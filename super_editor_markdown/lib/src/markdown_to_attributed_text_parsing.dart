@@ -12,9 +12,9 @@ AttributedText attributedTextFromMarkdown(String markdown) {
   }
 
   final document = deserializeMarkdownToDocument(markdown);
-  assert(document.nodes.length == 1,
-      "Tried to parse Markdown to AttributedText. Expected one paragraph node but ended up with ${document.nodes.length} parsed nodes.");
-  assert(document.nodes.first is ParagraphNode,
-      "Tried to parse Markdown to AttributedText. Expected text but found content type: ${document.nodes.first.runtimeType}");
-  return (document.nodes.first as ParagraphNode).text;
+  assert(document.nodeCount == 1,
+      "Tried to parse Markdown to AttributedText. Expected one paragraph node but ended up with ${document.nodeCount} parsed nodes.");
+  assert(document.first is ParagraphNode,
+      "Tried to parse Markdown to AttributedText. Expected text but found content type: ${document.first.runtimeType}");
+  return (document.first as ParagraphNode).text;
 }

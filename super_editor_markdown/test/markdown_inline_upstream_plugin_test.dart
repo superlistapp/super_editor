@@ -13,7 +13,7 @@ void main() {
       testWidgets("bold", (tester) async {
         final (document, _) = await _pumpScaffold(tester);
 
-        final nodeId = document.nodes.first.id;
+        final nodeId = document.first.id;
         await tester.placeCaretInParagraph(nodeId, 0);
         await tester.typeImeText("**bold**");
 
@@ -27,7 +27,7 @@ void main() {
       testWidgets("italics", (tester) async {
         final (document, _) = await _pumpScaffold(tester);
 
-        final nodeId = document.nodes.first.id;
+        final nodeId = document.first.id;
         await tester.placeCaretInParagraph(nodeId, 0);
         await tester.typeImeText("*italics*");
 
@@ -41,7 +41,7 @@ void main() {
       testWidgets("strikethrough", (tester) async {
         final (document, _) = await _pumpScaffold(tester);
 
-        final nodeId = document.nodes.first.id;
+        final nodeId = document.first.id;
         await tester.placeCaretInParagraph(nodeId, 0);
         await tester.typeImeText("~strikethrough");
 
@@ -67,7 +67,7 @@ void main() {
       testWidgets("code", (tester) async {
         final (document, _) = await _pumpScaffold(tester);
 
-        final nodeId = document.nodes.first.id;
+        final nodeId = document.first.id;
         await tester.placeCaretInParagraph(nodeId, 0);
         await tester.typeImeText("`code");
 
@@ -94,7 +94,7 @@ void main() {
         testWidgets("bold then italics", (tester) async {
           final (document, _) = await _pumpScaffold(tester);
 
-          final nodeId = document.nodes.first.id;
+          final nodeId = document.first.id;
           await tester.placeCaretInParagraph(nodeId, 0);
           await tester.typeImeText("**token*");
 
@@ -105,7 +105,7 @@ void main() {
         testWidgets("italics then bold", (tester) async {
           final (document, _) = await _pumpScaffold(tester);
 
-          final nodeId = document.nodes.first.id;
+          final nodeId = document.first.id;
           await tester.placeCaretInParagraph(nodeId, 0);
           await tester.typeImeText("*token**");
 
@@ -122,7 +122,7 @@ void main() {
       testWidgets("bold", (tester) async {
         final (document, _) = await _pumpScaffold(tester, "Hello");
 
-        final nodeId = document.nodes.first.id;
+        final nodeId = document.first.id;
         await tester.placeCaretInParagraph(nodeId, 5);
 
         await tester.typeImeText(" **bold**");
@@ -137,7 +137,7 @@ void main() {
       testWidgets("italics", (tester) async {
         final (document, _) = await _pumpScaffold(tester, "Hello");
 
-        final nodeId = document.nodes.first.id;
+        final nodeId = document.first.id;
         await tester.placeCaretInParagraph(nodeId, 5);
 
         await tester.typeImeText(" *italics*");
@@ -152,7 +152,7 @@ void main() {
       testWidgets("strikethrough", (tester) async {
         final (document, _) = await _pumpScaffold(tester, "Hello");
 
-        final nodeId = document.nodes.first.id;
+        final nodeId = document.first.id;
         await tester.placeCaretInParagraph(nodeId, 5);
 
         await tester.typeImeText(" ~strikethrough~");
@@ -168,7 +168,7 @@ void main() {
         testWidgets("bold then italics", (tester) async {
           final (document, _) = await _pumpScaffold(tester, "Hello");
 
-          final nodeId = document.nodes.first.id;
+          final nodeId = document.first.id;
           await tester.placeCaretInParagraph(nodeId, 5);
           await tester.typeImeText(" **token*");
 
@@ -179,7 +179,7 @@ void main() {
         testWidgets("italics then bold", (tester) async {
           final (document, _) = await _pumpScaffold(tester, "Hello");
 
-          final nodeId = document.nodes.first.id;
+          final nodeId = document.first.id;
           await tester.placeCaretInParagraph(nodeId, 5);
           await tester.typeImeText(" *token**");
 
@@ -196,20 +196,20 @@ void main() {
       testWidgets("unbalanced italics", (tester) async {
         final (document, _) = await _pumpScaffold(tester, "");
 
-        final nodeId = document.nodes.first.id;
+        final nodeId = document.first.id;
         await tester.placeCaretInParagraph(nodeId, 0);
 
         await tester.typeImeText("**noitalics*");
 
         expect(SuperEditorInspector.findTextInComponent(nodeId).text, "**noitalics*");
-        expect((document.nodes.first as ParagraphNode).text.spans.markers.isEmpty, isTrue);
+        expect((document.first as ParagraphNode).text.spans.markers.isEmpty, isTrue);
       });
     });
 
     testWidgets("multiple styles", (tester) async {
       final (document, _) = await _pumpScaffold(tester, "Hello");
 
-      final nodeId = document.nodes.first.id;
+      final nodeId = document.first.id;
       await tester.placeCaretInParagraph(nodeId, 5);
 
       // Italics
@@ -247,7 +247,7 @@ void main() {
     testWidgets("preserves non-Markdown attributions", (tester) async {
       final (document, editor) = await _pumpScaffold(tester, "Hello *italics");
 
-      final nodeId = document.nodes.first.id;
+      final nodeId = document.first.id;
 
       // Add a non-Markdown attribution to the text.
       const colorAttribution = ColorAttribution(Color(0xFFFF0000));
@@ -288,7 +288,7 @@ void main() {
       // when given a specific ambiguous input.
       final (document, _) = await _pumpScaffold(tester, "Hello");
 
-      final nodeId = document.nodes.first.id;
+      final nodeId = document.first.id;
       await tester.placeCaretInParagraph(nodeId, 5);
 
       // "**this*" should do nothing because the downstream syntax doesn't have a
@@ -334,7 +334,7 @@ void main() {
       testWidgets("italics", (tester) async {
         final (document, _) = await _pumpScaffold(tester, "Hello italics*");
 
-        final nodeId = document.nodes.first.id;
+        final nodeId = document.first.id;
         await tester.placeCaretInParagraph(nodeId, 6);
 
         await tester.typeImeText("*");
@@ -352,7 +352,7 @@ void main() {
       testWidgets("bold", (tester) async {
         final (document, _) = await _pumpScaffold(tester, "Hello bold**");
 
-        final nodeId = document.nodes.first.id;
+        final nodeId = document.first.id;
         await tester.placeCaretInParagraph(nodeId, 6);
 
         await tester.typeImeText("*");
@@ -381,7 +381,7 @@ void main() {
       testWidgets("bold", (tester) async {
         final (document, _) = await _pumpScaffold(tester);
 
-        final nodeId = document.nodes.first.id;
+        final nodeId = document.first.id;
         await tester.placeCaretInParagraph(nodeId, 0);
 
         // Type the trigger characters, without any content between them.
@@ -395,7 +395,7 @@ void main() {
       testWidgets("italics > single trigger > star", (tester) async {
         final (document, _) = await _pumpScaffold(tester);
 
-        final nodeId = document.nodes.first.id;
+        final nodeId = document.first.id;
         await tester.placeCaretInParagraph(nodeId, 0);
 
         // Type the trigger characters, without any content between them.
@@ -409,7 +409,7 @@ void main() {
       testWidgets("italics > tripple trigger > star", (tester) async {
         final (document, _) = await _pumpScaffold(tester);
 
-        final nodeId = document.nodes.first.id;
+        final nodeId = document.first.id;
         await tester.placeCaretInParagraph(nodeId, 0);
 
         // Type the trigger characters, without any content between them.
@@ -423,7 +423,7 @@ void main() {
       testWidgets("italics > single trigger > underscore", (tester) async {
         final (document, _) = await _pumpScaffold(tester);
 
-        final nodeId = document.nodes.first.id;
+        final nodeId = document.first.id;
         await tester.placeCaretInParagraph(nodeId, 0);
 
         // Type the trigger characters, without any content between them.
@@ -437,7 +437,7 @@ void main() {
       testWidgets("italics > tripple trigger > underscore", (tester) async {
         final (document, _) = await _pumpScaffold(tester);
 
-        final nodeId = document.nodes.first.id;
+        final nodeId = document.first.id;
         await tester.placeCaretInParagraph(nodeId, 0);
 
         // Type the trigger characters, without any content between them.
@@ -451,7 +451,7 @@ void main() {
       testWidgets("strikethrough", (tester) async {
         final (document, _) = await _pumpScaffold(tester);
 
-        final nodeId = document.nodes.first.id;
+        final nodeId = document.first.id;
         await tester.placeCaretInParagraph(nodeId, 0);
 
         // Type the trigger characters, without any content between them.
@@ -465,7 +465,7 @@ void main() {
       testWidgets("code", (tester) async {
         final (document, _) = await _pumpScaffold(tester);
 
-        final nodeId = document.nodes.first.id;
+        final nodeId = document.first.id;
         await tester.placeCaretInParagraph(nodeId, 0);
 
         // Type the trigger characters, without any content between them.
@@ -481,7 +481,7 @@ void main() {
       testWidgets("but only when a space follows the syntax", (tester) async {
         final (document, _) = await _pumpScaffold(tester);
 
-        final nodeId = document.nodes.first.id;
+        final nodeId = document.first.id;
         await tester.placeCaretInParagraph(nodeId, 0);
 
         // Enter a link syntax, but no characters after it.
@@ -512,7 +512,7 @@ void main() {
       testWidgets("parses Markdown link syntax and plays nice with built-in linkification reaction", (tester) async {
         final (document, _) = await _pumpScaffold(tester);
 
-        final nodeId = document.nodes.first.id;
+        final nodeId = document.first.id;
         await tester.placeCaretInParagraph(nodeId, 0);
 
         await tester.typeImeText("[google](www.google.com) ");
@@ -551,8 +551,6 @@ Future<(Document, Editor)> _pumpScaffold(WidgetTester tester, [String initialMar
       home: Scaffold(
         body: SuperEditor(
           editor: editor,
-          document: document,
-          composer: composer,
           plugins: {
             MarkdownInlineUpstreamSyntaxPlugin(),
           },

@@ -52,8 +52,8 @@ class _FeaturedEditorState extends State<FeaturedEditor> {
     _composer = MutableDocumentComposer(
       initialSelection: DocumentSelection.collapsed(
         position: DocumentPosition(
-          nodeId: _doc.nodes.last.id, // Place caret at end of document
-          nodePosition: (_doc.nodes.last as TextNode).endPosition,
+          nodeId: _doc.last.id, // Place caret at end of document
+          nodePosition: (_doc.last as TextNode).endPosition,
         ),
       ),
     );

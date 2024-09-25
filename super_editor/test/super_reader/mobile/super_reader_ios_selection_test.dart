@@ -1,3 +1,4 @@
+import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_test_runners/flutter_test_runners.dart';
 import 'package:super_editor/src/infrastructure/platforms/ios/selection_handles.dart';
@@ -247,6 +248,72 @@ void main() {
           gesture.up();
         });
       });
+
+      group("horizontal drag", () {
+        testWidgetsOnIos("does not cause reader to scroll", (tester) async {
+          final scrollController = ScrollController();
+
+          await tester //
+              .createDocument()
+              .withLongTextContent()
+              .withScrollController(scrollController)
+              .pump();
+
+          // Start dragging horizontally.
+          final gesture = await tester.startGesture(
+            tester.getCenter(find.byType(SuperReader)),
+          );
+
+          // Drag horizontally.
+          for (int i = 1; i < 10; i += 1) {
+            await gesture.moveBy(const Offset(20, 0));
+            await tester.pump();
+          }
+
+          // Ensure that dragging doesn't cause the reader to scroll.
+          expect(scrollController.offset, 0);
+
+          // Release the gesture so the test system doesn't complain.
+          await gesture.up();
+          await tester.pumpAndSettle();
+        });
+      });
+
+      group("vertical drag", () {
+        testWidgetsOnIos("scrolls the reader after a horizontal drag", (tester) async {
+          final scrollController = ScrollController();
+
+          await tester //
+              .createDocument()
+              .withLongTextContent()
+              .withScrollController(scrollController)
+              .pump();
+
+          // Start dragging horizontally.
+          final gesture = await tester.startGesture(
+            tester.getCenter(find.byType(SuperReader)),
+          );
+
+          // Drag horizontally.
+          for (int i = 1; i < 10; i += 1) {
+            await gesture.moveBy(const Offset(20, 0));
+            await tester.pump();
+          }
+
+          // Drag vertically.
+          for (int i = 1; i < 10; i += 1) {
+            await gesture.moveBy(const Offset(0, -10));
+            await tester.pump();
+          }
+
+          // Ensure that the reader scrolled up.
+          expect(scrollController.offset, greaterThan(0.0));
+
+          // Release the gesture so the test system doesn't complain.
+          await gesture.up();
+          await tester.pumpAndSettle();
+        });
+      });
     });
 
     group('within ancestor scrollable', () {
@@ -262,7 +329,7 @@ multiple lines.''',
             .insideCustomScrollView()
             .pump();
 
-        final paragraphNode = testContext.document.nodes.first as ParagraphNode;
+        final paragraphNode = testContext.document.first as ParagraphNode;
 
         // Double tap to select "SuperEditor".
         await SuperReaderRobot(tester).doubleTapInParagraph(paragraphNode.id, 0);
@@ -306,7 +373,7 @@ multiple lines.''',
             .insideCustomScrollView()
             .pump();
 
-        final paragraphNode = testContext.document.nodes.first as ParagraphNode;
+        final paragraphNode = testContext.document.first as ParagraphNode;
 
         // Double tap to select "SuperEditor".
         await SuperReaderRobot(tester).doubleTapInParagraph(paragraphNode.id, 0);

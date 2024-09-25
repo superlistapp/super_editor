@@ -101,13 +101,11 @@ class _EditorReaderSwitchDemoState extends State<_EditorReaderSwitchDemo> {
         controller: widget.scrollController,
         slivers: [
           const SliverAppBar(),
-          SliverToBoxAdapter(
-            child: ListenableBuilder(
-              listenable: widget.isEditable,
-              builder: (context, _) {
-                return _buildEditorOrReader();
-              },
-            ),
+          ListenableBuilder(
+            listenable: widget.isEditable,
+            builder: (context, _) {
+              return _buildEditorOrReader();
+            },
           )
         ],
       ),
@@ -117,8 +115,6 @@ class _EditorReaderSwitchDemoState extends State<_EditorReaderSwitchDemo> {
   Widget _buildEditorOrReader() {
     if (widget.isEditable.value) {
       return SuperEditor(
-        document: widget.document,
-        composer: _composer,
         editor: _docEditor,
       );
     } else {

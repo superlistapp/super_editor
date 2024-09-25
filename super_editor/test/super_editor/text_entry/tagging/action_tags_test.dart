@@ -455,13 +455,13 @@ void main() {
         await tester.placeCaretInParagraph("1", 7);
 
         // Start composing a tag.
-        await tester.typeImeText("/");
+        await tester.typeImeText("/stuff");
 
         // Ensure that we're composing.
         var text = SuperEditorInspector.findTextInComponent("1");
         expect(
           text.getAttributedRange({actionTagComposingAttribution}, 7),
-          const SpanRange(7, 7),
+          const SpanRange(7, 12),
         );
 
         // Cancel composing.
@@ -472,7 +472,7 @@ void main() {
         expect(
           text.getAttributionSpansInRange(
             attributionFilter: (attribution) => attribution == actionTagComposingAttribution,
-            range: const SpanRange(0, 7),
+            range: const SpanRange(0, 12),
           ),
           isEmpty,
         );
@@ -482,33 +482,15 @@ void main() {
         );
 
         // Start typing again.
-        await tester.typeImeText("h");
+        await tester.typeImeText(" ");
 
         // Ensure that we didn't start composing again.
         text = SuperEditorInspector.findTextInComponent("1");
-        expect(text.text, "before /h");
+        expect(text.text, "before /stuff ");
         expect(
           text.getAttributionSpansInRange(
             attributionFilter: (attribution) => attribution == actionTagComposingAttribution,
-            range: const SpanRange(0, 8),
-          ),
-          isEmpty,
-        );
-        expect(
-          text.getAttributedRange({actionTagCancelledAttribution}, 7),
-          const SpanRange(7, 7),
-        );
-
-        // Add a space, cause the tag to end.
-        await tester.typeImeText(" ");
-
-        // Ensure that the cancelled tag wasn't submitted, and didn't start composing again.
-        text = SuperEditorInspector.findTextInComponent("1");
-        expect(text.text, "before /h ");
-        expect(
-          text.getAttributionSpansInRange(
-            attributionFilter: (attribution) => attribution == actionTagComposingAttribution,
-            range: const SpanRange(0, 9),
+            range: const SpanRange(0, 13),
           ),
           isEmpty,
         );
@@ -649,6 +631,38 @@ void main() {
           isEmpty,
         );
       });
+    });
+  });
+
+  group("selections >", () {
+    testWidgetsOnAllPlatforms("can find tag that surrounds the extent position when the selection is expanded",
+        (tester) async {
+      await _pumpTestEditor(
+        tester,
+        paragraphThenHrDoc(),
+      );
+
+      // Create cancelled action tag
+      await tester.placeCaretInParagraph("1", 0);
+      await tester.typeImeText("/header ");
+
+      // Place cursor at the end of the horizontal rule/block node
+      await tester.pressDownArrow();
+      await tester.pressRightArrow();
+
+      // Select upstream towards the cancelled action tag
+      await expectLater(
+        () async {
+          await tester.pressShiftLeftArrow();
+          await tester.pressShiftUpArrow();
+        },
+        returnsNormally,
+      );
+
+      // If we reach the end without exception, then ActionTagComposingReaction did not blow up due to the base or extent
+      // position, and type of content at those positions.
+      //
+      // Original bug: https://github.com/superlistapp/super_editor/pull/2201
     });
   });
 }

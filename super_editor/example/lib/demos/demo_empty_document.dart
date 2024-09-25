@@ -37,8 +37,6 @@ class _EmptyDocumentDemoState extends State<EmptyDocumentDemo> {
     return SafeArea(
       child: SuperEditor(
         editor: _docEditor,
-        document: _doc,
-        composer: _composer,
         gestureMode: DocumentGestureMode.mouse,
       ),
     );

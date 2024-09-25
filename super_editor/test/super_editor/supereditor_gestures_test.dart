@@ -37,7 +37,7 @@ void main() {
         SuperEditorInspector.findDocumentSelection(),
         DocumentSelection.collapsed(
           position: DocumentPosition(
-            nodeId: testContext.findEditContext().document.nodes.first.id,
+            nodeId: testContext.findEditContext().document.first.id,
             nodePosition: const TextNodePosition(offset: 0),
           ),
         ),
@@ -66,7 +66,7 @@ void main() {
         SuperEditorInspector.findDocumentSelection(),
         DocumentSelection.collapsed(
           position: DocumentPosition(
-            nodeId: testContext.findEditContext().document.nodes.first.id,
+            nodeId: testContext.findEditContext().document.first.id,
             nodePosition: const TextNodePosition(offset: 0),
           ),
         ),
@@ -95,7 +95,7 @@ void main() {
         SuperEditorInspector.findDocumentSelection(),
         DocumentSelection.collapsed(
           position: DocumentPosition(
-            nodeId: testContext.findEditContext().document.nodes.first.id,
+            nodeId: testContext.findEditContext().document.first.id,
             nodePosition: const TextNodePosition(offset: 0),
           ),
         ),
@@ -124,7 +124,7 @@ void main() {
         SuperEditorInspector.findDocumentSelection(),
         DocumentSelection.collapsed(
           position: DocumentPosition(
-            nodeId: testContext.findEditContext().document.nodes.first.id,
+            nodeId: testContext.findEditContext().document.first.id,
             nodePosition: const TextNodePosition(offset: 0),
           ),
         ),
@@ -153,7 +153,7 @@ void main() {
         SuperEditorInspector.findDocumentSelection(),
         DocumentSelection.collapsed(
           position: DocumentPosition(
-            nodeId: testContext.findEditContext().document.nodes.first.id,
+            nodeId: testContext.findEditContext().document.first.id,
             nodePosition: const TextNodePosition(offset: 0),
           ),
         ),
@@ -178,7 +178,7 @@ void main() {
         SuperEditorInspector.findDocumentSelection(),
         DocumentSelection.collapsed(
           position: DocumentPosition(
-            nodeId: testContext.findEditContext().document.nodes.last.id,
+            nodeId: testContext.findEditContext().document.last.id,
             nodePosition: const TextNodePosition(offset: 14),
           ),
         ),
@@ -202,7 +202,7 @@ void main() {
         SuperEditorInspector.findDocumentSelection(),
         DocumentSelection.collapsed(
           position: DocumentPosition(
-            nodeId: testContext.findEditContext().document.nodes.first.id,
+            nodeId: testContext.findEditContext().document.first.id,
             nodePosition: const TextNodePosition(offset: 0),
           ),
         ),
@@ -229,7 +229,7 @@ spans multiple lines.''',
           .pump();
 
       final document = SuperEditorInspector.findDocument()!;
-      final paragraphNode = document.nodes.first as ParagraphNode;
+      final paragraphNode = document.first as ParagraphNode;
 
       await tester.dragSelectDocumentFromPositionByOffset(
         from: DocumentPosition(
@@ -275,7 +275,7 @@ spans multiple lines.''',
           .pump();
 
       final document = SuperEditorInspector.findDocument()!;
-      final paragraphNode = document.nodes.first as ParagraphNode;
+      final paragraphNode = document.first as ParagraphNode;
 
       await tester.dragSelectDocumentFromPositionByOffset(
         from: DocumentPosition(
@@ -323,8 +323,8 @@ spans multiple lines.''',
           .pump();
 
       final document = SuperEditorInspector.findDocument()!;
-      final titleNode = document.nodes.first as ParagraphNode;
-      final paragraphNode = document.nodes[1] as ParagraphNode;
+      final titleNode = document.first as ParagraphNode;
+      final paragraphNode = document.getNodeAt(1)! as ParagraphNode;
 
       await tester.dragSelectDocumentFromPositionByOffset(
         from: DocumentPosition(
@@ -372,8 +372,8 @@ spans multiple lines.''',
           .pump();
 
       final document = SuperEditorInspector.findDocument()!;
-      final titleNode = document.nodes.first as ParagraphNode;
-      final paragraphNode = document.nodes[1] as ParagraphNode;
+      final titleNode = document.first as ParagraphNode;
+      final paragraphNode = document.getNodeAt(1)! as ParagraphNode;
 
       await tester.dragSelectDocumentFromPositionByOffset(
         from: DocumentPosition(
@@ -465,7 +465,7 @@ spans multiple lines.''',
           .pump();
 
       // Tap to place caret.
-      await tester.placeCaretInParagraph(SuperEditorInspector.findDocument()!.nodes.first.id, 0);
+      await tester.placeCaretInParagraph(SuperEditorInspector.findDocument()!.first.id, 0);
 
       // Ensure the drag handle is displayed.
       expect(find.byType(AndroidSelectionHandle), findsOneWidget);
@@ -478,7 +478,7 @@ spans multiple lines.''',
           .pump();
 
       // Tap to place caret.
-      await tester.placeCaretInParagraph(SuperEditorInspector.findDocument()!.nodes.first.id, 0);
+      await tester.placeCaretInParagraph(SuperEditorInspector.findDocument()!.first.id, 0);
 
       // Ensure the drag handle is displayed.
       expect(find.byType(IosFloatingToolbarOverlay), findsOneWidget);
@@ -490,7 +490,7 @@ spans multiple lines.''',
           .withSingleParagraph()
           .pump();
 
-      await tester.placeCaretInParagraph(SuperEditorInspector.findDocument()!.nodes.first.id, 0);
+      await tester.placeCaretInParagraph(SuperEditorInspector.findDocument()!.first.id, 0);
 
       // Ensure no drag handle is displayed.
       expect(find.byType(AndroidSelectionHandle), findsNothing);
@@ -693,7 +693,7 @@ spans multiple lines.''',
           expect(context.findEditContext().composer.isInInteractionMode.value, isTrue);
 
           // Tap on the first link.
-          final textNode = context.document.nodes.first;
+          final textNode = context.document.first;
           await tester.tapInParagraph(textNode.id, 3);
 
           // Ensure that we tried to launch the first URL.

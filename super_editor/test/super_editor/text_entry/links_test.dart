@@ -97,9 +97,9 @@ void main() {
         );
 
         // Ensure we added a new empty paragraph.
-        expect(textContext.document.nodes.length, 2);
-        expect(textContext.document.nodes[1], isA<ParagraphNode>());
-        expect((textContext.document.nodes[1] as ParagraphNode).text.text, "");
+        expect(textContext.document.nodeCount, 2);
+        expect(textContext.document.getNodeAt(1)!, isA<ParagraphNode>());
+        expect((textContext.document.getNodeAt(1)! as ParagraphNode).text.text, "");
       });
 
       testWidgetsOnAllPlatforms('when pressing ENTER at the middle of a paragraph', (tester) async {
@@ -109,7 +109,7 @@ void main() {
             .withInputSource(TextInputSource.ime)
             .pump();
 
-        final nodeId = textContext.document.nodes.first.id;
+        final nodeId = textContext.document.first.id;
 
         // Place the caret at "Before link |after link".
         await tester.placeCaretInParagraph(nodeId, 12);
@@ -147,9 +147,9 @@ void main() {
         );
 
         // Ensure we split the paragraph.
-        expect(textContext.document.nodes.length, 2);
-        expect(textContext.document.nodes[1], isA<ParagraphNode>());
-        expect((textContext.document.nodes[1] as ParagraphNode).text.text, "after link");
+        expect(textContext.document.nodeCount, 2);
+        expect(textContext.document.getNodeAt(1)!, isA<ParagraphNode>());
+        expect((textContext.document.getNodeAt(1)! as ParagraphNode).text.text, "after link");
       });
 
       testWidgetsOnAndroid(
@@ -198,9 +198,9 @@ void main() {
         );
 
         // Ensure we added a new empty paragraph.
-        expect(textContext.document.nodes.length, 2);
-        expect(textContext.document.nodes[1], isA<ParagraphNode>());
-        expect((textContext.document.nodes[1] as ParagraphNode).text.text, "");
+        expect(textContext.document.nodeCount, 2);
+        expect(textContext.document.getNodeAt(1)!, isA<ParagraphNode>());
+        expect((textContext.document.getNodeAt(1)! as ParagraphNode).text.text, "");
       });
 
       testWidgetsOnAndroid(
@@ -212,7 +212,7 @@ void main() {
             .withInputSource(TextInputSource.ime)
             .pump();
 
-        final nodeId = textContext.document.nodes.first.id;
+        final nodeId = textContext.document.first.id;
 
         // Place the caret at "Before link |after link".
         await tester.placeCaretInParagraph(nodeId, 12);
@@ -251,9 +251,9 @@ void main() {
         );
 
         // Ensure we split the paragraph.
-        expect(textContext.document.nodes.length, 2);
-        expect(textContext.document.nodes[1], isA<ParagraphNode>());
-        expect((textContext.document.nodes[1] as ParagraphNode).text.text, "after link");
+        expect(textContext.document.nodeCount, 2);
+        expect(textContext.document.getNodeAt(1)!, isA<ParagraphNode>());
+        expect((textContext.document.getNodeAt(1)! as ParagraphNode).text.text, "after link");
       });
 
       testWidgetsOnIos('when pressing the newline button on the software keyboard at the end of a paragraph (on iOS)',
@@ -302,9 +302,9 @@ void main() {
         );
 
         // Ensure we added a new empty line.
-        expect(textContext.document.nodes.length, 2);
-        expect(textContext.document.nodes[1], isA<ParagraphNode>());
-        expect((textContext.document.nodes[1] as ParagraphNode).text.text, "");
+        expect(textContext.document.nodeCount, 2);
+        expect(textContext.document.getNodeAt(1)!, isA<ParagraphNode>());
+        expect((textContext.document.getNodeAt(1)! as ParagraphNode).text.text, "");
       });
 
       testWidgetsOnIos(
@@ -316,7 +316,7 @@ void main() {
             .withInputSource(TextInputSource.ime)
             .pump();
 
-        final nodeId = textContext.document.nodes.first.id;
+        final nodeId = textContext.document.first.id;
 
         // Place the caret at "Before link |after link".
         await tester.placeCaretInParagraph(nodeId, 12);
@@ -356,9 +356,9 @@ void main() {
         );
 
         // Ensure we split the paragraph.
-        expect(textContext.document.nodes.length, 2);
-        expect(textContext.document.nodes[1], isA<ParagraphNode>());
-        expect((textContext.document.nodes[1] as ParagraphNode).text.text, "after link");
+        expect(textContext.document.nodeCount, 2);
+        expect(textContext.document.getNodeAt(1)!, isA<ParagraphNode>());
+        expect((textContext.document.getNodeAt(1)! as ParagraphNode).text.text, "after link");
       });
 
       testWidgetsOnAllPlatforms('when pressing ENTER at the end of a list item', (tester) async {
@@ -368,7 +368,7 @@ void main() {
             .withInputSource(TextInputSource.ime)
             .pump();
 
-        final nodeId = textContext.document.nodes.first.id;
+        final nodeId = textContext.document.first.id;
 
         // Place the caret at the end of the list item.
         await tester.placeCaretInParagraph(nodeId, 4);
@@ -406,9 +406,9 @@ void main() {
         );
 
         // Ensure we added a new empty list item.
-        expect(textContext.document.nodes.length, 2);
-        expect(textContext.document.nodes[1], isA<ListItemNode>());
-        expect((textContext.document.nodes[1] as ListItemNode).text.text, "");
+        expect(textContext.document.nodeCount, 2);
+        expect(textContext.document.getNodeAt(1)!, isA<ListItemNode>());
+        expect((textContext.document.getNodeAt(1)! as ListItemNode).text.text, "");
       });
 
       testWidgetsOnAllPlatforms('when pressing ENTER at the middle of a list item', (tester) async {
@@ -418,7 +418,7 @@ void main() {
             .withInputSource(TextInputSource.ime)
             .pump();
 
-        final nodeId = textContext.document.nodes.first.id;
+        final nodeId = textContext.document.first.id;
 
         // Place the caret at "Before link |after link".
         await tester.placeCaretInParagraph(nodeId, 12);
@@ -456,9 +456,9 @@ void main() {
         );
 
         // Ensure we split the list item.
-        expect(textContext.document.nodes.length, 2);
-        expect(textContext.document.nodes[1], isA<ListItemNode>());
-        expect((textContext.document.nodes[1] as ListItemNode).text.text, "after link");
+        expect(textContext.document.nodeCount, 2);
+        expect(textContext.document.getNodeAt(1)!, isA<ListItemNode>());
+        expect((textContext.document.getNodeAt(1)! as ListItemNode).text.text, "after link");
       });
 
       testWidgetsOnAndroid(
@@ -470,7 +470,7 @@ void main() {
             .withInputSource(TextInputSource.ime)
             .pump();
 
-        final nodeId = textContext.document.nodes.first.id;
+        final nodeId = textContext.document.first.id;
 
         // Place the caret at the end of the list item.
         await tester.placeCaretInParagraph(nodeId, 4);
@@ -509,9 +509,9 @@ void main() {
         );
 
         // Ensure we added a new empty list item.
-        expect(textContext.document.nodes.length, 2);
-        expect(textContext.document.nodes[1], isA<ListItemNode>());
-        expect((textContext.document.nodes[1] as ListItemNode).text.text, "");
+        expect(textContext.document.nodeCount, 2);
+        expect(textContext.document.getNodeAt(1)!, isA<ListItemNode>());
+        expect((textContext.document.getNodeAt(1)! as ListItemNode).text.text, "");
       });
 
       testWidgetsOnAndroid(
@@ -523,7 +523,7 @@ void main() {
             .withInputSource(TextInputSource.ime)
             .pump();
 
-        final nodeId = textContext.document.nodes.first.id;
+        final nodeId = textContext.document.first.id;
 
         // Place the caret at "Before link |after link".
         await tester.placeCaretInParagraph(nodeId, 12);
@@ -562,9 +562,9 @@ void main() {
         );
 
         // Ensure we split the list item.
-        expect(textContext.document.nodes.length, 2);
-        expect(textContext.document.nodes[1], isA<ListItemNode>());
-        expect((textContext.document.nodes[1] as ListItemNode).text.text, "after link");
+        expect(textContext.document.nodeCount, 2);
+        expect(textContext.document.getNodeAt(1)!, isA<ListItemNode>());
+        expect((textContext.document.getNodeAt(1)! as ListItemNode).text.text, "after link");
       });
 
       testWidgetsOnIos('when pressing the newline button on the software keyboard at the end of a list item (on iOS)',
@@ -575,7 +575,7 @@ void main() {
             .withInputSource(TextInputSource.ime)
             .pump();
 
-        final nodeId = textContext.document.nodes.first.id;
+        final nodeId = textContext.document.first.id;
 
         // Place the caret at the end of the list item.
         await tester.placeCaretInParagraph(nodeId, 4);
@@ -615,9 +615,9 @@ void main() {
         );
 
         // Ensure we added a new empty list item.
-        expect(textContext.document.nodes.length, 2);
-        expect(textContext.document.nodes[1], isA<ListItemNode>());
-        expect((textContext.document.nodes[1] as ListItemNode).text.text, "");
+        expect(textContext.document.nodeCount, 2);
+        expect(textContext.document.getNodeAt(1)!, isA<ListItemNode>());
+        expect((textContext.document.getNodeAt(1)! as ListItemNode).text.text, "");
       });
 
       testWidgetsOnIos(
@@ -629,7 +629,7 @@ void main() {
             .withInputSource(TextInputSource.ime)
             .pump();
 
-        final nodeId = textContext.document.nodes.first.id;
+        final nodeId = textContext.document.first.id;
 
         // Place the caret at "Before link |after link".
         await tester.placeCaretInParagraph(nodeId, 12);
@@ -669,9 +669,9 @@ void main() {
         );
 
         // Ensure we split the list item.
-        expect(textContext.document.nodes.length, 2);
-        expect(textContext.document.nodes[1], isA<ListItemNode>());
-        expect((textContext.document.nodes[1] as ListItemNode).text.text, "after link");
+        expect(textContext.document.nodeCount, 2);
+        expect(textContext.document.getNodeAt(1)!, isA<ListItemNode>());
+        expect((textContext.document.getNodeAt(1)! as ListItemNode).text.text, "after link");
       });
 
       testWidgetsOnAllPlatforms('when pressing ENTER at the end of a task', (tester) async {
@@ -688,8 +688,6 @@ void main() {
             home: Scaffold(
               body: SuperEditor(
                 editor: editor,
-                document: document,
-                composer: composer,
                 componentBuilders: [
                   TaskComponentBuilder(editor),
                   ...defaultComponentBuilders,
@@ -735,9 +733,9 @@ void main() {
         );
 
         // Ensure we added a new empty task.
-        expect(document.nodes.length, 2);
-        expect(document.nodes[1], isA<TaskNode>());
-        expect((document.nodes[1] as TaskNode).text.text, "");
+        expect(document.nodeCount, 2);
+        expect(document.getNodeAt(1)!, isA<TaskNode>());
+        expect((document.getNodeAt(1)! as TaskNode).text.text, "");
       });
 
       testWidgetsOnAllPlatforms('when pressing ENTER at the middle of a task', (tester) async {
@@ -754,8 +752,6 @@ void main() {
             home: Scaffold(
               body: SuperEditor(
                 editor: editor,
-                document: document,
-                composer: composer,
                 componentBuilders: [
                   TaskComponentBuilder(editor),
                   ...defaultComponentBuilders,
@@ -801,9 +797,9 @@ void main() {
         );
 
         // Ensure we split the task
-        expect(document.nodes.length, 2);
-        expect(document.nodes[1], isA<TaskNode>());
-        expect((document.nodes[1] as TaskNode).text.text, "after link");
+        expect(document.nodeCount, 2);
+        expect(document.getNodeAt(1)!, isA<TaskNode>());
+        expect((document.getNodeAt(1)! as TaskNode).text.text, "after link");
       });
 
       testWidgetsOnAndroid(
@@ -822,8 +818,6 @@ void main() {
             home: Scaffold(
               body: SuperEditor(
                 editor: editor,
-                document: document,
-                composer: composer,
                 componentBuilders: [
                   TaskComponentBuilder(editor),
                   ...defaultComponentBuilders,
@@ -870,9 +864,9 @@ void main() {
         );
 
         // Ensure we added a new empty task.
-        expect(document.nodes.length, 2);
-        expect(document.nodes[1], isA<TaskNode>());
-        expect((document.nodes[1] as TaskNode).text.text, "");
+        expect(document.nodeCount, 2);
+        expect(document.getNodeAt(1)!, isA<TaskNode>());
+        expect((document.getNodeAt(1)! as TaskNode).text.text, "");
       });
 
       testWidgetsOnAndroid(
@@ -891,8 +885,6 @@ void main() {
             home: Scaffold(
               body: SuperEditor(
                 editor: editor,
-                document: document,
-                composer: composer,
                 componentBuilders: [
                   TaskComponentBuilder(editor),
                   ...defaultComponentBuilders,
@@ -939,9 +931,9 @@ void main() {
         );
 
         // Ensure we split the task.
-        expect(document.nodes.length, 2);
-        expect(document.nodes[1], isA<TaskNode>());
-        expect((document.nodes[1] as TaskNode).text.text, "after link");
+        expect(document.nodeCount, 2);
+        expect(document.getNodeAt(1)!, isA<TaskNode>());
+        expect((document.getNodeAt(1)! as TaskNode).text.text, "after link");
       });
 
       testWidgetsOnIos('when pressing the newline button on the software keyboard at the end of a task (on iOS)',
@@ -959,8 +951,6 @@ void main() {
             home: Scaffold(
               body: SuperEditor(
                 editor: editor,
-                document: document,
-                composer: composer,
                 componentBuilders: [
                   TaskComponentBuilder(editor),
                   ...defaultComponentBuilders,
@@ -1008,9 +998,9 @@ void main() {
         );
 
         // Ensure we added a new empty task.
-        expect(document.nodes.length, 2);
-        expect(document.nodes[1], isA<TaskNode>());
-        expect((document.nodes[1] as TaskNode).text.text, "");
+        expect(document.nodeCount, 2);
+        expect(document.getNodeAt(1)!, isA<TaskNode>());
+        expect((document.getNodeAt(1)! as TaskNode).text.text, "");
       });
 
       testWidgetsOnIos('when pressing the newline button on the software keyboard at the middle of a task (on iOS)',
@@ -1028,8 +1018,6 @@ void main() {
             home: Scaffold(
               body: SuperEditor(
                 editor: editor,
-                document: document,
-                composer: composer,
                 componentBuilders: [
                   TaskComponentBuilder(editor),
                   ...defaultComponentBuilders,
@@ -1077,9 +1065,9 @@ void main() {
         );
 
         // Ensure we split the task.
-        expect(document.nodes.length, 2);
-        expect(document.nodes[1], isA<TaskNode>());
-        expect((document.nodes[1] as TaskNode).text.text, "after link");
+        expect(document.nodeCount, 2);
+        expect(document.getNodeAt(1)!, isA<TaskNode>());
+        expect((document.getNodeAt(1)! as TaskNode).text.text, "after link");
       });
     });
 
@@ -1312,7 +1300,7 @@ void main() {
         final doc = SuperEditorInspector.findDocument()!;
 
         // Place the caret in the first paragraph at the start of the link.
-        await tester.placeCaretInParagraph(doc.nodes.first.id, 0);
+        await tester.placeCaretInParagraph(doc.first.id, 0);
 
         // Type some text by simulating hardware keyboard key presses.
         await tester.typeKeyboardText('Go to ');
@@ -1335,7 +1323,7 @@ void main() {
         final doc = SuperEditorInspector.findDocument()!;
 
         // Place the caret in the first paragraph at the start of the link.
-        await tester.placeCaretInParagraph(doc.nodes.first.id, 0);
+        await tester.placeCaretInParagraph(doc.first.id, 0);
 
         // Type some text by simulating hardware keyboard key presses.
         await tester.typeKeyboardText('Go to ');
@@ -1358,7 +1346,7 @@ void main() {
         final doc = SuperEditorInspector.findDocument()!;
 
         // Place the caret in the first paragraph at the start of the link.
-        await tester.placeCaretInParagraph(doc.nodes.first.id, 0);
+        await tester.placeCaretInParagraph(doc.first.id, 0);
 
         // Type some text by simulating hardware keyboard key presses.
         await tester.typeKeyboardText('Go to ');
@@ -1382,7 +1370,7 @@ void main() {
         final doc = SuperEditorInspector.findDocument()!;
 
         // Place the caret in the first paragraph at the start of the link.
-        await tester.placeCaretInParagraph(doc.nodes.first.id, 14);
+        await tester.placeCaretInParagraph(doc.first.id, 14);
 
         // Type some text by simulating hardware keyboard key presses.
         await tester.typeKeyboardText(' to learn anything');
@@ -1405,7 +1393,7 @@ void main() {
         final doc = SuperEditorInspector.findDocument()!;
 
         // Place the caret in the first paragraph at the start of the link.
-        await tester.placeCaretInParagraph(doc.nodes.first.id, 14);
+        await tester.placeCaretInParagraph(doc.first.id, 14);
 
         // Type some text by simulating hardware keyboard key presses.
         await tester.typeKeyboardText(' to learn anything');
@@ -1428,7 +1416,7 @@ void main() {
         final doc = SuperEditorInspector.findDocument()!;
 
         // Place the caret in the first paragraph at the start of the link.
-        await tester.placeCaretInParagraph(doc.nodes.first.id, 14);
+        await tester.placeCaretInParagraph(doc.first.id, 14);
 
         // Type some text by simulating hardware keyboard key presses.
         await tester.typeKeyboardText(' to learn anything');
@@ -1452,13 +1440,13 @@ void main() {
         final doc = SuperEditorInspector.findDocument()!;
 
         // Place the caret at "www.goog|le.com"
-        await tester.placeCaretInParagraph(doc.nodes.first.id, 8);
+        await tester.placeCaretInParagraph(doc.first.id, 8);
 
         // Add characters.
         await tester.typeImeText("oooo");
 
         // Ensure the characters were inserted, the whole link is still attributed.
-        final nodeId = doc.nodes.first.id;
+        final nodeId = doc.first.id;
         var text = SuperEditorInspector.findTextInComponent(nodeId);
 
         expect(text.text, "www.googoooole.com");
@@ -1484,13 +1472,13 @@ void main() {
         final doc = SuperEditorInspector.findDocument()!;
 
         // Place the caret at "www.goog|le.com".
-        await tester.placeCaretInParagraph(doc.nodes.first.id, 8);
+        await tester.placeCaretInParagraph(doc.first.id, 8);
 
         // Add characters.
         await tester.typeImeText("oooo");
 
         // Ensure the characters were inserted and the link was updated.
-        final text = SuperEditorInspector.findTextInComponent(doc.nodes.first.id);
+        final text = SuperEditorInspector.findTextInComponent(doc.first.id);
         expect(text.text, "www.googoooole.com");
         expect(
           text.hasAttributionsThroughout(
@@ -1514,13 +1502,13 @@ void main() {
         final doc = SuperEditorInspector.findDocument()!;
 
         // Place the caret at "www.goog|le.com".
-        await tester.placeCaretInParagraph(doc.nodes.first.id, 8);
+        await tester.placeCaretInParagraph(doc.first.id, 8);
 
         // Add characters.
         await tester.typeImeText("oooo");
 
         // Ensure the characters were inserted and the attribution was removed.
-        final text = SuperEditorInspector.findTextInComponent(doc.nodes.first.id);
+        final text = SuperEditorInspector.findTextInComponent(doc.first.id);
         expect(text.text, "www.googoooole.com");
         expect(text.spans.markers, isEmpty);
       });
@@ -1537,7 +1525,7 @@ void main() {
         final doc = SuperEditorInspector.findDocument()!;
 
         // Place the caret at "|www.google.com".
-        await tester.placeCaretInParagraph(doc.nodes.first.id, 0);
+        await tester.placeCaretInParagraph(doc.first.id, 0);
 
         // Delete downstream characters.
         await tester.pressDelete();
@@ -1546,7 +1534,7 @@ void main() {
         await tester.pressDelete();
 
         // Ensure the characters were inserted, the whole link is still attributed.
-        final nodeId = doc.nodes.first.id;
+        final nodeId = doc.first.id;
         var text = SuperEditorInspector.findTextInComponent(nodeId);
 
         expect(text.text, "google.com");
@@ -1572,7 +1560,7 @@ void main() {
         final doc = SuperEditorInspector.findDocument()!;
 
         // Place the caret at "|www.google.com".
-        await tester.placeCaretInParagraph(doc.nodes.first.id, 0);
+        await tester.placeCaretInParagraph(doc.first.id, 0);
 
         // Delete downstream characters.
         await tester.pressDelete();
@@ -1581,7 +1569,7 @@ void main() {
         await tester.pressDelete();
 
         // Ensure the characters were delete and link attribution was updated.
-        final text = SuperEditorInspector.findTextInComponent(doc.nodes.first.id);
+        final text = SuperEditorInspector.findTextInComponent(doc.first.id);
         expect(text.text, "google.com");
         expect(
           text.hasAttributionsThroughout(
@@ -1605,7 +1593,7 @@ void main() {
         await tester.pressDelete();
 
         // Ensure the attribution was updated.
-        final textAfter = SuperEditorInspector.findTextInComponent(doc.nodes.first.id);
+        final textAfter = SuperEditorInspector.findTextInComponent(doc.first.id);
         expect(textAfter.text, "m");
         expect(
           (textAfter.getAllAttributionsAt(0).first as LinkAttribution).url.toString(),
@@ -1616,7 +1604,7 @@ void main() {
         await tester.pressDelete();
 
         // Ensure the text was deleted.
-        expect(SuperEditorInspector.findTextInComponent(doc.nodes.first.id).text, isEmpty);
+        expect(SuperEditorInspector.findTextInComponent(doc.first.id).text, isEmpty);
       });
 
       testWidgetsOnAllPlatforms('removing the attribution', (tester) async {
@@ -1630,7 +1618,7 @@ void main() {
         final doc = SuperEditorInspector.findDocument()!;
 
         // Place the caret at "|www.google.com".
-        await tester.placeCaretInParagraph(doc.nodes.first.id, 0);
+        await tester.placeCaretInParagraph(doc.first.id, 0);
 
         // Delete downstream characters.
         await tester.pressDelete();
@@ -1639,7 +1627,7 @@ void main() {
         await tester.pressDelete();
 
         // Ensure the characters were delete and link attribution was removed.
-        final text = SuperEditorInspector.findTextInComponent(doc.nodes.first.id);
+        final text = SuperEditorInspector.findTextInComponent(doc.first.id);
         expect(text.text, "google.com");
         expect(text.spans.markers, isEmpty);
       });
@@ -1656,7 +1644,7 @@ void main() {
         final doc = SuperEditorInspector.findDocument()!;
 
         // Place the caret at "www.google.com|".
-        await tester.placeCaretInParagraph(doc.nodes.first.id, 10);
+        await tester.placeCaretInParagraph(doc.first.id, 10);
 
         // Delete upstream characters.
         await tester.pressBackspace();
@@ -1666,7 +1654,7 @@ void main() {
         await tester.pressBackspace();
 
         // Ensure the characters were deleted and the whole link is still attributed.
-        final text = SuperEditorInspector.findTextInComponent(doc.nodes.first.id);
+        final text = SuperEditorInspector.findTextInComponent(doc.first.id);
         expect(text.text, "www.g.com");
         expect(
           text.hasAttributionsThroughout(
@@ -1690,7 +1678,7 @@ void main() {
         final doc = SuperEditorInspector.findDocument()!;
 
         // Place the caret at "www.google|.com".
-        await tester.placeCaretInParagraph(doc.nodes.first.id, 10);
+        await tester.placeCaretInParagraph(doc.first.id, 10);
 
         // Remove characters.
         await tester.pressBackspace();
@@ -1704,7 +1692,7 @@ void main() {
         await tester.typeImeText('duckduckgo');
 
         // Ensure the text and the link were updated.
-        var text = SuperEditorInspector.findTextInComponent(doc.nodes.first.id);
+        var text = SuperEditorInspector.findTextInComponent(doc.first.id);
         expect(text.text, "www.duckduckgo.com");
         expect(
           text.hasAttributionsThroughout(
@@ -1728,13 +1716,13 @@ void main() {
         final doc = SuperEditorInspector.findDocument()!;
 
         // Place the caret at "www.google|.com".
-        await tester.placeCaretInParagraph(doc.nodes.first.id, 10);
+        await tester.placeCaretInParagraph(doc.first.id, 10);
 
         // Remove a single character.
         await tester.pressBackspace();
 
         // Ensure the text was updated and the attribution was removed.
-        final text = SuperEditorInspector.findTextInComponent(doc.nodes.first.id);
+        final text = SuperEditorInspector.findTextInComponent(doc.first.id);
         expect(text.text, "www.googl.com");
         expect(text.spans.markers, isEmpty);
       });
@@ -1751,7 +1739,7 @@ void main() {
         final doc = SuperEditorInspector.findDocument()!;
 
         // Place the caret at "www.google.com|".
-        await tester.placeCaretInParagraph(doc.nodes.first.id, 14);
+        await tester.placeCaretInParagraph(doc.first.id, 14);
 
         // Delete upstream characters.
         await tester.pressBackspace();
@@ -1760,7 +1748,7 @@ void main() {
         await tester.pressBackspace();
 
         // Ensure the characters were inserted, the whole link is still attributed.
-        final nodeId = doc.nodes.first.id;
+        final nodeId = doc.first.id;
         var text = SuperEditorInspector.findTextInComponent(nodeId);
 
         expect(text.text, "www.google");
@@ -1786,14 +1774,14 @@ void main() {
         final doc = SuperEditorInspector.findDocument()!;
 
         // Place the caret at "www.google.com|".
-        await tester.placeCaretInParagraph(doc.nodes.first.id, 14);
+        await tester.placeCaretInParagraph(doc.first.id, 14);
 
         // Delete upstream characters.
         await tester.pressBackspace();
         await tester.pressBackspace();
 
         // Ensure the characters were deleted and the link was updated.
-        final text = SuperEditorInspector.findTextInComponent(doc.nodes.first.id);
+        final text = SuperEditorInspector.findTextInComponent(doc.first.id);
         expect(text.text, "www.google.c");
         expect(
           text.hasAttributionsThroughout(
@@ -1817,13 +1805,13 @@ void main() {
         final doc = SuperEditorInspector.findDocument()!;
 
         // Place the caret at "www.google.com|".
-        await tester.placeCaretInParagraph(doc.nodes.first.id, 14);
+        await tester.placeCaretInParagraph(doc.first.id, 14);
 
         // Delete an upstream characters.
         await tester.pressBackspace();
 
         // Ensure the character was deleted and the link was removed.
-        final text = SuperEditorInspector.findTextInComponent(doc.nodes.first.id);
+        final text = SuperEditorInspector.findTextInComponent(doc.first.id);
         expect(text.text, "www.google.co");
         expect(text.spans.markers, isEmpty);
       });
@@ -1840,13 +1828,13 @@ void main() {
         final doc = SuperEditorInspector.findDocument()!;
 
         // Double tap to select "google".
-        await tester.doubleTapInParagraph(doc.nodes.first.id, 5);
+        await tester.doubleTapInParagraph(doc.first.id, 5);
 
         // Replace "google" with "duckduckgo".
         await tester.typeImeText('duckduckgo');
 
         // Ensure the text and the link were updated.
-        final text = SuperEditorInspector.findTextInComponent(doc.nodes.first.id);
+        final text = SuperEditorInspector.findTextInComponent(doc.first.id);
         expect(text.text, "www.duckduckgo.com");
         expect(
           text.hasAttributionsThroughout(
@@ -1870,13 +1858,13 @@ void main() {
         final doc = SuperEditorInspector.findDocument()!;
 
         // Double tap to select "google".
-        await tester.doubleTapInParagraph(doc.nodes.first.id, 5);
+        await tester.doubleTapInParagraph(doc.first.id, 5);
 
         // Replace "google" with "duckduckgo".
         await tester.typeImeText('duckduckgo');
 
         // Ensure the text and the link were updated.
-        final text = SuperEditorInspector.findTextInComponent(doc.nodes.first.id);
+        final text = SuperEditorInspector.findTextInComponent(doc.first.id);
         expect(text.text, "www.duckduckgo.com");
         expect(
           text.hasAttributionsThroughout(
@@ -1900,13 +1888,13 @@ void main() {
         final doc = SuperEditorInspector.findDocument()!;
 
         // Double tap to select "google".
-        await tester.doubleTapInParagraph(doc.nodes.first.id, 5);
+        await tester.doubleTapInParagraph(doc.first.id, 5);
 
         // Replace "google" with "duckduckgo".
         await tester.typeImeText('duckduckgo');
 
         // Ensure the text and the link were updated.
-        final text = SuperEditorInspector.findTextInComponent(doc.nodes.first.id);
+        final text = SuperEditorInspector.findTextInComponent(doc.first.id);
         expect(text.text, "www.duckduckgo.com");
         expect(text.spans.markers, isEmpty);
       });
@@ -1922,7 +1910,7 @@ void main() {
       final doc = SuperEditorInspector.findDocument()!;
 
       // Place the caret at "www.google.com|".
-      await tester.placeCaretInParagraph(doc.nodes.first.id, 14);
+      await tester.placeCaretInParagraph(doc.first.id, 14);
 
       // Delete a character at the end of the link.
       await tester.pressBackspace();
@@ -1931,7 +1919,7 @@ void main() {
       await tester.typeImeText(" hello");
 
       // Ensure the text were inserted, and only the URL is linkified.
-      final nodeId = doc.nodes.first.id;
+      final nodeId = doc.first.id;
       var text = SuperEditorInspector.findTextInComponent(nodeId);
 
       expect(text.text, "www.google.co hello");
@@ -1965,7 +1953,7 @@ void main() {
       final doc = SuperEditorInspector.findDocument()!;
 
       // Place the caret at "www.google.com|".
-      await tester.placeCaretInParagraph(doc.nodes.first.id, 14);
+      await tester.placeCaretInParagraph(doc.first.id, 14);
 
       // Create a new paragraph.
       await tester.pressEnter();
@@ -1973,8 +1961,8 @@ void main() {
       // We had an issue where link attributions were extended to the beginning of
       // an empty paragraph, but were removed after the user started typing. So, first,
       // ensure that no link markers were added to the empty paragraph.
-      expect(doc.nodes.length, 2);
-      final newParagraphId = doc.nodes[1].id;
+      expect(doc.nodeCount, 2);
+      final newParagraphId = doc.getNodeAt(1)!.id;
       AttributedText newParagraphText = SuperEditorInspector.findTextInComponent(newParagraphId);
       expect(newParagraphText.spans.markers, isEmpty);
 
@@ -2003,10 +1991,10 @@ void main() {
       final doc = SuperEditorInspector.findDocument()!;
 
       // Ensure the Markdown correctly created a list item.
-      expect(doc.nodes.first, isA<ListItemNode>());
+      expect(doc.first, isA<ListItemNode>());
 
       // Place the caret at "www.google.com|".
-      await tester.placeCaretInParagraph(doc.nodes.first.id, 14);
+      await tester.placeCaretInParagraph(doc.first.id, 14);
 
       // Create a new list item.
       await tester.pressEnter();
@@ -2014,9 +2002,9 @@ void main() {
       // We had an issue where link attributions were extended to the beginning of
       // an empty list item, but were removed after the user started typing. So, first,
       // ensure that no link markers were added to the empty list item.
-      expect(doc.nodes.length, 2);
-      expect(doc.nodes[1], isA<ListItemNode>());
-      final newListItemId = doc.nodes[1].id;
+      expect(doc.nodeCount, 2);
+      expect(doc.getNodeAt(1)!, isA<ListItemNode>());
+      final newListItemId = doc.getNodeAt(1)!.id;
       AttributedText newListItemText = SuperEditorInspector.findTextInComponent(newListItemId);
       expect(newListItemText.spans.markers, isEmpty);
 

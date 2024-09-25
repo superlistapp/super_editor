@@ -40,7 +40,7 @@ void main() {
           )
           .pump();
 
-      final nodeId = context.document.nodes.first.id;
+      final nodeId = context.document.first.id;
 
       // Double tap to show the expanded handle.
       await SuperReaderRobot(tester).doubleTapInParagraph(nodeId, 0);

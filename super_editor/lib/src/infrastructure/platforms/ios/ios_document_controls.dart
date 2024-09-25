@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:follow_the_leader/follow_the_leader.dart';
 import 'package:overlord/follow_the_leader.dart';
 import 'package:super_editor/src/core/document.dart';
@@ -15,6 +16,7 @@ import 'package:super_editor/src/infrastructure/flutter/flutter_scheduler.dart';
 import 'package:super_editor/src/infrastructure/multi_listenable_builder.dart';
 import 'package:super_editor/src/infrastructure/platforms/ios/selection_handles.dart';
 import 'package:super_editor/src/infrastructure/platforms/mobile_documents.dart';
+import 'package:super_editor/src/infrastructure/render_sliver_ext.dart';
 import 'package:super_editor/src/infrastructure/touch_controls.dart';
 import 'package:super_text_layout/super_text_layout.dart';
 
@@ -136,17 +138,7 @@ class IosDocumentGestureEditingController extends GestureEditingController {
     required super.selectionLinks,
     required super.magnifierFocalPointLink,
     required super.overlayController,
-  }) : _documentLayoutLink = documentLayoutLink;
-
-  /// Layer link that's aligned to the top-left corner of the document layout.
-  ///
-  /// Some of the offsets reported by this controller are based on the
-  /// document layout coordinate space. Therefore, to honor those offsets on
-  /// the screen, this `LayerLink` should be used to align the controls with
-  /// the document layout before applying the offset that sits within the
-  /// document layout.
-  LayerLink get documentLayoutLink => _documentLayoutLink;
-  final LayerLink _documentLayoutLink;
+  });
 
   /// Whether or not a caret should be displayed.
   bool get hasCaret => caretTop != null;
@@ -296,8 +288,11 @@ class FloatingCursorController {
   /// or not a standard gray caret should be displayed.
   final isNearText = ValueNotifier<bool>(false);
 
-  /// The offset, width, and height of the active floating cursor.
+  /// The offset, width, and height of the active floating cursor in viewport coordinates.
   final cursorGeometryInViewport = ValueNotifier<Rect?>(null);
+
+  /// The offset, width, and height of the active floating cursor in document coordinates.
+  final cursorGeometryInDocument = ValueNotifier<Rect?>(null);
 
   /// Report that the user has activated the floating cursor.
   void onStart() {
@@ -569,7 +564,7 @@ class IosControlsDocumentLayerState extends DocumentLayoutLayerState<IosHandlesD
   @override
   void initState() {
     super.initState();
-    _caretBlinkController = BlinkController(tickerProvider: this);
+    _caretBlinkController = BlinkController.withTimer();
 
     widget.selection.addListener(_onSelectionChange);
     widget.shouldCaretBlink.addListener(_onBlinkModeChange);
@@ -643,7 +638,7 @@ class IosControlsDocumentLayerState extends DocumentLayoutLayerState<IosHandlesD
 
   void _startOrStopBlinking() {
     // TODO: allow a configurable policy as to whether to show the caret at all when the selection is expanded: https://github.com/superlistapp/super_editor/issues/234
-    final wantsToBlink = widget.selection.value != null;
+    final wantsToBlink = widget.selection.value != null && widget.shouldCaretBlink.value;
     if (wantsToBlink && _caretBlinkController.isBlinking) {
       return;
     }
@@ -745,7 +740,7 @@ class IosControlsDocumentLayerState extends DocumentLayoutLayerState<IosHandlesD
       // The computeLayoutData method is called during the layer's build, which means that the
       // layer's RenderBox is outdated, because it wasn't laid out yet for the current frame.
       // Use the content's RenderBox, which was already laid out for the current frame.
-      final contentBox = documentContext.findRenderObject() as RenderBox?;
+      final contentBox = documentContext.findRenderObject() as RenderSliver?;
       if (contentBox != null && contentBox.hasSize && caretRect.left + caretWidth >= contentBox.size.width) {
         // Ajust the caret position to make it entirely visible because it's currently placed
         // partially or entirely outside of the layers' bounds. This can happen for downstream selections
@@ -795,6 +790,7 @@ class IosControlsDocumentLayerState extends DocumentLayoutLayerState<IosHandlesD
     }
 
     return Stack(
+      clipBehavior: Clip.none,
       children: [
         if (layoutData.caret != null) //
           _buildCollapsedHandle(caret: layoutData.caret!),

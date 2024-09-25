@@ -316,7 +316,7 @@ void main() {
           await tester.sendKeyUpEvent(LogicalKeyboardKey.altLeft);
 
           // Ensure that the whole word was deleted.
-          final paragraphNode = testContext.findEditContext().document.nodes.first as ParagraphNode;
+          final paragraphNode = testContext.findEditContext().document.first as ParagraphNode;
           expect(paragraphNode.text.text.startsWith("Lorem  dolor sit amet"), isTrue);
           expect(
             SuperEditorInspector.findDocumentSelection(),
@@ -345,7 +345,7 @@ void main() {
           await tester.sendKeyUpEvent(LogicalKeyboardKey.altLeft);
 
           // Ensure that the whole word was deleted.
-          final paragraphNode = testContext.findEditContext().document.nodes.first as ParagraphNode;
+          final paragraphNode = testContext.findEditContext().document.first as ParagraphNode;
           expect(paragraphNode.text.text.startsWith("Lorem dolor sit amet"), isTrue);
           expect(
             SuperEditorInspector.findDocumentSelection(),
@@ -374,7 +374,7 @@ void main() {
           await tester.sendKeyUpEvent(LogicalKeyboardKey.altLeft);
 
           // Ensure that the whole word was deleted.
-          final paragraphNode = testContext.findEditContext().document.nodes.first as ParagraphNode;
+          final paragraphNode = testContext.findEditContext().document.first as ParagraphNode;
           expect(paragraphNode.text.text, startsWith("Lorem ipsum  sit amet"));
           expect(
             SuperEditorInspector.findDocumentSelection(),
@@ -403,7 +403,7 @@ void main() {
           await tester.sendKeyUpEvent(LogicalKeyboardKey.altLeft);
 
           // Ensure that the whole word was deleted.
-          final paragraphNode = testContext.findEditContext().document.nodes.first as ParagraphNode;
+          final paragraphNode = testContext.findEditContext().document.first as ParagraphNode;
           expect(paragraphNode.text.text.startsWith("Lorem ipsum sit amet"), isTrue);
           expect(
             SuperEditorInspector.findDocumentSelection(),
@@ -430,7 +430,7 @@ void main() {
           await tester.pressCtlBackspace();
 
           // Ensure that a character was deleted.
-          final paragraphNode = testContext.findEditContext().document.nodes.first as ParagraphNode;
+          final paragraphNode = testContext.findEditContext().document.first as ParagraphNode;
           expect(paragraphNode.text.text, startsWith("Lorem ipsu dolor sit amet"));
           expect(
             SuperEditorInspector.findDocumentSelection(),
@@ -459,7 +459,7 @@ void main() {
           await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
 
           // Ensure that a character was deleted.
-          final paragraphNode = testContext.findEditContext().document.nodes.first as ParagraphNode;
+          final paragraphNode = testContext.findEditContext().document.first as ParagraphNode;
           expect(paragraphNode.text.text.startsWith("Lorem ipsumdolor sit amet"), isTrue);
           expect(
             SuperEditorInspector.findDocumentSelection(),
@@ -618,7 +618,7 @@ void main() {
           await tester.pressCtlBackspace();
 
           // Ensure that the whole word was deleted.
-          final paragraphNode = testContext.findEditContext().document.nodes.first as ParagraphNode;
+          final paragraphNode = testContext.findEditContext().document.first as ParagraphNode;
           expect(paragraphNode.text.text.startsWith("Lorem  dolor sit amet"), isTrue);
           expect(
             SuperEditorInspector.findDocumentSelection(),
@@ -645,7 +645,7 @@ void main() {
           await tester.pressCtlBackspace();
 
           // Ensure that the whole word was deleted.
-          final paragraphNode = testContext.findEditContext().document.nodes.first as ParagraphNode;
+          final paragraphNode = testContext.findEditContext().document.first as ParagraphNode;
           expect(paragraphNode.text.text.startsWith("Lorem dolor sit amet"), isTrue);
           expect(
             SuperEditorInspector.findDocumentSelection(),
@@ -674,7 +674,7 @@ void main() {
           await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
 
           // Ensure that the whole word was deleted.
-          final paragraphNode = testContext.findEditContext().document.nodes.first as ParagraphNode;
+          final paragraphNode = testContext.findEditContext().document.first as ParagraphNode;
           expect(paragraphNode.text.text, startsWith("Lorem ipsum  sit amet"));
           expect(
             SuperEditorInspector.findDocumentSelection(),
@@ -703,7 +703,7 @@ void main() {
           await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
 
           // Ensure that the whole word was deleted.
-          final paragraphNode = testContext.findEditContext().document.nodes.first as ParagraphNode;
+          final paragraphNode = testContext.findEditContext().document.first as ParagraphNode;
           expect(paragraphNode.text.text.startsWith("Lorem ipsum sit amet"), isTrue);
           expect(
             SuperEditorInspector.findDocumentSelection(),
@@ -730,7 +730,7 @@ void main() {
           await tester.pressAltBackspace();
 
           // Ensure that nothing changed.
-          final paragraphNode = testContext.findEditContext().document.nodes.first as ParagraphNode;
+          final paragraphNode = testContext.findEditContext().document.first as ParagraphNode;
           expect(paragraphNode.text.text, startsWith("Lorem ipsu dolor sit amet"));
           expect(
             SuperEditorInspector.findDocumentSelection(),
@@ -759,7 +759,7 @@ void main() {
           await tester.sendKeyUpEvent(LogicalKeyboardKey.altLeft);
 
           // Ensure that nothing changed.
-          final paragraphNode = testContext.findEditContext().document.nodes.first as ParagraphNode;
+          final paragraphNode = testContext.findEditContext().document.first as ParagraphNode;
           expect(paragraphNode.text.text, startsWith("Lorem ipsumdolor sit amet"));
           expect(
             SuperEditorInspector.findDocumentSelection(),
@@ -782,7 +782,7 @@ void main() {
               .withInputSource(inputSourceVariant.currentValue!)
               .pump();
 
-          final node = testContext.findEditContext().document.nodes.first;
+          final node = testContext.findEditContext().document.first;
 
           // Place caret at "A| header"
           await tester.placeCaretInParagraph(node.id, 1);
@@ -808,7 +808,7 @@ void main() {
               .withInputSource(inputSourceVariant.currentValue!)
               .pump();
 
-          final node = testContext.findEditContext().document.nodes.first;
+          final node = testContext.findEditContext().document.first;
 
           // Place caret at the start of the header.
           await tester.placeCaretInParagraph(node.id, 0);
@@ -836,7 +836,7 @@ Second paragraph''') //
               .pump();
 
           // Place caret at "First para|graph".
-          await tester.placeCaretInParagraph(context.document.nodes.first.id, 10);
+          await tester.placeCaretInParagraph(context.document.first.id, 10);
 
           // Press DOWN arrow to move the caret to the downstream paragraph.
           await tester.pressDownArrow();
@@ -847,7 +847,7 @@ Second paragraph''') //
             selectionEquivalentTo(
               DocumentSelection.collapsed(
                 position: DocumentPosition(
-                  nodeId: context.document.nodes.last.id,
+                  nodeId: context.document.last.id,
                   nodePosition: const TextNodePosition(offset: 10),
                 ),
               ),
@@ -904,7 +904,7 @@ This is a paragraph
               .pump();
 
           // Place the caret at "This is a |paragraph".
-          await tester.placeCaretInParagraph(context.document.nodes.first.id, 10);
+          await tester.placeCaretInParagraph(context.document.first.id, 10);
 
           // Press DOWN arrow to move the caret to the downstream node.
           //
@@ -923,7 +923,7 @@ This is a paragraph
             selectionEquivalentTo(
               DocumentSelection.collapsed(
                 position: DocumentPosition(
-                  nodeId: context.document.nodes.last.id,
+                  nodeId: context.document.last.id,
                   nodePosition: const TextNodePosition(offset: 8),
                 ),
               ),
@@ -1058,7 +1058,7 @@ This is a paragraph''') //
               .pump();
 
           // Place caret at "This is |a list item".
-          await tester.placeCaretInParagraph(context.document.nodes.first.id, 8);
+          await tester.placeCaretInParagraph(context.document.first.id, 8);
 
           // Press DOWN arrow to move the caret to the downstream node.
           //
@@ -1077,7 +1077,7 @@ This is a paragraph''') //
             selectionEquivalentTo(
               DocumentSelection.collapsed(
                 position: DocumentPosition(
-                  nodeId: context.document.nodes.last.id,
+                  nodeId: context.document.last.id,
                   nodePosition: const TextNodePosition(offset: 10),
                 ),
               ),
@@ -1134,7 +1134,7 @@ This is a paragraph''') //
               .pump();
 
           // Place the caret at "This is a|nother list item".
-          await tester.placeCaretInParagraph(context.document.nodes.first.id, 9);
+          await tester.placeCaretInParagraph(context.document.first.id, 9);
 
           // Press down arrow to move the caret to the downstream node.
           //
@@ -1153,7 +1153,7 @@ This is a paragraph''') //
             selectionEquivalentTo(
               DocumentSelection.collapsed(
                 position: DocumentPosition(
-                  nodeId: context.document.nodes.last.id,
+                  nodeId: context.document.last.id,
                   nodePosition: const TextNodePosition(offset: 9),
                 ),
               ),
@@ -1173,7 +1173,7 @@ Second paragraph''') //
               .pump();
 
           // Place caret at "Second p|aragraph".
-          await tester.placeCaretInParagraph(context.document.nodes.last.id, 8);
+          await tester.placeCaretInParagraph(context.document.last.id, 8);
 
           // Press UP arrow to move the caret to the upstream paragraph.
           await tester.pressUpArrow();
@@ -1184,7 +1184,7 @@ Second paragraph''') //
             selectionEquivalentTo(
               DocumentSelection.collapsed(
                 position: DocumentPosition(
-                  nodeId: context.document.nodes.first.id,
+                  nodeId: context.document.first.id,
                   nodePosition: const TextNodePosition(offset: 10),
                 ),
               ),
@@ -1241,7 +1241,7 @@ This is a paragraph''') //
               .pump();
 
           // Place the caret at "This is a |paragraph".
-          await tester.placeCaretInParagraph(context.document.nodes.last.id, 10);
+          await tester.placeCaretInParagraph(context.document.last.id, 10);
 
           // Press UP arrow to move the caret to the upstream node.
           //
@@ -1260,7 +1260,7 @@ This is a paragraph''') //
             selectionEquivalentTo(
               DocumentSelection.collapsed(
                 position: DocumentPosition(
-                  nodeId: context.document.nodes.first.id,
+                  nodeId: context.document.first.id,
                   nodePosition: const TextNodePosition(offset: 8),
                 ),
               ),
@@ -1395,7 +1395,7 @@ This is a paragraph
               .pump();
 
           // Place caret at "This is |a list item".
-          await tester.placeCaretInParagraph(context.document.nodes.last.id, 8);
+          await tester.placeCaretInParagraph(context.document.last.id, 8);
 
           // Press UP arrow to move the caret to the upstream node.
           //
@@ -1414,7 +1414,7 @@ This is a paragraph
             selectionEquivalentTo(
               DocumentSelection.collapsed(
                 position: DocumentPosition(
-                  nodeId: context.document.nodes.first.id,
+                  nodeId: context.document.first.id,
                   nodePosition: const TextNodePosition(offset: 10),
                 ),
               ),
@@ -1471,7 +1471,7 @@ This is a paragraph
               .pump();
 
           // Place the caret at "This is a|nother list item".
-          await tester.placeCaretInParagraph(context.document.nodes.last.id, 9);
+          await tester.placeCaretInParagraph(context.document.last.id, 9);
 
           // Press UP arrow to move the caret to the upstream node.
           //
@@ -1490,7 +1490,7 @@ This is a paragraph
             selectionEquivalentTo(
               DocumentSelection.collapsed(
                 position: DocumentPosition(
-                  nodeId: context.document.nodes.first.id,
+                  nodeId: context.document.first.id,
                   nodePosition: const TextNodePosition(offset: 9),
                 ),
               ),
@@ -2524,9 +2524,7 @@ Future<TestDocumentContext> _pumpPageScrollSliverTestSetup(
                 ),
                 expandedHeight: 200.0,
               ),
-              SliverToBoxAdapter(
-                child: superEditor,
-              ),
+              superEditor,
               SliverList(
                 delegate: SliverChildBuilderDelegate(
                   (BuildContext context, int index) {
@@ -2557,8 +2555,6 @@ Future<void> _pumpEditorWithTaskComponent(
       home: Scaffold(
         body: SuperEditor(
           editor: editor,
-          document: document,
-          composer: composer,
           componentBuilders: [
             TaskComponentBuilder(editor),
             ...defaultComponentBuilders,

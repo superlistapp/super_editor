@@ -22,11 +22,13 @@ import 'package:super_editor/src/infrastructure/flutter/build_context.dart';
 import 'package:super_editor/src/infrastructure/flutter/flutter_scheduler.dart';
 import 'package:super_editor/src/infrastructure/multi_tap_gesture.dart';
 import 'package:super_editor/src/infrastructure/platforms/android/android_document_controls.dart';
+import 'package:super_editor/src/infrastructure/platforms/android/drag_handle_selection.dart';
 import 'package:super_editor/src/infrastructure/platforms/android/long_press_selection.dart';
 import 'package:super_editor/src/infrastructure/platforms/android/magnifier.dart';
 import 'package:super_editor/src/infrastructure/platforms/android/selection_handles.dart';
 import 'package:super_editor/src/infrastructure/platforms/mobile_documents.dart';
 import 'package:super_editor/src/infrastructure/signal_notifier.dart';
+import 'package:super_editor/src/infrastructure/sliver_hybrid_stack.dart';
 import 'package:super_editor/src/infrastructure/touch_controls.dart';
 
 import '../infrastructure/document_gestures.dart';
@@ -603,9 +605,7 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
   /// If this widget doesn't have an ancestor `Scrollable`, then this
   /// widget includes a `ScrollView` and this `State`'s render object
   /// is the viewport `RenderBox`.
-  RenderBox get viewportBox =>
-      (context.findAncestorScrollableWithVerticalScroll?.context.findRenderObject() ?? context.findRenderObject())
-          as RenderBox;
+  RenderBox get viewportBox => context.findViewportBox();
 
   Offset _getDocumentOffsetFromGlobalOffset(Offset globalOffset) {
     return _docLayout.getDocumentOffsetFromAncestorOffset(globalOffset);
@@ -699,6 +699,19 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
         ..hideExpandedHandles()
         ..hideMagnifier()
         ..hideToolbar();
+      return;
+    }
+
+    // Only scroll the editor to reveal the selection extent if the selection is
+    // collapsed. If the selection is expanded, the user is likely dragging
+    // a selection handle, which already causes auto-scrolling to reveal
+    // the selection extent. If the selection is expanded because the user
+    // double-tapped, the first tap will have already scrolled the editor to
+    // reveal the selection.
+    if (widget.selection.value?.isCollapsed == true) {
+      onNextFrame((_) {
+        _ensureSelectionExtentIsVisible();
+      });
     }
   }
 
@@ -1101,6 +1114,9 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
     final fingerDocumentPosition = _docLayout.getDocumentPositionNearestToOffset(
       _startDragPositionOffset! + fingerDragDelta - Offset(0, scrollDelta),
     )!;
+    if (fingerDocumentPosition != widget.selection.value!.extent) {
+      HapticFeedback.lightImpact();
+    }
     _selectPosition(fingerDocumentPosition);
   }
 
@@ -1361,6 +1377,7 @@ class SuperEditorAndroidControlsOverlayManagerState extends State<SuperEditorAnd
   //
   // The drag handle type varies independently from the drag selection bound.
   HandleType? _dragHandleType;
+  AndroidTextFieldDragHandleSelectionStrategy? _dragHandleSelectionStrategy;
 
   final _dragHandleSelectionGlobalFocalPoint = ValueNotifier<Offset?>(null);
   final _magnifierFocalPoint = ValueNotifier<Offset?>(null);
@@ -1466,16 +1483,17 @@ class SuperEditorAndroidControlsOverlayManagerState extends State<SuperEditorAnd
     _controlsController!.toggleToolbar();
   }
 
+  void _updateDragHandleSelection(DocumentSelection newSelection) {
+    if (newSelection != widget.selection.value) {
+      widget.setSelection(newSelection);
+      HapticFeedback.lightImpact();
+    }
+  }
+
   void _onHandlePanStart(DragStartDetails details, HandleType handleType) {
     final selection = widget.selection.value;
     if (selection == null) {
       throw Exception("Tried to drag a collapsed Android handle when there's no selection.");
-    }
-    if (handleType == HandleType.collapsed && !selection.isCollapsed) {
-      throw Exception("Tried to drag a collapsed Android handle but the selection is expanded.");
-    }
-    if (handleType != HandleType.collapsed && selection.isCollapsed) {
-      throw Exception("Tried to drag an expanded Android handle but the selection is collapsed.");
     }
 
     final isSelectionDownstream = widget.selection.value!.hasDownstreamAffinity(widget.document);
@@ -1497,6 +1515,12 @@ class SuperEditorAndroidControlsOverlayManagerState extends State<SuperEditorAnd
     );
     _dragHandleSelectionGlobalFocalPoint.value = centerOfContentAtOffset;
     _magnifierFocalPoint.value = centerOfContentAtOffset;
+
+    _dragHandleSelectionStrategy = AndroidTextFieldDragHandleSelectionStrategy(
+      document: widget.document,
+      documentLayout: widget.getDocumentLayout(),
+      select: _updateDragHandleSelection,
+    )..onHandlePanStart(details, selection, handleType);
 
     // Update the controls for handle dragging.
     _controlsController!
@@ -1522,20 +1546,24 @@ class SuperEditorAndroidControlsOverlayManagerState extends State<SuperEditorAnd
     // Move the selection focal point by the given delta.
     _dragHandleSelectionGlobalFocalPoint.value = _dragHandleSelectionGlobalFocalPoint.value! + details.delta;
 
-    // Update the selection and magnifier based on the latest drag handle offset.
-    _moveSelectionAndMagnifierToDragHandleOffset(dragDx: details.delta.dx);
+    _dragHandleSelectionStrategy!.onHandlePanUpdate(details);
+
+    // Update the magnifier based on the latest drag handle offset.
+    _moveMagnifierToDragHandleOffset(dragDx: details.delta.dx);
   }
 
   void _onHandlePanEnd(DragEndDetails details, HandleType handleType) {
+    _dragHandleSelectionStrategy = null;
     _onHandleDragEnd(handleType);
   }
 
   void _onHandlePanCancel(HandleType handleType) {
+    _dragHandleSelectionStrategy = null;
     _onHandleDragEnd(handleType);
   }
 
   void _onHandleDragEnd(HandleType handleType) {
-    _dragHandleSelectionBound = null;
+    _dragHandleSelectionStrategy = null;
     _dragHandleType = null;
     _dragHandleSelectionGlobalFocalPoint.value = null;
     _magnifierFocalPoint.value = null;
@@ -1582,6 +1610,13 @@ class SuperEditorAndroidControlsOverlayManagerState extends State<SuperEditorAnd
   void _moveSelectionAndMagnifierToDragHandleOffset({
     double dragDx = 0,
   }) {
+    _moveSelectionToDragHandleOffset();
+    _moveMagnifierToDragHandleOffset(dragDx: dragDx);
+  }
+
+  void _moveMagnifierToDragHandleOffset({
+    double dragDx = 0,
+  }) {
     // Move the selection to the document position that's nearest the focal point.
     final documentLayout = widget.getDocumentLayout();
     final nearestPosition = documentLayout.getDocumentPositionNearestToOffset(
@@ -1598,6 +1633,20 @@ class SuperEditorAndroidControlsOverlayManagerState extends State<SuperEditorAnd
       _magnifierFocalPoint.value!.dx + dragDx,
       centerOfContentAtNearestPosition.dy,
     );
+
+    // Update the auto-scroll focal point so that the viewport scrolls if we're
+    // close to the boundary.
+    widget.dragHandleAutoScroller.value?.updateAutoScrollHandleMonitoring(
+      dragEndInViewport: _contentOffsetInViewport(centerOfContentInContentSpace),
+    );
+  }
+
+  void _moveSelectionToDragHandleOffset() {
+    // Move the selection to the document position that's nearest the focal point.
+    final documentLayout = widget.getDocumentLayout();
+    final nearestPosition = documentLayout.getDocumentPositionNearestToOffset(
+      documentLayout.getDocumentOffsetFromAncestorOffset(_dragHandleSelectionGlobalFocalPoint.value!),
+    )!;
 
     switch (_dragHandleType!) {
       case HandleType.collapsed:
@@ -1619,12 +1668,6 @@ class SuperEditorAndroidControlsOverlayManagerState extends State<SuperEditorAnd
             ));
         }
     }
-
-    // Update the auto-scroll focal point so that the viewport scrolls if we're
-    // close to the boundary.
-    widget.dragHandleAutoScroller.value?.updateAutoScrollHandleMonitoring(
-      dragEndInViewport: _contentOffsetInViewport(centerOfContentInContentSpace),
-    );
   }
 
   /// Converts the [offset] in content space to an offset in the viewport space.
@@ -1636,10 +1679,15 @@ class SuperEditorAndroidControlsOverlayManagerState extends State<SuperEditorAnd
 
   @override
   Widget build(BuildContext context) {
-    return OverlayPortal(
-      controller: _overlayController,
-      overlayChildBuilder: _buildOverlay,
-      child: widget.child ?? const SizedBox(),
+    return SliverHybridStack(
+      children: [
+        widget.child!,
+        OverlayPortal(
+          controller: _overlayController,
+          overlayChildBuilder: _buildOverlay,
+          child: const SizedBox(),
+        ),
+      ],
     );
   }
 

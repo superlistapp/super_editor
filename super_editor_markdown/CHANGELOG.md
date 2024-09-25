@@ -1,3 +1,7 @@
+## [0.1.6] - Aug, 2024
+* Update `super_editor` dependency to `v0.3.0-dev.3`.
+* Update package metadata.
+
 ## [0.1.5] - May, 2023
 * Added explicit support for Dart 3
 * Bumped `super_editor` dependency to `v0.2.5`

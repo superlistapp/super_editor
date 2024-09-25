@@ -25,7 +25,7 @@ void main() {
             .pump();
 
         // Place caret at "|This is a paragraph".
-        await tester.placeCaretInParagraph(SuperEditorInspector.findDocument()!.nodes.first.id, 0);
+        await tester.placeCaretInParagraph(SuperEditorInspector.findDocument()!.first.id, 0);
 
         // Ensure the caret is displayed.
         expect(_caretFinder(), findsOneWidget);
@@ -75,7 +75,7 @@ void main() {
             .pump();
 
         // Place caret at the end of the text.
-        await tester.placeCaretInParagraph(SuperEditorInspector.findDocument()!.nodes.first.id, 19);
+        await tester.placeCaretInParagraph(SuperEditorInspector.findDocument()!.first.id, 19);
 
         // Ensure the caret is displayed.
         expect(_caretFinder(), findsOneWidget);
@@ -108,7 +108,7 @@ void main() {
             .pump();
 
         // Place caret at the end of the text.
-        await tester.placeCaretInParagraph(SuperEditorInspector.findDocument()!.nodes.first.id, 19);
+        await tester.placeCaretInParagraph(SuperEditorInspector.findDocument()!.first.id, 19);
 
         // Show the floating cursor.
         await tester.startFloatingCursorGesture();
@@ -148,7 +148,7 @@ void main() {
             .fromMarkdown('This is a paragraph')
             .pump();
 
-        final nodeId = testContext.document.nodes.first.id;
+        final nodeId = testContext.document.first.id;
 
         // Double tap to select the word "This"
         await tester.doubleTapInParagraph(nodeId, 0);
@@ -194,7 +194,7 @@ Second paragraph''') //
             .pump();
 
         // Place the caret at the end of the first paragraph.
-        await tester.placeCaretInParagraph(testContext.document.nodes.first.id, 27);
+        await tester.placeCaretInParagraph(testContext.document.first.id, 27);
 
         // Show the floating cursor.
         await tester.startFloatingCursorGesture();
@@ -221,7 +221,7 @@ Second paragraph''') //
           SuperEditorInspector.findDocumentSelection(),
           DocumentSelection.collapsed(
             position: DocumentPosition(
-              nodeId: testContext.document.nodes.last.id,
+              nodeId: testContext.document.last.id,
               nodePosition: const TextNodePosition(offset: 16, affinity: TextAffinity.upstream),
             ),
           ),

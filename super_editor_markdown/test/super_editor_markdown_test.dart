@@ -13,22 +13,22 @@ void main() {
           ),
         ]);
 
-        (doc.nodes[0] as ParagraphNode).putMetadataValue('blockType', header1Attribution);
+        (doc.getNodeAt(0)! as ParagraphNode).putMetadataValue('blockType', header1Attribution);
         expect(serializeDocumentToMarkdown(doc), '# My Header');
 
-        (doc.nodes[0] as ParagraphNode).putMetadataValue('blockType', header2Attribution);
+        (doc.getNodeAt(0)! as ParagraphNode).putMetadataValue('blockType', header2Attribution);
         expect(serializeDocumentToMarkdown(doc), '## My Header');
 
-        (doc.nodes[0] as ParagraphNode).putMetadataValue('blockType', header3Attribution);
+        (doc.getNodeAt(0)! as ParagraphNode).putMetadataValue('blockType', header3Attribution);
         expect(serializeDocumentToMarkdown(doc), '### My Header');
 
-        (doc.nodes[0] as ParagraphNode).putMetadataValue('blockType', header4Attribution);
+        (doc.getNodeAt(0)! as ParagraphNode).putMetadataValue('blockType', header4Attribution);
         expect(serializeDocumentToMarkdown(doc), '#### My Header');
 
-        (doc.nodes[0] as ParagraphNode).putMetadataValue('blockType', header5Attribution);
+        (doc.getNodeAt(0)! as ParagraphNode).putMetadataValue('blockType', header5Attribution);
         expect(serializeDocumentToMarkdown(doc), '##### My Header');
 
-        (doc.nodes[0] as ParagraphNode).putMetadataValue('blockType', header6Attribution);
+        (doc.getNodeAt(0)! as ParagraphNode).putMetadataValue('blockType', header6Attribution);
         expect(serializeDocumentToMarkdown(doc), '###### My Header');
       });
 
@@ -812,27 +812,27 @@ with multiple lines
     group('deserialization', () {
       test('headers', () {
         final header1Doc = deserializeMarkdownToDocument('# Header 1');
-        expect((header1Doc.nodes.first as ParagraphNode).getMetadataValue('blockType'), header1Attribution);
+        expect((header1Doc.first as ParagraphNode).getMetadataValue('blockType'), header1Attribution);
 
         final header2Doc = deserializeMarkdownToDocument('## Header 2');
-        expect((header2Doc.nodes.first as ParagraphNode).getMetadataValue('blockType'), header2Attribution);
+        expect((header2Doc.first as ParagraphNode).getMetadataValue('blockType'), header2Attribution);
 
         final header3Doc = deserializeMarkdownToDocument('### Header 3');
-        expect((header3Doc.nodes.first as ParagraphNode).getMetadataValue('blockType'), header3Attribution);
+        expect((header3Doc.first as ParagraphNode).getMetadataValue('blockType'), header3Attribution);
 
         final header4Doc = deserializeMarkdownToDocument('#### Header 4');
-        expect((header4Doc.nodes.first as ParagraphNode).getMetadataValue('blockType'), header4Attribution);
+        expect((header4Doc.first as ParagraphNode).getMetadataValue('blockType'), header4Attribution);
 
         final header5Doc = deserializeMarkdownToDocument('##### Header 5');
-        expect((header5Doc.nodes.first as ParagraphNode).getMetadataValue('blockType'), header5Attribution);
+        expect((header5Doc.first as ParagraphNode).getMetadataValue('blockType'), header5Attribution);
 
         final header6Doc = deserializeMarkdownToDocument('###### Header 6');
-        expect((header6Doc.nodes.first as ParagraphNode).getMetadataValue('blockType'), header6Attribution);
+        expect((header6Doc.first as ParagraphNode).getMetadataValue('blockType'), header6Attribution);
       });
 
       test('header with left alignment', () {
         final headerLeftAlignment1 = deserializeMarkdownToDocument(':---\n# Header 1');
-        final header = headerLeftAlignment1.nodes.first as ParagraphNode;
+        final header = headerLeftAlignment1.first as ParagraphNode;
         expect(header.getMetadataValue('blockType'), header1Attribution);
         expect(header.getMetadataValue('textAlign'), 'left');
         expect(header.text.text, 'Header 1');
@@ -840,7 +840,7 @@ with multiple lines
 
       test('header with center alignment', () {
         final headerLeftAlignment1 = deserializeMarkdownToDocument(':---:\n# Header 1');
-        final header = headerLeftAlignment1.nodes.first as ParagraphNode;
+        final header = headerLeftAlignment1.first as ParagraphNode;
         expect(header.getMetadataValue('blockType'), header1Attribution);
         expect(header.getMetadataValue('textAlign'), 'center');
         expect(header.text.text, 'Header 1');
@@ -848,7 +848,7 @@ with multiple lines
 
       test('header with right alignment', () {
         final headerLeftAlignment1 = deserializeMarkdownToDocument('---:\n# Header 1');
-        final header = headerLeftAlignment1.nodes.first as ParagraphNode;
+        final header = headerLeftAlignment1.first as ParagraphNode;
         expect(header.getMetadataValue('blockType'), header1Attribution);
         expect(header.getMetadataValue('textAlign'), 'right');
         expect(header.text.text, 'Header 1');
@@ -856,7 +856,7 @@ with multiple lines
 
       test('header with justify alignment', () {
         final headerLeftAlignment1 = deserializeMarkdownToDocument('-::-\n# Header 1');
-        final header = headerLeftAlignment1.nodes.first as ParagraphNode;
+        final header = headerLeftAlignment1.first as ParagraphNode;
         expect(header.getMetadataValue('blockType'), header1Attribution);
         expect(header.getMetadataValue('textAlign'), 'justify');
         expect(header.text.text, 'Header 1');
@@ -865,7 +865,7 @@ with multiple lines
       test('blockquote', () {
         final blockquoteDoc = deserializeMarkdownToDocument('> This is a blockquote');
 
-        final blockquote = blockquoteDoc.nodes.first as ParagraphNode;
+        final blockquote = blockquoteDoc.first as ParagraphNode;
         expect(blockquote.getMetadataValue('blockType'), blockquoteAttribution);
         expect(blockquote.text.text, 'This is a blockquote');
       });
@@ -876,7 +876,7 @@ with multiple lines
 This is some code
 ```''');
 
-        final code = codeBlockDoc.nodes.first as ParagraphNode;
+        final code = codeBlockDoc.first as ParagraphNode;
         expect(code.getMetadataValue('blockType'), codeAttribution);
         expect(code.text.text, 'This is some code\n');
       });
@@ -884,7 +884,7 @@ This is some code
       test('image', () {
         final codeBlockDoc = deserializeMarkdownToDocument('![Image alt text](https://images.com/some/image.png)');
 
-        final image = codeBlockDoc.nodes.first as ImageNode;
+        final image = codeBlockDoc.first as ImageNode;
         expect(image.imageUrl, 'https://images.com/some/image.png');
         expect(image.altText, 'Image alt text');
         expect(image.expectedBitmapSize, isNull);
@@ -894,7 +894,7 @@ This is some code
         final codeBlockDoc =
             deserializeMarkdownToDocument('![Image alt text](https://images.com/some/image.png =500x200)');
 
-        final image = codeBlockDoc.nodes.first as ImageNode;
+        final image = codeBlockDoc.first as ImageNode;
         expect(image.imageUrl, 'https://images.com/some/image.png');
         expect(image.altText, 'Image alt text');
         expect(image.expectedBitmapSize?.width, 500.0);
@@ -905,7 +905,7 @@ This is some code
         final codeBlockDoc = deserializeMarkdownToDocument(
             '![Image alt text](https://images.com/some/image.png =500x200 "image title")');
 
-        final image = codeBlockDoc.nodes.first as ImageNode;
+        final image = codeBlockDoc.first as ImageNode;
         expect(image.imageUrl, 'https://images.com/some/image.png');
         expect(image.altText, 'Image alt text');
         expect(image.expectedBitmapSize?.width, 500.0);
@@ -916,7 +916,7 @@ This is some code
         final codeBlockDoc =
             deserializeMarkdownToDocument('![Image alt text](https://images.com/some/image.png =500x)');
 
-        final image = codeBlockDoc.nodes.first as ImageNode;
+        final image = codeBlockDoc.first as ImageNode;
         expect(image.imageUrl, 'https://images.com/some/image.png');
         expect(image.altText, 'Image alt text');
         expect(image.expectedBitmapSize?.width, 500.0);
@@ -927,7 +927,7 @@ This is some code
         final codeBlockDoc =
             deserializeMarkdownToDocument('![Image alt text](https://images.com/some/image.png =x200)');
 
-        final image = codeBlockDoc.nodes.first as ImageNode;
+        final image = codeBlockDoc.first as ImageNode;
         expect(image.imageUrl, 'https://images.com/some/image.png');
         expect(image.altText, 'Image alt text');
         expect(image.expectedBitmapSize?.width, isNull);
@@ -937,7 +937,7 @@ This is some code
       test('image with size notation without width and height', () {
         final codeBlockDoc = deserializeMarkdownToDocument('![Image alt text](https://images.com/some/image.png =x)');
 
-        final image = codeBlockDoc.nodes.first as ImageNode;
+        final image = codeBlockDoc.first as ImageNode;
         expect(image.imageUrl, 'https://images.com/some/image.png');
         expect(image.altText, 'Image alt text');
         expect(image.expectedBitmapSize?.width, isNull);
@@ -947,7 +947,7 @@ This is some code
       test('image with incomplete size notation', () {
         final codeBlockDoc = deserializeMarkdownToDocument('![Image alt text](https://images.com/some/image.png =)');
 
-        final image = codeBlockDoc.nodes.first as ImageNode;
+        final image = codeBlockDoc.first as ImageNode;
         expect(image.imageUrl, 'https://images.com/some/image.png');
         expect(image.altText, 'Image alt text');
         expect(image.expectedBitmapSize?.width, isNull);
@@ -959,10 +959,10 @@ This is some code
 
         final document = deserializeMarkdownToDocument(markdown);
 
-        expect(document.nodes.length, 1);
-        expect(document.nodes.first, isA<ParagraphNode>());
+        expect(document.nodeCount, 1);
+        expect(document.first, isA<ParagraphNode>());
 
-        final paragraph = document.nodes.first as ParagraphNode;
+        final paragraph = document.first as ParagraphNode;
         expect(paragraph.text.text, 'This is some unstyled text to parse as markdown');
       });
 
@@ -971,10 +971,10 @@ This is some code
 
         final document = deserializeMarkdownToDocument(markdown);
 
-        expect(document.nodes.length, 1);
-        expect(document.nodes.first, isA<ParagraphNode>());
+        expect(document.nodeCount, 1);
+        expect(document.first, isA<ParagraphNode>());
 
-        final paragraph = document.nodes.first as ParagraphNode;
+        final paragraph = document.first as ParagraphNode;
         final styledText = paragraph.text;
         expect(styledText.text, 'This is some styled text to parse as markdown');
 
@@ -990,10 +990,10 @@ This is some code
 
         final document = deserializeMarkdownToDocument(markdown);
 
-        expect(document.nodes.length, 1);
-        expect(document.nodes.first, isA<ParagraphNode>());
+        expect(document.nodeCount, 1);
+        expect(document.first, isA<ParagraphNode>());
 
-        final paragraph = document.nodes.first as ParagraphNode;
+        final paragraph = document.first as ParagraphNode;
         final styledText = paragraph.text;
         expect(styledText.text, 'Preserves symbols like &, <, and >, rather than use HTML escape codes.');
       });
@@ -1003,10 +1003,10 @@ This is some code
 
         final document = deserializeMarkdownToDocument(markdown, encodeHtml: true);
 
-        expect(document.nodes.length, 1);
-        expect(document.nodes.first, isA<ParagraphNode>());
+        expect(document.nodeCount, 1);
+        expect(document.first, isA<ParagraphNode>());
 
-        final paragraph = document.nodes.first as ParagraphNode;
+        final paragraph = document.first as ParagraphNode;
         final styledText = paragraph.text;
         expect(styledText.text, 'Escapes HTML symbols like &amp;, &lt;, and &gt;, when requested.');
       });
@@ -1016,10 +1016,10 @@ This is some code
 
         final document = deserializeMarkdownToDocument(markdown);
 
-        expect(document.nodes.length, 1);
-        expect(document.nodes.first, isA<ParagraphNode>());
+        expect(document.nodeCount, 1);
+        expect(document.first, isA<ParagraphNode>());
 
-        final paragraph = document.nodes.first as ParagraphNode;
+        final paragraph = document.first as ParagraphNode;
         final styledText = paragraph.text;
         expect(styledText.text, 'This is some styled link text');
 
@@ -1038,10 +1038,10 @@ This is some code
 
         final document = deserializeMarkdownToDocument(markdown);
 
-        expect(document.nodes.length, 1);
-        expect(document.nodes.first, isA<ParagraphNode>());
+        expect(document.nodeCount, 1);
+        expect(document.first, isA<ParagraphNode>());
 
-        final paragraph = document.nodes.first as ParagraphNode;
+        final paragraph = document.first as ParagraphNode;
         final styledText = paragraph.text;
         expect(styledText.text, 'This is a test');
 
@@ -1060,10 +1060,10 @@ This is some code
         const markdown = 'This **is [a** link](https://example.org) test';
         final document = deserializeMarkdownToDocument(markdown);
 
-        expect(document.nodes.length, 1);
-        expect(document.nodes.first, isA<ParagraphNode>());
+        expect(document.nodeCount, 1);
+        expect(document.first, isA<ParagraphNode>());
 
-        final paragraph = document.nodes.first as ParagraphNode;
+        final paragraph = document.first as ParagraphNode;
         final styledText = paragraph.text;
         expect(styledText.text, 'This **is a** link test');
 
@@ -1077,10 +1077,10 @@ This is some code
         const markdown = 'This is [a link]() test';
         final document = deserializeMarkdownToDocument(markdown);
 
-        expect(document.nodes.length, 1);
-        expect(document.nodes.first, isA<ParagraphNode>());
+        expect(document.nodeCount, 1);
+        expect(document.first, isA<ParagraphNode>());
 
-        final paragraph = document.nodes.first as ParagraphNode;
+        final paragraph = document.first as ParagraphNode;
         final styledText = paragraph.text;
         expect(styledText.text, 'This is a link test');
 
@@ -1097,36 +1097,36 @@ This is some code
 
         final document = deserializeMarkdownToDocument(markdown);
 
-        expect(document.nodes.length, 5);
-        for (final node in document.nodes) {
+        expect(document.nodeCount, 5);
+        for (final node in document) {
           expect(node, isA<ListItemNode>());
           expect((node as ListItemNode).type, ListItemType.unordered);
         }
 
-        expect((document.nodes[0] as ListItemNode).indent, 0);
-        expect((document.nodes[0] as ListItemNode).text.text, 'list item 1');
+        expect((document.getNodeAt(0)! as ListItemNode).indent, 0);
+        expect((document.getNodeAt(0)! as ListItemNode).text.text, 'list item 1');
 
-        expect((document.nodes[1] as ListItemNode).indent, 0);
-        expect((document.nodes[1] as ListItemNode).text.text, 'list item 2');
+        expect((document.getNodeAt(1)! as ListItemNode).indent, 0);
+        expect((document.getNodeAt(1)! as ListItemNode).text.text, 'list item 2');
 
-        expect((document.nodes[2] as ListItemNode).indent, 1);
-        expect((document.nodes[2] as ListItemNode).text.text, 'list item 2.1');
+        expect((document.getNodeAt(2)! as ListItemNode).indent, 1);
+        expect((document.getNodeAt(2)! as ListItemNode).text.text, 'list item 2.1');
 
-        expect((document.nodes[3] as ListItemNode).indent, 1);
-        expect((document.nodes[3] as ListItemNode).text.text, 'list item 2.2');
+        expect((document.getNodeAt(3)! as ListItemNode).indent, 1);
+        expect((document.getNodeAt(3)! as ListItemNode).text.text, 'list item 2.2');
 
-        expect((document.nodes[4] as ListItemNode).indent, 0);
-        expect((document.nodes[4] as ListItemNode).text.text, 'list item 3');
+        expect((document.getNodeAt(4)! as ListItemNode).indent, 0);
+        expect((document.getNodeAt(4)! as ListItemNode).text.text, 'list item 3');
       });
 
       test('empty unordered list item', () {
         const markdown = '* ';
         final document = deserializeMarkdownToDocument(markdown);
 
-        expect(document.nodes.length, 1);
-        expect(document.nodes.first, isA<ListItemNode>());
-        expect((document.nodes.first as ListItemNode).type, ListItemType.unordered);
-        expect((document.nodes.first as ListItemNode).text.text, isEmpty);
+        expect(document.nodeCount, 1);
+        expect(document.first, isA<ListItemNode>());
+        expect((document.first as ListItemNode).type, ListItemType.unordered);
+        expect((document.first as ListItemNode).text.text, isEmpty);
       });
 
       test('unordered list followd by empty list item', () {
@@ -1135,11 +1135,11 @@ This is some code
 
         final document = deserializeMarkdownToDocument(markdown);
 
-        expect(document.nodes.length, 1);
+        expect(document.nodeCount, 1);
 
-        expect(document.nodes[0], isA<ListItemNode>());
-        expect((document.nodes[0] as ListItemNode).type, ListItemType.unordered);
-        expect((document.nodes[0] as ListItemNode).text.text, 'list item 1');
+        expect(document.getNodeAt(0)!, isA<ListItemNode>());
+        expect((document.getNodeAt(0)! as ListItemNode).type, ListItemType.unordered);
+        expect((document.getNodeAt(0)! as ListItemNode).text.text, 'list item 1');
       });
 
       test('parses mixed unordered and ordered items', () {
@@ -1158,37 +1158,37 @@ This is some code
 
         final document = deserializeMarkdownToDocument(markdown);
 
-        expect(document.nodes.length, 9);
-        for (final node in document.nodes) {
+        expect(document.nodeCount, 9);
+        for (final node in document) {
           expect(node, isA<ListItemNode>());
         }
 
-        expect((document.nodes[0] as ListItemNode).type, ListItemType.ordered);
-        expect((document.nodes[0] as ListItemNode).text.text, 'Ordered 1');
+        expect((document.getNodeAt(0)! as ListItemNode).type, ListItemType.ordered);
+        expect((document.getNodeAt(0)! as ListItemNode).text.text, 'Ordered 1');
 
-        expect((document.nodes[1] as ListItemNode).type, ListItemType.unordered);
-        expect((document.nodes[1] as ListItemNode).text.text, 'Unordered 1');
+        expect((document.getNodeAt(1)! as ListItemNode).type, ListItemType.unordered);
+        expect((document.getNodeAt(1)! as ListItemNode).text.text, 'Unordered 1');
 
-        expect((document.nodes[2] as ListItemNode).type, ListItemType.unordered);
-        expect((document.nodes[2] as ListItemNode).text.text, 'Unordered 2');
+        expect((document.getNodeAt(2)! as ListItemNode).type, ListItemType.unordered);
+        expect((document.getNodeAt(2)! as ListItemNode).text.text, 'Unordered 2');
 
-        expect((document.nodes[3] as ListItemNode).type, ListItemType.ordered);
-        expect((document.nodes[3] as ListItemNode).text.text, 'Ordered 2');
+        expect((document.getNodeAt(3)! as ListItemNode).type, ListItemType.ordered);
+        expect((document.getNodeAt(3)! as ListItemNode).text.text, 'Ordered 2');
 
-        expect((document.nodes[4] as ListItemNode).type, ListItemType.unordered);
-        expect((document.nodes[4] as ListItemNode).text.text, 'Unordered 1');
+        expect((document.getNodeAt(4)! as ListItemNode).type, ListItemType.unordered);
+        expect((document.getNodeAt(4)! as ListItemNode).text.text, 'Unordered 1');
 
-        expect((document.nodes[5] as ListItemNode).type, ListItemType.unordered);
-        expect((document.nodes[5] as ListItemNode).text.text, 'Unordered 2');
+        expect((document.getNodeAt(5)! as ListItemNode).type, ListItemType.unordered);
+        expect((document.getNodeAt(5)! as ListItemNode).text.text, 'Unordered 2');
 
-        expect((document.nodes[6] as ListItemNode).type, ListItemType.ordered);
-        expect((document.nodes[6] as ListItemNode).text.text, 'Ordered 3');
+        expect((document.getNodeAt(6)! as ListItemNode).type, ListItemType.ordered);
+        expect((document.getNodeAt(6)! as ListItemNode).text.text, 'Ordered 3');
 
-        expect((document.nodes[7] as ListItemNode).type, ListItemType.unordered);
-        expect((document.nodes[7] as ListItemNode).text.text, 'Unordered 1');
+        expect((document.getNodeAt(7)! as ListItemNode).type, ListItemType.unordered);
+        expect((document.getNodeAt(7)! as ListItemNode).text.text, 'Unordered 1');
 
-        expect((document.nodes[8] as ListItemNode).type, ListItemType.unordered);
-        expect((document.nodes[8] as ListItemNode).text.text, 'Unordered 2');
+        expect((document.getNodeAt(8)! as ListItemNode).type, ListItemType.unordered);
+        expect((document.getNodeAt(8)! as ListItemNode).text.text, 'Unordered 2');
       });
 
       test('unordered list with empty lines between items', () {
@@ -1201,15 +1201,15 @@ This is some code
 
         final document = deserializeMarkdownToDocument(markdown);
 
-        expect(document.nodes.length, 3);
-        for (final node in document.nodes) {
+        expect(document.nodeCount, 3);
+        for (final node in document) {
           expect(node, isA<ListItemNode>());
           expect((node as ListItemNode).type, ListItemType.unordered);
         }
 
-        expect((document.nodes[0] as ListItemNode).text.text, 'list item 1');
-        expect((document.nodes[1] as ListItemNode).text.text, 'list item 2');
-        expect((document.nodes[2] as ListItemNode).text.text, 'list item 3');
+        expect((document.getNodeAt(0)! as ListItemNode).text.text, 'list item 1');
+        expect((document.getNodeAt(1)! as ListItemNode).text.text, 'list item 2');
+        expect((document.getNodeAt(2)! as ListItemNode).text.text, 'list item 3');
       });
 
       test('ordered list', () {
@@ -1222,36 +1222,36 @@ This is some code
 
         final document = deserializeMarkdownToDocument(markdown);
 
-        expect(document.nodes.length, 5);
-        for (final node in document.nodes) {
+        expect(document.nodeCount, 5);
+        for (final node in document) {
           expect(node, isA<ListItemNode>());
           expect((node as ListItemNode).type, ListItemType.ordered);
         }
 
-        expect((document.nodes[0] as ListItemNode).indent, 0);
-        expect((document.nodes[0] as ListItemNode).text.text, 'list item 1');
+        expect((document.getNodeAt(0)! as ListItemNode).indent, 0);
+        expect((document.getNodeAt(0)! as ListItemNode).text.text, 'list item 1');
 
-        expect((document.nodes[1] as ListItemNode).indent, 0);
-        expect((document.nodes[1] as ListItemNode).text.text, 'list item 2');
+        expect((document.getNodeAt(1)! as ListItemNode).indent, 0);
+        expect((document.getNodeAt(1)! as ListItemNode).text.text, 'list item 2');
 
-        expect((document.nodes[2] as ListItemNode).indent, 1);
-        expect((document.nodes[2] as ListItemNode).text.text, 'list item 2.1');
+        expect((document.getNodeAt(2)! as ListItemNode).indent, 1);
+        expect((document.getNodeAt(2)! as ListItemNode).text.text, 'list item 2.1');
 
-        expect((document.nodes[3] as ListItemNode).indent, 1);
-        expect((document.nodes[3] as ListItemNode).text.text, 'list item 2.2');
+        expect((document.getNodeAt(3)! as ListItemNode).indent, 1);
+        expect((document.getNodeAt(3)! as ListItemNode).text.text, 'list item 2.2');
 
-        expect((document.nodes[4] as ListItemNode).indent, 0);
-        expect((document.nodes[4] as ListItemNode).text.text, 'list item 3');
+        expect((document.getNodeAt(4)! as ListItemNode).indent, 0);
+        expect((document.getNodeAt(4)! as ListItemNode).text.text, 'list item 3');
       });
 
       test('empty ordered list item', () {
         const markdown = '1. ';
         final document = deserializeMarkdownToDocument(markdown);
 
-        expect(document.nodes.length, 1);
-        expect(document.nodes.first, isA<ListItemNode>());
-        expect((document.nodes.first as ListItemNode).type, ListItemType.ordered);
-        expect((document.nodes.first as ListItemNode).text.text, isEmpty);
+        expect(document.nodeCount, 1);
+        expect(document.first, isA<ListItemNode>());
+        expect((document.first as ListItemNode).type, ListItemType.ordered);
+        expect((document.first as ListItemNode).text.text, isEmpty);
       });
 
       test('ordered list with empty lines between items', () {
@@ -1264,15 +1264,15 @@ This is some code
 
         final document = deserializeMarkdownToDocument(markdown);
 
-        expect(document.nodes.length, 3);
-        for (final node in document.nodes) {
+        expect(document.nodeCount, 3);
+        for (final node in document) {
           expect(node, isA<ListItemNode>());
           expect((node as ListItemNode).type, ListItemType.ordered);
         }
 
-        expect((document.nodes[0] as ListItemNode).text.text, 'list item 1');
-        expect((document.nodes[1] as ListItemNode).text.text, 'list item 2');
-        expect((document.nodes[2] as ListItemNode).text.text, 'list item 3');
+        expect((document.getNodeAt(0)! as ListItemNode).text.text, 'list item 1');
+        expect((document.getNodeAt(1)! as ListItemNode).text.text, 'list item 2');
+        expect((document.getNodeAt(2)! as ListItemNode).text.text, 'list item 3');
       });
 
       test('mixing multiple levels of ordered and unordered lists', () {
@@ -1293,59 +1293,59 @@ This is some code
 ''';
         final document = deserializeMarkdownToDocument(markdown);
 
-        expect(document.nodes.length, 13);
+        expect(document.nodeCount, 13);
 
-        expect((document.nodes[0] as ListItemNode).indent, 0);
-        expect((document.nodes[0] as ListItemNode).type, ListItemType.unordered);
-        expect((document.nodes[0] as ListItemNode).text.text, 'Level 1');
+        expect((document.getNodeAt(0)! as ListItemNode).indent, 0);
+        expect((document.getNodeAt(0)! as ListItemNode).type, ListItemType.unordered);
+        expect((document.getNodeAt(0)! as ListItemNode).text.text, 'Level 1');
 
-        expect((document.nodes[1] as ListItemNode).indent, 1);
-        expect((document.nodes[1] as ListItemNode).type, ListItemType.ordered);
-        expect((document.nodes[1] as ListItemNode).text.text, 'Level 2');
+        expect((document.getNodeAt(1)! as ListItemNode).indent, 1);
+        expect((document.getNodeAt(1)! as ListItemNode).type, ListItemType.ordered);
+        expect((document.getNodeAt(1)! as ListItemNode).text.text, 'Level 2');
 
-        expect((document.nodes[2] as ListItemNode).indent, 2);
-        expect((document.nodes[2] as ListItemNode).type, ListItemType.ordered);
-        expect((document.nodes[2] as ListItemNode).text.text, 'Level 3');
+        expect((document.getNodeAt(2)! as ListItemNode).indent, 2);
+        expect((document.getNodeAt(2)! as ListItemNode).type, ListItemType.ordered);
+        expect((document.getNodeAt(2)! as ListItemNode).text.text, 'Level 3');
 
-        expect((document.nodes[3] as ListItemNode).indent, 3);
-        expect((document.nodes[3] as ListItemNode).type, ListItemType.unordered);
-        expect((document.nodes[3] as ListItemNode).text.text, 'Sublevel 1');
+        expect((document.getNodeAt(3)! as ListItemNode).indent, 3);
+        expect((document.getNodeAt(3)! as ListItemNode).type, ListItemType.unordered);
+        expect((document.getNodeAt(3)! as ListItemNode).text.text, 'Sublevel 1');
 
-        expect((document.nodes[4] as ListItemNode).indent, 3);
-        expect((document.nodes[4] as ListItemNode).type, ListItemType.unordered);
-        expect((document.nodes[4] as ListItemNode).text.text, 'Sublevel 2');
+        expect((document.getNodeAt(4)! as ListItemNode).indent, 3);
+        expect((document.getNodeAt(4)! as ListItemNode).type, ListItemType.unordered);
+        expect((document.getNodeAt(4)! as ListItemNode).text.text, 'Sublevel 2');
 
-        expect((document.nodes[5] as ListItemNode).indent, 2);
-        expect((document.nodes[5] as ListItemNode).type, ListItemType.ordered);
-        expect((document.nodes[5] as ListItemNode).text.text, 'Level 3 again');
+        expect((document.getNodeAt(5)! as ListItemNode).indent, 2);
+        expect((document.getNodeAt(5)! as ListItemNode).type, ListItemType.ordered);
+        expect((document.getNodeAt(5)! as ListItemNode).text.text, 'Level 3 again');
 
-        expect((document.nodes[6] as ListItemNode).indent, 1);
-        expect((document.nodes[6] as ListItemNode).type, ListItemType.ordered);
-        expect((document.nodes[6] as ListItemNode).text.text, 'Level 2 returning');
+        expect((document.getNodeAt(6)! as ListItemNode).indent, 1);
+        expect((document.getNodeAt(6)! as ListItemNode).type, ListItemType.ordered);
+        expect((document.getNodeAt(6)! as ListItemNode).text.text, 'Level 2 returning');
 
-        expect((document.nodes[7] as ListItemNode).indent, 0);
-        expect((document.nodes[7] as ListItemNode).type, ListItemType.ordered);
-        expect((document.nodes[7] as ListItemNode).text.text, 'Level 1 once more');
+        expect((document.getNodeAt(7)! as ListItemNode).indent, 0);
+        expect((document.getNodeAt(7)! as ListItemNode).type, ListItemType.ordered);
+        expect((document.getNodeAt(7)! as ListItemNode).text.text, 'Level 1 once more');
 
-        expect((document.nodes[8] as ListItemNode).indent, 1);
-        expect((document.nodes[8] as ListItemNode).type, ListItemType.unordered);
-        expect((document.nodes[8] as ListItemNode).text.text, 'Bullet list');
+        expect((document.getNodeAt(8)! as ListItemNode).indent, 1);
+        expect((document.getNodeAt(8)! as ListItemNode).type, ListItemType.unordered);
+        expect((document.getNodeAt(8)! as ListItemNode).text.text, 'Bullet list');
 
-        expect((document.nodes[9] as ListItemNode).indent, 2);
-        expect((document.nodes[9] as ListItemNode).type, ListItemType.unordered);
-        expect((document.nodes[9] as ListItemNode).text.text, 'Another bullet');
+        expect((document.getNodeAt(9)! as ListItemNode).indent, 2);
+        expect((document.getNodeAt(9)! as ListItemNode).type, ListItemType.unordered);
+        expect((document.getNodeAt(9)! as ListItemNode).text.text, 'Another bullet');
 
-        expect((document.nodes[10] as ListItemNode).indent, 0);
-        expect((document.nodes[10] as ListItemNode).type, ListItemType.unordered);
-        expect((document.nodes[10] as ListItemNode).text.text, 'Main bullet list');
+        expect((document.getNodeAt(10)! as ListItemNode).indent, 0);
+        expect((document.getNodeAt(10)! as ListItemNode).type, ListItemType.unordered);
+        expect((document.getNodeAt(10)! as ListItemNode).text.text, 'Main bullet list');
 
-        expect((document.nodes[11] as ListItemNode).indent, 1);
-        expect((document.nodes[11] as ListItemNode).type, ListItemType.unordered);
-        expect((document.nodes[11] as ListItemNode).text.text, 'Sub bullet list');
+        expect((document.getNodeAt(11)! as ListItemNode).indent, 1);
+        expect((document.getNodeAt(11)! as ListItemNode).type, ListItemType.unordered);
+        expect((document.getNodeAt(11)! as ListItemNode).text.text, 'Sub bullet list');
 
-        expect((document.nodes[12] as ListItemNode).indent, 2);
-        expect((document.nodes[12] as ListItemNode).type, ListItemType.unordered);
-        expect((document.nodes[12] as ListItemNode).text.text, 'Subsub bullet list');
+        expect((document.getNodeAt(12)! as ListItemNode).indent, 2);
+        expect((document.getNodeAt(12)! as ListItemNode).type, ListItemType.unordered);
+        expect((document.getNodeAt(12)! as ListItemNode).text.text, 'Subsub bullet list');
       });
 
       test('tasks', () {
@@ -1358,84 +1358,84 @@ with multiple lines
 
         final document = deserializeMarkdownToDocument(markdown);
 
-        expect(document.nodes.length, 4);
+        expect(document.nodeCount, 4);
 
-        expect(document.nodes[0], isA<TaskNode>());
-        expect(document.nodes[1], isA<TaskNode>());
-        expect(document.nodes[2], isA<TaskNode>());
-        expect(document.nodes[3], isA<TaskNode>());
+        expect(document.getNodeAt(0)!, isA<TaskNode>());
+        expect(document.getNodeAt(1)!, isA<TaskNode>());
+        expect(document.getNodeAt(2)!, isA<TaskNode>());
+        expect(document.getNodeAt(3)!, isA<TaskNode>());
 
-        expect((document.nodes[0] as TaskNode).text.text, 'Task 1');
-        expect((document.nodes[0] as TaskNode).isComplete, isTrue);
+        expect((document.getNodeAt(0)! as TaskNode).text.text, 'Task 1');
+        expect((document.getNodeAt(0)! as TaskNode).isComplete, isTrue);
 
-        expect((document.nodes[1] as TaskNode).text.text, 'Task 2');
-        expect((document.nodes[1] as TaskNode).isComplete, isFalse);
+        expect((document.getNodeAt(1)! as TaskNode).text.text, 'Task 2');
+        expect((document.getNodeAt(1)! as TaskNode).isComplete, isFalse);
 
-        expect((document.nodes[2] as TaskNode).text.text, 'Task 3\nwith multiple lines');
-        expect((document.nodes[2] as TaskNode).isComplete, isFalse);
+        expect((document.getNodeAt(2)! as TaskNode).text.text, 'Task 3\nwith multiple lines');
+        expect((document.getNodeAt(2)! as TaskNode).isComplete, isFalse);
 
-        expect((document.nodes[3] as TaskNode).text.text, 'Task 4');
-        expect((document.nodes[3] as TaskNode).isComplete, isTrue);
+        expect((document.getNodeAt(3)! as TaskNode).text.text, 'Task 4');
+        expect((document.getNodeAt(3)! as TaskNode).isComplete, isTrue);
       });
 
       test('example doc 1', () {
         final document = deserializeMarkdownToDocument(exampleMarkdownDoc1);
 
-        expect(document.nodes.length, 26);
+        expect(document.nodeCount, 26);
 
-        expect(document.nodes[0], isA<ParagraphNode>());
-        expect((document.nodes[0] as ParagraphNode).getMetadataValue('blockType'), header1Attribution);
+        expect(document.getNodeAt(0)!, isA<ParagraphNode>());
+        expect((document.getNodeAt(0)! as ParagraphNode).getMetadataValue('blockType'), header1Attribution);
 
-        expect(document.nodes[1], isA<HorizontalRuleNode>());
+        expect(document.getNodeAt(1)!, isA<HorizontalRuleNode>());
 
-        expect(document.nodes[2], isA<ParagraphNode>());
+        expect(document.getNodeAt(2)!, isA<ParagraphNode>());
 
-        expect(document.nodes[3], isA<ParagraphNode>());
+        expect(document.getNodeAt(3)!, isA<ParagraphNode>());
 
         for (int i = 4; i < 9; ++i) {
-          expect(document.nodes[i], isA<ListItemNode>());
+          expect(document.getNodeAt(i)!, isA<ListItemNode>());
         }
 
-        expect(document.nodes[9], isA<HorizontalRuleNode>());
+        expect(document.getNodeAt(9)!, isA<HorizontalRuleNode>());
 
         for (int i = 10; i < 15; ++i) {
-          expect(document.nodes[i], isA<ListItemNode>());
+          expect(document.getNodeAt(i)!, isA<ListItemNode>());
         }
 
-        expect(document.nodes[15], isA<HorizontalRuleNode>());
+        expect(document.getNodeAt(15)!, isA<HorizontalRuleNode>());
 
-        expect(document.nodes[16], isA<ImageNode>());
+        expect(document.getNodeAt(16)!, isA<ImageNode>());
 
-        expect(document.nodes[17], isA<TaskNode>());
+        expect(document.getNodeAt(17)!, isA<TaskNode>());
 
-        expect(document.nodes[18], isA<ParagraphNode>());
+        expect(document.getNodeAt(18)!, isA<ParagraphNode>());
 
-        expect(document.nodes[19], isA<TaskNode>());
+        expect(document.getNodeAt(19)!, isA<TaskNode>());
 
-        expect(document.nodes[20], isA<HorizontalRuleNode>());
+        expect(document.getNodeAt(20)!, isA<HorizontalRuleNode>());
 
-        expect(document.nodes[21], isA<ParagraphNode>());
-        expect((document.nodes[21] as ParagraphNode).getMetadataValue('blockType'), header1Attribution);
-        expect((document.nodes[21] as ParagraphNode).getMetadataValue('textAlign'), 'left');
+        expect(document.getNodeAt(21)!, isA<ParagraphNode>());
+        expect((document.getNodeAt(21)! as ParagraphNode).getMetadataValue('blockType'), header1Attribution);
+        expect((document.getNodeAt(21)! as ParagraphNode).getMetadataValue('textAlign'), 'left');
 
-        expect(document.nodes[22], isA<ParagraphNode>());
-        expect((document.nodes[22] as ParagraphNode).getMetadataValue('blockType'), header1Attribution);
-        expect((document.nodes[22] as ParagraphNode).getMetadataValue('textAlign'), 'center');
+        expect(document.getNodeAt(22)!, isA<ParagraphNode>());
+        expect((document.getNodeAt(22)! as ParagraphNode).getMetadataValue('blockType'), header1Attribution);
+        expect((document.getNodeAt(22)! as ParagraphNode).getMetadataValue('textAlign'), 'center');
 
-        expect(document.nodes[23], isA<ParagraphNode>());
-        expect((document.nodes[23] as ParagraphNode).getMetadataValue('blockType'), header1Attribution);
-        expect((document.nodes[23] as ParagraphNode).getMetadataValue('textAlign'), 'right');
+        expect(document.getNodeAt(23)!, isA<ParagraphNode>());
+        expect((document.getNodeAt(23)! as ParagraphNode).getMetadataValue('blockType'), header1Attribution);
+        expect((document.getNodeAt(23)! as ParagraphNode).getMetadataValue('textAlign'), 'right');
 
-        expect(document.nodes[24], isA<ParagraphNode>());
-        expect((document.nodes[24] as ParagraphNode).getMetadataValue('blockType'), header1Attribution);
-        expect((document.nodes[24] as ParagraphNode).getMetadataValue('textAlign'), 'justify');
+        expect(document.getNodeAt(24)!, isA<ParagraphNode>());
+        expect((document.getNodeAt(24)! as ParagraphNode).getMetadataValue('blockType'), header1Attribution);
+        expect((document.getNodeAt(24)! as ParagraphNode).getMetadataValue('textAlign'), 'justify');
 
-        expect(document.nodes[25], isA<ParagraphNode>());
+        expect(document.getNodeAt(25)!, isA<ParagraphNode>());
       });
 
       test('paragraph with strikethrough', () {
         final doc = deserializeMarkdownToDocument('~This is~ a paragraph.');
-        final styledText = (doc.nodes[0] as ParagraphNode).text;
+        final styledText = (doc.getNodeAt(0)! as ParagraphNode).text;
 
         // Ensure text within the range is attributed.
         expect(styledText.getAllAttributionsAt(0).contains(strikethroughAttribution), true);
@@ -1447,7 +1447,7 @@ with multiple lines
 
       test('paragraph with underline', () {
         final doc = deserializeMarkdownToDocument('¬This is¬ a paragraph.');
-        final styledText = (doc.nodes[0] as ParagraphNode).text;
+        final styledText = (doc.getNodeAt(0)! as ParagraphNode).text;
 
         // Ensure text within the range is attributed.
         expect(styledText.getAllAttributionsAt(0).contains(underlineAttribution), true);
@@ -1460,7 +1460,7 @@ with multiple lines
       test('paragraph with left alignment', () {
         final doc = deserializeMarkdownToDocument(':---\nParagraph1');
 
-        final paragraph = doc.nodes.first as ParagraphNode;
+        final paragraph = doc.first as ParagraphNode;
         expect(paragraph.getMetadataValue('textAlign'), 'left');
         expect(paragraph.text.text, 'Paragraph1');
       });
@@ -1468,7 +1468,7 @@ with multiple lines
       test('paragraph with center alignment', () {
         final doc = deserializeMarkdownToDocument(':---:\nParagraph1');
 
-        final paragraph = doc.nodes.first as ParagraphNode;
+        final paragraph = doc.first as ParagraphNode;
         expect(paragraph.getMetadataValue('textAlign'), 'center');
         expect(paragraph.text.text, 'Paragraph1');
       });
@@ -1476,7 +1476,7 @@ with multiple lines
       test('paragraph with right alignment', () {
         final doc = deserializeMarkdownToDocument('---:\nParagraph1');
 
-        final paragraph = doc.nodes.first as ParagraphNode;
+        final paragraph = doc.first as ParagraphNode;
         expect(paragraph.getMetadataValue('textAlign'), 'right');
         expect(paragraph.text.text, 'Paragraph1');
       });
@@ -1484,7 +1484,7 @@ with multiple lines
       test('paragraph with justify alignment', () {
         final doc = deserializeMarkdownToDocument('-::-\nParagraph1');
 
-        final paragraph = doc.nodes.first as ParagraphNode;
+        final paragraph = doc.first as ParagraphNode;
         expect(paragraph.getMetadataValue('textAlign'), 'justify');
         expect(paragraph.text.text, 'Paragraph1');
       });
@@ -1492,7 +1492,7 @@ with multiple lines
       test('treats alignment token as text at the end of the document', () {
         final doc = deserializeMarkdownToDocument('---:');
 
-        final paragraph = doc.nodes.first as ParagraphNode;
+        final paragraph = doc.first as ParagraphNode;
         expect(paragraph.getMetadataValue('textAlign'), isNull);
         expect(paragraph.text.text, '---:');
       });
@@ -1500,18 +1500,18 @@ with multiple lines
       test('treats alignment token as text when not followed by a paragraph', () {
         final doc = deserializeMarkdownToDocument('---:\n - - -');
 
-        final paragraph = doc.nodes.first as ParagraphNode;
+        final paragraph = doc.first as ParagraphNode;
         expect(paragraph.getMetadataValue('textAlign'), isNull);
         expect(paragraph.text.text, '---:');
 
         // Ensure the horizontal rule is parsed.
-        expect(doc.nodes[1], isA<HorizontalRuleNode>());
+        expect(doc.getNodeAt(1)!, isA<HorizontalRuleNode>());
       });
 
       test('treats alignment token as text when not using supereditor syntax', () {
         final doc = deserializeMarkdownToDocument(':---\nParagraph1', syntax: MarkdownSyntax.normal);
 
-        final paragraph = doc.nodes.first as ParagraphNode;
+        final paragraph = doc.first as ParagraphNode;
         expect(paragraph.getMetadataValue('textAlign'), isNull);
         expect(paragraph.text.text, ':---\nParagraph1');
       });
@@ -1522,9 +1522,9 @@ with multiple lines
 Paragraph2""";
         final doc = deserializeMarkdownToDocument(input);
 
-        expect(doc.nodes.length, 2);
-        expect((doc.nodes[0] as ParagraphNode).text.text, 'Paragraph1');
-        expect((doc.nodes[1] as ParagraphNode).text.text, 'Paragraph2');
+        expect(doc.nodeCount, 2);
+        expect((doc.getNodeAt(0)! as ParagraphNode).text.text, 'Paragraph1');
+        expect((doc.getNodeAt(1)! as ParagraphNode).text.text, 'Paragraph2');
       });
 
       test('empty paragraph between paragraphs', () {
@@ -1535,10 +1535,10 @@ Paragraph2""";
 Paragraph3""";
         final doc = deserializeMarkdownToDocument(input);
 
-        expect(doc.nodes.length, 3);
-        expect((doc.nodes[0] as ParagraphNode).text.text, 'Paragraph1');
-        expect((doc.nodes[1] as ParagraphNode).text.text, '');
-        expect((doc.nodes[2] as ParagraphNode).text.text, 'Paragraph3');
+        expect(doc.nodeCount, 3);
+        expect((doc.getNodeAt(0)! as ParagraphNode).text.text, 'Paragraph1');
+        expect((doc.getNodeAt(1)! as ParagraphNode).text.text, '');
+        expect((doc.getNodeAt(2)! as ParagraphNode).text.text, 'Paragraph3');
       });
 
       test('multiple empty paragraph between paragraphs', () {
@@ -1551,59 +1551,59 @@ Paragraph3""";
 Paragraph4""";
         final doc = deserializeMarkdownToDocument(input);
 
-        expect(doc.nodes.length, 4);
-        expect((doc.nodes[0] as ParagraphNode).text.text, 'Paragraph1');
-        expect((doc.nodes[1] as ParagraphNode).text.text, '');
-        expect((doc.nodes[2] as ParagraphNode).text.text, '');
-        expect((doc.nodes[3] as ParagraphNode).text.text, 'Paragraph4');
+        expect(doc.nodeCount, 4);
+        expect((doc.getNodeAt(0)! as ParagraphNode).text.text, 'Paragraph1');
+        expect((doc.getNodeAt(1)! as ParagraphNode).text.text, '');
+        expect((doc.getNodeAt(2)! as ParagraphNode).text.text, '');
+        expect((doc.getNodeAt(3)! as ParagraphNode).text.text, 'Paragraph4');
       });
 
       test('paragraph ending with one blank line', () {
         final doc = deserializeMarkdownToDocument('First Paragraph.  \n\n\nSecond Paragraph');
-        expect(doc.nodes.length, 2);
+        expect(doc.nodeCount, 2);
 
-        expect(doc.nodes.first, isA<ParagraphNode>());
-        expect((doc.nodes.first as ParagraphNode).text.text, 'First Paragraph.\n');
+        expect(doc.first, isA<ParagraphNode>());
+        expect((doc.first as ParagraphNode).text.text, 'First Paragraph.\n');
 
-        expect(doc.nodes.last, isA<ParagraphNode>());
-        expect((doc.nodes.last as ParagraphNode).text.text, 'Second Paragraph');
+        expect(doc.last, isA<ParagraphNode>());
+        expect((doc.last as ParagraphNode).text.text, 'Second Paragraph');
       });
 
       test('paragraph ending with multiple blank lines', () {
         final doc = deserializeMarkdownToDocument('First Paragraph.  \n  \n  \n\n\nSecond Paragraph');
 
-        expect(doc.nodes.length, 2);
+        expect(doc.nodeCount, 2);
 
-        expect(doc.nodes.first, isA<ParagraphNode>());
-        expect((doc.nodes.first as ParagraphNode).text.text, 'First Paragraph.\n\n\n');
+        expect(doc.first, isA<ParagraphNode>());
+        expect((doc.first as ParagraphNode).text.text, 'First Paragraph.\n\n\n');
 
-        expect(doc.nodes.last, isA<ParagraphNode>());
-        expect((doc.nodes.last as ParagraphNode).text.text, 'Second Paragraph');
+        expect(doc.last, isA<ParagraphNode>());
+        expect((doc.last as ParagraphNode).text.text, 'Second Paragraph');
       });
 
       test('paragraph with multiple blank lines at the middle', () {
         final doc =
             deserializeMarkdownToDocument('First Paragraph.  \n  \n  \nStill First Paragraph\n\nSecond Paragraph');
 
-        expect(doc.nodes.length, 2);
+        expect(doc.nodeCount, 2);
 
-        expect(doc.nodes.first, isA<ParagraphNode>());
-        expect((doc.nodes.first as ParagraphNode).text.text, 'First Paragraph.\n\n\nStill First Paragraph');
+        expect(doc.first, isA<ParagraphNode>());
+        expect((doc.first as ParagraphNode).text.text, 'First Paragraph.\n\n\nStill First Paragraph');
 
-        expect(doc.nodes.last, isA<ParagraphNode>());
-        expect((doc.nodes.last as ParagraphNode).text.text, 'Second Paragraph');
+        expect(doc.last, isA<ParagraphNode>());
+        expect((doc.last as ParagraphNode).text.text, 'Second Paragraph');
       });
 
       test('paragraph beginning with multiple blank lines', () {
         final doc = deserializeMarkdownToDocument('  \n  \nFirst Paragraph.\n\nSecond Paragraph');
 
-        expect(doc.nodes.length, 2);
+        expect(doc.nodeCount, 2);
 
-        expect(doc.nodes.first, isA<ParagraphNode>());
-        expect((doc.nodes.first as ParagraphNode).text.text, '\n\nFirst Paragraph.');
+        expect(doc.first, isA<ParagraphNode>());
+        expect((doc.first as ParagraphNode).text.text, '\n\nFirst Paragraph.');
 
-        expect(doc.nodes.last, isA<ParagraphNode>());
-        expect((doc.nodes.last as ParagraphNode).text.text, 'Second Paragraph');
+        expect(doc.last, isA<ParagraphNode>());
+        expect((doc.last as ParagraphNode).text.text, 'Second Paragraph');
       });
 
       test('document ending with an empty paragraph', () {
@@ -1613,22 +1613,22 @@ First Paragraph.
 
 """);
 
-        expect(doc.nodes.length, 2);
+        expect(doc.nodeCount, 2);
 
-        expect(doc.nodes.first, isA<ParagraphNode>());
-        expect((doc.nodes.first as ParagraphNode).text.text, 'First Paragraph.');
+        expect(doc.first, isA<ParagraphNode>());
+        expect((doc.first as ParagraphNode).text.text, 'First Paragraph.');
 
-        expect(doc.nodes.last, isA<ParagraphNode>());
-        expect((doc.nodes.last as ParagraphNode).text.text, '');
+        expect(doc.last, isA<ParagraphNode>());
+        expect((doc.last as ParagraphNode).text.text, '');
       });
 
       test('empty markdown produces an empty paragraph', () {
         final doc = deserializeMarkdownToDocument('');
 
-        expect(doc.nodes.length, 1);
+        expect(doc.nodeCount, 1);
 
-        expect(doc.nodes.first, isA<ParagraphNode>());
-        expect((doc.nodes.first as ParagraphNode).text.text, '');
+        expect(doc.first, isA<ParagraphNode>());
+        expect((doc.first as ParagraphNode).text.text, '');
       });
     });
   });

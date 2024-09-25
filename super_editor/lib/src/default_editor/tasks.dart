@@ -1,4 +1,5 @@
 import 'package:attributed_text/attributed_text.dart';
+import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:super_editor/src/core/document.dart';
@@ -16,6 +17,7 @@ import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/attributed_text_styles.dart';
 import 'package:super_editor/src/infrastructure/composable_text.dart';
 import 'package:super_editor/src/infrastructure/keyboard.dart';
+import 'package:super_text_layout/super_text_layout.dart';
 
 import 'attributions.dart';
 import 'layout_single_column/layout_single_column.dart';
@@ -146,6 +148,10 @@ class TaskComponentBuilder implements ComponentBuilder {
       text: node.text,
       textStyleBuilder: noStyleBuilder,
       selectionColor: const Color(0x00000000),
+      spellingErrors: node.text
+          .getAttributionSpansByFilter((a) => a == spellingErrorAttribution)
+          .map((a) => TextRange(start: a.start, end: a.end + 1)) // +1 because text range end is exclusive
+          .toList(),
     );
   }
 
@@ -185,9 +191,17 @@ class TaskComponentViewModel extends SingleColumnLayoutComponentViewModel with T
     this.selection,
     required this.selectionColor,
     this.highlightWhenEmpty = false,
-    this.composingRegion,
-    this.showComposingUnderline = false,
-  }) : super(nodeId: nodeId, maxWidth: maxWidth, padding: padding);
+    TextRange? composingRegion,
+    bool showComposingRegionUnderline = false,
+    UnderlineStyle spellingErrorUnderlineStyle = const SquiggleUnderlineStyle(color: Color(0xFFFF0000)),
+    List<TextRange> spellingErrors = const <TextRange>[],
+  }) : super(nodeId: nodeId, maxWidth: maxWidth, padding: padding) {
+    this.composingRegion = composingRegion;
+    this.showComposingRegionUnderline = showComposingRegionUnderline;
+
+    this.spellingErrorUnderlineStyle = spellingErrorUnderlineStyle;
+    this.spellingErrors = spellingErrors;
+  }
 
   int indent;
   TextBlockIndentCalculator indentCalculator;
@@ -209,10 +223,6 @@ class TaskComponentViewModel extends SingleColumnLayoutComponentViewModel with T
   Color selectionColor;
   @override
   bool highlightWhenEmpty;
-  @override
-  TextRange? composingRegion;
-  @override
-  bool showComposingUnderline;
 
   @override
   TaskComponentViewModel copy() {
@@ -230,8 +240,10 @@ class TaskComponentViewModel extends SingleColumnLayoutComponentViewModel with T
       selection: selection,
       selectionColor: selectionColor,
       highlightWhenEmpty: highlightWhenEmpty,
+      spellingErrorUnderlineStyle: spellingErrorUnderlineStyle,
+      spellingErrors: List.from(spellingErrors),
       composingRegion: composingRegion,
-      showComposingUnderline: showComposingUnderline,
+      showComposingRegionUnderline: showComposingRegionUnderline,
     );
   }
 
@@ -249,8 +261,10 @@ class TaskComponentViewModel extends SingleColumnLayoutComponentViewModel with T
           selection == other.selection &&
           selectionColor == other.selectionColor &&
           highlightWhenEmpty == other.highlightWhenEmpty &&
+          spellingErrorUnderlineStyle == other.spellingErrorUnderlineStyle &&
+          const DeepCollectionEquality().equals(spellingErrors, other.spellingErrors) &&
           composingRegion == other.composingRegion &&
-          showComposingUnderline == other.showComposingUnderline;
+          showComposingRegionUnderline == other.showComposingRegionUnderline;
 
   @override
   int get hashCode =>
@@ -263,8 +277,10 @@ class TaskComponentViewModel extends SingleColumnLayoutComponentViewModel with T
       selection.hashCode ^
       selectionColor.hashCode ^
       highlightWhenEmpty.hashCode ^
+      spellingErrorUnderlineStyle.hashCode ^
+      spellingErrors.hashCode ^
       composingRegion.hashCode ^
-      showComposingUnderline.hashCode;
+      showComposingRegionUnderline.hashCode;
 }
 
 /// The standard [TextBlockIndentCalculator] used by tasks in `SuperEditor`.
@@ -344,8 +360,7 @@ class _TaskComponentState extends State<TaskComponent> with ProxyDocumentCompone
             textSelection: widget.viewModel.selection,
             selectionColor: widget.viewModel.selectionColor,
             highlightWhenEmpty: widget.viewModel.highlightWhenEmpty,
-            composingRegion: widget.viewModel.composingRegion,
-            showComposingUnderline: widget.viewModel.showComposingUnderline,
+            underlines: widget.viewModel.createUnderlines(),
             showDebugPaint: widget.showDebugPaint,
           ),
         ),
@@ -608,7 +623,7 @@ class ChangeTaskCompletionCommand extends EditCommand {
 
   @override
   void execute(EditContext context, CommandExecutor executor) {
-    final taskNode = context.find<MutableDocument>(Editor.documentKey).getNodeById(nodeId);
+    final taskNode = context.document.getNodeById(nodeId);
     if (taskNode is! TaskNode) {
       return;
     }
@@ -658,7 +673,7 @@ class ConvertParagraphToTaskCommand extends EditCommand {
 
   @override
   void execute(EditContext context, CommandExecutor executor) {
-    final document = context.find<MutableDocument>(Editor.documentKey);
+    final document = context.document;
     final existingNode = document.getNodeById(nodeId);
     if (existingNode is! ParagraphNode) {
       editorOpsLog.warning(
@@ -713,7 +728,7 @@ class ConvertTaskToParagraphCommand extends EditCommand {
 
   @override
   void execute(EditContext context, CommandExecutor executor) {
-    final document = context.find<MutableDocument>(Editor.documentKey);
+    final document = context.document;
     final node = document.getNodeById(nodeId);
     final taskNode = node as TaskNode;
     final newMetadata = Map<String, dynamic>.from(paragraphMetadata ?? {});
@@ -762,7 +777,7 @@ class SplitExistingTaskCommand extends EditCommand {
 
   @override
   void execute(EditContext editContext, CommandExecutor executor) {
-    final document = editContext.find<MutableDocument>(Editor.documentKey);
+    final document = editContext.document;
     final composer = editContext.find<MutableDocumentComposer>(Editor.composerKey);
     final selection = composer.selection;
 
@@ -849,7 +864,7 @@ class IndentTaskCommand extends EditCommand {
 
   @override
   void execute(EditContext context, CommandExecutor executor) {
-    final document = context.find<MutableDocument>(Editor.documentKey);
+    final document = context.document;
 
     final task = document.getNodeById(nodeId);
     if (task is! TaskNode) {
@@ -898,7 +913,7 @@ class UnIndentTaskCommand extends EditCommand {
 
   @override
   void execute(EditContext context, CommandExecutor executor) {
-    final document = context.find<MutableDocument>(Editor.documentKey);
+    final document = context.document;
 
     final task = document.getNodeById(nodeId);
     if (task is! TaskNode) {
@@ -913,7 +928,7 @@ class UnIndentTaskCommand extends EditCommand {
 
     final subTasks = <TaskNode>[];
     int index = document.getNodeIndexById(task.id) + 1;
-    while (index < document.nodes.length) {
+    while (index < document.nodeCount) {
       final subTask = document.getNodeAt(index);
       if (subTask is! TaskNode) {
         break;
@@ -971,7 +986,7 @@ class SetTaskIndentCommand extends EditCommand {
 
   @override
   void execute(EditContext context, CommandExecutor executor) {
-    final document = context.find<MutableDocument>(Editor.documentKey);
+    final document = context.document;
 
     final task = document.getNodeById(nodeId);
     if (task is! TaskNode) {
@@ -1003,10 +1018,10 @@ class UpdateSubTaskIndentAfterTaskDeletionReaction extends EditReaction {
     // At least one task was deleted. We're not sure where in the document the
     // tasks were before being deleted. Therefore, we check and fix every task
     // indentation in the document.
-    final document = editorContext.find<MutableDocument>(Editor.documentKey);
+    final document = editorContext.document;
     final changeIndentationRequests = <EditRequest>[];
     int maxIndentation = 0;
-    for (int i = 0; i < document.nodes.length; i += 1) {
+    for (int i = 0; i < document.nodeCount; i += 1) {
       final node = document.getNodeAt(i);
       if (node is! TaskNode) {
         // This node isn't a task. The first task in a list of tasks

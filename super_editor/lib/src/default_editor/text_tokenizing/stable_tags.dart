@@ -176,7 +176,7 @@ class FillInComposingUserTagCommand extends EditCommand {
 
   @override
   void execute(EditContext context, CommandExecutor executor) {
-    final document = context.find<MutableDocument>(Editor.documentKey);
+    final document = context.document;
     final composer = context.find<MutableDocumentComposer>(Editor.composerKey);
 
     final selection = composer.selection;
@@ -291,7 +291,7 @@ class CancelComposingStableTagCommand extends EditCommand {
 
   @override
   void execute(EditContext context, CommandExecutor executor) {
-    final document = context.find<MutableDocument>(Editor.documentKey);
+    final document = context.document;
     final composer = context.find<MutableDocumentComposer>(Editor.composerKey);
 
     final selection = composer.selection;
@@ -387,7 +387,7 @@ class TagUserReaction extends EditReaction {
     editorStableTagsLog.info(
         "Caret position: ${editContext.find<MutableDocumentComposer>(Editor.composerKey).selection?.extent.nodePosition}");
 
-    final document = editContext.find<MutableDocument>(Editor.documentKey);
+    final document = editContext.document;
     _healCancelledTags(requestDispatcher, document, changeList);
 
     _adjustTagAttributionsAroundAlteredTags(editContext, requestDispatcher, changeList);
@@ -486,7 +486,7 @@ class TagUserReaction extends EditReaction {
     RequestDispatcher requestDispatcher,
     List<EditEvent> changeList,
   ) {
-    final document = editContext.find<MutableDocument>(Editor.documentKey);
+    final document = editContext.document;
 
     final composingToken = _findComposingTagAtCaret(editContext);
     if (composingToken != null) {
@@ -526,7 +526,7 @@ class TagUserReaction extends EditReaction {
     List<EditEvent> changeList,
   ) {
     editorStableTagsLog.info("Removing invalid tags.");
-    final document = editContext.find<MutableDocument>(Editor.documentKey);
+    final document = editContext.document;
     final nodesToInspect = <String>{};
     for (final edit in changeList) {
       // We only care about deleted text, in case the deletion made an existing tag invalid.
@@ -699,7 +699,7 @@ class TagUserReaction extends EditReaction {
       return;
     }
 
-    final document = editContext.find<MutableDocument>(Editor.documentKey);
+    final document = editContext.document;
     final selectedNode = document.getNodeById(selectionPosition.nodeId);
     if (selectedNode is! TextNode) {
       // Tagging only happens in the middle of text. The selected content isn't text. Return.
@@ -780,7 +780,7 @@ class TagUserReaction extends EditReaction {
     List<EditEvent> changeList,
   ) {
     editorStableTagsLog.fine("Looking for completed tags to commit.");
-    final document = editContext.find<MutableDocument>(Editor.documentKey);
+    final document = editContext.document;
     final composingTagNodeCandidates = <String>{};
     for (final edit in changeList) {
       if (edit is DocumentEdit && (edit.change is TextInsertionEvent || edit.change is TextDeletedEvent)) {
@@ -897,7 +897,7 @@ class TagUserReaction extends EditReaction {
       return null;
     }
 
-    final document = editContext.find<MutableDocument>(Editor.documentKey);
+    final document = editContext.document;
     final selectedNode = document.getNodeById(selectionPosition.nodeId);
     if (selectedNode is! TextNode) {
       // Tagging only happens in the middle of text. The selected content isn't text. Return.
@@ -914,7 +914,7 @@ class TagUserReaction extends EditReaction {
   }
 
   void _updateTagIndex(EditContext editContext, List<EditEvent> changeList) {
-    final document = editContext.find<MutableDocument>(Editor.documentKey);
+    final document = editContext.document;
     final index = editContext.stableTagIndex;
     for (final event in changeList) {
       if (event is! DocumentEdit) {
@@ -1144,7 +1144,7 @@ class AdjustSelectionAroundTagReaction extends EditReaction {
 
     editorStableTagsLog.info(" - we received just one selection change event. Checking for user tag.");
 
-    final document = editContext.find<MutableDocument>(Editor.documentKey);
+    final document = editContext.document;
 
     final newCaret = selectionChangeEvent.newSelection?.extent;
     if (newCaret == null) {
@@ -1236,7 +1236,7 @@ class AdjustSelectionAroundTagReaction extends EditReaction {
   }) {
     editorStableTagsLog.fine("Adjusting an expanded selection to avoid a partial stable tag selection.");
 
-    final document = editContext.find<MutableDocument>(Editor.documentKey);
+    final document = editContext.document;
     final extentNode = document.getNodeById(newCaret.nodeId);
     if (extentNode is! TextNode) {
       // The caret isn't sitting in text. Fizzle.
@@ -1394,7 +1394,7 @@ class AdjustSelectionAroundTagReaction extends EditReaction {
     bool expand = false,
   }) {
     editorStableTagsLog.info("Pushing caret to other side of token - tag around caret: $tagAroundCaret");
-    final Document document = editContext.find<MutableDocument>(Editor.documentKey);
+    final Document document = editContext.document;
 
     final pushDirection = document.getAffinityBetween(
       base: selectionChangeEvent.oldSelection!.extent,
@@ -1450,7 +1450,7 @@ class AdjustSelectionAroundTagReaction extends EditReaction {
   }) {
     editorStableTagsLog.info("Pushing expanded selection to other side(s) of token(s)");
 
-    final document = editContext.find<MutableDocument>(Editor.documentKey);
+    final document = editContext.document;
     final selection = selectionChangeEvent.newSelection!;
     final selectionAffinity = document.getAffinityForSelection(selection);
 

@@ -146,14 +146,14 @@ void main() {
         await tester.pressEnter();
 
         // Ensure the new paragraph is indented.
-        var newParagraph = SuperEditorInspector.findDocument()!.nodes[1] as ParagraphNode;
+        var newParagraph = SuperEditorInspector.findDocument()!.getNodeAt(1) as ParagraphNode;
         expect(newParagraph.indent, 1);
 
         // Press Enter again to reset the indent.
         await tester.pressEnter();
 
         // Ensure the new paragraph is no longer indented.
-        newParagraph = SuperEditorInspector.findDocument()!.nodes[1] as ParagraphNode;
+        newParagraph = SuperEditorInspector.findDocument()!.getNodeAt(1) as ParagraphNode;
         expect(newParagraph.indent, 0);
       });
 

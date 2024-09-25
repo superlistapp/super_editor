@@ -189,7 +189,7 @@ class OrderedListItemConversionReaction extends ParagraphPrefixConversionReactio
       // ordered list item. For example, the list has the items 1, 2, 3 and 4,
       // and the user types " 5. ".
 
-      final document = editContext.find<MutableDocument>(Editor.documentKey);
+      final document = editContext.document;
 
       final upstreamNode = document.getNodeBefore(paragraph);
       if (upstreamNode == null || upstreamNode is! ListItemNode || upstreamNode.type != ListItemType.ordered) {
@@ -298,7 +298,7 @@ class HorizontalRuleConversionReaction extends EditReaction {
       return;
     }
 
-    final document = editorContext.find<MutableDocument>(Editor.documentKey);
+    final document = editorContext.document;
 
     final didTypeSpace = EditInspector.didTypeSpace(document, changeList);
     if (!didTypeSpace) {
@@ -372,7 +372,7 @@ abstract class ParagraphPrefixConversionReaction extends EditReaction {
 
   @override
   void react(EditContext editContext, RequestDispatcher requestDispatcher, List<EditEvent> changeList) {
-    final document = editContext.find<MutableDocument>(Editor.documentKey);
+    final document = editContext.document;
     final typedText = EditInspector.findLastTextUserTyped(document, changeList);
     if (typedText == null) {
       return;
@@ -435,7 +435,7 @@ class ImageUrlConversionReaction extends EditReaction {
       return;
     }
 
-    final document = editContext.find<MutableDocument>(Editor.documentKey);
+    final document = editContext.document;
     final previousNode = document.getNodeById(selectionChange.oldSelection!.extent.nodeId);
     if (previousNode is! ParagraphNode) {
       // The intention indicated that the user pressed "enter" from a paragraph
@@ -563,7 +563,7 @@ class LinkifyReaction extends EditReaction {
 
   @override
   void react(EditContext editContext, RequestDispatcher requestDispatcher, List<EditEvent> edits) {
-    final document = editContext.find<MutableDocument>(Editor.documentKey);
+    final document = editContext.document;
     final composer = editContext.find<MutableDocumentComposer>(Editor.composerKey);
     final selection = composer.selection;
 
@@ -923,7 +923,7 @@ class DashConversionReaction extends EditReaction {
 
   @override
   void react(EditContext editorContext, RequestDispatcher requestDispatcher, List<EditEvent> changeList) {
-    final document = editorContext.find<MutableDocument>(Editor.documentKey);
+    final document = editorContext.document;
     final composer = editorContext.find<MutableDocumentComposer>(Editor.composerKey);
 
     if (changeList.length < 2) {

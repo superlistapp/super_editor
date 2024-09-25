@@ -437,7 +437,7 @@ void main() {
         await tester.pump();
 
         expect(composer.selection!.isCollapsed, true);
-        expect(document.nodes.length, 2);
+        expect(document.nodeCount, 2);
         expect(composer.selection!.extent.nodeId, "1");
         expect((composer.selection!.extent.nodePosition as TextNodePosition).offset, 20);
       });
@@ -456,7 +456,7 @@ void main() {
         await tester.pump();
 
         expect(composer.selection!.isCollapsed, true);
-        expect(document.nodes.length, 2);
+        expect(document.nodeCount, 2);
         expect(composer.selection!.extent.nodeId, "3");
         expect((composer.selection!.extent.nodePosition as TextNodePosition).offset, 0);
       });
@@ -475,7 +475,7 @@ void main() {
         await tester.pump();
 
         expect(composer.selection!.isCollapsed, true);
-        expect(document.nodes.length, 1);
+        expect(document.nodeCount, 1);
         expect(composer.selection!.extent.nodeId, "1");
         expect((composer.selection!.extent.nodePosition as TextNodePosition).offset, 20);
       });
@@ -529,7 +529,7 @@ void main() {
         await tester.pump();
 
         expect(composer.selection!.isCollapsed, true);
-        expect(document.nodes.length, 2);
+        expect(document.nodeCount, 2);
         expect(composer.selection!.extent.nodePosition, isA<TextNodePosition>());
         expect((composer.selection!.extent.nodePosition as TextNodePosition).offset, 0);
         expect(document.getNodeAt(0)!.id, composer.selection!.extent.nodeId);
@@ -548,7 +548,7 @@ void main() {
         await tester.pump();
 
         expect(composer.selection!.isCollapsed, true);
-        expect(document.nodes.length, 2);
+        expect(document.nodeCount, 2);
         expect(composer.selection!.extent.nodePosition, isA<TextNodePosition>());
         expect((composer.selection!.extent.nodePosition as TextNodePosition).offset, 0);
         expect(document.getNodeAt(1)!.id, composer.selection!.extent.nodeId);
@@ -569,9 +569,9 @@ void main() {
         await tester.pump();
 
         expect(composer.selection!.isCollapsed, true);
-        expect(document.nodes.length, 2);
-        expect(document.nodes[0], isA<ParagraphNode>());
-        expect(document.nodes[1], isA<HorizontalRuleNode>());
+        expect(document.nodeCount, 2);
+        expect(document.getNodeAt(0)!, isA<ParagraphNode>());
+        expect(document.getNodeAt(1)!, isA<HorizontalRuleNode>());
         expect(composer.selection!.extent.nodePosition, const TextNodePosition(offset: 1));
       });
 
@@ -588,9 +588,9 @@ void main() {
         await tester.pump();
 
         expect(composer.selection!.isCollapsed, true);
-        expect(document.nodes.length, 2);
-        expect(document.nodes[0], isA<HorizontalRuleNode>());
-        expect(document.nodes[1], isA<ParagraphNode>());
+        expect(document.nodeCount, 2);
+        expect(document.getNodeAt(0)!, isA<HorizontalRuleNode>());
+        expect(document.getNodeAt(1)!, isA<ParagraphNode>());
         expect(composer.selection!.extent.nodePosition, const TextNodePosition(offset: 1));
       });
 
@@ -612,8 +612,8 @@ void main() {
         await tester.pump();
 
         expect(composer.selection!.isCollapsed, true);
-        expect(document.nodes.length, 1);
-        expect(document.nodes[0], isA<HorizontalRuleNode>());
+        expect(document.nodeCount, 1);
+        expect(document.getNodeAt(0)!, isA<HorizontalRuleNode>());
         expect(composer.selection!.extent.nodePosition, const UpstreamDownstreamNodePosition.upstream());
       });
     });
@@ -627,8 +627,6 @@ Widget _buildHardwareKeyboardEditor(MutableDocument document, MutableDocumentCom
     home: Scaffold(
       body: SuperEditor(
         editor: editor,
-        document: document,
-        composer: composer,
         // Make the text small so that the test paragraphs fit on a single
         // line, so that we can place the caret on the left/right halves
         // of lines, as needed.

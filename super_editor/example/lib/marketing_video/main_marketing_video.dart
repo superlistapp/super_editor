@@ -31,8 +31,8 @@ class _MarketingVideoState extends State<MarketingVideo> {
     _composer = MutableDocumentComposer(
       initialSelection: DocumentSelection.collapsed(
         position: DocumentPosition(
-          nodeId: _document.nodes.first.id,
-          nodePosition: _document.nodes.first.endPosition,
+          nodeId: _document.first.id,
+          nodePosition: _document.first.endPosition,
         ),
       ),
     );
@@ -193,8 +193,6 @@ class _MarketingVideoState extends State<MarketingVideo> {
         child: SuperEditor(
           documentLayoutKey: _docLayoutKey,
           editor: _editor,
-          document: _document,
-          composer: _composer,
           stylesheet: defaultStylesheet.copyWith(
             documentPadding: const EdgeInsets.all(16),
             addRulesAfter: [
@@ -309,12 +307,12 @@ class DocumentEditingRobot {
             ChangeSelectionRequest(
               DocumentSelection(
                 base: DocumentPosition(
-                  nodeId: _document.nodes.first.id,
-                  nodePosition: _document.nodes.first.beginningPosition,
+                  nodeId: _document.first.id,
+                  nodePosition: _document.first.beginningPosition,
                 ),
                 extent: DocumentPosition(
-                  nodeId: _document.nodes.last.id,
-                  nodePosition: _document.nodes.last.endPosition,
+                  nodeId: _document.last.id,
+                  nodePosition: _document.last.endPosition,
                 ),
               ),
               SelectionChangeType.expandSelection,

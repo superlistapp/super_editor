@@ -118,7 +118,7 @@ class SubmitComposingActionTagCommand extends EditCommand {
 
   @override
   void execute(EditContext context, CommandExecutor executor) {
-    final document = context.find<MutableDocument>(Editor.documentKey);
+    final document = context.document;
     final composer = context.find<MutableDocumentComposer>(Editor.composerKey);
     if (composer.selection == null) {
       return;
@@ -196,7 +196,7 @@ class CancelComposingActionTagCommand extends EditCommand {
 
   @override
   void execute(EditContext context, CommandExecutor executor) {
-    final document = context.find<MutableDocument>(Editor.documentKey);
+    final document = context.document;
     final composer = context.find<MutableDocumentComposer>(Editor.composerKey);
 
     final selection = composer.selection;
@@ -256,7 +256,7 @@ class CancelComposingActionTagCommand extends EditCommand {
       AddTextAttributionsCommand(
         documentRange: textNode.selectionBetween(
           composingToken.indexedTag.startOffset,
-          composingToken.indexedTag.endOffset,
+          composingToken.indexedTag.startOffset + 1,
         ),
         attributions: {actionTagCancelledAttribution},
       ),
@@ -278,7 +278,7 @@ class ActionTagComposingReaction extends EditReaction {
 
   @override
   void react(EditContext editorContext, RequestDispatcher requestDispatcher, List<EditEvent> changeList) {
-    final document = editorContext.find<MutableDocument>(Editor.documentKey);
+    final document = editorContext.document;
     final composer = editorContext.find<MutableDocumentComposer>(Editor.composerKey);
 
     _composingTag = editorContext.composingActionTag.value;
@@ -316,7 +316,7 @@ class ActionTagComposingReaction extends EditReaction {
         tagRule: _tagRule,
         nodeId: textNode.id,
         text: textNode.text,
-        expansionPosition: base.nodePosition as TextNodePosition,
+        expansionPosition: extent.nodePosition as TextNodePosition,
         isTokenCandidate: (attributions) => !attributions.contains(actionTagCancelledAttribution),
       );
     }

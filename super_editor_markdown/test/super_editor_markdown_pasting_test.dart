@@ -37,8 +37,6 @@ void main() {
           home: Scaffold(
             body: SuperEditor(
               editor: editor,
-              document: document,
-              composer: composer,
               keyboardActions: [
                 pasteMarkdownOnCmdAndCtrlV,
                 ...defaultKeyboardActions,
@@ -85,7 +83,7 @@ This is the document that exists before Markdown is pasted.
       );
 
       // Place the caret at the beginning of the document.
-      await tester.placeCaretInParagraph(document.nodes.first.id, 0);
+      await tester.placeCaretInParagraph(document.first.id, 0);
 
       // Ensure that the document has the caret.
       expect(composer.selection, isNotNull);
@@ -129,7 +127,7 @@ This is the document that exists before Markdown is pasted.
       );
 
       // Place the caret at the beginning of the document.
-      await tester.placeCaretInParagraph(document.nodes.first.id, 0);
+      await tester.placeCaretInParagraph(document.first.id, 0);
 
       // Ensure that the document has the caret.
       expect(composer.selection, isNotNull);
@@ -168,7 +166,7 @@ This is the document that exists before Markdown is pasted.''',
       );
 
       // Place the caret between chevrons ">|<"
-      final lastParagraph = document.nodes.last as TextNode;
+      final lastParagraph = document.last as TextNode;
       await tester.placeCaretInParagraph(lastParagraph.id, 37);
 
       // Ensure that the document has the caret.
@@ -203,7 +201,7 @@ Aenean mattis ante justo, quis sollicitudin metus interdum id.< here and continu
       );
 
       // Place the caret between chevrons ">|<".
-      final lastParagraph = document.nodes.last as TextNode;
+      final lastParagraph = document.last as TextNode;
       await tester.placeCaretInParagraph(lastParagraph.id, 40);
 
       // Ensure that the document has the caret.
@@ -236,7 +234,7 @@ Aenean mattis ante justo, quis sollicitudin metus interdum id.< here and continu
       );
 
       // Place the caret between chevrons ">|<".
-      final lastParagraph = document.nodes.last as TextNode;
+      final lastParagraph = document.last as TextNode;
       await tester.placeCaretInParagraph(lastParagraph.id, 42);
 
       // Ensure that the document has the caret.
@@ -274,7 +272,7 @@ This is the document that exists before Markdown is pasted.
       );
 
       // Place the caret at the end of the existing document.
-      final lastParagraph = document.nodes.last as TextNode;
+      final lastParagraph = document.last as TextNode;
       await tester.placeCaretInParagraph(lastParagraph.id, lastParagraph.endPosition.offset);
 
       // Ensure that the document has the caret.
@@ -319,7 +317,7 @@ This is the document that exists before Markdown is pasted.
       );
 
       // Place the caret at the end of the existing document.
-      final lastParagraph = document.nodes.last as TextNode;
+      final lastParagraph = document.last as TextNode;
       await tester.placeCaretInParagraph(lastParagraph.id, lastParagraph.endPosition.offset);
 
       // Ensure that the document has the caret.
@@ -359,7 +357,7 @@ Aenean mattis ante justo, quis sollicitudin metus interdum id.''',
       );
 
       // Place the caret in empty paragraph.
-      final paragraph = document.nodes.first as TextNode;
+      final paragraph = document.first as TextNode;
       await tester.placeCaretInParagraph(paragraph.id, 0);
 
       // Simulate the user copying a markdown snippet.
@@ -401,8 +399,6 @@ Future<(Editor, MutableDocument, MutableDocumentComposer)> _pumpSuperEditor(
       home: Scaffold(
         body: SuperEditor(
           editor: editor,
-          document: document,
-          composer: composer,
           keyboardActions: [
             pasteMarkdownOnCmdAndCtrlV,
             ...defaultKeyboardActions,

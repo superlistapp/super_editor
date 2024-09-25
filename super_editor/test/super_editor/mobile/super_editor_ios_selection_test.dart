@@ -1,6 +1,5 @@
-import 'dart:ui';
-
 import 'package:flutter/gestures.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_test_runners/flutter_test_runners.dart';
 import 'package:super_editor/src/infrastructure/platforms/ios/selection_handles.dart';
@@ -323,14 +322,14 @@ void main() {
           ).pump();
 
           // Long press near the top of the image.
-          final tapDownOffset = tester.getTopLeft(find.byType(ImageComponent)) + Offset(0, 10);
+          final tapDownOffset = tester.getTopLeft(find.byType(ImageComponent)) + const Offset(0, 10);
           final gesture = await tester.startGesture(tapDownOffset);
           await tester.pump(kLongPressTimeout + kPressTimeout);
 
           // Ensure the image was selected.
           expect(
             SuperEditorInspector.findDocumentSelection(),
-            DocumentSelection(
+            const DocumentSelection(
               base: DocumentPosition(nodeId: '1', nodePosition: UpstreamDownstreamNodePosition.upstream()),
               extent: DocumentPosition(nodeId: '1', nodePosition: UpstreamDownstreamNodePosition.downstream()),
             ),
@@ -385,14 +384,14 @@ void main() {
           ).pump();
 
           // Long press near the top of the image.
-          final tapDownOffset = tester.getTopLeft(find.byType(ImageComponent)) + Offset(0, 10);
+          final tapDownOffset = tester.getTopLeft(find.byType(ImageComponent)) + const Offset(0, 10);
           final gesture = await tester.startGesture(tapDownOffset);
           await tester.pump(kLongPressTimeout + kPressTimeout);
 
           // Ensure the image was selected.
           expect(
             SuperEditorInspector.findDocumentSelection(),
-            DocumentSelection(
+            const DocumentSelection(
               base: DocumentPosition(nodeId: '2', nodePosition: UpstreamDownstreamNodePosition.upstream()),
               extent: DocumentPosition(nodeId: '2', nodePosition: UpstreamDownstreamNodePosition.downstream()),
             ),
@@ -428,6 +427,75 @@ void main() {
           await tester.pump();
         });
       });
+
+      group("horizontal drag", () {
+        testWidgetsOnIos("does not cause editor to scroll", (tester) async {
+          final scrollController = ScrollController();
+
+          await tester //
+              .createDocument()
+              .withLongDoc()
+              .withScrollController(scrollController)
+              .pump();
+
+          // Start dragging horizontally.
+          final gesture = await tester.startGesture(
+            tester.getCenter(find.byType(SuperEditor)),
+          );
+
+          // Drag horizontally.
+          for (int i = 1; i < 10; i += 1) {
+            await gesture.moveBy(const Offset(20, 0));
+            await tester.pump();
+          }
+
+          // Ensure that dragging doesn't cause the editor to scroll.
+          expect(scrollController.offset, 0);
+
+          // Release the gesture so the test system doesn't complain.
+          await gesture.up();
+          await tester.pumpAndSettle();
+        });
+      });
+
+      group("vertical drag", () {
+        testWidgetsOnIos("scrolls the editor after a horizontal drag", (tester) async {
+          final scrollController = ScrollController();
+
+          await tester //
+              .createDocument()
+              .withLongDoc()
+              .withScrollController(scrollController)
+              .pump();
+
+          // Start dragging horizontally.
+          final gesture = await tester.startGesture(
+            tester.getCenter(find.byType(SuperEditor)),
+          );
+
+          // Drag horizontally.
+          for (int i = 1; i < 10; i += 1) {
+            await gesture.moveBy(const Offset(20, 0));
+            await tester.pump();
+          }
+
+          // Ensure that dragging doesn't cause the editor to scroll.
+          expect(scrollController.offset, 0);
+
+          // Drag vertically.
+          for (int i = 1; i < 10; i += 1) {
+            await gesture.moveBy(const Offset(0, -10));
+            await tester.pump();
+          }
+
+          // Ensure that the editor scrolled up.
+          expect(scrollController.offset, greaterThan(0.0));
+
+          // Release the gesture so the test system doesn't complain.
+          await gesture.up();
+          await tester.pumpAndSettle();
+        });
+      });
     });
 
     group('within ancestor scrollable', () {
@@ -443,7 +511,7 @@ multiple lines.''',
             .insideCustomScrollView()
             .pump();
 
-        final paragraphNode = testContext.document.nodes.first as ParagraphNode;
+        final paragraphNode = testContext.document.first as ParagraphNode;
 
         // Double tap to select "SuperEditor".
         await tester.doubleTapInParagraph(paragraphNode.id, 0);
@@ -487,7 +555,7 @@ multiple lines.''',
             .insideCustomScrollView()
             .pump();
 
-        final paragraphNode = testContext.document.nodes.first as ParagraphNode;
+        final paragraphNode = testContext.document.first as ParagraphNode;
 
         // Double tap to select "SuperEditor".
         await tester.doubleTapInParagraph(paragraphNode.id, 0);

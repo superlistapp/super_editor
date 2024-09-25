@@ -19,21 +19,21 @@ This is another normal paragraph.''',
         customElementToNodeConverters: [UpsellElementToNodeConverter()],
       );
 
-      expect(document.nodes.length, 4);
+      expect(document.nodeCount, 4);
       expect(
-        document.nodes[0],
+        document.getNodeAt(0)!,
         isA<ParagraphNode>(),
       );
       expect(
-        document.nodes[1],
+        document.getNodeAt(1)!,
         isA<ParagraphNode>(),
       );
       expect(
-        document.nodes[2],
+        document.getNodeAt(2)!,
         isA<UpsellNode>(),
       );
       expect(
-        document.nodes[3],
+        document.getNodeAt(3)!,
         isA<ParagraphNode>(),
       );
     });
@@ -52,25 +52,25 @@ This is another normal paragraph.''',
         customElementToNodeConverters: [CalloutElementToNodeConverter()],
       );
 
-      expect(document.nodes.length, 4);
+      expect(document.nodeCount, 4);
       expect(
-        document.nodes[0],
+        document.getNodeAt(0)!,
         isA<ParagraphNode>(),
       );
       expect(
-        document.nodes[1],
+        document.getNodeAt(1)!,
         isA<ParagraphNode>(),
       );
       expect(
-        document.nodes[2],
+        document.getNodeAt(2)!,
         isA<ParagraphNode>(),
       );
       expect(
-        (document.nodes[2] as ParagraphNode).metadata["blockType"],
+        (document.getNodeAt(2)! as ParagraphNode).metadata["blockType"],
         const NamedAttribution("callout"),
       );
       expect(
-        document.nodes[3],
+        document.getNodeAt(3)!,
         isA<ParagraphNode>(),
       );
     });

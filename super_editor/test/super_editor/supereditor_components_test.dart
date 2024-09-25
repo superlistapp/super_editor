@@ -140,8 +140,7 @@ class HintTextComponentBuilder implements ComponentBuilder {
       ),
       textSelection: textSelection,
       selectionColor: componentViewModel.selectionColor,
-      composingRegion: componentViewModel.composingRegion,
-      showComposingUnderline: componentViewModel.showComposingUnderline,
+      underlines: componentViewModel.createUnderlines(),
     );
   }
 }
@@ -164,7 +163,7 @@ Future<void> _pumpImageTestApp(
                 width: double.infinity,
               ).toMetadata(),
             ),
-            ...longTextDoc().nodes,
+            ...longTextDoc(),
           ],
         ),
       )

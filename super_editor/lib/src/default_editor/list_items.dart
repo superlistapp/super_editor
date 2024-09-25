@@ -1,4 +1,5 @@
 import 'package:attributed_text/attributed_text.dart';
+import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:super_editor/src/core/document_composer.dart';
@@ -10,6 +11,7 @@ import 'package:super_editor/src/default_editor/blocks/indentation.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/attributed_text_styles.dart';
 import 'package:super_editor/src/infrastructure/keyboard.dart';
+import 'package:super_text_layout/super_text_layout.dart';
 
 import '../core/document.dart';
 import 'layout_single_column/layout_single_column.dart';
@@ -135,6 +137,10 @@ class ListItemComponentBuilder implements ComponentBuilder {
           text: node.text,
           textStyleBuilder: noStyleBuilder,
           selectionColor: const Color(0x00000000),
+          spellingErrors: node.text
+              .getAttributionSpansByFilter((a) => a == spellingErrorAttribution)
+              .map((a) => TextRange(start: a.start, end: a.end + 1)) // +1 because text range end is exclusive
+              .toList(),
         ),
       ListItemType.ordered => OrderedListItemComponentViewModel(
           nodeId: node.id,
@@ -143,6 +149,10 @@ class ListItemComponentBuilder implements ComponentBuilder {
           text: node.text,
           textStyleBuilder: noStyleBuilder,
           selectionColor: const Color(0x00000000),
+          spellingErrors: node.text
+              .getAttributionSpansByFilter((a) => a == spellingErrorAttribution)
+              .map((a) => TextRange(start: a.start, end: a.end + 1)) // +1 because text range end is exclusive
+              .toList(),
         ),
     };
   }
@@ -165,8 +175,7 @@ class ListItemComponentBuilder implements ComponentBuilder {
         textSelection: componentViewModel.selection,
         selectionColor: componentViewModel.selectionColor,
         highlightWhenEmpty: componentViewModel.highlightWhenEmpty,
-        composingRegion: componentViewModel.composingRegion,
-        showComposingUnderline: componentViewModel.showComposingUnderline,
+        underlines: componentViewModel.createUnderlines(),
       );
     } else if (componentViewModel is OrderedListItemComponentViewModel) {
       return OrderedListItemComponent(
@@ -179,8 +188,7 @@ class ListItemComponentBuilder implements ComponentBuilder {
         textSelection: componentViewModel.selection,
         selectionColor: componentViewModel.selectionColor,
         highlightWhenEmpty: componentViewModel.highlightWhenEmpty,
-        composingRegion: componentViewModel.composingRegion,
-        showComposingUnderline: componentViewModel.showComposingUnderline,
+        underlines: componentViewModel.createUnderlines(),
       );
     }
 
@@ -203,9 +211,17 @@ abstract class ListItemComponentViewModel extends SingleColumnLayoutComponentVie
     this.selection,
     required this.selectionColor,
     this.highlightWhenEmpty = false,
-    this.composingRegion,
-    this.showComposingUnderline = false,
-  }) : super(nodeId: nodeId, maxWidth: maxWidth, padding: padding);
+    TextRange? composingRegion,
+    bool showComposingRegionUnderline = false,
+    UnderlineStyle spellingErrorUnderlineStyle = const SquiggleUnderlineStyle(color: Color(0xFFFF0000)),
+    List<TextRange> spellingErrors = const <TextRange>[],
+  }) : super(nodeId: nodeId, maxWidth: maxWidth, padding: padding) {
+    this.composingRegion = composingRegion;
+    this.showComposingRegionUnderline = showComposingRegionUnderline;
+
+    this.spellingErrorUnderlineStyle = spellingErrorUnderlineStyle;
+    this.spellingErrors = spellingErrors;
+  }
 
   int indent;
 
@@ -223,10 +239,6 @@ abstract class ListItemComponentViewModel extends SingleColumnLayoutComponentVie
   Color selectionColor;
   @override
   bool highlightWhenEmpty;
-  @override
-  TextRange? composingRegion;
-  @override
-  bool showComposingUnderline;
 
   @override
   bool operator ==(Object other) =>
@@ -240,8 +252,11 @@ abstract class ListItemComponentViewModel extends SingleColumnLayoutComponentVie
           textDirection == other.textDirection &&
           selection == other.selection &&
           selectionColor == other.selectionColor &&
+          highlightWhenEmpty == other.highlightWhenEmpty &&
+          spellingErrorUnderlineStyle == other.spellingErrorUnderlineStyle &&
+          const DeepCollectionEquality().equals(spellingErrors, spellingErrors) &&
           composingRegion == other.composingRegion &&
-          showComposingUnderline == other.showComposingUnderline;
+          showComposingRegionUnderline == other.showComposingRegionUnderline;
 
   @override
   int get hashCode =>
@@ -252,7 +267,11 @@ abstract class ListItemComponentViewModel extends SingleColumnLayoutComponentVie
       textDirection.hashCode ^
       selection.hashCode ^
       selectionColor.hashCode ^
-      composingRegion.hashCode;
+      highlightWhenEmpty.hashCode ^
+      spellingErrorUnderlineStyle.hashCode ^
+      spellingErrors.hashCode ^
+      composingRegion.hashCode ^
+      showComposingRegionUnderline.hashCode;
 }
 
 class UnorderedListItemComponentViewModel extends ListItemComponentViewModel {
@@ -270,18 +289,20 @@ class UnorderedListItemComponentViewModel extends ListItemComponentViewModel {
     required super.selectionColor,
     super.highlightWhenEmpty = false,
     super.composingRegion,
-    super.showComposingUnderline = false,
+    super.showComposingRegionUnderline = false,
+    super.spellingErrorUnderlineStyle,
+    super.spellingErrors,
   });
 
-  ListItemDotStyle dotStyle = const ListItemDotStyle();
+  ListItemDotStyle dotStyle;
 
   @override
   void applyStyles(Map<String, dynamic> styles) {
     super.applyStyles(styles);
-    dotStyle = ListItemDotStyle(
+    dotStyle = dotStyle.copyWith(
       color: styles[Styles.dotColor],
-      shape: styles[Styles.dotShape] ?? BoxShape.circle,
-      size: styles[Styles.dotSize] ?? const Size(4, 4),
+      shape: styles[Styles.dotShape],
+      size: styles[Styles.dotSize],
     );
   }
 
@@ -299,7 +320,9 @@ class UnorderedListItemComponentViewModel extends ListItemComponentViewModel {
       selection: selection,
       selectionColor: selectionColor,
       composingRegion: composingRegion,
-      showComposingUnderline: showComposingUnderline,
+      showComposingRegionUnderline: showComposingRegionUnderline,
+      spellingErrorUnderlineStyle: spellingErrorUnderlineStyle,
+      spellingErrors: List.from(spellingErrors),
     );
   }
 
@@ -331,7 +354,9 @@ class OrderedListItemComponentViewModel extends ListItemComponentViewModel {
     required super.selectionColor,
     super.highlightWhenEmpty = false,
     super.composingRegion,
-    super.showComposingUnderline = false,
+    super.showComposingRegionUnderline = false,
+    super.spellingErrorUnderlineStyle,
+    super.spellingErrors,
   });
 
   final int? ordinalValue;
@@ -340,7 +365,7 @@ class OrderedListItemComponentViewModel extends ListItemComponentViewModel {
   @override
   void applyStyles(Map<String, dynamic> styles) {
     super.applyStyles(styles);
-    numeralStyle = styles[Styles.listNumeralStyle] ?? OrderedListNumeralStyle.arabic;
+    numeralStyle = styles[Styles.listNumeralStyle] ?? numeralStyle;
   }
 
   @override
@@ -358,7 +383,9 @@ class OrderedListItemComponentViewModel extends ListItemComponentViewModel {
       selection: selection,
       selectionColor: selectionColor,
       composingRegion: composingRegion,
-      showComposingUnderline: showComposingUnderline,
+      showComposingRegionUnderline: showComposingRegionUnderline,
+      spellingErrorUnderlineStyle: spellingErrorUnderlineStyle,
+      spellingErrors: List.from(spellingErrors),
     );
   }
 
@@ -385,6 +412,20 @@ class ListItemDotStyle {
   final Color? color;
   final BoxShape shape;
   final Size size;
+
+  /// Returns a copy of this [ListItemDotStyle] with optional new values
+  /// for [color], [shape], and [size].
+  ListItemDotStyle copyWith({
+    Color? color,
+    BoxShape? shape,
+    Size? size,
+  }) {
+    return ListItemDotStyle(
+      color: color ?? this.color,
+      shape: shape ?? this.shape,
+      size: size ?? this.size,
+    );
+  }
 
   @override
   bool operator ==(Object other) =>
@@ -417,8 +458,7 @@ class UnorderedListItemComponent extends StatefulWidget {
     this.showCaret = false,
     this.caretColor = Colors.black,
     this.highlightWhenEmpty = false,
-    this.composingRegion,
-    this.showComposingUnderline = false,
+    this.underlines = const [],
     this.showDebugPaint = false,
   }) : super(key: key);
 
@@ -434,8 +474,9 @@ class UnorderedListItemComponent extends StatefulWidget {
   final bool showCaret;
   final Color caretColor;
   final bool highlightWhenEmpty;
-  final TextRange? composingRegion;
-  final bool showComposingUnderline;
+
+  final List<Underlines> underlines;
+
   final bool showDebugPaint;
 
   @override
@@ -492,8 +533,7 @@ class _UnorderedListItemComponentState extends State<UnorderedListItemComponent>
               textScaler: textScaler,
               selectionColor: widget.selectionColor,
               highlightWhenEmpty: widget.highlightWhenEmpty,
-              composingRegion: widget.composingRegion,
-              showComposingUnderline: widget.showComposingUnderline,
+              underlines: widget.underlines,
               showDebugPaint: widget.showDebugPaint,
             ),
           ),
@@ -581,8 +621,7 @@ class OrderedListItemComponent extends StatefulWidget {
     this.showCaret = false,
     this.caretColor = Colors.black,
     this.highlightWhenEmpty = false,
-    this.composingRegion,
-    this.showComposingUnderline = false,
+    this.underlines = const [],
     this.showDebugPaint = false,
   }) : super(key: key);
 
@@ -599,8 +638,9 @@ class OrderedListItemComponent extends StatefulWidget {
   final bool showCaret;
   final Color caretColor;
   final bool highlightWhenEmpty;
-  final TextRange? composingRegion;
-  final bool showComposingUnderline;
+
+  final List<Underlines> underlines;
+
   final bool showDebugPaint;
 
   @override
@@ -658,8 +698,7 @@ class _OrderedListItemComponentState extends State<OrderedListItemComponent> {
               textScaler: textScaler,
               selectionColor: widget.selectionColor,
               highlightWhenEmpty: widget.highlightWhenEmpty,
-              composingRegion: widget.composingRegion,
-              showComposingUnderline: widget.showComposingUnderline,
+              underlines: widget.underlines,
               showDebugPaint: widget.showDebugPaint,
             ),
           ),
@@ -837,7 +876,7 @@ class IndentListItemCommand extends EditCommand {
 
   @override
   void execute(EditContext context, CommandExecutor executor) {
-    final document = context.find<MutableDocument>(Editor.documentKey);
+    final document = context.document;
     final node = document.getNodeById(nodeId);
     final listItem = node as ListItemNode;
     if (listItem.indent >= 6) {
@@ -875,7 +914,7 @@ class UnIndentListItemCommand extends EditCommand {
 
   @override
   void execute(EditContext context, CommandExecutor executor) {
-    final document = context.find<MutableDocument>(Editor.documentKey);
+    final document = context.document;
     final node = document.getNodeById(nodeId);
     final listItem = node as ListItemNode;
     if (listItem.indent > 0) {
@@ -922,7 +961,7 @@ class ConvertListItemToParagraphCommand extends EditCommand {
 
   @override
   void execute(EditContext context, CommandExecutor executor) {
-    final document = context.find<MutableDocument>(Editor.documentKey);
+    final document = context.document;
     final node = document.getNodeById(nodeId);
     final listItem = node as ListItemNode;
     final newMetadata = Map<String, dynamic>.from(paragraphMetadata ?? {});
@@ -969,7 +1008,7 @@ class ConvertParagraphToListItemCommand extends EditCommand {
 
   @override
   void execute(EditContext context, CommandExecutor executor) {
-    final document = context.find<MutableDocument>(Editor.documentKey);
+    final document = context.document;
     final node = document.getNodeById(nodeId);
     final paragraphNode = node as ParagraphNode;
 
@@ -1012,7 +1051,7 @@ class ChangeListItemTypeCommand extends EditCommand {
 
   @override
   void execute(EditContext context, CommandExecutor executor) {
-    final document = context.find<MutableDocument>(Editor.documentKey);
+    final document = context.document;
     final existingListItem = document.getNodeById(nodeId) as ListItemNode;
 
     final newListItemNode = ListItemNode(
@@ -1058,7 +1097,7 @@ class SplitListItemCommand extends EditCommand {
 
   @override
   void execute(EditContext context, CommandExecutor executor) {
-    final document = context.find<MutableDocument>(Editor.documentKey);
+    final document = context.document;
     final composer = context.find<MutableDocumentComposer>(Editor.composerKey);
 
     final node = document.getNodeById(nodeId);

@@ -66,8 +66,6 @@ class _MarkdownSerializationDemoState extends State<MarkdownSerializationDemo> {
             child: SuperEditor(
               key: _docKey,
               editor: _docEditor,
-              document: _doc,
-              composer: _composer,
               componentBuilders: [
                 TaskComponentBuilder(_docEditor),
                 ...defaultComponentBuilders,

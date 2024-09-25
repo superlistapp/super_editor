@@ -22,7 +22,7 @@ void main() {
         ).pump();
 
         // Place caret at the beginning of the paragraph.
-        await tester.placeCaretInParagraph(context.findEditContext().document.nodes.first.id, 0);
+        await tester.placeCaretInParagraph(context.findEditContext().document.first.id, 0);
 
         // Insert the image at the current selection.
         context.findEditContext().commonOps.insertImage('http://image.fake');
@@ -31,21 +31,21 @@ void main() {
         final doc = SuperEditorInspector.findDocument()!;
 
         // Ensure that one node was inserted.
-        expect(doc.nodes.length, 2);
+        expect(doc.nodeCount, 2);
 
         // Ensure that the image was added.
-        expect(doc.nodes[0], isA<ImageNode>());
+        expect(doc.getNodeAt(0)!, isA<ImageNode>());
 
         // Ensure that the paragraph node content remains unchanged, but is moved down.
-        expect(doc.nodes[1], isA<ParagraphNode>());
-        expect((doc.nodes[1] as ParagraphNode).text.text, 'First paragraph');
+        expect(doc.getNodeAt(1)!, isA<ParagraphNode>());
+        expect((doc.getNodeAt(1)! as ParagraphNode).text.text, 'First paragraph');
 
         // Ensure the selection was placed at the beginning of the paragraph.
         expect(
           SuperEditorInspector.findDocumentSelection(),
           DocumentSelection.collapsed(
             position: DocumentPosition(
-              nodeId: doc.nodes[1].id,
+              nodeId: doc.getNodeAt(1)!.id,
               nodePosition: const TextNodePosition(offset: 0),
             ),
           ),
@@ -61,7 +61,7 @@ void main() {
         ).pump();
 
         // Place caret at "Before the image| after the image".
-        await tester.placeCaretInParagraph(context.findEditContext().document.nodes.first.id, 16);
+        await tester.placeCaretInParagraph(context.findEditContext().document.first.id, 16);
 
         // Insert the image at the current selection.
         context.findEditContext().commonOps.insertImage('http://image.fake');
@@ -70,25 +70,25 @@ void main() {
         final doc = SuperEditorInspector.findDocument()!;
 
         // Ensure that two nodes were inserted.
-        expect(doc.nodes.length, 3);
+        expect(doc.nodeCount, 3);
 
         // Ensure that the first node has the text from before the caret.
-        expect(doc.nodes[0], isA<ParagraphNode>());
-        expect((doc.nodes[0] as ParagraphNode).text.text, 'Before the image');
+        expect(doc.getNodeAt(0)!, isA<ParagraphNode>());
+        expect((doc.getNodeAt(0)! as ParagraphNode).text.text, 'Before the image');
 
         // Ensure that the image was added.
-        expect(doc.nodes[1], isA<ImageNode>());
+        expect(doc.getNodeAt(1)!, isA<ImageNode>());
 
         // Ensure that the last node has the text from after the caret.
-        expect(doc.nodes[2], isA<ParagraphNode>());
-        expect((doc.nodes[2] as ParagraphNode).text.text, ' after the image');
+        expect(doc.getNodeAt(2)!, isA<ParagraphNode>());
+        expect((doc.getNodeAt(2)! as ParagraphNode).text.text, ' after the image');
 
         // Ensure the selection was placed at the beginning of the last paragraph.
         expect(
           SuperEditorInspector.findDocumentSelection(),
           DocumentSelection.collapsed(
             position: DocumentPosition(
-              nodeId: doc.nodes.last.id,
+              nodeId: doc.last.id,
               nodePosition: const TextNodePosition(offset: 0),
             ),
           ),
@@ -105,7 +105,7 @@ void main() {
         ).pump();
 
         // Place caret at the end of the paragraph.
-        await tester.placeCaretInParagraph(context.findEditContext().document.nodes.first.id, 15);
+        await tester.placeCaretInParagraph(context.findEditContext().document.first.id, 15);
 
         // Insert the image at the current selection.
         context.findEditContext().commonOps.insertImage('http://image.fake');
@@ -114,25 +114,25 @@ void main() {
         final doc = SuperEditorInspector.findDocument()!;
 
         // Ensure that two nodes were inserted.
-        expect(doc.nodes.length, 3);
+        expect(doc.nodeCount, 3);
 
         // Ensure that the first node remains unchanged.
-        expect(doc.nodes[0], isA<ParagraphNode>());
-        expect((doc.nodes[0] as ParagraphNode).text.text, 'First paragraph');
+        expect(doc.getNodeAt(0)!, isA<ParagraphNode>());
+        expect((doc.getNodeAt(0)! as ParagraphNode).text.text, 'First paragraph');
 
         // Ensure that the image was added.
-        expect(doc.nodes[1], isA<ImageNode>());
+        expect(doc.getNodeAt(1)!, isA<ImageNode>());
 
         // Ensure that an empty node was added after the image.
-        expect(doc.nodes[2], isA<ParagraphNode>());
-        expect((doc.nodes[2] as ParagraphNode).text.text, '');
+        expect(doc.getNodeAt(2)!, isA<ParagraphNode>());
+        expect((doc.getNodeAt(2)! as ParagraphNode).text.text, '');
 
         // Ensure the selection was placed at the beginning of the last paragraph.
         expect(
           SuperEditorInspector.findDocumentSelection(),
           DocumentSelection.collapsed(
             position: DocumentPosition(
-              nodeId: doc.nodes.last.id,
+              nodeId: doc.last.id,
               nodePosition: const TextNodePosition(offset: 0),
             ),
           ),
@@ -153,7 +153,7 @@ Second paragraph"""). //
         // Place caret at the end of the first paragraph by selecting the second paragraph and pressing left.
         //
         // This results in an upstream text affinity.
-        await tester.placeCaretInParagraph(context.findEditContext().document.nodes.last.id, 0);
+        await tester.placeCaretInParagraph(context.findEditContext().document.last.id, 0);
         await tester.pressLeftArrow();
 
         // Insert the image at the current selection.
@@ -163,25 +163,25 @@ Second paragraph"""). //
         final doc = SuperEditorInspector.findDocument()!;
 
         // Ensure that two nodes were inserted.
-        expect(doc.nodes.length, 4);
+        expect(doc.nodeCount, 4);
 
         // Ensure that the first node remains unchanged.
-        expect(doc.nodes[0], isA<ParagraphNode>());
-        expect((doc.nodes[0] as ParagraphNode).text.text, 'First paragraph');
+        expect(doc.getNodeAt(0)!, isA<ParagraphNode>());
+        expect((doc.getNodeAt(0)! as ParagraphNode).text.text, 'First paragraph');
 
         // Ensure that the image was added.
-        expect(doc.nodes[1], isA<ImageNode>());
+        expect(doc.getNodeAt(1)!, isA<ImageNode>());
 
         // Ensure that an empty node was added after the image.
-        expect(doc.nodes[2], isA<ParagraphNode>());
-        expect((doc.nodes[2] as ParagraphNode).text.text, '');
+        expect(doc.getNodeAt(2)!, isA<ParagraphNode>());
+        expect((doc.getNodeAt(2)! as ParagraphNode).text.text, '');
 
         // Ensure the selection was placed at the beginning of the newly created paragraph.
         expect(
           SuperEditorInspector.findDocumentSelection(),
           DocumentSelection.collapsed(
             position: DocumentPosition(
-              nodeId: doc.nodes[2].id,
+              nodeId: doc.getNodeAt(2)!.id,
               nodePosition: const TextNodePosition(offset: 0),
             ),
           ),
@@ -207,21 +207,21 @@ Second paragraph"""). //
         final doc = SuperEditorInspector.findDocument()!;
 
         // Ensure that one node was inserted.
-        expect(doc.nodes.length, 2);
+        expect(doc.nodeCount, 2);
 
         // Ensure that the paragraph was converted to an image.
-        expect(doc.nodes.first, isA<ImageNode>());
+        expect(doc.first, isA<ImageNode>());
 
         // Ensure that an empty node was added after the image.
-        expect(doc.nodes[1], isA<ParagraphNode>());
-        expect((doc.nodes[1] as ParagraphNode).text.text, '');
+        expect(doc.getNodeAt(1)!, isA<ParagraphNode>());
+        expect((doc.getNodeAt(1)! as ParagraphNode).text.text, '');
 
         // Ensure the selection was placed at the empty paragraph.
         expect(
           SuperEditorInspector.findDocumentSelection(),
           DocumentSelection.collapsed(
             position: DocumentPosition(
-              nodeId: doc.nodes[1].id,
+              nodeId: doc.getNodeAt(1)!.id,
               nodePosition: const TextNodePosition(offset: 0),
             ),
           ),
@@ -237,7 +237,7 @@ Second paragraph"""). //
             .pump();
 
         // Place caret at the beginning of the paragraph.
-        await tester.placeCaretInParagraph(context.findEditContext().document.nodes.first.id, 0);
+        await tester.placeCaretInParagraph(context.findEditContext().document.first.id, 0);
 
         // Insert the horizontal rule at the current selection.
         context.findEditContext().commonOps.insertHorizontalRule();
@@ -246,21 +246,21 @@ Second paragraph"""). //
         final doc = SuperEditorInspector.findDocument()!;
 
         // Ensure that one node was inserted.
-        expect(doc.nodes.length, 2);
+        expect(doc.nodeCount, 2);
 
         // Ensure that the horizontal rule was added.
-        expect(doc.nodes[0], isA<HorizontalRuleNode>());
+        expect(doc.getNodeAt(0)!, isA<HorizontalRuleNode>());
 
         // Ensure that the paragraph node content remains unchanged, but is moved down.
-        expect(doc.nodes[1], isA<ParagraphNode>());
-        expect((doc.nodes[1] as ParagraphNode).text.text, 'First paragraph');
+        expect(doc.getNodeAt(1)!, isA<ParagraphNode>());
+        expect((doc.getNodeAt(1)! as ParagraphNode).text.text, 'First paragraph');
 
         // Ensure the selection was placed at the beginning of the paragraph.
         expect(
           SuperEditorInspector.findDocumentSelection(),
           DocumentSelection.collapsed(
             position: DocumentPosition(
-              nodeId: doc.nodes[1].id,
+              nodeId: doc.getNodeAt(1)!.id,
               nodePosition: const TextNodePosition(offset: 0),
             ),
           ),
@@ -273,7 +273,7 @@ Second paragraph"""). //
             .pump();
 
         // Place caret at "Before the hr| after the hr".
-        await tester.placeCaretInParagraph(context.findEditContext().document.nodes.first.id, 13);
+        await tester.placeCaretInParagraph(context.findEditContext().document.first.id, 13);
 
         // Insert the horizontal rule at the current selection.
         context.findEditContext().commonOps.insertHorizontalRule();
@@ -282,25 +282,25 @@ Second paragraph"""). //
         final doc = SuperEditorInspector.findDocument()!;
 
         // Ensure that two nodes were inserted.
-        expect(doc.nodes.length, 3);
+        expect(doc.nodeCount, 3);
 
         // Ensure that the first node has the text from before the caret.
-        expect(doc.nodes[0], isA<ParagraphNode>());
-        expect((doc.nodes[0] as ParagraphNode).text.text, 'Before the hr');
+        expect(doc.getNodeAt(0)!, isA<ParagraphNode>());
+        expect((doc.getNodeAt(0)! as ParagraphNode).text.text, 'Before the hr');
 
         // Ensure that the horizontal rule was added.
-        expect(doc.nodes[1], isA<HorizontalRuleNode>());
+        expect(doc.getNodeAt(1)!, isA<HorizontalRuleNode>());
 
         // Ensure that the last node has the text from after the caret.
-        expect(doc.nodes[2], isA<ParagraphNode>());
-        expect((doc.nodes[2] as ParagraphNode).text.text, ' after the hr');
+        expect(doc.getNodeAt(2)!, isA<ParagraphNode>());
+        expect((doc.getNodeAt(2)! as ParagraphNode).text.text, ' after the hr');
 
         // Ensure the selection was placed at the beginning of the last paragraph.
         expect(
           SuperEditorInspector.findDocumentSelection(),
           DocumentSelection.collapsed(
             position: DocumentPosition(
-              nodeId: doc.nodes.last.id,
+              nodeId: doc.last.id,
               nodePosition: const TextNodePosition(offset: 0),
             ),
           ),
@@ -314,7 +314,7 @@ Second paragraph"""). //
             .pump();
 
         // Place caret at the end of the paragraph.
-        await tester.placeCaretInParagraph(context.findEditContext().document.nodes.first.id, 15);
+        await tester.placeCaretInParagraph(context.findEditContext().document.first.id, 15);
 
         // Insert the horizontal rule at the current selection.
         context.findEditContext().commonOps.insertHorizontalRule();
@@ -323,25 +323,25 @@ Second paragraph"""). //
         final doc = SuperEditorInspector.findDocument()!;
 
         // Ensure that two nodes were inserted.
-        expect(doc.nodes.length, 3);
+        expect(doc.nodeCount, 3);
 
         // Ensure that the first node remains unchanged.
-        expect(doc.nodes[0], isA<ParagraphNode>());
-        expect((doc.nodes[0] as ParagraphNode).text.text, 'First paragraph');
+        expect(doc.getNodeAt(0)!, isA<ParagraphNode>());
+        expect((doc.getNodeAt(0)! as ParagraphNode).text.text, 'First paragraph');
 
         // Ensure that the horizontal rule was added.
-        expect(doc.nodes[1], isA<HorizontalRuleNode>());
+        expect(doc.getNodeAt(1)!, isA<HorizontalRuleNode>());
 
         // Ensure that an empty node was added at the end.
-        expect(doc.nodes[2], isA<ParagraphNode>());
-        expect((doc.nodes[2] as ParagraphNode).text.text, '');
+        expect(doc.getNodeAt(2)!, isA<ParagraphNode>());
+        expect((doc.getNodeAt(2)! as ParagraphNode).text.text, '');
 
         // Ensure the selection was placed at the beginning of the last paragraph.
         expect(
           SuperEditorInspector.findDocumentSelection(),
           DocumentSelection.collapsed(
             position: DocumentPosition(
-              nodeId: doc.nodes.last.id,
+              nodeId: doc.last.id,
               nodePosition: const TextNodePosition(offset: 0),
             ),
           ),
@@ -359,7 +359,7 @@ Second paragraph"""). //
         // Place caret at the end of the first paragraph by selecting the second paragraph and pressing left.
         //
         // This results in an upstream text affinity.
-        await tester.placeCaretInParagraph(context.findEditContext().document.nodes.last.id, 0);
+        await tester.placeCaretInParagraph(context.findEditContext().document.last.id, 0);
         await tester.pressLeftArrow();
 
         // Insert the horizontal rule at the current selection.
@@ -369,25 +369,25 @@ Second paragraph"""). //
         final doc = SuperEditorInspector.findDocument()!;
 
         // Ensure that two nodes were inserted.
-        expect(doc.nodes.length, 4);
+        expect(doc.nodeCount, 4);
 
         // Ensure that the first node remains unchanged.
-        expect(doc.nodes[0], isA<ParagraphNode>());
-        expect((doc.nodes[0] as ParagraphNode).text.text, 'First paragraph');
+        expect(doc.getNodeAt(0)!, isA<ParagraphNode>());
+        expect((doc.getNodeAt(0)! as ParagraphNode).text.text, 'First paragraph');
 
         // Ensure that the horizontal rule was added.
-        expect(doc.nodes[1], isA<HorizontalRuleNode>());
+        expect(doc.getNodeAt(1)!, isA<HorizontalRuleNode>());
 
         // Ensure that an empty node was added at the end.
-        expect(doc.nodes[2], isA<ParagraphNode>());
-        expect((doc.nodes[2] as ParagraphNode).text.text, '');
+        expect(doc.getNodeAt(2)!, isA<ParagraphNode>());
+        expect((doc.getNodeAt(2)! as ParagraphNode).text.text, '');
 
         // Ensure the selection was placed at the beginning of the newly created paragraph.
         expect(
           SuperEditorInspector.findDocumentSelection(),
           DocumentSelection.collapsed(
             position: DocumentPosition(
-              nodeId: doc.nodes[2].id,
+              nodeId: doc.getNodeAt(2)!.id,
               nodePosition: const TextNodePosition(offset: 0),
             ),
           ),
@@ -410,21 +410,21 @@ Second paragraph"""). //
         final doc = SuperEditorInspector.findDocument()!;
 
         // Ensure that one node was inserted.
-        expect(doc.nodes.length, 2);
+        expect(doc.nodeCount, 2);
 
         // Ensure the paragraph was converted to a horizontal rule.
-        expect(doc.nodes.first, isA<HorizontalRuleNode>());
+        expect(doc.first, isA<HorizontalRuleNode>());
 
         // Ensure that an empty node was added after the horizontal rule.
-        expect(doc.nodes[1], isA<ParagraphNode>());
-        expect((doc.nodes[1] as ParagraphNode).text.text, '');
+        expect(doc.getNodeAt(1)!, isA<ParagraphNode>());
+        expect((doc.getNodeAt(1)! as ParagraphNode).text.text, '');
 
         // Ensure that the selection was placed at the empty paragraph.
         expect(
           SuperEditorInspector.findDocumentSelection(),
           DocumentSelection.collapsed(
             position: DocumentPosition(
-              nodeId: doc.nodes[1].id,
+              nodeId: doc.getNodeAt(1)!.id,
               nodePosition: const TextNodePosition(offset: 0),
             ),
           ),
@@ -477,14 +477,14 @@ Second paragraph"""). //
 
         // Ensure an empty paragraph was inserted and the selection was placed on its beginning.
         final doc = testContext.findEditContext().document;
-        expect(doc.nodes.length, 3);
-        expect(doc.nodes[1], isA<ParagraphNode>());
-        expect((doc.nodes[1] as ParagraphNode).text.text, '');
+        expect(doc.nodeCount, 3);
+        expect(doc.getNodeAt(1)!, isA<ParagraphNode>());
+        expect((doc.getNodeAt(1)! as ParagraphNode).text.text, '');
         expect(
           SuperEditorInspector.findDocumentSelection(),
           DocumentSelection.collapsed(
             position: DocumentPosition(
-              nodeId: testContext.findEditContext().document.nodes[1].id,
+              nodeId: testContext.findEditContext().document.getNodeAt(1)!.id,
               nodePosition: const TextNodePosition(offset: 0),
             ),
           ),
@@ -536,14 +536,14 @@ Second paragraph"""). //
 
         // Ensure an empty paragraph was inserted and the selection was placed on its beginning.
         final doc = testContext.findEditContext().document;
-        expect(doc.nodes.length, 3);
-        expect(doc.nodes[1], isA<ParagraphNode>());
-        expect((doc.nodes[1] as ParagraphNode).text.text, '');
+        expect(doc.nodeCount, 3);
+        expect(doc.getNodeAt(1)!, isA<ParagraphNode>());
+        expect((doc.getNodeAt(1)! as ParagraphNode).text.text, '');
         expect(
           SuperEditorInspector.findDocumentSelection(),
           DocumentSelection.collapsed(
             position: DocumentPosition(
-              nodeId: testContext.findEditContext().document.nodes[1].id,
+              nodeId: testContext.findEditContext().document.getNodeAt(1)!.id,
               nodePosition: const TextNodePosition(offset: 0),
             ),
           ),
@@ -595,14 +595,14 @@ Second paragraph"""). //
 
         // Ensure an empty paragraph was inserted and the selection was placed on its beginning.
         final doc = testContext.findEditContext().document;
-        expect(doc.nodes.length, 3);
-        expect(doc.nodes[1], isA<ParagraphNode>());
-        expect((doc.nodes[1] as ParagraphNode).text.text, '');
+        expect(doc.nodeCount, 3);
+        expect(doc.getNodeAt(1)!, isA<ParagraphNode>());
+        expect((doc.getNodeAt(1)! as ParagraphNode).text.text, '');
         expect(
           SuperEditorInspector.findDocumentSelection(),
           DocumentSelection.collapsed(
             position: DocumentPosition(
-              nodeId: testContext.findEditContext().document.nodes[1].id,
+              nodeId: testContext.findEditContext().document.getNodeAt(1)!.id,
               nodePosition: const TextNodePosition(offset: 0),
             ),
           ),

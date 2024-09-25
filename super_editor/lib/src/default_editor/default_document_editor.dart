@@ -15,6 +15,7 @@ Editor createDefaultDocumentEditor({
   required MutableDocument document,
   required MutableDocumentComposer composer,
   HistoryGroupingPolicy historyGroupingPolicy = defaultMergePolicy,
+  bool isHistoryEnabled = false,
 }) {
   final editor = Editor(
     editables: {
@@ -24,6 +25,7 @@ Editor createDefaultDocumentEditor({
     requestHandlers: List.from(defaultRequestHandlers),
     historyGroupingPolicy: historyGroupingPolicy,
     reactionPipeline: List.from(defaultEditorReactions),
+    isHistoryEnabled: isHistoryEnabled,
   );
 
   return editor;

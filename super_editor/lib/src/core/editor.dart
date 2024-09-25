@@ -58,6 +58,7 @@ class Editor implements RequestDispatcher {
     this.historyGroupingPolicy = neverMergePolicy,
     List<EditReaction>? reactionPipeline,
     List<EditListener>? listeners,
+    this.isHistoryEnabled = false,
   })  : requestHandlers = requestHandlers ?? [],
         reactionPipeline = reactionPipeline ?? [],
         _changeListeners = listeners ?? [] {
@@ -76,6 +77,12 @@ class Editor implements RequestDispatcher {
   /// Service Locator that provides all resources that are relevant for document editing.
   late final EditContext context;
 
+  /// Whether history tracking (and undo/redo) are enabled.
+  ///
+  /// When [isHistoryEnabled] is `false`, undo/redo is disabled, calling [undo] and [redo]
+  /// will have no effect, and [history] and [future] are always empty.
+  final bool isHistoryEnabled;
+
   /// Policies that determine when a new transaction of changes should be combined with the
   /// previous transaction, impacting what is undone by undo.
   final HistoryGroupingPolicy historyGroupingPolicy;
@@ -83,9 +90,17 @@ class Editor implements RequestDispatcher {
   /// Executes [EditCommand]s and collects a list of changes.
   late final _DocumentEditorCommandExecutor _commandExecutor;
 
+  /// A list of editor transactions that were run previously, leading to the current
+  /// state of the document, and other editables.
   List<CommandTransaction> get history => List.from(_history);
   final _history = <CommandTransaction>[];
 
+  /// A list of editor transactions that were undone since the last time a change was
+  /// made.
+  ///
+  /// As soon as a new change is made through the editor, the [future] list is cleared
+  /// out, because the editor no longer knows if the [future] changes can be applied
+  /// to the document and other editables.
   List<CommandTransaction> get future => List.from(_future);
   final _future = <CommandTransaction>[];
 
@@ -173,7 +188,7 @@ class Editor implements RequestDispatcher {
       return;
     }
 
-    if (_transaction!.commands.isNotEmpty) {
+    if (_transaction!.commands.isNotEmpty && isHistoryEnabled) {
       if (_history.isEmpty) {
         // Add this transaction onto the history stack.
         _history.add(_transaction!);
@@ -342,7 +357,7 @@ class Editor implements RequestDispatcher {
       reaction.react(context, this, _activeChangeList!);
     }
 
-    if (_transaction!.commands.isNotEmpty) {
+    if (_transaction!.commands.isNotEmpty && isHistoryEnabled) {
       _history.add(_transaction!);
     }
 
@@ -354,6 +369,11 @@ class Editor implements RequestDispatcher {
   }
 
   void undo() {
+    if (!isHistoryEnabled) {
+      // History is disabled, therefore undo/redo are disabled.
+      return;
+    }
+
     editorEditsLog.info("Running undo");
     if (_history.isEmpty) {
       return;
@@ -390,7 +410,6 @@ class Editor implements RequestDispatcher {
     final changeEvents = <EditEvent>[];
     for (final commandTransaction in _history) {
       for (final command in commandTransaction.commands) {
-        editorEditsLog.finer("Executing command: ${command.runtimeType}");
         // We re-run the commands without tracking changes and without running reactions
         // because any relevant reactions should have run the first time around, and already
         // submitted their commands.
@@ -412,6 +431,11 @@ class Editor implements RequestDispatcher {
   }
 
   void redo() {
+    if (!isHistoryEnabled) {
+      // History is disabled, therefore undo/redo are disabled.
+      return;
+    }
+
     editorEditsLog.info("Running redo");
     if (_future.isEmpty) {
       return;
@@ -631,7 +655,7 @@ class MergeRapidTextInputPolicy implements HistoryGroupingPolicy {
       return TransactionMerge.noOpinion;
     }
 
-    if (newTransaction.firstChangeTime.difference(previousTransaction.lastChangeTime!) > _maxMergeTime) {
+    if (newTransaction.firstChangeTime.difference(previousTransaction.lastChangeTime) > _maxMergeTime) {
       // The text insertions were far enough apart in time that we don't want to merge them.
       return TransactionMerge.noOpinion;
     }
@@ -988,8 +1012,52 @@ class FunctionalEditListener implements EditListener {
   void onEdit(List<EditEvent> changeList) => _onEdit(changeList);
 }
 
+/// Extensions that provide direct, type-safe access to [Editable]s that are
+/// expected to exist in all [Editor]s.
+///
+/// This extension is similar to [StandardEditablesInContext], except this extension
+/// operates on an [Editor] and the other operates on [EditContext]s. Both exist
+/// for convenience.
+extension StandardEditables on Editor {
+  /// Finds and returns the [MutableDocument] within the [Editor].
+  MutableDocument get document => context.find<MutableDocument>(Editor.documentKey);
+
+  /// Finds and returns the [MutableDocument] within the [Editor], or `null` if no [MutableDocument]
+  /// is in the [Editor].
+  MutableDocument? get maybeDocument => context.findMaybe<MutableDocument>(Editor.documentKey);
+
+  /// Finds and returns the [MutableDocumentComposer] within the [Editor].
+  MutableDocumentComposer get composer => context.find<MutableDocumentComposer>(Editor.composerKey);
+
+  /// Finds and returns the [MutableDocumentComposer] within the [Editor], or `null` if no
+  /// [MutableDocumentComposer] is in the [Editor].
+  MutableDocumentComposer? get maybeComposer => context.findMaybe<MutableDocumentComposer>(Editor.composerKey);
+}
+
+/// Extensions that provide direct, type-safe access to [Editable]s that are
+/// expected to exist in all [EditContext]s.
+///
+/// This extension is similar to [StandardEditables], except this extension
+/// operates on an [EditContext] and the other operates on [Editor]s. Both exist
+/// for convenience.
+extension StandardEditablesInContext on EditContext {
+  /// Finds and returns the [MutableDocument] within the [EditContext].
+  MutableDocument get document => find<MutableDocument>(Editor.documentKey);
+
+  /// Finds and returns the [MutableDocument] within the [EditContext], or `null` if no [MutableDocument]
+  /// is in the [EditContext].
+  MutableDocument? get maybeDocument => findMaybe<MutableDocument>(Editor.documentKey);
+
+  /// Finds and returns the [MutableDocumentComposer] within the [EditContext].
+  MutableDocumentComposer get composer => find<MutableDocumentComposer>(Editor.composerKey);
+
+  /// Finds and returns the [MutableDocumentComposer] within the [EditContext], or `null` if no
+  /// [MutableDocumentComposer] is in the [EditContext].
+  MutableDocumentComposer? get maybeComposer => findMaybe<MutableDocumentComposer>(Editor.composerKey);
+}
+
 /// An in-memory, mutable [Document].
-class MutableDocument implements Document, Editable {
+class MutableDocument with Iterable<DocumentNode> implements Document, Editable {
   /// Creates an in-memory, mutable version of a [Document].
   ///
   /// Initializes the content of this [MutableDocument] with the given [nodes],
@@ -1026,7 +1094,10 @@ class MutableDocument implements Document, Editable {
   final List<DocumentNode> _nodes;
 
   @override
-  List<DocumentNode> get nodes => UnmodifiableListView(_nodes);
+  int get nodeCount => _nodes.length;
+
+  @override
+  bool get isEmpty => _nodes.isEmpty;
 
   /// Maps a node id to its index in the node list.
   final Map<String, int> _nodeIndicesById = {};
@@ -1035,6 +1106,15 @@ class MutableDocument implements Document, Editable {
   final Map<String, DocumentNode> _nodesById = {};
 
   final _listeners = <DocumentChangeListener>[];
+
+  @override
+  Iterator<DocumentNode> get iterator => _nodes.iterator;
+
+  @override
+  DocumentNode? get firstOrNull => _nodes.firstOrNull;
+
+  @override
+  DocumentNode? get lastOrNull => _nodes.lastOrNull;
 
   @override
   DocumentNode? getNodeById(String nodeId) {
@@ -1206,13 +1286,12 @@ class MutableDocument implements Document, Editable {
   /// ignores the runtime type of the [Document], itself.
   @override
   bool hasEquivalentContent(Document other) {
-    final otherNodes = other.nodes;
-    if (_nodes.length != otherNodes.length) {
+    if (_nodes.length != other.nodeCount) {
       return false;
     }
 
     for (int i = 0; i < _nodes.length; ++i) {
-      if (!_nodes[i].hasEquivalentContent(otherNodes[i])) {
+      if (!_nodes[i].hasEquivalentContent(other.getNodeAt(i)!)) {
         return false;
       }
     }
@@ -1277,7 +1356,7 @@ class MutableDocument implements Document, Editable {
       identical(this, other) ||
       other is MutableDocument &&
           runtimeType == other.runtimeType &&
-          const DeepCollectionEquality().equals(_nodes, other.nodes);
+          const DeepCollectionEquality().equals(_nodes, other._nodes);
 
   @override
   int get hashCode => _nodes.hashCode;

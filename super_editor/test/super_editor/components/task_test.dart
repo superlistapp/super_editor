@@ -22,21 +22,21 @@ void main() {
       await _pumpScaffold(tester, document: document);
 
       // Ensure the task isn't checked.
-      expect((document.nodes.first as TaskNode).isComplete, false);
+      expect((document.first as TaskNode).isComplete, false);
       expect(TaskInspector.isChecked("1"), false);
 
       // Tap to check the box.
       await tester.tapOnCheckbox("1");
 
       // Ensure the task is checked.
-      expect((document.nodes.first as TaskNode).isComplete, true);
+      expect((document.first as TaskNode).isComplete, true);
       expect(TaskInspector.isChecked("1"), true);
 
       // Tap to uncheck the box.
       await tester.tapOnCheckbox("1");
 
       // Ensure the task isn't checked.
-      expect((document.nodes.first as TaskNode).isComplete, false);
+      expect((document.first as TaskNode).isComplete, false);
       expect(TaskInspector.isChecked("1"), false);
     });
 
@@ -52,9 +52,9 @@ void main() {
       editor.execute([const ConvertParagraphToTaskRequest(nodeId: "1")]);
 
       // Ensure the node is now a task.
-      expect(document.nodes.length, 1);
-      expect(document.nodes.first, isA<TaskNode>());
-      expect((document.nodes.first as TaskNode).text.text, "This will be a task");
+      expect(document.nodeCount, 1);
+      expect(document.first, isA<TaskNode>());
+      expect((document.first as TaskNode).text.text, "This will be a task");
     });
 
     group("inserts", () {
@@ -74,16 +74,16 @@ void main() {
         await tester.pressEnter();
 
         // Ensure that a new, empty task was created.
-        expect(document.nodes.length, 2);
-        expect(document.nodes.first, isA<TaskNode>());
-        expect((document.nodes.first as TaskNode).text.text, "This is a task");
-        expect(document.nodes.last, isA<TaskNode>());
-        expect((document.nodes.last as TaskNode).text.text, "");
+        expect(document.nodeCount, 2);
+        expect(document.first, isA<TaskNode>());
+        expect((document.first as TaskNode).text.text, "This is a task");
+        expect(document.last, isA<TaskNode>());
+        expect((document.last as TaskNode).text.text, "");
         expect(
           SuperEditorInspector.findDocumentSelection(),
           DocumentSelection.collapsed(
             position: DocumentPosition(
-              nodeId: document.nodes.last.id,
+              nodeId: document.last.id,
               nodePosition: const TextNodePosition(offset: 0),
             ),
           ),
@@ -109,16 +109,16 @@ void main() {
         await tester.pump();
 
         // Ensure that a new, empty task was created.
-        expect(document.nodes.length, 2);
-        expect(document.nodes.first, isA<TaskNode>());
-        expect((document.nodes.first as TaskNode).text.text, "This is a task");
-        expect(document.nodes.last, isA<TaskNode>());
-        expect((document.nodes.last as TaskNode).text.text, "");
+        expect(document.nodeCount, 2);
+        expect(document.first, isA<TaskNode>());
+        expect((document.first as TaskNode).text.text, "This is a task");
+        expect(document.last, isA<TaskNode>());
+        expect((document.last as TaskNode).text.text, "");
         expect(
           SuperEditorInspector.findDocumentSelection(),
           DocumentSelection.collapsed(
             position: DocumentPosition(
-              nodeId: document.nodes.last.id,
+              nodeId: document.last.id,
               nodePosition: const TextNodePosition(offset: 0),
             ),
           ),
@@ -141,16 +141,16 @@ void main() {
         await tester.typeImeText("\n");
 
         // Ensure that a new, empty task was created.
-        expect(document.nodes.length, 2);
-        expect(document.nodes.first, isA<TaskNode>());
-        expect((document.nodes.first as TaskNode).text.text, "This is a task");
-        expect(document.nodes.last, isA<TaskNode>());
-        expect((document.nodes.last as TaskNode).text.text, "");
+        expect(document.nodeCount, 2);
+        expect(document.first, isA<TaskNode>());
+        expect((document.first as TaskNode).text.text, "This is a task");
+        expect(document.last, isA<TaskNode>());
+        expect((document.last as TaskNode).text.text, "");
         expect(
           SuperEditorInspector.findDocumentSelection(),
           DocumentSelection.collapsed(
             position: DocumentPosition(
-              nodeId: document.nodes.last.id,
+              nodeId: document.last.id,
               nodePosition: const TextNodePosition(offset: 0),
             ),
           ),
@@ -173,16 +173,16 @@ void main() {
         await tester.testTextInput.receiveAction(TextInputAction.newline);
 
         // Ensure that a new, empty task was created.
-        expect(document.nodes.length, 2);
-        expect(document.nodes.first, isA<TaskNode>());
-        expect((document.nodes.first as TaskNode).text.text, "This is a task");
-        expect(document.nodes.last, isA<TaskNode>());
-        expect((document.nodes.last as TaskNode).text.text, "");
+        expect(document.nodeCount, 2);
+        expect(document.first, isA<TaskNode>());
+        expect((document.first as TaskNode).text.text, "This is a task");
+        expect(document.last, isA<TaskNode>());
+        expect((document.last as TaskNode).text.text, "");
         expect(
           SuperEditorInspector.findDocumentSelection(),
           DocumentSelection.collapsed(
             position: DocumentPosition(
-              nodeId: document.nodes.last.id,
+              nodeId: document.last.id,
               nodePosition: const TextNodePosition(offset: 0),
             ),
           ),
@@ -206,16 +206,16 @@ void main() {
         await tester.pressEnter();
 
         // Ensure that a new task was created with part of the previous task.
-        expect(document.nodes.length, 2);
-        expect(document.nodes.first, isA<TaskNode>());
-        expect((document.nodes.first as TaskNode).text.text, "This is ");
-        expect(document.nodes.last, isA<TaskNode>());
-        expect((document.nodes.last as TaskNode).text.text, "a task");
+        expect(document.nodeCount, 2);
+        expect(document.first, isA<TaskNode>());
+        expect((document.first as TaskNode).text.text, "This is ");
+        expect(document.last, isA<TaskNode>());
+        expect((document.last as TaskNode).text.text, "a task");
         expect(
           SuperEditorInspector.findDocumentSelection(),
           DocumentSelection.collapsed(
             position: DocumentPosition(
-              nodeId: document.nodes.last.id,
+              nodeId: document.last.id,
               nodePosition: const TextNodePosition(offset: 0),
             ),
           ),
@@ -237,16 +237,16 @@ void main() {
         await tester.typeImeText("\n");
 
         // Ensure that a new task was created with part of the previous task.
-        expect(document.nodes.length, 2);
-        expect(document.nodes.first, isA<TaskNode>());
-        expect((document.nodes.first as TaskNode).text.text, "This is ");
-        expect(document.nodes.last, isA<TaskNode>());
-        expect((document.nodes.last as TaskNode).text.text, "a task");
+        expect(document.nodeCount, 2);
+        expect(document.first, isA<TaskNode>());
+        expect((document.first as TaskNode).text.text, "This is ");
+        expect(document.last, isA<TaskNode>());
+        expect((document.last as TaskNode).text.text, "a task");
         expect(
           SuperEditorInspector.findDocumentSelection(),
           DocumentSelection.collapsed(
             position: DocumentPosition(
-              nodeId: document.nodes.last.id,
+              nodeId: document.last.id,
               nodePosition: const TextNodePosition(offset: 0),
             ),
           ),
@@ -268,16 +268,16 @@ void main() {
         await tester.testTextInput.receiveAction(TextInputAction.newline);
 
         // Ensure that a new task was created with part of the previous task.
-        expect(document.nodes.length, 2);
-        expect(document.nodes.first, isA<TaskNode>());
-        expect((document.nodes.first as TaskNode).text.text, "This is ");
-        expect(document.nodes.last, isA<TaskNode>());
-        expect((document.nodes.last as TaskNode).text.text, "a task");
+        expect(document.nodeCount, 2);
+        expect(document.first, isA<TaskNode>());
+        expect((document.first as TaskNode).text.text, "This is ");
+        expect(document.last, isA<TaskNode>());
+        expect((document.last as TaskNode).text.text, "a task");
         expect(
           SuperEditorInspector.findDocumentSelection(),
           DocumentSelection.collapsed(
             position: DocumentPosition(
-              nodeId: document.nodes.last.id,
+              nodeId: document.last.id,
               nodePosition: const TextNodePosition(offset: 0),
             ),
           ),
@@ -301,9 +301,9 @@ void main() {
         await tester.pressBackspace();
 
         // Ensure the task converted to a paragraph.
-        expect(document.nodes.length, 1);
-        expect(document.nodes.first, isA<ParagraphNode>());
-        expect((document.nodes.first as ParagraphNode).text.text, "This is a task");
+        expect(document.nodeCount, 1);
+        expect(document.first, isA<ParagraphNode>());
+        expect((document.first as ParagraphNode).text.text, "This is a task");
       });
 
       testWidgetsOnAllPlatforms(
@@ -334,9 +334,9 @@ void main() {
         ], getter: imeClientGetter);
 
         // Ensure the task converted to a paragraph.
-        expect(document.nodes.length, 1);
-        expect(document.nodes.first, isA<ParagraphNode>());
-        expect((document.nodes.first as ParagraphNode).text.text, "This is a task");
+        expect(document.nodeCount, 1);
+        expect(document.first, isA<ParagraphNode>());
+        expect((document.first as ParagraphNode).text.text, "This is a task");
       });
 
       testWidgetsOnAllPlatforms("task to paragraph when the user presses ENTER on an empty task", (tester) async {
@@ -351,9 +351,9 @@ void main() {
         final document = SuperEditorInspector.findDocument()!;
 
         // Ensure the task was converted to a paragraph.
-        expect(document.nodes.length, 1);
-        expect(document.nodes.first, isA<ParagraphNode>());
-        expect((document.nodes.first as ParagraphNode).text.text, "");
+        expect(document.nodeCount, 1);
+        expect(document.first, isA<ParagraphNode>());
+        expect((document.first as ParagraphNode).text.text, "");
       });
 
       testWidgetsOnAndroid("task to paragraph upon new line insertion on an empty task", (tester) async {
@@ -369,9 +369,9 @@ void main() {
         final document = SuperEditorInspector.findDocument()!;
 
         // Ensure the task was converted to a paragraph.
-        expect(document.nodes.length, 1);
-        expect(document.nodes.first, isA<ParagraphNode>());
-        expect((document.nodes.first as ParagraphNode).text.text, "");
+        expect(document.nodeCount, 1);
+        expect(document.first, isA<ParagraphNode>());
+        expect((document.first as ParagraphNode).text.text, "");
       });
 
       testWidgetsOnIos("task to paragraph new line input action on an empty task", (tester) async {
@@ -387,9 +387,9 @@ void main() {
         final document = SuperEditorInspector.findDocument()!;
 
         // Ensure the task was converted to a paragraph.
-        expect(document.nodes.length, 1);
-        expect(document.nodes.first, isA<ParagraphNode>());
-        expect((document.nodes.first as ParagraphNode).text.text, "");
+        expect(document.nodeCount, 1);
+        expect(document.first, isA<ParagraphNode>());
+        expect((document.first as ParagraphNode).text.text, "");
       });
 
       testWidgetsOnWebDesktop("task to paragraph when the user presses ENTER on an empty task", (tester) async {
@@ -407,9 +407,9 @@ void main() {
         final document = SuperEditorInspector.findDocument()!;
 
         // Ensure the task was converted to a paragraph.
-        expect(document.nodes.length, 1);
-        expect(document.nodes.first, isA<ParagraphNode>());
-        expect((document.nodes.first as ParagraphNode).text.text, "");
+        expect(document.nodeCount, 1);
+        expect(document.first, isA<ParagraphNode>());
+        expect((document.first as ParagraphNode).text.text, "");
       });
 
       testWidgets("paragraph to task for incomplete task", (tester) async {
@@ -426,8 +426,8 @@ void main() {
         ]);
 
         // Ensure the paragraph is a task, and it's not checked.
-        expect(document.nodes.first, isA<TaskNode>());
-        expect((document.nodes.first as TaskNode).isComplete, isFalse);
+        expect(document.first, isA<TaskNode>());
+        expect((document.first as TaskNode).isComplete, isFalse);
       });
 
       testWidgets("paragraph to task for complete task", (tester) async {
@@ -444,8 +444,8 @@ void main() {
         ]);
 
         // Ensure the paragraph is a task, and it IS checked.
-        expect(document.nodes.first, isA<TaskNode>());
-        expect((document.nodes.first as TaskNode).isComplete, isTrue);
+        expect(document.first, isA<TaskNode>());
+        expect((document.first as TaskNode).isComplete, isTrue);
       });
     });
 
@@ -677,8 +677,6 @@ Future<Editor> _pumpScaffold(WidgetTester tester, {MutableDocument? document}) a
       home: Scaffold(
         body: SuperEditor(
           editor: editor,
-          document: document,
-          composer: composer,
         ),
       ),
     ),

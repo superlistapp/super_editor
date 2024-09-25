@@ -209,8 +209,7 @@ class CommonEditorOperations {
   ///
   /// Always returns [true].
   bool selectAll() {
-    final nodes = document.nodes;
-    if (nodes.isEmpty) {
+    if (document.isEmpty) {
       return false;
     }
 
@@ -218,12 +217,12 @@ class CommonEditorOperations {
       ChangeSelectionRequest(
         DocumentSelection(
           base: DocumentPosition(
-            nodeId: nodes.first.id,
-            nodePosition: nodes.first.beginningPosition,
+            nodeId: document.first.id,
+            nodePosition: document.first.beginningPosition,
           ),
           extent: DocumentPosition(
-            nodeId: nodes.last.id,
-            nodePosition: nodes.last.endPosition,
+            nodeId: document.last.id,
+            nodePosition: document.last.endPosition,
           ),
         ),
         SelectionChangeType.expandSelection,
@@ -665,11 +664,11 @@ class CommonEditorOperations {
       return false;
     }
 
-    if (document.nodes.isEmpty) {
+    if (document.isEmpty) {
       return false;
     }
 
-    final firstNode = document.nodes.first;
+    final firstNode = document.first;
 
     if (expand) {
       final currentExtentNode = document.getNodeById(composer.selection!.extent.nodeId);
@@ -729,11 +728,11 @@ class CommonEditorOperations {
       return false;
     }
 
-    if (document.nodes.isEmpty) {
+    if (document.isEmpty) {
       return false;
     }
 
-    final lastNode = document.nodes.last;
+    final lastNode = document.last;
 
     if (expand) {
       final currentExtentNode = document.getNodeById(composer.selection!.extent.nodeId);
@@ -1200,6 +1199,9 @@ class CommonEditorOperations {
         SelectionChangeType.deleteContent,
         SelectionReason.userInteraction,
       ),
+      // Since two paragraphs were combined, the composing region might point
+      // to a deleted paragraph. Clear it.
+      ClearComposingRegionRequest(),
     ]);
 
     return true;
@@ -2263,12 +2265,29 @@ class PasteEditorCommand extends EditCommand {
   final String _content;
   final DocumentPosition _pastePosition;
 
+  // The [_content] as [DocumentNode]s so that we only generate node IDs one
+  // time. This is critical for undo behavior to work as expected.
+  List<DocumentNode>? _parsedContent;
+
   @override
   HistoryBehavior get historyBehavior => HistoryBehavior.undoable;
 
   @override
   void execute(EditContext context, CommandExecutor executor) {
-    final document = context.find<MutableDocument>(Editor.documentKey);
+    // Only parse the content if we haven't done it already. This command
+    // might be run 2+ times if the user runs an undo operation.
+    _parsedContent ??= _parseContent();
+
+    // Assign locally so we don't have to use a "!" everywhere we reference it.
+    // Also, make a copy of the existing nodes so that when the document mutates,
+    // our local copy doesn't change.
+    final parsedContent = _parsedContent!.map((node) => node.copy()).toList();
+    if (parsedContent.isEmpty) {
+      // No content to paste.
+      return;
+    }
+
+    final document = context.document;
     final composer = context.find<MutableDocumentComposer>(Editor.composerKey);
     final currentNodeWithSelection = document.getNodeById(_pastePosition.nodeId);
     if (currentNodeWithSelection is! TextNode) {
@@ -2277,14 +2296,10 @@ class PasteEditorCommand extends EditCommand {
 
     editorOpsLog.info("Pasting clipboard content in document.");
 
-    // Split the pasted content at newlines, and apply attributions based
-    // on inspection of the pasted content, e.g., link attributions.
-    final attributedLines = _inferAttributionsForLinesOfPastedText(_content);
-
     final textNode = document.getNode(_pastePosition) as TextNode;
     final pasteTextOffset = (_pastePosition.nodePosition as TextPosition).offset;
 
-    if (attributedLines.length > 1 && pasteTextOffset < textNode.endPosition.offset) {
+    if (parsedContent.length > 1 && pasteTextOffset < textNode.endPosition.offset) {
       // There is more than 1 node of content being pasted. Therefore,
       // new nodes will need to be added, which means that the currently
       // selected text node will be split at the current text offset.
@@ -2301,20 +2316,20 @@ class PasteEditorCommand extends EditCommand {
       );
     }
 
-    // Paste the first piece of attributed content into the selected TextNode.
-    executor.executeCommand(
-      InsertAttributedTextCommand(
-        documentPosition: _pastePosition,
-        textToInsert: attributedLines.first,
-      ),
-    );
+    if (parsedContent.first is TextNode) {
+      // Paste the first piece of attributed content into the existing selected TextNode.
+      executor.executeCommand(
+        InsertAttributedTextCommand(
+          documentPosition: _pastePosition,
+          textToInsert: (parsedContent.first as TextNode).text,
+        ),
+      );
+    }
 
     // The first line of pasted text was added to the selected paragraph.
-    // Now, create new nodes for each additional line of pasted text and
-    // insert those nodes.
-    final pastedContentNodes = _convertLinesToParagraphs(attributedLines.sublist(1));
+    // Now, add all remaining pasted nodes to the document..
     DocumentNode previousNode = currentNodeWithSelection;
-    for (final pastedNode in pastedContentNodes) {
+    for (final pastedNode in parsedContent.sublist(1)) {
       document.insertNodeAfter(
         existingNode: previousNode,
         newNode: pastedNode,
@@ -2332,17 +2347,10 @@ class PasteEditorCommand extends EditCommand {
     executor.executeCommand(
       ChangeSelectionCommand(
         DocumentSelection.collapsed(
-          position: pastedContentNodes.isNotEmpty
-              ? DocumentPosition(
-                  nodeId: previousNode.id,
-                  nodePosition: previousNode.endPosition,
-                )
-              : DocumentPosition(
-                  nodeId: currentNodeWithSelection.id,
-                  nodePosition: TextNodePosition(
-                    offset: pasteTextOffset + attributedLines.first.text.length,
-                  ),
-                ),
+          position: DocumentPosition(
+            nodeId: previousNode.id,
+            nodePosition: previousNode.endPosition,
+          ),
         ),
         SelectionChangeType.insertContent,
         SelectionReason.userInteraction,
@@ -2350,6 +2358,13 @@ class PasteEditorCommand extends EditCommand {
     );
     editorOpsLog.fine('New selection after paste operation: ${composer.selection}');
     editorOpsLog.fine('Done with paste command.');
+  }
+
+  List<DocumentNode> _parseContent() {
+    // Split the pasted content at newlines, and apply attributions based
+    // on inspection of the pasted content, e.g., link attributions.
+    final attributedLines = _inferAttributionsForLinesOfPastedText(_content);
+    return _convertLinesToParagraphs(attributedLines).toList();
   }
 
   /// Breaks the given [content] at each newline, then applies any inferred
@@ -2448,7 +2463,7 @@ class DeleteUpstreamCharacterCommand extends EditCommand {
 
   @override
   void execute(EditContext context, CommandExecutor executor) {
-    final document = context.find<MutableDocument>(Editor.documentKey);
+    final document = context.document;
     final composer = context.find<MutableDocumentComposer>(Editor.composerKey);
     final selection = composer.selection;
 
@@ -2502,7 +2517,7 @@ class DeleteDownstreamCharacterCommand extends EditCommand {
 
   @override
   void execute(EditContext context, CommandExecutor executor) {
-    final document = context.find<MutableDocument>(Editor.documentKey);
+    final document = context.document;
     final composer = context.find<MutableDocumentComposer>(Editor.composerKey);
     final selection = composer.selection;
 
