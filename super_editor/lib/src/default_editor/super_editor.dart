@@ -1210,7 +1210,7 @@ const defaultComponentBuilders = <ComponentBuilder>[
 
 /// Default list of document overlays that are displayed on top of the document
 /// layout in a [SuperEditor].
-const defaultSuperEditorDocumentOverlayBuilders = [
+const defaultSuperEditorDocumentOverlayBuilders = <SuperEditorLayerBuilder>[
   // Adds a Leader around the document selection at a focal point for the
   // iOS floating toolbar.
   SuperEditorIosToolbarFocalPointDocumentLayerBuilder(),
