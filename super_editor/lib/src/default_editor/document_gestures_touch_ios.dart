@@ -1920,7 +1920,10 @@ class _EditorFloatingCursorState extends State<EditorFloatingCursor> {
 /// iOS floating toolbar.
 class SuperEditorIosToolbarFocalPointDocumentLayerBuilder implements SuperEditorLayerBuilder {
   const SuperEditorIosToolbarFocalPointDocumentLayerBuilder({
-    // ignore: unused_element
+    // TODO(srawlins): `unused_element`, when reporting a parameter, is being
+    // renamed to `unused_element_parameter`. For now, ignore each; when the SDK
+    // constraint is >= 3.6.0, just ignore `unused_element_parameter`.
+    // ignore: unused_element, unused_element_parameter
     this.showDebugLeaderBounds = false,
   });
 
