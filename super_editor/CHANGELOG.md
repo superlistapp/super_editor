@@ -1,3 +1,6 @@
+## [0.3.0-dev.9] - Sept 26, 2024
+ * FEATURE: Indent for blockquotes.
+
 ## [0.3.0-dev.8] - Sept 24, 2024
  * ADJUSTMENT: Change mobile caret overlays to use `Timer`s instead of `Ticker`s
    to prevent frame churn.
