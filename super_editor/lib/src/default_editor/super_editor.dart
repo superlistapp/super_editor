@@ -1008,7 +1008,10 @@ class DefaultAndroidEditorToolbar extends StatelessWidget {
 class _SelectionLeadersDocumentLayerBuilder implements SuperEditorLayerBuilder {
   const _SelectionLeadersDocumentLayerBuilder({
     required this.links,
-    // ignore: unused_element
+    // TODO(srawlins): `unused_element`, when reporting a parameter, is being
+    // renamed to `unused_element_parameter`. For now, ignore each; when the SDK
+    // constraint is >= 3.6.0, just ignore `unused_element_parameter`.
+    // ignore: unused_element, unused_element_parameter
     this.showDebugLeaderBounds = false,
   });
 
@@ -1210,7 +1213,7 @@ const defaultComponentBuilders = <ComponentBuilder>[
 
 /// Default list of document overlays that are displayed on top of the document
 /// layout in a [SuperEditor].
-const defaultSuperEditorDocumentOverlayBuilders = [
+const defaultSuperEditorDocumentOverlayBuilders = <SuperEditorLayerBuilder>[
   // Adds a Leader around the document selection at a focal point for the
   // iOS floating toolbar.
   SuperEditorIosToolbarFocalPointDocumentLayerBuilder(),

@@ -193,7 +193,7 @@ class AndroidControlsDocumentLayerState
   @override
   void initState() {
     super.initState();
-    _caretBlinkController = BlinkController(tickerProvider: this);
+    _caretBlinkController = BlinkController.withTimer();
 
     _previousSelection = widget.selection.value;
     widget.selection.addListener(_onSelectionChange);
