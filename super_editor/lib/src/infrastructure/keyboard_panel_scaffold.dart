@@ -283,7 +283,7 @@ class KeyboardPanelController with ChangeNotifier {
   void showKeyboardPanel() {
     _wantsToShowKeyboardPanel = true;
     _wantsToShowSoftwareKeyboard = false;
-    softwareKeyboardController.close();
+    softwareKeyboardController.hide();
     notifyListeners();
   }
 
@@ -306,7 +306,7 @@ class KeyboardPanelController with ChangeNotifier {
   void closeKeyboardAndPanel() {
     _wantsToShowKeyboardPanel = false;
     _wantsToShowSoftwareKeyboard = false;
-    softwareKeyboardController.close();
+    softwareKeyboardController.hide();
     notifyListeners();
   }
 

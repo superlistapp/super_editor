@@ -125,6 +125,10 @@ class SoftwareKeyboardController {
     _delegate?.open();
   }
 
+  void hide() {
+    SystemChannels.textInput.invokeListMethod("TextInput.hide");
+  }
+
   /// Closes the software keyboard.
   void close() {
     assert(hasDelegate);
