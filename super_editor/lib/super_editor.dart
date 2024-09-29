@@ -75,6 +75,7 @@ export 'src/infrastructure/flutter/text_selection.dart';
 export 'src/infrastructure/platforms/android/android_document_controls.dart';
 export 'src/infrastructure/platforms/android/toolbar.dart';
 export 'src/infrastructure/platforms/ios/ios_document_controls.dart';
+export 'src/infrastructure/platforms/ios/ios_system_context_menu.dart';
 export 'src/infrastructure/platforms/ios/floating_cursor.dart';
 export 'src/infrastructure/platforms/ios/toolbar.dart';
 export 'src/infrastructure/platforms/ios/magnifier.dart';
