@@ -1,5 +1,3 @@
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
 import 'package:super_editor/super_editor.dart';
 
@@ -69,7 +67,8 @@ class SpellingAndGrammarStyler extends SingleColumnLayoutStylePhase {
       return viewModel;
     }
     if (viewModel is! TextComponentViewModel) {
-      // TODO: log error about component type
+      editorSpellingAndGrammarLog
+          .warning("Tried to apply spelling/grammar errors to a non-text view model: ${viewModel.runtimeType}");
       return viewModel;
     }
 
@@ -93,6 +92,11 @@ class SpellingAndGrammarStyler extends SingleColumnLayoutStylePhase {
   }
 }
 
+/// A spelling or grammar error within a [TextNode].
+///
+/// Each error refers to the node with the error, the text range in the node that
+/// constitutes the error, the type of error, the text with the error, and (possibly)
+/// suggested corrections for that error.
 class TextError {
   const TextError.spelling({
     required this.nodeId,

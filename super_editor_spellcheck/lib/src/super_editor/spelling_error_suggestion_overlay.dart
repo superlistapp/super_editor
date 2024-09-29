@@ -113,41 +113,44 @@ class _SpellingErrorSuggestionOverlayState
 
   void _onSelectionChange() {
     setState(() {
+      // Re-compute layout data. The layout needs to be re-computed regardless
+      // of any conditions that follow this comment.
+
       // If the selection was sitting in an ignored spelling error, and
       // now the selection is somewhere else, reset the ignored error.
-      if (_ignoredSpellingErrorRange != null) {
-        final selection = widget.editor.context.composer.selection;
-        if (selection == null) {
-          // There's no selection. Therefore, the user isn't still selecting
-          // the mis-spelled word. Reset the ignored word.
-          _ignoredSpellingErrorRange = null;
-        } else {
-          // There's a selection. If it's not still in the ignored word, reset
-          // the ignored word.
-          final ignoredWordAsSelection = DocumentSelection(
-            base: _ignoredSpellingErrorRange!.start,
-            extent: _ignoredSpellingErrorRange!.end.copyWith(
-              // Add one to the downstream offset so that when the caret sits immediately
-              // after the mis-spelled word, it's still considered to sit within the word.
-              // We do this because we don't want to reset the ignored word when the caret
-              // sits immediately after it.
-              nodePosition: TextNodePosition(
-                offset: (_ignoredSpellingErrorRange!.end.nodePosition as TextNodePosition).offset + 1,
-              ),
-            ),
-          );
-          final isBaseInWord =
-              widget.editor.document.doesSelectionContainPosition(ignoredWordAsSelection, selection.base);
-          final isExtentInWord =
-              widget.editor.document.doesSelectionContainPosition(ignoredWordAsSelection, selection.extent);
-
-          if (!isBaseInWord || !isExtentInWord) {
-            _ignoredSpellingErrorRange = null;
-          }
-        }
+      if (_ignoredSpellingErrorRange == null) {
+        return;
       }
 
-      // Also, re-compute layout data.
+      final selection = widget.editor.context.composer.selection;
+      if (selection == null) {
+        // There's no selection. Therefore, the user isn't still selecting
+        // the mis-spelled word. Reset the ignored word.
+        _ignoredSpellingErrorRange = null;
+      } else {
+        // There's a selection. If it's not still in the ignored word, reset
+        // the ignored word.
+        final ignoredWordAsSelection = DocumentSelection(
+          base: _ignoredSpellingErrorRange!.start,
+          extent: _ignoredSpellingErrorRange!.end.copyWith(
+            // Add one to the downstream offset so that when the caret sits immediately
+            // after the mis-spelled word, it's still considered to sit within the word.
+            // We do this because we don't want to reset the ignored word when the caret
+            // sits immediately after it.
+            nodePosition: TextNodePosition(
+              offset: (_ignoredSpellingErrorRange!.end.nodePosition as TextNodePosition).offset + 1,
+            ),
+          ),
+        );
+        final isBaseInWord =
+            widget.editor.document.doesSelectionContainPosition(ignoredWordAsSelection, selection.base);
+        final isExtentInWord =
+            widget.editor.document.doesSelectionContainPosition(ignoredWordAsSelection, selection.extent);
+
+        if (!isBaseInWord || !isExtentInWord) {
+          _ignoredSpellingErrorRange = null;
+        }
+      }
     });
   }
 
@@ -165,6 +168,10 @@ class _SpellingErrorSuggestionOverlayState
   ) {
     _suggestionListenable.value = null;
 
+    // When there's no selected spelling error, we need to hide the toolbar overlay.
+    // Rather than conditionally hide the toolbar based on the code below, we start
+    // by hiding the toolbar overlay in all cases. Then, if it's needed, the code
+    // below will bring it back.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_suggestionToolbarOverlayController.isShowing) {
         _suggestionToolbarOverlayController.hide();

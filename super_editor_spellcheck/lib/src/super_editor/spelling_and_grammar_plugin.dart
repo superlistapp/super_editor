@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'dart:ui';
 
 import 'package:flutter/foundation.dart';
@@ -34,6 +33,8 @@ class SpellingAndGrammarPlugin extends SuperEditorPlugin {
 
   final _styler = SpellingAndGrammarStyler();
 
+  /// Leader attached to an invisible rectangle around the currently selected
+  /// misspelled word.
   final _selectedWordLink = LeaderLink();
 
   late final SpellingAndGrammarReaction _reaction;
@@ -214,11 +215,13 @@ class SpellingAndGrammarReaction implements EditReaction {
     for (final textNodeId in changedTextNodes) {
       final textNode = document.getNodeById(textNodeId);
       if (textNode == null) {
-        // TODO: log a warning.
+        editorSpellingAndGrammarLog.warning(
+            "A TextNode that was listed as changed in a transaction somehow disappeared from the Document before this Reaction ran.");
         continue;
       }
       if (textNode is! TextNode) {
-        // TODO: log a warning.
+        editorSpellingAndGrammarLog.warning(
+            "A TextNode that was listed as changed in a transaction somehow became a non-text node before this Reaction ran.");
         continue;
       }
 

@@ -67,12 +67,22 @@ class SpellingErrorSuggestions with ChangeNotifier implements Editable {
 
   /// Clears all spelling suggestions for text within the node with the given [nodeId].
   void clearNode(String nodeId) {
+    if (_suggestions[nodeId] == null) {
+      return;
+    }
+
     _suggestions.remove(nodeId);
+    notifyListeners();
   }
 
   /// Clears all spelling suggestions for all text in the document.
   void clear() {
+    if (_suggestions.isEmpty) {
+      return;
+    }
+
     _suggestions.clear();
+    notifyListeners();
   }
 
   @override
@@ -88,8 +98,12 @@ class SpellingErrorSuggestions with ChangeNotifier implements Editable {
 }
 
 class SpellingErrorSuggestion {
-  const SpellingErrorSuggestion(
-      {required this.word, required this.nodeId, required this.range, required this.suggestions});
+  const SpellingErrorSuggestion({
+    required this.word,
+    required this.nodeId,
+    required this.range,
+    required this.suggestions,
+  });
 
   final String word;
   final String nodeId;
