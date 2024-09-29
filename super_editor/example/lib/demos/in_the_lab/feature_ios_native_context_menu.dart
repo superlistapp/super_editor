@@ -78,8 +78,6 @@ class _NativeIosContextMenuFeatureDemoState extends State<NativeIosContextMenuFe
       child: IntrinsicHeight(
         child: SuperEditor(
           editor: _editor,
-          document: _document,
-          composer: _composer,
           documentLayoutKey: _documentLayoutKey,
           selectionStyle: SelectionStyles(
             selectionColor: Colors.red.withOpacity(0.3),
@@ -156,7 +154,6 @@ class _SuperTextFieldWithNativeContextMenuState extends State<_SuperTextFieldWit
       decoration: BoxDecoration(
         border: Border.all(color: Colors.grey),
         borderRadius: BorderRadius.circular(4),
-        // color: const Color(0xFF222222),
       ),
       child: SuperIOSTextField(
         padding: const EdgeInsets.all(12),
