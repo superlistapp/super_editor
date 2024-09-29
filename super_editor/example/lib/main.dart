@@ -15,6 +15,7 @@ import 'package:example/demos/flutter_features/demo_inline_widgets.dart';
 import 'package:example/demos/flutter_features/textinputclient/basic_text_input_client.dart';
 import 'package:example/demos/flutter_features/textinputclient/textfield.dart';
 import 'package:example/demos/in_the_lab/feature_action_tags.dart';
+import 'package:example/demos/in_the_lab/feature_ios_native_context_menu.dart';
 import 'package:example/demos/in_the_lab/feature_pattern_tags.dart';
 import 'package:example/demos/in_the_lab/feature_stable_tags.dart';
 import 'package:example/demos/in_the_lab/selected_text_colors_demo.dart';
@@ -322,6 +323,13 @@ final _menu = <_MenuGroup>[
         title: 'Action Tags',
         pageBuilder: (context) {
           return const ActionTagsFeatureDemo();
+        },
+      ),
+      _MenuItem(
+        icon: Icons.apple,
+        title: 'Native iOS Toolbar',
+        pageBuilder: (context) {
+          return const NativeIosContextMenuFeatureDemo();
         },
       ),
     ],
