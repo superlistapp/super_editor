@@ -976,19 +976,10 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
       ..hideMagnifier()
       ..blinkCaret();
 
-    switch (_dragMode) {
-      case DragMode.collapsed:
-      case DragMode.base:
-      case DragMode.extent:
-      case DragMode.longPress:
-        // The user was dragging a selection change in some way, either with handles
-        // or with a long-press. Finish that interaction.
-        _onDragSelectionEnd();
-        break;
-      default:
-        // The user wasn't dragging over a selection. Do nothing.
-        _dragMode = null;
-        break;
+    if (_dragMode != null) {
+      // The user was dragging a selection change in some way, either with handles
+      // or with a long-press. Finish that interaction.
+      _onDragSelectionEnd();
     }
   }
 
@@ -1242,6 +1233,10 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
     }
 
     final gestureSettings = MediaQuery.maybeOf(context)?.gestureSettings;
+    // PanGestureRecognizer is above contents to have first pass at gestures, but it only accepts
+    // gestures that are over caret or handles or when a long press is in progress.
+    // TapGestureRecognizer is below contents so that it doesn't interferes with buttons and other
+    // tappable widgets.
     final layerAbove = RawGestureDetector(
       key: _interactor,
       behavior: HitTestBehavior.translucent,
@@ -1378,7 +1373,6 @@ class SuperEditorIosToolbarOverlayManagerState extends State<SuperEditorIosToolb
 
   @override
   Widget build(BuildContext context) {
-    final ancestorScrollable = context.findAncestorScrollableWithVerticalScroll;
     return SliverHybridStack(
       children: [
         widget.child,
