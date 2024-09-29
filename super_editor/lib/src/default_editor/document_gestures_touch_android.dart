@@ -1082,7 +1082,7 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
   void _onPanCancel() {
     // When _tapDownLongPressTimer is not null we're waiting for either tapUp or tapCancel,
     // which will deal with the long press.
-    if (_tapDownLongPressTimer == null &&_isLongPressInProgress) {
+    if (_tapDownLongPressTimer == null && _isLongPressInProgress) {
       _onLongPressEnd();
       return;
     }
@@ -1203,6 +1203,10 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
   @override
   Widget build(BuildContext context) {
     final gestureSettings = MediaQuery.maybeOf(context)?.gestureSettings;
+    // PanGestureRecognizer is above contents to have first pass at gestures, but it only accepts
+    // gestures that are over caret or handles or when a long press is in progress.
+    // TapGestureRecognizer is below contents so that it doesn't interferes with buttons and other
+    // tappable widgets.
     final layerAbove = RawGestureDetector(
       key: _interactor,
       behavior: HitTestBehavior.translucent,

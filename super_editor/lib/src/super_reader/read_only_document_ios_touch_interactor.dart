@@ -908,6 +908,10 @@ class _SuperReaderIosDocumentTouchInteractorState extends State<SuperReaderIosDo
     }
 
     final gestureSettings = MediaQuery.maybeOf(context)?.gestureSettings;
+    // PanGestureRecognizer is above contents to have first pass at gestures, but it only accepts
+    // gestures that are over caret or handles or when a long press is in progress.
+    // TapGestureRecognizer is below contents so that it doesn't interferes with buttons and other
+    // tappable widgets.
     final layerAbove = RawGestureDetector(
       key: _interactor,
       behavior: HitTestBehavior.translucent,
