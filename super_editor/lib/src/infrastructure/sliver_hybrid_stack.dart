@@ -86,7 +86,7 @@ class _RenderSliverHybridStack extends RenderSliver
       if (child is RenderBox) {
         final childParentData = child.parentData! as SliverLogicalParentData;
         childParentData.layoutOffset = -constraints.scrollOffset;
-        if (constraints.scrollOffset == 0.0 && fillViewport) {
+        if (constraints.scrollOffset == 0.0 && constraints.viewportMainAxisExtent.isFinite && fillViewport) {
           child.layout(
             BoxConstraints.tightFor(
               width: constraints.crossAxisExtent,
