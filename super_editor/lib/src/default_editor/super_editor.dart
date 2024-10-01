@@ -1359,6 +1359,7 @@ final defaultImeKeyboardActions = <DocumentKeyboardAction>[
   scrollOnPageUpKeyPress,
   scrollOnPageDownKeyPress,
   moveUpAndDownWithArrowKeys,
+  moveToStartOrEndOfLineWithArrowKeysOnWeb,
   doNothingWithLeftRightArrowKeysAtMiddleOfTextOnWeb,
   moveLeftAndRightWithArrowKeys,
   moveToLineStartWithHome,
