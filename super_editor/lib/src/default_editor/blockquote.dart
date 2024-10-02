@@ -6,6 +6,7 @@ import 'package:super_editor/src/core/edit_context.dart';
 import 'package:super_editor/src/core/editor.dart';
 import 'package:super_editor/src/core/styles.dart';
 import 'package:super_editor/src/default_editor/attributions.dart';
+import 'package:super_editor/src/default_editor/blocks/indentation.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/attributed_text_styles.dart';
 import 'package:super_editor/src/infrastructure/keyboard.dart';
@@ -55,6 +56,7 @@ class BlockquoteComponentBuilder implements ComponentBuilder {
       nodeId: node.id,
       text: node.text,
       textStyleBuilder: noStyleBuilder,
+      indent: node.indent,
       backgroundColor: const Color(0x00000000),
       borderRadius: BorderRadius.zero,
       textDirection: textDirection,
@@ -74,6 +76,8 @@ class BlockquoteComponentBuilder implements ComponentBuilder {
       textKey: componentContext.componentKey,
       text: componentViewModel.text,
       styleBuilder: componentViewModel.textStyleBuilder,
+      indent: componentViewModel.indent,
+      indentCalculator: componentViewModel.indentCalculator,
       backgroundColor: componentViewModel.backgroundColor,
       borderRadius: componentViewModel.borderRadius,
       textSelection: componentViewModel.selection,
@@ -93,6 +97,8 @@ class BlockquoteComponentViewModel extends SingleColumnLayoutComponentViewModel 
     required this.textStyleBuilder,
     this.textDirection = TextDirection.ltr,
     this.textAlignment = TextAlign.left,
+    this.indent = 0,
+    this.indentCalculator = defaultParagraphIndentCalculator,
     required this.backgroundColor,
     required this.borderRadius,
     this.selection,
@@ -123,6 +129,10 @@ class BlockquoteComponentViewModel extends SingleColumnLayoutComponentViewModel 
   TextDirection textDirection;
   @override
   TextAlign textAlignment;
+
+  int indent;
+  TextBlockIndentCalculator indentCalculator;
+
   @override
   TextSelection? selection;
   @override
@@ -150,6 +160,8 @@ class BlockquoteComponentViewModel extends SingleColumnLayoutComponentViewModel 
       textStyleBuilder: textStyleBuilder,
       textDirection: textDirection,
       textAlignment: textAlignment,
+      indent: indent,
+      indentCalculator: indentCalculator,
       backgroundColor: backgroundColor,
       borderRadius: borderRadius,
       selection: selection,
@@ -174,6 +186,7 @@ class BlockquoteComponentViewModel extends SingleColumnLayoutComponentViewModel 
           text == other.text &&
           textDirection == other.textDirection &&
           textAlignment == other.textAlignment &&
+          indent == other.indent &&
           backgroundColor == other.backgroundColor &&
           borderRadius == other.borderRadius &&
           selection == other.selection &&
@@ -193,6 +206,7 @@ class BlockquoteComponentViewModel extends SingleColumnLayoutComponentViewModel 
       text.hashCode ^
       textDirection.hashCode ^
       textAlignment.hashCode ^
+      indent.hashCode ^
       backgroundColor.hashCode ^
       borderRadius.hashCode ^
       selection.hashCode ^
@@ -214,6 +228,8 @@ class BlockquoteComponent extends StatelessWidget {
     required this.text,
     required this.styleBuilder,
     this.textSelection,
+    this.indent = 0,
+    this.indentCalculator = defaultParagraphIndentCalculator,
     this.selectionColor = Colors.lightBlueAccent,
     required this.backgroundColor,
     required this.borderRadius,
@@ -226,6 +242,8 @@ class BlockquoteComponent extends StatelessWidget {
   final AttributedText text;
   final AttributionStyleBuilder styleBuilder;
   final TextSelection? textSelection;
+  final int indent;
+  final TextBlockIndentCalculator indentCalculator;
   final Color selectionColor;
   final Color backgroundColor;
   final BorderRadius borderRadius;
@@ -242,15 +260,29 @@ class BlockquoteComponent extends StatelessWidget {
           borderRadius: borderRadius,
           color: backgroundColor,
         ),
-        child: TextComponent(
-          key: textKey,
-          text: text,
-          textStyleBuilder: styleBuilder,
-          textSelection: textSelection,
-          selectionColor: selectionColor,
-          highlightWhenEmpty: highlightWhenEmpty,
-          underlines: underlines,
-          showDebugPaint: showDebugPaint,
+        child: Row(
+          children: [
+            // Indent spacing on left.
+            SizedBox(
+              width: indentCalculator(
+                styleBuilder({}),
+                indent,
+              ),
+            ),
+            // The actual paragraph UI.
+            Expanded(
+              child: TextComponent(
+                key: textKey,
+                text: text,
+                textStyleBuilder: styleBuilder,
+                textSelection: textSelection,
+                selectionColor: selectionColor,
+                highlightWhenEmpty: highlightWhenEmpty,
+                underlines: underlines,
+                showDebugPaint: showDebugPaint,
+              ),
+            ),
+          ],
         ),
       ),
     );

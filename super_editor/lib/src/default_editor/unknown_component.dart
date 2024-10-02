@@ -19,11 +19,8 @@ class UnknownComponentBuilder implements ComponentBuilder {
   Widget? createComponent(
       SingleColumnDocumentComponentContext componentContext, SingleColumnLayoutComponentViewModel componentViewModel) {
     editorLayoutLog.warning("Building component widget for unknown component: $componentViewModel");
-    return SizedBox(
+    return UnknownComponent(
       key: componentContext.componentKey,
-      width: double.infinity,
-      height: 100,
-      child: const Placeholder(),
     );
   }
 }
@@ -53,11 +50,13 @@ class _UnkownViewModel extends SingleColumnLayoutComponentViewModel {
 /// `DocumentNode` for which there is no corresponding
 /// component builder.
 class UnknownComponent extends StatelessWidget {
+  const UnknownComponent({super.key});
+
   @override
   Widget build(BuildContext context) {
     return const SizedBox(
       width: double.infinity,
-      height: 54,
+      height: 100,
       child: Placeholder(),
     );
   }
