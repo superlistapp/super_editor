@@ -21,9 +21,7 @@ class _MobileChatDemoState extends State<MobileChatDemo> {
     final document = MutableDocument.empty();
     final composer = MutableDocumentComposer();
     _editor = createDefaultDocumentEditor(document: document, composer: composer);
-    _keyboardPanelController = KeyboardPanelController(
-      softwareKeyboardController: _softwareKeyboardController,
-    );
+    _keyboardPanelController = KeyboardPanelController(_softwareKeyboardController);
   }
 
   @override
@@ -95,7 +93,7 @@ class _MobileChatDemoState extends State<MobileChatDemo> {
           padding: const EdgeInsets.only(top: 16, bottom: 24),
           child: KeyboardPanelScaffold(
             controller: _keyboardPanelController,
-            aboveKeyboardBuilder: _buildKeyboardToolbar,
+            toolbarBuilder: _buildKeyboardToolbar,
             keyboardPanelBuilder: (context) => Container(
               color: Colors.blue,
               height: 100,
@@ -138,7 +136,7 @@ class _MobileChatDemoState extends State<MobileChatDemo> {
           ),
           const Spacer(),
           GestureDetector(
-            onTap: () => _keyboardPanelController.toggleKeyboard(),
+            onTap: () => _keyboardPanelController.toggleSoftwareKeyboardWithPanel(),
             child: Icon(isKeyboardPanelVisible ? Icons.keyboard : Icons.keyboard_hide),
           ),
           const SizedBox(width: 24),

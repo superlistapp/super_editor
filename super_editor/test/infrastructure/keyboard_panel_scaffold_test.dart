@@ -18,7 +18,7 @@ void main() {
 
     testWidgetsOnMobile('shows above-keyboard panel at the bottom when there is no keyboard', (tester) async {
       final softwareKeyboardController = SoftwareKeyboardController();
-      final controller = KeyboardPanelController(softwareKeyboardController: softwareKeyboardController);
+      final controller = KeyboardPanelController(softwareKeyboardController);
 
       await _pumpTestApp(
         tester,
@@ -27,7 +27,7 @@ void main() {
       );
 
       // Request to show the above-keyboard panel.
-      controller.showAboveKeyboardPanel();
+      controller.showToolbar();
       await tester.pump();
 
       // Ensure the above-keyboard panel sits at the bottom of the screen.
@@ -49,7 +49,7 @@ void main() {
 
     testWidgetsOnMobile('shows above-keyboard panel above the keyboard', (tester) async {
       final softwareKeyboardController = SoftwareKeyboardController();
-      final controller = KeyboardPanelController(softwareKeyboardController: softwareKeyboardController);
+      final controller = KeyboardPanelController(softwareKeyboardController);
 
       await _pumpTestApp(
         tester,
@@ -58,7 +58,7 @@ void main() {
       );
 
       // Request to show the above-keyboard panel.
-      controller.showAboveKeyboardPanel();
+      controller.showToolbar();
       await tester.pump();
 
       // Place the caret at the beginning of the document to show the software keyboard.
@@ -74,7 +74,7 @@ void main() {
     testWidgetsOnMobile('shows above-keyboard panel above the keyboard when toggling panels and showing the keyboard',
         (tester) async {
       final softwareKeyboardController = SoftwareKeyboardController();
-      final controller = KeyboardPanelController(softwareKeyboardController: softwareKeyboardController);
+      final controller = KeyboardPanelController(softwareKeyboardController);
 
       await _pumpTestApp(
         tester,
@@ -83,7 +83,7 @@ void main() {
       );
 
       // Request to show the above-keyboard panel.
-      controller.showAboveKeyboardPanel();
+      controller.showToolbar();
       await tester.pump();
 
       // Place the caret at the beginning of the document to show the software keyboard.
@@ -109,7 +109,7 @@ void main() {
 
     testWidgetsOnMobile('shows keyboard panel upon request', (tester) async {
       final softwareKeyboardController = SoftwareKeyboardController();
-      final controller = KeyboardPanelController(softwareKeyboardController: softwareKeyboardController);
+      final controller = KeyboardPanelController(softwareKeyboardController);
 
       await _pumpTestApp(
         tester,
@@ -130,7 +130,7 @@ void main() {
 
     testWidgetsOnMobile('displays panel with the same height as the keyboard', (tester) async {
       final softwareKeyboardController = SoftwareKeyboardController();
-      final controller = KeyboardPanelController(softwareKeyboardController: softwareKeyboardController);
+      final controller = KeyboardPanelController(softwareKeyboardController);
 
       await _pumpTestApp(
         tester,
@@ -139,7 +139,7 @@ void main() {
       );
 
       // Request to show the above-keyboard panel.
-      controller.showAboveKeyboardPanel();
+      controller.showToolbar();
       await tester.pump();
 
       // Place the caret at the beginning of the document to show the software keyboard.
@@ -164,7 +164,7 @@ void main() {
 
     testWidgetsOnMobile('hides the panel when toggling the keyboard', (tester) async {
       final softwareKeyboardController = SoftwareKeyboardController();
-      final controller = KeyboardPanelController(softwareKeyboardController: softwareKeyboardController);
+      final controller = KeyboardPanelController(softwareKeyboardController);
 
       await _pumpTestApp(
         tester,
@@ -173,7 +173,7 @@ void main() {
       );
 
       // Request to show the above-keyboard panel.
-      controller.showAboveKeyboardPanel();
+      controller.showToolbar();
       await tester.pump();
 
       // Place the caret at the beginning of the document to show the software keyboard.
@@ -187,7 +187,7 @@ void main() {
       expect(find.byKey(_keyboardPanelKey), findsOneWidget);
 
       // Hide the keyboard panel and show the software keyboard.
-      controller.toggleKeyboard();
+      controller.toggleSoftwareKeyboardWithPanel();
       await tester.pumpAndSettle();
 
       // Ensure the keyboard panel is not visible.
@@ -202,7 +202,7 @@ void main() {
 
     testWidgetsOnMobile('hides the panel upon request', (tester) async {
       final softwareKeyboardController = SoftwareKeyboardController();
-      final controller = KeyboardPanelController(softwareKeyboardController: softwareKeyboardController);
+      final controller = KeyboardPanelController(softwareKeyboardController);
 
       await _pumpTestApp(
         tester,
@@ -211,7 +211,7 @@ void main() {
       );
 
       // Request to show the above-keyboard panel.
-      controller.showAboveKeyboardPanel();
+      controller.showToolbar();
       await tester.pump();
 
       // Place the caret at the beginning of the document to show the software keyboard.
@@ -240,7 +240,7 @@ void main() {
     testWidgetsOnMobile('shows above-keyboard panel at the bottom when closing the panel and the keyboard',
         (tester) async {
       final softwareKeyboardController = SoftwareKeyboardController();
-      final controller = KeyboardPanelController(softwareKeyboardController: softwareKeyboardController);
+      final controller = KeyboardPanelController(softwareKeyboardController);
 
       await _pumpTestApp(
         tester,
@@ -249,7 +249,7 @@ void main() {
       );
 
       // Request to show the above-keyboard panel.
-      controller.showAboveKeyboardPanel();
+      controller.showToolbar();
       await tester.pump();
 
       // Place the caret at the beginning of the document to show the software keyboard.
@@ -289,7 +289,7 @@ Future<void> _pumpTestApp(
   SoftwareKeyboardController? softwareKeyboardController,
 }) async {
   final keyboardController = softwareKeyboardController ?? SoftwareKeyboardController();
-  final keyboardPanelController = controller ?? KeyboardPanelController(softwareKeyboardController: keyboardController);
+  final keyboardPanelController = controller ?? KeyboardPanelController(keyboardController);
 
   await tester //
       .createDocument()
@@ -305,11 +305,11 @@ Future<void> _pumpTestApp(
               body: KeyboardPanelScaffold(
                 controller: keyboardPanelController,
                 contentBuilder: (context, isKeyboardPanelVisible) => superEditor,
-                aboveKeyboardBuilder: (context, isKeyboardPanelVisible) => SizedBox(
+                toolbarBuilder: (context, isKeyboardPanelVisible) => const SizedBox(
                   key: _aboveKeyboardPanelKey,
                   height: 54,
                 ),
-                keyboardPanelBuilder: (context) => ColoredBox(
+                keyboardPanelBuilder: (context) => const ColoredBox(
                   key: _keyboardPanelKey,
                   color: Colors.red,
                 ),

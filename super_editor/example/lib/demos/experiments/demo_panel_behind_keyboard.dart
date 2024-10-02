@@ -30,7 +30,7 @@ class _PanelBehindKeyboardDemoState extends State<PanelBehindKeyboardDemo> {
   void initState() {
     super.initState();
 
-    _keyboardPanelController = KeyboardPanelController(softwareKeyboardController: _keyboardController);
+    _keyboardPanelController = KeyboardPanelController(_keyboardController);
 
     _focusNode = FocusNode();
 
@@ -196,11 +196,11 @@ class _PanelBehindKeyboardDemoState extends State<PanelBehindKeyboardDemo> {
   Widget _buildTopPanelToggle(BuildContext context) {
     return KeyboardPanelScaffold(
       controller: _keyboardPanelController,
-      aboveKeyboardBuilder: _buildTopPanel,
+      toolbarBuilder: _buildTopPanel,
       keyboardPanelBuilder: _buildKeyboardPanel,
       contentBuilder: (context, wantsToShowKeyboardPanel) {
         return ElevatedButton(
-          onPressed: _keyboardPanelController.toggleAboveKeyboardPanel,
+          onPressed: _keyboardPanelController.toggleToolbar,
           child: Text('Toggle above-keyboard panel'),
         );
       },
@@ -221,7 +221,7 @@ class _PanelBehindKeyboardDemoState extends State<PanelBehindKeyboardDemo> {
           ),
           const Spacer(),
           GestureDetector(
-            onTap: () => _keyboardPanelController.toggleKeyboard(),
+            onTap: () => _keyboardPanelController.toggleSoftwareKeyboardWithPanel(),
             child: Icon(isKeyboardPanelVisible ? Icons.keyboard : Icons.keyboard_hide),
           ),
           const SizedBox(width: 24),
