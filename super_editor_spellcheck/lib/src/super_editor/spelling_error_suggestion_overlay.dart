@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:follow_the_leader/follow_the_leader.dart';
 import 'package:super_editor/super_editor.dart';
+import 'package:super_editor_spellcheck/src/super_editor/spelling_and_grammar_plugin.dart';
 import 'package:super_editor_spellcheck/src/super_editor/spelling_error_suggestions.dart';
-import 'package:super_editor_spellcheck/super_editor_spellcheck.dart';
 
 class SpellingErrorSuggestionOverlayBuilder implements SuperEditorLayerBuilder {
   const SpellingErrorSuggestionOverlayBuilder(
@@ -173,6 +173,10 @@ class _SpellingErrorSuggestionOverlayState
     // by hiding the toolbar overlay in all cases. Then, if it's needed, the code
     // below will bring it back.
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) {
+        return;
+      }
+
       if (_suggestionToolbarOverlayController.isShowing) {
         _suggestionToolbarOverlayController.hide();
       }
@@ -217,6 +221,10 @@ class _SpellingErrorSuggestionOverlayState
     _suggestionListenable.value = spellingSuggestion;
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) {
+        return;
+      }
+
       _suggestionToolbarOverlayController.show();
     });
 

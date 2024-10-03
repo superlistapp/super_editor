@@ -3,21 +3,33 @@ import 'package:super_editor/super_editor.dart';
 
 /// A [SingleColumnLayoutStylePhase] that applies spelling and grammar error
 /// underlines to [TextNode]s in the document that have reported errors.
+///
+/// Provide a [spellingErrorUnderlineStyle] and/or [grammarErrorUnderlineStyle]
+/// to override all other style preferences for spelling and grammar error underline
+/// styles across all text components.
 class SpellingAndGrammarStyler extends SingleColumnLayoutStylePhase {
   SpellingAndGrammarStyler({
-    UnderlineStyle spellingErrorUnderlineStyle = defaultSpellingErrorUnderlineStyle,
-    UnderlineStyle grammarErrorUnderlineStyle = defaultGrammarErrorUnderlineStyle,
+    UnderlineStyle? spellingErrorUnderlineStyle,
+    UnderlineStyle? grammarErrorUnderlineStyle,
   })  : _spellingErrorUnderlineStyle = spellingErrorUnderlineStyle,
         _grammarErrorUnderlineStyle = grammarErrorUnderlineStyle;
 
-  UnderlineStyle _spellingErrorUnderlineStyle;
-  set spellingErrorUnderlineStyle(UnderlineStyle style) {
+  UnderlineStyle? _spellingErrorUnderlineStyle;
+  set spellingErrorUnderlineStyle(UnderlineStyle? style) {
+    if (style == _spellingErrorUnderlineStyle) {
+      return;
+    }
+
     _spellingErrorUnderlineStyle = style;
     markDirty();
   }
 
-  UnderlineStyle _grammarErrorUnderlineStyle;
-  set grammarErrorUnderlineStyle(UnderlineStyle style) {
+  UnderlineStyle? _grammarErrorUnderlineStyle;
+  set grammarErrorUnderlineStyle(UnderlineStyle? style) {
+    if (style == _grammarErrorUnderlineStyle) {
+      return;
+    }
+
     _grammarErrorUnderlineStyle = style;
     markDirty();
   }
@@ -73,7 +85,11 @@ class SpellingAndGrammarStyler extends SingleColumnLayoutStylePhase {
     }
 
     final spellingErrors = _errorsByNode[viewModel.nodeId]!.where((error) => error.type == TextErrorType.spelling);
-    viewModel.spellingErrorUnderlineStyle = _spellingErrorUnderlineStyle;
+    if (_spellingErrorUnderlineStyle != null) {
+      // The user explicitly requested this style be used for spelling errors.
+      // Apply it.
+      viewModel.spellingErrorUnderlineStyle = _spellingErrorUnderlineStyle!;
+    }
     viewModel.spellingErrors
       ..clear()
       ..addAll([
@@ -81,7 +97,11 @@ class SpellingAndGrammarStyler extends SingleColumnLayoutStylePhase {
       ]);
 
     final grammarErrors = _errorsByNode[viewModel.nodeId]!.where((error) => error.type == TextErrorType.grammar);
-    viewModel.grammarErrorUnderlineStyle = _grammarErrorUnderlineStyle;
+    if (_grammarErrorUnderlineStyle != null) {
+      // The user explicitly requested this style be used for grammar errors.
+      // Apply it.
+      viewModel.grammarErrorUnderlineStyle = _grammarErrorUnderlineStyle!;
+    }
     viewModel.grammarErrors
       ..clear()
       ..addAll([

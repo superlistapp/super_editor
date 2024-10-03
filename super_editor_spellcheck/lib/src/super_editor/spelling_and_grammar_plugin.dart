@@ -240,16 +240,19 @@ class SpellingAndGrammarReaction implements EditReaction {
     // the response out of order with other requests.
     _asyncRequestIds[textNode.id] ??= 0;
     final requestId = _asyncRequestIds[textNode.id]! + 1;
-    _asyncRequestIds[textNode.id] = _asyncRequestIds[textNode.id]! + 1;
+    _asyncRequestIds[textNode.id] = requestId;
 
     int startingOffset = 0;
     TextRange prevError = TextRange.empty;
+    final locale = PlatformDispatcher.instance.locale;
+    final language = spellChecker.convertDartLocaleToMacLanguageCode(locale)!;
     final spellingSuggestions = <TextRange, SpellingErrorSuggestion>{};
     if (isSpellCheckEnabled) {
       do {
         prevError = await spellChecker.checkSpelling(
           stringToCheck: textNode.text.text,
           startingOffset: startingOffset,
+          language: language,
         );
 
         if (prevError.isValid) {
@@ -280,8 +283,6 @@ class SpellingAndGrammarReaction implements EditReaction {
     }
 
     if (isGrammarCheckEnabled) {
-      final locale = PlatformDispatcher.instance.locale;
-      final language = spellChecker.convertDartLocaleToMacLanguageCode(locale)!;
       startingOffset = 0;
       prevError = TextRange.empty;
       do {
