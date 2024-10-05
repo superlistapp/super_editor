@@ -528,6 +528,10 @@ abstract class ElementToNodeConverter {
 /// This [DelimiterSyntax] produces `Element`s with a `u` tag.
 class UnderlineSyntax extends md.DelimiterSyntax {
 
+  /// This is required by md.DelimiterSyntax, in theory the constructor takes an optional tags member, but a bug in
+  /// the Markdown lib replaces that with a const [], and then tries to sort it.
+  static final _tags = [ md.DelimiterTag("u", 1) ];
+
   UnderlineSyntax() : super('¬', requiresDelimiterRun: true, allowIntraWord: true, tags: _tags);
 
   @override
@@ -541,7 +545,6 @@ class UnderlineSyntax extends md.DelimiterSyntax {
     final element = md.Element('u', getChildren());
     return [ element ];
   }
-  static final _tags = [ md.DelimiterTag("u", 1) ];
 }
 
 /// Parses a paragraph preceded by an alignment token.
