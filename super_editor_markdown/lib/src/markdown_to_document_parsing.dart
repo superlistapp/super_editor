@@ -808,7 +808,7 @@ class _TaskSyntax extends md.BlockSyntax {
         !_blankLinePattern.hasMatch(parser.current.content) &&
         !_standardNonParagraphBlockSyntaxes.any((syntax) => syntax.pattern.hasMatch(parser.current.content))) {
       buffer.write('\n');
-      buffer.write(parser.current);
+      buffer.write(parser.current.content);
 
       parser.advance();
     }
