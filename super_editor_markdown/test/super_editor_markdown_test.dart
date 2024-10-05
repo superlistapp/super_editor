@@ -1129,17 +1129,21 @@ This is some code
         expect((document.first as ListItemNode).text.text, isEmpty);
       });
 
-      test('unordered list followd by empty list item', () {
-        const markdown = """- list item 1
-    - """;
+      test('unordered list followed by empty list item', () {
+        const markdown = """
+- list item 1
+- """;
 
         final document = deserializeMarkdownToDocument(markdown);
 
-        expect(document.nodeCount, 1);
+        expect(document.nodeCount, 2);
 
         expect(document.getNodeAt(0)!, isA<ListItemNode>());
         expect((document.getNodeAt(0)! as ListItemNode).type, ListItemType.unordered);
         expect((document.getNodeAt(0)! as ListItemNode).text.text, 'list item 1');
+        expect(document.getNodeAt(1)!, isA<ListItemNode>());
+        expect((document.getNodeAt(1)! as ListItemNode).type, ListItemType.unordered);
+        expect((document.getNodeAt(1)! as ListItemNode).text.text, '');
       });
 
       test('parses mixed unordered and ordered items', () {
@@ -1433,8 +1437,20 @@ with multiple lines
         expect(document.getNodeAt(25)!, isA<ParagraphNode>());
       });
 
-      test('paragraph with strikethrough', () {
+      test('paragraph with single ~ should not be strikethrough', () {
         final doc = deserializeMarkdownToDocument('~This is~ a paragraph.');
+        final styledText = (doc.getNodeAt(0)! as ParagraphNode).text;
+
+        // Ensure text within the range isn't attributed.
+        expect(styledText.getAllAttributionsAt(0).contains(strikethroughAttribution), false);
+        expect(styledText.getAllAttributionsAt(6).contains(strikethroughAttribution), false);
+
+        // Ensure text outside the range isn't attributed.
+        expect(styledText.getAllAttributionsAt(7).contains(strikethroughAttribution), false);
+      });
+
+      test('paragraph with double strikethrough', () {
+        final doc = deserializeMarkdownToDocument('~~This is~~ a paragraph.');
         final styledText = (doc.getNodeAt(0)! as ParagraphNode).text;
 
         // Ensure text within the range is attributed.

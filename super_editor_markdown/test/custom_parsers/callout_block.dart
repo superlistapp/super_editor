@@ -41,7 +41,7 @@ class CalloutBlockSyntax extends md.BlockSyntax {
 
         // If we're followed by a blank line, skip it, so that we don't end
         // up with an extra paragraph for that blank line.
-        if (parser.current.content.isEmpty) {
+        if (parser.current.content.trim().isEmpty) {
           parser.advance();
         }
 
