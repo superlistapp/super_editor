@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:super_editor/src/infrastructure/sliver_hybrid_stack.dart';
 
 class SuperEditorDebugVisuals extends InheritedWidget {
   static SuperEditorDebugVisualsConfig of(BuildContext context) {
@@ -120,7 +121,7 @@ class SuperEditorImeDebugVisuals extends StatelessWidget {
                 ? "ATTACHED TO IME"
                 : "DETACHED FROM IME";
 
-        return Stack(
+        return SliverHybridStack(
           children: [
             // Super Editor
             child,
