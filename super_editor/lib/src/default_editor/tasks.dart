@@ -201,7 +201,7 @@ class TaskComponentViewModel extends SingleColumnLayoutComponentViewModel with T
     this.spellingErrors = spellingErrors;
 
     this.grammarErrorUnderlineStyle = grammarErrorUnderlineStyle;
-    this.grammarErrors = spellingErrors;
+    this.grammarErrors = grammarErrors;
   }
 
   int indent;
