@@ -1251,9 +1251,18 @@ class CommonEditorOperations {
   ///
   /// This can be used, for example, to effectively delete an image by replacing
   /// it with an empty paragraph.
-  void replaceBlockNodeWithEmptyParagraphAndCollapsedSelection(String nodeId) {
+  ///
+  /// If [abortIfUndeletable] is `true`, the operation is be aborted if the
+  /// node is not deletable.
+  void replaceBlockNodeWithEmptyParagraphAndCollapsedSelection(
+    String nodeId, {
+    bool abortIfUndeletable = true,
+  }) {
     editor.execute([
-      ReplaceNodeWithEmptyParagraphWithCaretRequest(nodeId: nodeId),
+      ReplaceNodeWithEmptyParagraphWithCaretRequest(
+        nodeId: nodeId,
+        abortIfUndeletable: abortIfUndeletable,
+      ),
     ]);
   }
 
@@ -1284,11 +1293,9 @@ class CommonEditorOperations {
 
     // Delete the selected content.
     editor.execute([
-      DeleteContentRequest(documentRange: composer.selection!),
-      ChangeSelectionRequest(
-        DocumentSelection.collapsed(position: newSelectionPosition),
-        SelectionChangeType.deleteContent,
-        SelectionReason.userInteraction,
+      DeleteContentRequest(
+        documentRange: composer.selection!,
+        newSelection: DocumentSelection.collapsed(position: newSelectionPosition),
       ),
     ]);
   }

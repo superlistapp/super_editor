@@ -614,27 +614,32 @@ class ReplaceNodeCommand extends EditCommand {
 class ReplaceNodeWithEmptyParagraphWithCaretRequest implements EditRequest {
   const ReplaceNodeWithEmptyParagraphWithCaretRequest({
     required this.nodeId,
+    this.abortIfUndeletable = true,
   });
 
   final String nodeId;
+  final bool abortIfUndeletable;
 
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       other is ReplaceNodeWithEmptyParagraphWithCaretRequest &&
           runtimeType == other.runtimeType &&
-          nodeId == other.nodeId;
+          nodeId == other.nodeId &&
+          abortIfUndeletable == other.abortIfUndeletable;
 
   @override
-  int get hashCode => nodeId.hashCode;
+  int get hashCode => nodeId.hashCode ^ abortIfUndeletable.hashCode;
 }
 
 class ReplaceNodeWithEmptyParagraphWithCaretCommand extends EditCommand {
   ReplaceNodeWithEmptyParagraphWithCaretCommand({
     required this.nodeId,
+    this.abortIfUndeletable = true,
   });
 
   final String nodeId;
+  final bool abortIfUndeletable;
 
   @override
   HistoryBehavior get historyBehavior => HistoryBehavior.undoable;
@@ -645,6 +650,10 @@ class ReplaceNodeWithEmptyParagraphWithCaretCommand extends EditCommand {
 
     final oldNode = document.getNodeById(nodeId);
     if (oldNode == null) {
+      return;
+    }
+
+    if (abortIfUndeletable && oldNode.metadata['deletable'] == false) {
       return;
     }
 
@@ -680,17 +689,30 @@ class ReplaceNodeWithEmptyParagraphWithCaretCommand extends EditCommand {
 class DeleteContentRequest implements EditRequest {
   DeleteContentRequest({
     required this.documentRange,
+    this.newSelection,
+    this.abortIfUndeletable = true,
   });
 
   final DocumentRange documentRange;
+  final DocumentSelection? newSelection;
+  final bool abortIfUndeletable;
 }
 
 class DeleteContentCommand extends EditCommand {
   DeleteContentCommand({
     required this.documentRange,
+    this.newSelection,
+    this.abortIfUndeletable = true,
   });
 
   final DocumentRange documentRange;
+  final DocumentSelection? newSelection;
+
+  /// If `true`, the command will abort if any of the nodes in [documentRange]
+  /// have the `deletable` metadata set to `false`.
+  ///
+  /// Defaults to `true`.
+  final bool abortIfUndeletable;
 
   @override
   HistoryBehavior get historyBehavior => HistoryBehavior.undoable;
@@ -705,6 +727,11 @@ class DeleteContentCommand extends EditCommand {
     final nodes = document.getNodesInside(documentRange.start, documentRange.end);
     final normalizedRange = documentRange.normalize(document);
 
+    if (nodes.any((node) => node.metadata[NodeMetadata.deletable] == false)) {
+      // At least one of the nodes in the range is not deletable. Abort the deletion.
+      return;
+    }
+
     if (nodes.length == 1) {
       // This is a selection within a single node.
       final changeList = _deleteSelectionWithinSingleNode(
@@ -714,6 +741,17 @@ class DeleteContentCommand extends EditCommand {
       );
 
       executor.logChanges(changeList);
+
+      if (newSelection != null) {
+        executor.executeCommand(
+          ChangeSelectionCommand(
+            newSelection!,
+            SelectionChangeType.deleteContent,
+            SelectionReason.userInteraction,
+          ),
+        );
+      }
+
       return;
     }
 
@@ -783,6 +821,15 @@ class DeleteContentCommand extends EditCommand {
     // then we need to consider merging them if one or both are
     // empty.
     if (startNodeAfterDeletion is! TextNode || endNodeAfterDeletion is! TextNode) {
+      if (newSelection != null) {
+        executor.executeCommand(
+          ChangeSelectionCommand(
+            newSelection!,
+            SelectionChangeType.deleteContent,
+            SelectionReason.userInteraction,
+          ),
+        );
+      }
       // Neither of the end nodes are `TextNode`s, so there's nothing
       // for us to merge. We're done.
       return;
@@ -807,6 +854,15 @@ class DeleteContentCommand extends EditCommand {
         NodeRemovedEvent(endNodeAfterDeletion.id, endNodeAfterDeletion),
       )
     ]);
+    if (newSelection != null) {
+      executor.executeCommand(
+        ChangeSelectionCommand(
+          newSelection!,
+          SelectionChangeType.deleteContent,
+          SelectionReason.userInteraction,
+        ),
+      );
+    }
     _log.log('DeleteSelectionCommand', ' - done with selection deletion');
   }
 
@@ -1063,17 +1119,21 @@ class DeleteUpstreamAtBeginningOfNodeRequest implements EditRequest {
 class DeleteNodeRequest implements EditRequest {
   DeleteNodeRequest({
     required this.nodeId,
+    this.abortIfUndeletable = true,
   });
 
   final String nodeId;
+  final bool abortIfUndeletable;
 }
 
 class DeleteNodeCommand extends EditCommand {
   DeleteNodeCommand({
     required this.nodeId,
+    this.abortIfUndeletable = true,
   });
 
   final String nodeId;
+  final bool abortIfUndeletable;
 
   @override
   HistoryBehavior get historyBehavior => HistoryBehavior.undoable;
@@ -1086,6 +1146,11 @@ class DeleteNodeCommand extends EditCommand {
     final node = document.getNodeById(nodeId);
     if (node == null) {
       _log.log('DeleteNodeCommand', 'No such node. Returning.');
+      return;
+    }
+
+    if (abortIfUndeletable && node.metadata[NodeMetadata.deletable] == false) {
+      // The node is marked as undeletable. Fizzle.
       return;
     }
 

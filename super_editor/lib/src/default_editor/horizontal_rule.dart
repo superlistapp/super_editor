@@ -12,7 +12,9 @@ import 'layout_single_column/layout_single_column.dart';
 class HorizontalRuleNode extends BlockNode with ChangeNotifier {
   HorizontalRuleNode({
     required this.id,
+    Map<String, dynamic>? metadata,
   }) {
+    super.metadata = metadata ?? {};
     putMetadataValue("blockType", const NamedAttribution("horizontalRule"));
   }
 

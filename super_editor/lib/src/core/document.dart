@@ -457,3 +457,14 @@ abstract class NodePosition {
   /// even though [==] returns `false`.
   bool isEquivalentTo(NodePosition other);
 }
+
+/// Keys to access metadata on a [DocumentNode].
+class NodeMetadata {
+  /// Applies an [Attribution] to the node.
+  static const String blockType = 'blockType';
+
+  /// Whether or not the node is deletable.
+  ///
+  /// If the node doesn't have this metadata, it is assumed to be deletable.
+  static const String deletable = 'deletable';
+}
