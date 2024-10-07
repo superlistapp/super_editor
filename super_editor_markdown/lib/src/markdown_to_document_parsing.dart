@@ -537,8 +537,16 @@ abstract class ElementToNodeConverter {
 /// This [DelimiterSyntax] produces `Element`s with a `u` tag.
 class UnderlineSyntax extends md.DelimiterSyntax {
 
-  /// This is required by md.DelimiterSyntax, in theory the constructor takes an optional tags member, but a bug in
-  /// the Markdown lib replaces that with a const [], and then tries to sort it.
+  /// According to the docs:
+  ///
+  /// https://pub.dev/documentation/markdown/latest/markdown/DelimiterSyntax-class.html
+  ///
+  /// The DelimiterSyntax constructor takes a nullable. However, the problem is there is a bug in the underlying dart
+  /// library if you don't pass it. Due to these two lines, one sets it to const [] if not passed, then the next tries
+  /// to sort. So we have to pass something at the moment or it blows up.
+  ///
+  /// https://github.com/dart-lang/markdown/blob/d53feae0760a4f0aae5ffdfb12d8e6acccf14b40/lib/src/inline_syntaxes/delimiter_syntax.dart#L67
+  /// https://github.com/dart-lang/markdown/blob/d53feae0760a4f0aae5ffdfb12d8e6acccf14b40/lib/src/inline_syntaxes/delimiter_syntax.dart#L319
   static final _tags = [ md.DelimiterTag("u", 1) ];
 
   UnderlineSyntax() : super('¬', requiresDelimiterRun: true, allowIntraWord: true, tags: _tags);
