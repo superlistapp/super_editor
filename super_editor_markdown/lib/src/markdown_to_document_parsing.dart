@@ -23,7 +23,7 @@ MutableDocument deserializeMarkdownToDocument(
   List<ElementToNodeConverter> customElementToNodeConverters = const [],
   bool encodeHtml = false,
 }) {
-  final markdownLines = const LineSplitter().convert(markdown).map((l) {
+  final markdownLines = const LineSplitter().convert(markdown).map<md.Line>((String l) {
     return md.Line(l);
   }).toList();
 
@@ -59,6 +59,14 @@ MutableDocument deserializeMarkdownToDocument(
     documentNodes.add(
       ParagraphNode(id: Editor.createNodeId(), text: AttributedText()),
     );
+  }
+
+  // Add 1 hanging line for every 2 blank lines at the end, need this to preserve behavior pre markdown 7.2.1
+  final hangingEmptyLines = markdownLines.reversed.takeWhile((md.Line l) => l.isBlankLine);
+  if(hangingEmptyLines.isNotEmpty && documentNodes.lastOrNull is ListItemNode) {
+    for(var i = 0; i < hangingEmptyLines.length >> 1; i++) {
+      documentNodes.add(ParagraphNode(id: Editor.createNodeId(), text: AttributedText()));
+    }
   }
 
   return MutableDocument(nodes: documentNodes);
@@ -394,6 +402,7 @@ class _MarkdownToDocument implements md.NodeVisitor {
       text,
       md.Document(
         inlineSyntaxes: [
+          SingleStrikethroughSyntax(), // this needs to be before md.StrikethroughSyntax to be recognized
           md.StrikethroughSyntax(),
           UnderlineSyntax(),
           if (syntax == MarkdownSyntax.superEditor) //
@@ -546,6 +555,23 @@ class UnderlineSyntax extends md.DelimiterSyntax {
     return [ element ];
   }
 }
+
+/// A Markdown [DelimiterSyntax] that matches strikethrough spans of text, which are represented in
+/// Markdown with surrounding `~` tags, e.g., "this is ~strikethrough~ text".
+///
+/// Markdown in library in 7.2.1 seems to not be matching single strikethroughs
+///
+/// This [DelimiterSyntax] produces `Element`s with a `del` tag.
+class SingleStrikethroughSyntax extends md.DelimiterSyntax {
+  SingleStrikethroughSyntax()
+      : super(
+          '~',
+          requiresDelimiterRun: true,
+          allowIntraWord: true,
+          tags: [md.DelimiterTag('del', 1)],
+        );
+}
+
 
 /// Parses a paragraph preceded by an alignment token.
 class _ParagraphWithAlignmentSyntax extends _EmptyLinePreservingParagraphSyntax {

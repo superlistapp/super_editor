@@ -1437,13 +1437,13 @@ with multiple lines
         expect(document.getNodeAt(25)!, isA<ParagraphNode>());
       });
 
-      test('paragraph with single ~ should not be strikethrough', () {
+      test('paragraph with single strikethrough', () {
         final doc = deserializeMarkdownToDocument('~This is~ a paragraph.');
         final styledText = (doc.getNodeAt(0)! as ParagraphNode).text;
 
         // Ensure text within the range isn't attributed.
-        expect(styledText.getAllAttributionsAt(0).contains(strikethroughAttribution), false);
-        expect(styledText.getAllAttributionsAt(6).contains(strikethroughAttribution), false);
+        expect(styledText.getAllAttributionsAt(0).contains(strikethroughAttribution), true);
+        expect(styledText.getAllAttributionsAt(6).contains(strikethroughAttribution), true);
 
         // Ensure text outside the range isn't attributed.
         expect(styledText.getAllAttributionsAt(7).contains(strikethroughAttribution), false);
@@ -1555,6 +1555,23 @@ Paragraph3""";
         expect((doc.getNodeAt(0)! as ParagraphNode).text.text, 'Paragraph1');
         expect((doc.getNodeAt(1)! as ParagraphNode).text.text, '');
         expect((doc.getNodeAt(2)! as ParagraphNode).text.text, 'Paragraph3');
+      });
+
+       test('empty paragraph after paragraphs', () {
+        const input ='''
+1. First item
+2. Second item
+3. Third item
+
+
+''';
+        final doc = deserializeMarkdownToDocument(input);
+
+        expect(doc.nodeCount, 4);
+        expect((doc.getNodeAt(0)! as ListItemNode).text.text, 'First item');
+        expect((doc.getNodeAt(1)! as ListItemNode).text.text, 'Second item');
+        expect((doc.getNodeAt(2)! as ListItemNode).text.text, 'Third item');
+        expect((doc.getNodeAt(3)! as ParagraphNode).text.text, '');
       });
 
       test('multiple empty paragraph between paragraphs', () {

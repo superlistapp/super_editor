@@ -95,6 +95,7 @@ _InlineMarkdownToDocument _parseInline(md.Element element) {
     element.textContent,
     md.Document(
       inlineSyntaxes: [
+        SingleStrikethroughSyntax(), // this needs to be before md.StrikethroughSyntax to be recognized
         md.StrikethroughSyntax(),
         UnderlineSyntax(),
       ],
