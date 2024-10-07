@@ -1130,8 +1130,7 @@ This is some code
       });
 
       test('unordered list followed by empty list item', () {
-        const markdown = """
-- list item 1
+        const markdown = """- list item 1
 - """;
 
         final document = deserializeMarkdownToDocument(markdown);
@@ -1441,7 +1440,7 @@ with multiple lines
         final doc = deserializeMarkdownToDocument('~This is~ a paragraph.');
         final styledText = (doc.getNodeAt(0)! as ParagraphNode).text;
 
-        // Ensure text within the range isn't attributed.
+        // Ensure text within the range is attributed.
         expect(styledText.getAllAttributionsAt(0).contains(strikethroughAttribution), true);
         expect(styledText.getAllAttributionsAt(6).contains(strikethroughAttribution), true);
 
@@ -1557,21 +1556,25 @@ Paragraph3""";
         expect((doc.getNodeAt(2)! as ParagraphNode).text.text, 'Paragraph3');
       });
 
-       test('empty paragraph after paragraphs', () {
+       test('every 2 newlines after a list are a paragraph', () {
         const input ='''
 1. First item
 2. Second item
 3. Third item
 
 
+
+
 ''';
         final doc = deserializeMarkdownToDocument(input);
 
-        expect(doc.nodeCount, 4);
+        expect(doc.nodeCount, 5);
         expect((doc.getNodeAt(0)! as ListItemNode).text.text, 'First item');
         expect((doc.getNodeAt(1)! as ListItemNode).text.text, 'Second item');
         expect((doc.getNodeAt(2)! as ListItemNode).text.text, 'Third item');
+        // super_editor tests expect empty newlines after a list to be retained
         expect((doc.getNodeAt(3)! as ParagraphNode).text.text, '');
+        expect((doc.getNodeAt(4)! as ParagraphNode).text.text, '');
       });
 
       test('multiple empty paragraph between paragraphs', () {
