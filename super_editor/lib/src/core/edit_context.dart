@@ -1,3 +1,4 @@
+import 'package:flutter/widgets.dart';
 import 'package:super_editor/src/default_editor/common_editor_operations.dart';
 import 'package:super_editor/src/infrastructure/documents/document_scroller.dart';
 
@@ -19,6 +20,7 @@ class SuperEditorContext {
   /// The [documentLayout] is passed as a [getDocumentLayout] callback that
   /// should return the current layout as it might change.
   SuperEditorContext({
+    required this.editorFocusNode,
     required this.editor,
     required this.document,
     required DocumentLayout Function() getDocumentLayout,
@@ -26,6 +28,8 @@ class SuperEditorContext {
     required this.scroller,
     required this.commonOps,
   }) : _getDocumentLayout = getDocumentLayout;
+
+  final FocusNode editorFocusNode;
 
   /// The editor of the [Document] that allows executing commands that alter the
   /// structure of the document.
