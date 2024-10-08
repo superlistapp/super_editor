@@ -6,6 +6,7 @@ import 'package:super_editor/src/core/document.dart';
 import 'package:super_editor/src/core/document_composer.dart';
 import 'package:super_editor/src/core/editor.dart';
 import 'package:super_editor/src/core/document_selection.dart';
+import 'package:super_editor/src/default_editor/box_component.dart';
 import 'package:super_editor/src/default_editor/common_editor_operations.dart';
 import 'package:super_editor/src/default_editor/selection_upstream_downstream.dart';
 import 'package:super_editor/src/default_editor/text.dart';
@@ -721,6 +722,7 @@ class DeleteContentCommand extends EditCommand {
   void execute(EditContext context, CommandExecutor executor) {
     _log.log('DeleteSelectionCommand', 'DocumentEditor: deleting selection: $documentRange');
     final document = context.document;
+    final selection = context.composer.selection;
     final nodes = document.getNodesInside(documentRange.start, documentRange.end);
     final normalizedRange = documentRange.normalize(document);
 
@@ -729,6 +731,23 @@ class DeleteContentCommand extends EditCommand {
 
       if (nodes.first.metadata[NodeMetadata.isDeletable] == false) {
         // The node is not deletable. Abort the deletion.
+        if (nodes.first is BlockNode && selection?.isCollapsed == false) {
+          // On iOS, pressing backspace generates a non-text delta expanding the selection
+          // prior to its deletion. Since we can't delete the block, we'll just collapse the
+          // selection to the end of the block.
+          executor.executeCommand(
+            ChangeSelectionCommand(
+              DocumentSelection.collapsed(
+                position: DocumentPosition(
+                  nodeId: nodes.first.id,
+                  nodePosition: nodes.first.endPosition,
+                ),
+              ),
+              SelectionChangeType.placeCaret,
+              SelectionReason.contentChange,
+            ),
+          );
+        }
         return;
       }
       final changeList = _deleteSelectionWithinSingleNode(
