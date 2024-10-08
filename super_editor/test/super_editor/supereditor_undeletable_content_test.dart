@@ -1,3 +1,4 @@
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_test_robots/flutter_test_robots.dart';
 import 'package:flutter_test_runners/flutter_test_runners.dart';
@@ -13,22 +14,19 @@ void main() {
       testWidgetsOnArbitraryDesktop('at the downstream edge of the node', (tester) async {
         await _pumpHrThenParagraphTestApp(tester);
 
-        // Place the caret at the downstream edge of the horizontal rule.
-        await tester.tapAtDocumentPosition(
-          const DocumentPosition(
-            nodeId: 'hr',
-            nodePosition: UpstreamDownstreamNodePosition.downstream(),
-          ),
+        const hrDownstreamEdgePosition = DocumentPosition(
+          nodeId: 'hr',
+          nodePosition: UpstreamDownstreamNodePosition.downstream(),
         );
 
-        // Ensure the selection is at the downstream edge of the horizontal ruler.
+        // Place the caret at the downstream edge of the horizontal rule.
+        await tester.tapAtDocumentPosition(hrDownstreamEdgePosition);
+
+        // Ensure the selection is at the downstream edge of the horizontal rule.
         expect(
           SuperEditorInspector.findDocumentSelection(),
           const DocumentSelection.collapsed(
-            position: DocumentPosition(
-              nodeId: 'hr',
-              nodePosition: UpstreamDownstreamNodePosition.downstream(),
-            ),
+            position: hrDownstreamEdgePosition,
           ),
         );
 
@@ -37,16 +35,25 @@ void main() {
         await tester.pressBackspace();
         await tester.pressBackspace();
 
-        // Ensure that the horizontal ruler was not deleted and not converted to a paragraph.
+        // Ensure that the horizontal rule was not deleted.
         final document = SuperEditorInspector.findDocument()!;
         expect(document.getNodeById('hr'), isNotNull);
         expect(document.getNodeById('hr'), isA<HorizontalRuleNode>());
+
+        // Ensure the selection didn't change.
+        expect(
+          SuperEditorInspector.findDocumentSelection(),
+          const DocumentSelection.collapsed(
+            position: hrDownstreamEdgePosition,
+          ),
+        );
       });
 
       testWidgetsOnArbitraryDesktop('with an expanded downstream selection', (tester) async {
         final testContext = await _pumpParagraphThenHrTestApp(tester);
 
-        // Select the whole hr.
+        // Select the whole hr. Use a command instead of a user gesture to have
+        // precise control over the selection.
         testContext.editor.execute([
           const ChangeSelectionRequest(
             DocumentSelection(
@@ -70,7 +77,7 @@ void main() {
         await tester.pressBackspace();
         await tester.pressBackspace();
 
-        // Ensure that the horizontal ruler was not deleted and not converted to a paragraph.
+        // Ensure that the horizontal rule was not deleted.
         final document = SuperEditorInspector.findDocument()!;
         expect(document.getNodeById('hr'), isNotNull);
         expect(document.getNodeById('hr'), isA<HorizontalRuleNode>());
@@ -79,7 +86,8 @@ void main() {
       testWidgetsOnArbitraryDesktop('with an expanded upstream selection', (tester) async {
         final testContext = await _pumpParagraphThenHrTestApp(tester);
 
-        // Select the whole hr.
+        // Select the whole hr. Use a command instead of a user gesture to have
+        // precise control over the selection.
         testContext.editor.execute([
           const ChangeSelectionRequest(
             DocumentSelection(
@@ -103,7 +111,7 @@ void main() {
         await tester.pressBackspace();
         await tester.pressBackspace();
 
-        // Ensure that the horizontal ruler was not deleted and not converted to a paragraph.
+        // Ensure that the horizontal rule was not deleted.
         final document = SuperEditorInspector.findDocument()!;
         expect(document.getNodeById('hr'), isNotNull);
         expect(document.getNodeById('hr'), isA<HorizontalRuleNode>());
@@ -125,7 +133,7 @@ void main() {
                 nodePosition: TextNodePosition(offset: 10),
               ),
             ),
-            SelectionChangeType.alteredContent,
+            SelectionChangeType.expandSelection,
             SelectionReason.userInteraction,
           )
         ]);
@@ -134,8 +142,8 @@ void main() {
         // Press backspace to delete the selected nodes.
         await tester.pressBackspace();
 
-        // Ensure that the deletable content was deleted and selection moved to upstream edge
-        // of the first deletable node.
+        // Ensure that the deletable content was deleted and the selection moved to upstream edge
+        // of the selection.
         final document = SuperEditorInspector.findDocument()!;
         expect(document.nodeCount, 4);
         expect(SuperEditorInspector.findTextInComponent('1'), AttributedText('Para3'));
@@ -200,7 +208,7 @@ void main() {
           ),
         );
 
-        // Ensure that the horizontal rule was not deleted and not converted to a paragraph.
+        // Ensure that the horizontal rule was not deleted.
         final document = SuperEditorInspector.findDocument()!;
         expect(document.getNodeById('hr'), isNotNull);
         expect(document.getNodeById('hr'), isA<HorizontalRuleNode>());
@@ -247,7 +255,7 @@ void main() {
           ),
         );
 
-        // Ensure that the horizontal ruler was not deleted and not converted to a paragraph.
+        // Ensure that the horizontal rule was not deleted.
         final document = SuperEditorInspector.findDocument()!;
         expect(document.getNodeById('hr'), isNotNull);
         expect(document.getNodeById('hr'), isA<HorizontalRuleNode>());
@@ -291,7 +299,7 @@ void main() {
           ),
         );
 
-        // Ensure that the horizontal ruler was not deleted and not converted to a paragraph.
+        // Ensure that the horizontal rule was not deleted.
         final document = SuperEditorInspector.findDocument()!;
         expect(document.getNodeById('hr'), isNotNull);
         expect(document.getNodeById('hr'), isA<HorizontalRuleNode>());
@@ -301,7 +309,7 @@ void main() {
           'when selection starts at a downstream deletable node and ends at the upstream edge', (tester) async {
         final testContext = await _pumpHrThenParagraphTestApp(tester);
 
-        // Select from the "Para|graph 2" to the upstream edge of the second horizontal ruler.
+        // Select from the "Para|graph 2" to the upstream edge of the second horizontal rule.
         testContext.editor.execute([
           const ChangeSelectionRequest(
             DocumentSelection(
@@ -335,7 +343,7 @@ void main() {
           ),
         );
 
-        // Ensure that the horizontal ruler was not deleted and not converted to a paragraph.
+        // Ensure that the horizontal rule was not deleted.
         final document = SuperEditorInspector.findDocument()!;
         expect(document.getNodeById('hr'), isNotNull);
         expect(document.getNodeById('hr'), isA<HorizontalRuleNode>());
@@ -346,22 +354,19 @@ void main() {
       testWidgetsOnArbitraryDesktop('at the upstream edge of the node', (tester) async {
         await _pumpParagraphThenHrTestApp(tester);
 
-        // Place the caret at the upstream edge of the horizontal rule.
-        await tester.tapAtDocumentPosition(
-          const DocumentPosition(
-            nodeId: 'hr',
-            nodePosition: UpstreamDownstreamNodePosition.upstream(),
-          ),
+        const hrUpstreamEdgePosition = DocumentPosition(
+          nodeId: 'hr',
+          nodePosition: UpstreamDownstreamNodePosition.upstream(),
         );
+
+        // Place the caret at the upstream edge of the horizontal rule.
+        await tester.tapAtDocumentPosition(hrUpstreamEdgePosition);
 
         // Ensure the selection is at the beginning of the horizontal rule.
         expect(
           SuperEditorInspector.findDocumentSelection(),
           const DocumentSelection.collapsed(
-            position: DocumentPosition(
-              nodeId: 'hr',
-              nodePosition: UpstreamDownstreamNodePosition.upstream(),
-            ),
+            position: hrUpstreamEdgePosition,
           ),
         );
 
@@ -370,16 +375,25 @@ void main() {
         await tester.pressDelete();
         await tester.pressDelete();
 
-        // Ensure that the horizontal rule was not deleted and not converted to a paragraph.
+        // Ensure that the horizontal rule was not deleted.
         final document = SuperEditorInspector.findDocument()!;
         expect(document.getNodeById('hr'), isNotNull);
         expect(document.getNodeById('hr'), isA<HorizontalRuleNode>());
+
+        // Ensure the selection didn't change.
+        expect(
+          SuperEditorInspector.findDocumentSelection(),
+          const DocumentSelection.collapsed(
+            position: hrUpstreamEdgePosition,
+          ),
+        );
       });
 
       testWidgetsOnArbitraryDesktop('with an expanded downstream selection', (tester) async {
         final testContext = await _pumpParagraphThenHrTestApp(tester);
 
-        // Select the whole hr.
+        // Select the whole hr. Use a command instead of a user gesture to have
+        // precise control over the selection.
         testContext.editor.execute([
           const ChangeSelectionRequest(
             DocumentSelection(
@@ -403,7 +417,7 @@ void main() {
         await tester.pressDelete();
         await tester.pressDelete();
 
-        // Ensure that the horizontal rule was not deleted and not converted to a paragraph.
+        // Ensure that the horizontal rule was not deleted.
         final document = SuperEditorInspector.findDocument()!;
         expect(document.getNodeById('hr'), isNotNull);
         expect(document.getNodeById('hr'), isA<HorizontalRuleNode>());
@@ -412,7 +426,8 @@ void main() {
       testWidgetsOnArbitraryDesktop('with an expanded upstream selection', (tester) async {
         final testContext = await _pumpParagraphThenHrTestApp(tester);
 
-        // Select the whole hr.
+        // Select the whole hr. Use a command instead of a user gesture to have
+        // precise control over the selection.
         testContext.editor.execute([
           const ChangeSelectionRequest(
             DocumentSelection(
@@ -580,7 +595,7 @@ void main() {
           ),
         );
 
-        // Ensure that the horizontal ruler was not deleted.
+        // Ensure that the horizontal rule was not deleted.
         final document = SuperEditorInspector.findDocument()!;
         expect(document.getNodeById('hr'), isNotNull);
         expect(document.getNodeById('hr'), isA<HorizontalRuleNode>());
@@ -634,7 +649,7 @@ void main() {
           'when selection starts at a downstream deletable node and ends at the upstream edge', (tester) async {
         final testContext = await _pumpHrThenParagraphTestApp(tester);
 
-        // Select from the "Para|graph 2" to the upstream edge of the second horizontal ruler.
+        // Select from the "Para|graph 2" to the upstream edge of the second horizontal rule.
         testContext.editor.execute([
           const ChangeSelectionRequest(
             DocumentSelection(
@@ -692,7 +707,7 @@ void main() {
                 nodePosition: TextNodePosition(offset: 10),
               ),
             ),
-            SelectionChangeType.alteredContent,
+            SelectionChangeType.expandSelection,
             SelectionReason.userInteraction,
           )
         ]);
@@ -727,51 +742,452 @@ void main() {
       });
     });
 
-    // group('with backspace in software keyboard', () {
-    //   testWidgetsOnMobile('at the downstream edge of the node', (tester) async {
-    //     await _pumpHrThenParagraphTestApp(tester);
+    group('with backspace in software keyboard', () {
+      testWidgetsOnMobile('at the downstream edge of the node', (tester) async {
+        await _pumpHrThenParagraphTestApp(tester);
 
-    //     // Place the caret at the downstream edge of the horizontal rule.
-    //     await tester.tapAtDocumentPosition(
-    //       const DocumentPosition(
-    //         nodeId: 'hr',
-    //         nodePosition: UpstreamDownstreamNodePosition.downstream(),
-    //       ),
-    //     );
-    //     await tester.pump();
+        const hrDownstreamPosition = DocumentPosition(
+          nodeId: 'hr',
+          nodePosition: UpstreamDownstreamNodePosition.downstream(),
+        );
 
-    //     // Simulate pressing backspace.
-    //     await tester.ime.sendDeltas([
-    //       const TextEditingDeltaNonTextUpdate(
-    //         oldText: '. ~',
-    //         selection: TextSelection.collapsed(offset: 3),
-    //         composing: TextRange(start: -1, end: -1),
-    //       ),
-    //       const TextEditingDeltaDeletion(
-    //         oldText: '. ~',
-    //         deletedRange: TextRange.collapsed(2),
-    //         selection: TextSelection.collapsed(offset: 2),
-    //         composing: TextRange(start: -1, end: -1),
-    //       ),
-    //     ], getter: imeClientGetter);
+        // Place the caret at the downstream edge of the horizontal rule.
+        await tester.tapAtDocumentPosition(hrDownstreamPosition);
+        await tester.pump();
 
-    //     // Ensure that the horizontal ruler was not deleted and not converted to a paragraph.
-    //     final document = SuperEditorInspector.findDocument()!;
-    //     expect(document.getNodeById('hr'), isNotNull);
-    //     expect(document.getNodeById('hr'), isA<HorizontalRuleNode>());
+        // Ensure the caret is at the downstream edge of the horizontal rule.
+        expect(
+          SuperEditorInspector.findDocumentSelection(),
+          const DocumentSelection.collapsed(
+            position: hrDownstreamPosition,
+          ),
+        );
 
-    //     // Ensure the selection was kept where it was.
-    //     expect(
-    //       SuperEditorInspector.findDocumentSelection(),
-    //       const DocumentSelection.collapsed(
-    //         position: DocumentPosition(
-    //           nodeId: 'hr',
-    //           nodePosition: UpstreamDownstreamNodePosition.downstream(),
-    //         ),
-    //       ),
-    //     );
-    //   });
-    // });
+        // Simulate the user pressing backspace. The IME first generates a
+        // selection change and then a deletion. Each block node is represented by a "~"
+        // in the IME.
+        await tester.ime.sendDeltas([
+          const TextEditingDeltaNonTextUpdate(
+            oldText: '. ~',
+            selection: TextSelection(baseOffset: 2, extentOffset: 3),
+            composing: TextRange(start: -1, end: -1),
+          ),
+          const TextEditingDeltaDeletion(
+            oldText: '. ~',
+            deletedRange: TextSelection(baseOffset: 2, extentOffset: 3),
+            selection: TextSelection.collapsed(offset: 2),
+            composing: TextRange(start: -1, end: -1),
+          ),
+        ], getter: imeClientGetter);
+
+        // Ensure that the horizontal rule was not deleted.
+        final document = SuperEditorInspector.findDocument()!;
+        expect(document.getNodeById('hr'), isNotNull);
+        expect(document.getNodeById('hr'), isA<HorizontalRuleNode>());
+
+        // Ensure the selection was kept where it was.
+        expect(
+          SuperEditorInspector.findDocumentSelection(),
+          const DocumentSelection.collapsed(
+            position: hrDownstreamPosition,
+          ),
+        );
+      });
+
+      testWidgetsOnMobile('with an expanded downstream selection', (tester) async {
+        final testContext = await _pumpParagraphThenHrTestApp(tester);
+
+        // Select the whole hr. Use a command instead of a user gesture to have
+        // precise control over the selection.
+        testContext.editor.execute([
+          const ChangeSelectionRequest(
+            DocumentSelection(
+              base: DocumentPosition(
+                nodeId: 'hr',
+                nodePosition: UpstreamDownstreamNodePosition.upstream(),
+              ),
+              extent: DocumentPosition(
+                nodeId: 'hr',
+                nodePosition: UpstreamDownstreamNodePosition.downstream(),
+              ),
+            ),
+            SelectionChangeType.expandSelection,
+            SelectionReason.userInteraction,
+          )
+        ]);
+        await tester.pump();
+
+        // Simulate the user pressing backspace. The IME first generates a
+        // selection change and then a deletion. Each block node is represented by a "~"
+        // in the IME.
+        await tester.ime.sendDeltas([
+          const TextEditingDeltaNonTextUpdate(
+            oldText: '. ~',
+            selection: TextSelection(baseOffset: 2, extentOffset: 3),
+            composing: TextRange(start: -1, end: -1),
+          ),
+          const TextEditingDeltaDeletion(
+            oldText: '. ~',
+            deletedRange: TextSelection(baseOffset: 2, extentOffset: 3),
+            selection: TextSelection.collapsed(offset: 2),
+            composing: TextRange(start: -1, end: -1),
+          ),
+        ], getter: imeClientGetter);
+
+        // Ensure that the horizontal rule was not deleted.
+        final document = SuperEditorInspector.findDocument()!;
+        expect(document.getNodeById('hr'), isNotNull);
+        expect(document.getNodeById('hr'), isA<HorizontalRuleNode>());
+      });
+
+      testWidgetsOnMobile('with an expanded upstream selection', (tester) async {
+        final testContext = await _pumpParagraphThenHrTestApp(tester);
+
+        // Select the whole hr. Use a command instead of a user gesture to have
+        // precise control over the selection.
+        testContext.editor.execute([
+          const ChangeSelectionRequest(
+            DocumentSelection(
+              base: DocumentPosition(
+                nodeId: 'hr',
+                nodePosition: UpstreamDownstreamNodePosition.downstream(),
+              ),
+              extent: DocumentPosition(
+                nodeId: 'hr',
+                nodePosition: UpstreamDownstreamNodePosition.upstream(),
+              ),
+            ),
+            SelectionChangeType.expandSelection,
+            SelectionReason.userInteraction,
+          )
+        ]);
+        await tester.pump();
+
+        // Simulate the user pressing backspace. The IME first generates a
+        // selection change and then a deletion. Each block node is represented by a "~"
+        // in the IME.
+        await tester.ime.sendDeltas([
+          const TextEditingDeltaNonTextUpdate(
+            oldText: '. ~',
+            selection: TextSelection(baseOffset: 2, extentOffset: 3),
+            composing: TextRange(start: -1, end: -1),
+          ),
+          const TextEditingDeltaDeletion(
+            oldText: '. ~',
+            deletedRange: TextSelection(baseOffset: 2, extentOffset: 3),
+            selection: TextSelection.collapsed(offset: 2),
+            composing: TextRange(start: -1, end: -1),
+          ),
+        ], getter: imeClientGetter);
+
+        // Ensure that the horizontal rule was not deleted.
+        final document = SuperEditorInspector.findDocument()!;
+        expect(document.getNodeById('hr'), isNotNull);
+        expect(document.getNodeById('hr'), isA<HorizontalRuleNode>());
+      });
+
+      testWidgetsOnMobile('when multiple deletable and undeletable nodes are selected', (tester) async {
+        final testContext = await _pumpMultipleDeletableAndUndeletableNodesTestApp(tester);
+
+        // Select from "Para>graph 1" to "Paragraph <3".
+        testContext.editor.execute([
+          const ChangeSelectionRequest(
+            DocumentSelection(
+              base: DocumentPosition(
+                nodeId: '1',
+                nodePosition: TextNodePosition(offset: 4),
+              ),
+              extent: DocumentPosition(
+                nodeId: '3',
+                nodePosition: TextNodePosition(offset: 10),
+              ),
+            ),
+            SelectionChangeType.expandSelection,
+            SelectionReason.userInteraction,
+          )
+        ]);
+        await tester.pump();
+
+        // Simulate the user pressing backspace. The IME first generates a
+        // selection change and then a deletion. Each block node is represented by a "~"
+        // in the IME.
+        await tester.ime.sendDeltas([
+          const TextEditingDeltaNonTextUpdate(
+            oldText: '. Paragraph 1\n~\n~\nParagraph 2\n~\nParagraph 3',
+            selection: TextSelection(baseOffset: 6, extentOffset: 42),
+            composing: TextRange(start: -1, end: -1),
+          ),
+          const TextEditingDeltaDeletion(
+            oldText: '. Paragraph 1\n~\n~\nParagraph 2\n~\nParagraph 3',
+            deletedRange: TextSelection(baseOffset: 6, extentOffset: 42),
+            selection: TextSelection.collapsed(offset: 6),
+            composing: TextRange(start: -1, end: -1),
+          ),
+        ], getter: imeClientGetter);
+
+        // Ensure that the deletable content was deleted and selection moved to upstream edge
+        // of the first deletable node.
+        final document = SuperEditorInspector.findDocument()!;
+        expect(document.nodeCount, 4);
+        expect(SuperEditorInspector.findTextInComponent('1'), AttributedText('Para3'));
+        expect(
+          SuperEditorInspector.findDocumentSelection(),
+          selectionEquivalentTo(
+            const DocumentSelection.collapsed(
+              position: DocumentPosition(nodeId: '1', nodePosition: TextNodePosition(offset: 4)),
+            ),
+          ),
+        );
+
+        // Ensure that the undeletable content was not deleted.
+        expect(document.getNodeById('hr1'), isNotNull);
+        expect(document.getNodeById('hr1'), isA<HorizontalRuleNode>());
+
+        expect(document.getNodeById('hr2'), isNotNull);
+        expect(document.getNodeById('hr2'), isA<HorizontalRuleNode>());
+
+        expect(document.getNodeById('hr3'), isNotNull);
+        expect(document.getNodeById('hr3'), isA<HorizontalRuleNode>());
+      });
+
+      testWidgetsOnMobile('when selection starts at upstream edge and ends at a downstream deletable node',
+          (tester) async {
+        final testContext = await _pumpHrThenParagraphTestApp(tester);
+
+        // Select from the upstream edge of the horizontal rule to "Para|graph 1".
+        testContext.editor.execute([
+          const ChangeSelectionRequest(
+            DocumentSelection(
+              base: DocumentPosition(
+                nodeId: 'hr',
+                nodePosition: UpstreamDownstreamNodePosition.upstream(),
+              ),
+              extent: DocumentPosition(
+                nodeId: '1',
+                nodePosition: TextNodePosition(offset: 4),
+              ),
+            ),
+            SelectionChangeType.expandSelection,
+            SelectionReason.userInteraction,
+          )
+        ]);
+        await tester.pump();
+
+        // Simulate the user pressing backspace. The IME first generates a
+        // selection change and then a deletion. Each block node is represented by a "~"
+        // in the IME.
+        await tester.ime.sendDeltas([
+          const TextEditingDeltaNonTextUpdate(
+            oldText: '. ~\nParagraph 1',
+            selection: TextSelection(baseOffset: 2, extentOffset: 8),
+            composing: TextRange(start: -1, end: -1),
+          ),
+          const TextEditingDeltaDeletion(
+            oldText: '. ~\nParagraph 1',
+            deletedRange: TextSelection(baseOffset: 2, extentOffset: 8),
+            selection: TextSelection.collapsed(offset: 6),
+            composing: TextRange(start: -1, end: -1),
+          ),
+        ], getter: imeClientGetter);
+
+        // Ensure that the deletable content was deleted and selection moved to the beginning
+        // of the selected paragraph.
+        expect(
+          SuperEditorInspector.findTextInComponent('1').text,
+          'graph 1',
+        );
+        expect(
+          SuperEditorInspector.findDocumentSelection(),
+          selectionEquivalentTo(
+            const DocumentSelection.collapsed(
+              position: DocumentPosition(nodeId: '1', nodePosition: TextNodePosition(offset: 0)),
+            ),
+          ),
+        );
+
+        // Ensure that the horizontal rule was not deleted.
+        final document = SuperEditorInspector.findDocument()!;
+        expect(document.getNodeById('hr'), isNotNull);
+        expect(document.getNodeById('hr'), isA<HorizontalRuleNode>());
+      });
+
+      testWidgetsOnMobile('when selection starts at downstream edge and ends at an upstream deletable node',
+          (tester) async {
+        final testContext = await _pumpParagraphThenHrTestApp(tester);
+
+        // Select from the downstream edge of the horizontal rule to "Para|graph 1".
+        testContext.editor.execute([
+          const ChangeSelectionRequest(
+            DocumentSelection(
+              base: DocumentPosition(
+                nodeId: 'hr',
+                nodePosition: UpstreamDownstreamNodePosition.downstream(),
+              ),
+              extent: DocumentPosition(
+                nodeId: '1',
+                nodePosition: TextNodePosition(offset: 4),
+              ),
+            ),
+            SelectionChangeType.expandSelection,
+            SelectionReason.userInteraction,
+          )
+        ]);
+        await tester.pump();
+
+        // Simulate the user pressing backspace. The IME first generates a
+        // selection change and then a deletion. Each block node is represented by a "~"
+        // in the IME.
+        await tester.ime.sendDeltas([
+          const TextEditingDeltaNonTextUpdate(
+            oldText: '. Paragraph 1\n~',
+            selection: TextSelection(baseOffset: 15, extentOffset: 6),
+            composing: TextRange(start: -1, end: -1),
+          ),
+          const TextEditingDeltaDeletion(
+            oldText: '. Paragraph 1\n~',
+            deletedRange: TextSelection(baseOffset: 15, extentOffset: 6),
+            selection: TextSelection.collapsed(offset: 6),
+            composing: TextRange(start: -1, end: -1),
+          ),
+        ], getter: imeClientGetter);
+
+        // Ensure that the deletable content was deleted and selection moved to the upstream edge
+        // of the selection
+        expect(
+          SuperEditorInspector.findTextInComponent('1').text,
+          'Para',
+        );
+        expect(
+          SuperEditorInspector.findDocumentSelection(),
+          selectionEquivalentTo(
+            const DocumentSelection.collapsed(
+              position: DocumentPosition(nodeId: '1', nodePosition: TextNodePosition(offset: 4)),
+            ),
+          ),
+        );
+
+        // Ensure that the horizontal rule was not deleted.
+        final document = SuperEditorInspector.findDocument()!;
+        expect(document.getNodeById('hr'), isNotNull);
+        expect(document.getNodeById('hr'), isA<HorizontalRuleNode>());
+      });
+
+      testWidgetsOnMobile('when selection starts at an upstream deletable node and ends at the downstream edge',
+          (tester) async {
+        final testContext = await _pumpParagraphThenHrTestApp(tester);
+
+        // Select from the "Para|graph 1" to the downstream edge of the horizontal rule.
+        testContext.editor.execute([
+          const ChangeSelectionRequest(
+            DocumentSelection(
+              base: DocumentPosition(
+                nodeId: '1',
+                nodePosition: TextNodePosition(offset: 4),
+              ),
+              extent: DocumentPosition(
+                nodeId: 'hr',
+                nodePosition: UpstreamDownstreamNodePosition.downstream(),
+              ),
+            ),
+            SelectionChangeType.expandSelection,
+            SelectionReason.userInteraction,
+          )
+        ]);
+        await tester.pump();
+
+        // Simulate the user pressing backspace. The IME first generates a
+        // selection change and then a deletion. Each block node is represented by a "~"
+        // in the IME.
+        await tester.ime.sendDeltas([
+          const TextEditingDeltaNonTextUpdate(
+            oldText: '. Paragraph 1\n~',
+            selection: TextSelection(baseOffset: 6, extentOffset: 15),
+            composing: TextRange(start: -1, end: -1),
+          ),
+          const TextEditingDeltaDeletion(
+            oldText: '. Paragraph 1\n~',
+            deletedRange: TextSelection(baseOffset: 6, extentOffset: 15),
+            selection: TextSelection.collapsed(offset: 6),
+            composing: TextRange(start: -1, end: -1),
+          ),
+        ], getter: imeClientGetter);
+
+        // Ensure that the deletable content was deleted and selection moved to the beginning
+        // of the selected paragraph.
+        expect(SuperEditorInspector.findTextInComponent('1').text, 'Para');
+        expect(
+          SuperEditorInspector.findDocumentSelection(),
+          selectionEquivalentTo(
+            const DocumentSelection.collapsed(
+              position: DocumentPosition(nodeId: '1', nodePosition: TextNodePosition(offset: 4)),
+            ),
+          ),
+        );
+
+        // Ensure that the horizontal rule was not deleted.
+        final document = SuperEditorInspector.findDocument()!;
+        expect(document.getNodeById('hr'), isNotNull);
+        expect(document.getNodeById('hr'), isA<HorizontalRuleNode>());
+      });
+
+      testWidgetsOnMobile('when selection starts at a downstream deletable node and ends at the upstream edge',
+          (tester) async {
+        final testContext = await _pumpHrThenParagraphTestApp(tester);
+
+        // Select from the "Para|graph 1" to the upstream edge of the second horizontal rule.
+        testContext.editor.execute([
+          const ChangeSelectionRequest(
+            DocumentSelection(
+              base: DocumentPosition(
+                nodeId: '1',
+                nodePosition: TextNodePosition(offset: 4),
+              ),
+              extent: DocumentPosition(
+                nodeId: 'hr',
+                nodePosition: UpstreamDownstreamNodePosition.upstream(),
+              ),
+            ),
+            SelectionChangeType.expandSelection,
+            SelectionReason.userInteraction,
+          )
+        ]);
+        await tester.pump();
+
+        // Simulate the user pressing backspace. The IME first generates a
+        // selection change and then a deletion. Each block node is represented by a "~"
+        // in the IME.
+        await tester.ime.sendDeltas([
+          const TextEditingDeltaNonTextUpdate(
+            oldText: '. ~\nParagraph 1',
+            selection: TextSelection(baseOffset: 8, extentOffset: 2),
+            composing: TextRange(start: -1, end: -1),
+          ),
+          const TextEditingDeltaDeletion(
+            oldText: '. ~\nParagraph 1',
+            deletedRange: TextSelection(baseOffset: 8, extentOffset: 2),
+            selection: TextSelection.collapsed(offset: 2),
+            composing: TextRange(start: -1, end: -1),
+          ),
+        ], getter: imeClientGetter);
+
+        // Ensure that the deletable content was deleted and selection moved to the beginning
+        // of the selected paragraph.
+        expect(SuperEditorInspector.findTextInComponent('1').text, 'graph 1');
+        expect(
+          SuperEditorInspector.findDocumentSelection(),
+          selectionEquivalentTo(
+            const DocumentSelection.collapsed(
+              position: DocumentPosition(nodeId: '1', nodePosition: TextNodePosition(offset: 0)),
+            ),
+          ),
+        );
+
+        // Ensure that the horizontal rule was not deleted.
+        final document = SuperEditorInspector.findDocument()!;
+        expect(document.getNodeById('hr'), isNotNull);
+        expect(document.getNodeById('hr'), isA<HorizontalRuleNode>());
+      });
+    });
   });
 }
 
