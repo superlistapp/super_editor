@@ -6,6 +6,7 @@ import 'package:super_editor/src/core/document.dart';
 import 'package:super_editor/src/core/document_composer.dart';
 import 'package:super_editor/src/core/editor.dart';
 import 'package:super_editor/src/core/document_selection.dart';
+import 'package:super_editor/src/default_editor/common_editor_operations.dart';
 import 'package:super_editor/src/default_editor/selection_upstream_downstream.dart';
 import 'package:super_editor/src/default_editor/text.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
@@ -653,7 +654,7 @@ class ReplaceNodeWithEmptyParagraphWithCaretCommand extends EditCommand {
       return;
     }
 
-    if (abortIfUndeletable && oldNode.metadata['deletable'] == false) {
+    if (abortIfUndeletable && oldNode.metadata[NodeMetadata.isDeletable] == false) {
       return;
     }
 
@@ -689,13 +690,9 @@ class ReplaceNodeWithEmptyParagraphWithCaretCommand extends EditCommand {
 class DeleteContentRequest implements EditRequest {
   DeleteContentRequest({
     required this.documentRange,
-    this.newSelection,
-    this.abortIfUndeletable = true,
   });
 
   final DocumentRange documentRange;
-  final DocumentSelection? newSelection;
-  final bool abortIfUndeletable;
 }
 
 class DeleteContentCommand extends EditCommand {
@@ -727,13 +724,13 @@ class DeleteContentCommand extends EditCommand {
     final nodes = document.getNodesInside(documentRange.start, documentRange.end);
     final normalizedRange = documentRange.normalize(document);
 
-    if (nodes.any((node) => node.metadata[NodeMetadata.deletable] == false)) {
-      // At least one of the nodes in the range is not deletable. Abort the deletion.
-      return;
-    }
-
     if (nodes.length == 1) {
       // This is a selection within a single node.
+
+      if (nodes.first.metadata[NodeMetadata.isDeletable] == false) {
+        // The node is not deletable. Abort the deletion.
+        return;
+      }
       final changeList = _deleteSelectionWithinSingleNode(
         document: document,
         normalizedRange: normalizedRange,
@@ -775,24 +772,28 @@ class DeleteContentCommand extends EditCommand {
       ),
     );
 
-    _log.log('DeleteSelectionCommand', ' - deleting partial selection within the starting node.');
-    executor.logChanges(
-      _deleteRangeWithinNodeFromPositionToEnd(
-        document: document,
-        node: startNode,
-        nodePosition: normalizedRange.start.nodePosition,
-        replaceWithParagraph: false,
-      ),
-    );
+    if (startNode.metadata[NodeMetadata.isDeletable] != false) {
+      _log.log('DeleteSelectionCommand', ' - deleting partial selection within the starting node.');
+      executor.logChanges(
+        _deleteRangeWithinNodeFromPositionToEnd(
+          document: document,
+          node: startNode,
+          nodePosition: normalizedRange.start.nodePosition,
+          replaceWithParagraph: false,
+        ),
+      );
+    }
 
-    _log.log('DeleteSelectionCommand', ' - deleting partial selection within ending node.');
-    executor.logChanges(
-      _deleteRangeWithinNodeFromStartToPosition(
-        document: document,
-        node: endNode,
-        nodePosition: normalizedRange.end.nodePosition,
-      ),
-    );
+    if (endNode.metadata[NodeMetadata.isDeletable] != false) {
+      _log.log('DeleteSelectionCommand', ' - deleting partial selection within ending node.');
+      executor.logChanges(
+        _deleteRangeWithinNodeFromStartToPosition(
+          document: document,
+          node: endNode,
+          nodePosition: normalizedRange.end.nodePosition,
+        ),
+      );
+    }
 
     // If all selected nodes were deleted, e.g., the user selected from
     // the beginning of the first node to the end of the last node, then
@@ -939,6 +940,10 @@ class DeleteContentCommand extends EditCommand {
     for (int i = endIndex - 1; i > startIndex; --i) {
       _log.log('_deleteNodesBetweenFirstAndLast', ' - deleting node $i: ${document.getNodeAt(i)?.id}');
       final removedNode = document.getNodeAt(i)!;
+      if (removedNode.metadata[NodeMetadata.isDeletable] == false) {
+        // This node is not deletable. Ignore it.
+        continue;
+      }
       changes.add(DocumentEdit(
         NodeRemovedEvent(removedNode.id, removedNode),
       ));
@@ -1098,6 +1103,56 @@ class DeleteContentCommand extends EditCommand {
   }
 }
 
+class DeleteSelectionRequest implements EditRequest {
+  DeleteSelectionRequest({
+    this.abortIfUndeletable = true,
+  });
+
+  final bool abortIfUndeletable;
+}
+
+class DeleteSelectionCommand extends EditCommand {
+  DeleteSelectionCommand({
+    this.abortIfUndeletable = true,
+  });
+
+  /// If `true`, the command will abort if any of the nodes in [documentRange]
+  /// have the `isDeletable` metadata set to `false`.
+  ///
+  /// Defaults to `true`.
+  final bool abortIfUndeletable;
+
+  @override
+  HistoryBehavior get historyBehavior => HistoryBehavior.undoable;
+
+  @override
+  String describe() => "Delete selected content";
+
+  @override
+  void execute(EditContext context, CommandExecutor executor) {
+    final document = context.document;
+    final composer = context.composer;
+
+    final selection = composer.selection;
+    if (selection == null) {
+      return;
+    }
+
+    final newSelectionPosition = CommonEditorOperations.getDocumentPositionAfterExpandedDeletion(
+      document: document,
+      selection: selection,
+    );
+
+    executor.executeCommand(
+      DeleteContentCommand(
+        documentRange: selection,
+        newSelection: DocumentSelection.collapsed(position: newSelectionPosition),
+        abortIfUndeletable: abortIfUndeletable,
+      ),
+    );
+  }
+}
+
 /// Request to handle a collapsed selection upstream deletion at the
 /// beginning of a [node].
 ///
@@ -1149,7 +1204,7 @@ class DeleteNodeCommand extends EditCommand {
       return;
     }
 
-    if (abortIfUndeletable && node.metadata[NodeMetadata.deletable] == false) {
+    if (abortIfUndeletable && node.metadata[NodeMetadata.isDeletable] == false) {
       // The node is marked as undeletable. Fizzle.
       return;
     }

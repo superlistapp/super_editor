@@ -465,6 +465,9 @@ class NodeMetadata {
 
   /// Whether or not the node is deletable.
   ///
+  /// A deletable node can be removed from the document, for example,
+  /// when pressing backspace when the node is selected.
+  ///
   /// If the node doesn't have this metadata, it is assumed to be deletable.
-  static const String deletable = 'deletable';
+  static const String isDeletable = 'isDeletable';
 }

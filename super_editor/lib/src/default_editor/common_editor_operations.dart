@@ -1286,17 +1286,9 @@ class CommonEditorOperations {
   }
 
   void _deleteExpandedSelection() {
-    final newSelectionPosition = getDocumentPositionAfterExpandedDeletion(
-      document: document,
-      selection: composer.selection!,
-    );
-
     // Delete the selected content.
     editor.execute([
-      DeleteContentRequest(
-        documentRange: composer.selection!,
-        newSelection: DocumentSelection.collapsed(position: newSelectionPosition),
-      ),
+      DeleteSelectionRequest(),
     ]);
   }
 
