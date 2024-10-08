@@ -699,17 +699,17 @@ class DeleteContentCommand extends EditCommand {
   DeleteContentCommand({
     required this.documentRange,
     this.newSelection,
-    this.abortIfUndeletable = true,
+    this.ignoreUndeletableNodes = true,
   });
 
   final DocumentRange documentRange;
   final DocumentSelection? newSelection;
 
-  /// If `true`, the command will abort if any of the nodes in [documentRange]
-  /// have the `deletable` metadata set to `false`.
+  /// If `true`, the command will ignore any nodes which have the `deletable`
+  /// metadata set to `false`.
   ///
   /// Defaults to `true`.
-  final bool abortIfUndeletable;
+  final bool ignoreUndeletableNodes;
 
   @override
   HistoryBehavior get historyBehavior => HistoryBehavior.undoable;
@@ -1113,14 +1113,14 @@ class DeleteSelectionRequest implements EditRequest {
 
 class DeleteSelectionCommand extends EditCommand {
   DeleteSelectionCommand({
-    this.abortIfUndeletable = true,
+    this.ignoreUndeletableNodes = true,
   });
 
-  /// If `true`, the command will abort if any of the nodes in [documentRange]
+  /// If `true`, the command will ignore any nodes in the selection which
   /// have the `isDeletable` metadata set to `false`.
   ///
   /// Defaults to `true`.
-  final bool abortIfUndeletable;
+  final bool ignoreUndeletableNodes;
 
   @override
   HistoryBehavior get historyBehavior => HistoryBehavior.undoable;
@@ -1147,7 +1147,7 @@ class DeleteSelectionCommand extends EditCommand {
       DeleteContentCommand(
         documentRange: selection,
         newSelection: DocumentSelection.collapsed(position: newSelectionPosition),
-        abortIfUndeletable: abortIfUndeletable,
+        ignoreUndeletableNodes: ignoreUndeletableNodes,
       ),
     );
   }

@@ -109,7 +109,7 @@ final defaultRequestHandlers = List.unmodifiable(<EditRequestHandler>[
       ? DeleteContentCommand(documentRange: request.documentRange)
       : null,
   (request) => request is DeleteSelectionRequest //
-      ? DeleteSelectionCommand(abortIfUndeletable: request.abortIfUndeletable)
+      ? DeleteSelectionCommand(ignoreUndeletableNodes: request.abortIfUndeletable)
       : null,
   (request) => request is DeleteUpstreamAtBeginningOfNodeRequest && request.node is ListItemNode
       ? ConvertListItemToParagraphCommand(nodeId: request.node.id, paragraphMetadata: request.node.metadata)
