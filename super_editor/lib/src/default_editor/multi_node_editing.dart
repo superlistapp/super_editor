@@ -690,18 +690,9 @@ class DeleteContentRequest implements EditRequest {
 class DeleteContentCommand extends EditCommand {
   DeleteContentCommand({
     required this.documentRange,
-    this.newSelection,
-    this.ignoreUndeletableNodes = true,
   });
 
   final DocumentRange documentRange;
-  final DocumentSelection? newSelection;
-
-  /// If `true`, the command will ignore any nodes which have the `deletable`
-  /// metadata set to `false`.
-  ///
-  /// Defaults to `true`.
-  final bool ignoreUndeletableNodes;
 
   @override
   HistoryBehavior get historyBehavior => HistoryBehavior.undoable;
@@ -720,7 +711,7 @@ class DeleteContentCommand extends EditCommand {
     if (nodes.length == 1) {
       // This is a selection within a single node.
 
-      if (ignoreUndeletableNodes && nodes.first.metadata[NodeMetadata.isDeletable] == false) {
+      if (nodes.first.metadata[NodeMetadata.isDeletable] == false) {
         // The node is not deletable. Abort the deletion.
         if (nodes.first is BlockNode && selection?.isCollapsed == false) {
           // On iOS, pressing backspace generates a non-text delta expanding the selection
@@ -749,16 +740,6 @@ class DeleteContentCommand extends EditCommand {
 
       executor.logChanges(changeList);
 
-      if (newSelection != null) {
-        executor.executeCommand(
-          ChangeSelectionCommand(
-            newSelection!,
-            SelectionChangeType.deleteContent,
-            SelectionReason.userInteraction,
-          ),
-        );
-      }
-
       return;
     }
 
@@ -782,7 +763,7 @@ class DeleteContentCommand extends EditCommand {
       ),
     );
 
-    if (ignoreUndeletableNodes && startNode.metadata[NodeMetadata.isDeletable] != false) {
+    if (startNode.metadata[NodeMetadata.isDeletable] != false) {
       _log.log('DeleteSelectionCommand', ' - deleting partial selection within the starting node.');
       executor.logChanges(
         _deleteRangeWithinNodeFromPositionToEnd(
@@ -794,7 +775,7 @@ class DeleteContentCommand extends EditCommand {
       );
     }
 
-    if (ignoreUndeletableNodes && endNode.metadata[NodeMetadata.isDeletable] != false) {
+    if (endNode.metadata[NodeMetadata.isDeletable] != false) {
       _log.log('DeleteSelectionCommand', ' - deleting partial selection within ending node.');
       executor.logChanges(
         _deleteRangeWithinNodeFromStartToPosition(
@@ -832,15 +813,6 @@ class DeleteContentCommand extends EditCommand {
     // then we need to consider merging them if one or both are
     // empty.
     if (startNodeAfterDeletion is! TextNode || endNodeAfterDeletion is! TextNode) {
-      if (newSelection != null) {
-        executor.executeCommand(
-          ChangeSelectionCommand(
-            newSelection!,
-            SelectionChangeType.deleteContent,
-            SelectionReason.userInteraction,
-          ),
-        );
-      }
       // Neither of the end nodes are `TextNode`s, so there's nothing
       // for us to merge. We're done.
       return;
@@ -865,15 +837,6 @@ class DeleteContentCommand extends EditCommand {
         NodeRemovedEvent(endNodeAfterDeletion.id, endNodeAfterDeletion),
       )
     ]);
-    if (newSelection != null) {
-      executor.executeCommand(
-        ChangeSelectionCommand(
-          newSelection!,
-          SelectionChangeType.deleteContent,
-          SelectionReason.userInteraction,
-        ),
-      );
-    }
     _log.log('DeleteSelectionCommand', ' - done with selection deletion');
   }
 
@@ -950,7 +913,7 @@ class DeleteContentCommand extends EditCommand {
     for (int i = endIndex - 1; i > startIndex; --i) {
       _log.log('_deleteNodesBetweenFirstAndLast', ' - deleting node $i: ${document.getNodeAt(i)?.id}');
       final removedNode = document.getNodeAt(i)!;
-      if (ignoreUndeletableNodes && removedNode.metadata[NodeMetadata.isDeletable] == false) {
+      if (removedNode.metadata[NodeMetadata.isDeletable] == false) {
         // This node is not deletable. Ignore it.
         continue;
       }
@@ -1136,18 +1099,51 @@ class DeleteSelectionCommand extends EditCommand {
       return;
     }
 
+    if (selection.base.nodeId == selection.extent.nodeId) {
+      // The selection is contained within a single node. Prevent the deletion
+      // if the node is non-deletable. When there are multiple nodes selected,
+      // non-deletable nodes are ignored inside DeleteContentCommand.
+      final node = document.getNodeById(selection.base.nodeId)!;
+      if (node.metadata[NodeMetadata.isDeletable] == false) {
+        if (node is BlockNode && !selection.isCollapsed) {
+          // On iOS, pressing backspace generates a non-text delta expanding the selection
+          // prior to its deletion. Since we can't delete the block, we'll just collapse the
+          // selection to the end of the block.
+          executor.executeCommand(
+            ChangeSelectionCommand(
+              DocumentSelection.collapsed(
+                position: DocumentPosition(
+                  nodeId: node.id,
+                  nodePosition: node.endPosition,
+                ),
+              ),
+              SelectionChangeType.placeCaret,
+              SelectionReason.contentChange,
+            ),
+          );
+        }
+        return;
+      }
+    }
+
     final newSelectionPosition = CommonEditorOperations.getDocumentPositionAfterExpandedDeletion(
       document: document,
       selection: selection,
     );
 
-    executor.executeCommand(
-      DeleteContentCommand(
-        documentRange: selection,
-        newSelection: DocumentSelection.collapsed(position: newSelectionPosition),
-        ignoreUndeletableNodes: true,
-      ),
-    );
+    executor
+      ..executeCommand(
+        DeleteContentCommand(
+          documentRange: selection,
+        ),
+      )
+      ..executeCommand(
+        ChangeSelectionCommand(
+          DocumentSelection.collapsed(position: newSelectionPosition),
+          SelectionChangeType.deleteContent,
+          SelectionReason.userInteraction,
+        ),
+      );
   }
 }
 
