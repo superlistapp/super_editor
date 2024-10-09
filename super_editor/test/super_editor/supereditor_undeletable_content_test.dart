@@ -10,8 +10,11 @@ import 'supereditor_test_tools.dart';
 
 void main() {
   group('SuperEditor > undeletable content > prevents deletion > ', () {
+    // The desktop tests run for all desktop platforms because on mac the backspace
+    // is handled by selectors and on the other platforms it is handled by the keyboard handlers.
+    // See `MacOsSelectors` for more information.
     group('with backspace', () {
-      testWidgetsOnArbitraryDesktop('at the downstream edge of the node', (tester) async {
+      testWidgetsOnDesktop('at the downstream edge of the node', (tester) async {
         await _pumpHrThenParagraphTestApp(tester);
 
         const hrDownstreamEdgePosition = DocumentPosition(
@@ -49,7 +52,7 @@ void main() {
         );
       });
 
-      testWidgetsOnArbitraryDesktop('with an expanded downstream selection', (tester) async {
+      testWidgetsOnDesktop('with an expanded downstream selection', (tester) async {
         final testContext = await _pumpParagraphThenHrTestApp(tester);
 
         // Select the whole hr. Use a command instead of a user gesture to have
@@ -83,7 +86,7 @@ void main() {
         expect(document.getNodeById('hr'), isA<HorizontalRuleNode>());
       });
 
-      testWidgetsOnArbitraryDesktop('with an expanded upstream selection', (tester) async {
+      testWidgetsOnDesktop('with an expanded upstream selection', (tester) async {
         final testContext = await _pumpParagraphThenHrTestApp(tester);
 
         // Select the whole hr. Use a command instead of a user gesture to have
@@ -167,7 +170,7 @@ void main() {
         expect(document.getNodeById('hr3'), isA<HorizontalRuleNode>());
       });
 
-      testWidgetsOnArbitraryDesktop('when selection starts at upstream edge and ends at a downstream deletable node',
+      testWidgetsOnDesktop('when selection starts at upstream edge and ends at a downstream deletable node',
           (tester) async {
         final testContext = await _pumpHrThenParagraphTestApp(tester);
 
@@ -214,7 +217,7 @@ void main() {
         expect(document.getNodeById('hr'), isA<HorizontalRuleNode>());
       });
 
-      testWidgetsOnArbitraryDesktop('when selection starts at downstream edge and ends at an upstream deletable node',
+      testWidgetsOnDesktop('when selection starts at downstream edge and ends at an upstream deletable node',
           (tester) async {
         final testContext = await _pumpParagraphThenHrTestApp(tester);
 
@@ -261,8 +264,8 @@ void main() {
         expect(document.getNodeById('hr'), isA<HorizontalRuleNode>());
       });
 
-      testWidgetsOnArbitraryDesktop(
-          'when selection starts at an upstream deletable node and ends at the downstream edge', (tester) async {
+      testWidgetsOnDesktop('when selection starts at an upstream deletable node and ends at the downstream edge',
+          (tester) async {
         final testContext = await _pumpParagraphThenHrTestApp(tester);
 
         // Select from the "Para|graph 1" to the downstream edge of the horizontal rule.
@@ -305,8 +308,8 @@ void main() {
         expect(document.getNodeById('hr'), isA<HorizontalRuleNode>());
       });
 
-      testWidgetsOnArbitraryDesktop(
-          'when selection starts at a downstream deletable node and ends at the upstream edge', (tester) async {
+      testWidgetsOnDesktop('when selection starts at a downstream deletable node and ends at the upstream edge',
+          (tester) async {
         final testContext = await _pumpHrThenParagraphTestApp(tester);
 
         // Select from the "Para|graph 2" to the upstream edge of the second horizontal rule.
@@ -351,7 +354,7 @@ void main() {
     });
 
     group('with delete', () {
-      testWidgetsOnArbitraryDesktop('at the upstream edge of the node', (tester) async {
+      testWidgetsOnDesktop('at the upstream edge of the node', (tester) async {
         await _pumpParagraphThenHrTestApp(tester);
 
         const hrUpstreamEdgePosition = DocumentPosition(
@@ -389,7 +392,7 @@ void main() {
         );
       });
 
-      testWidgetsOnArbitraryDesktop('with an expanded downstream selection', (tester) async {
+      testWidgetsOnDesktop('with an expanded downstream selection', (tester) async {
         final testContext = await _pumpParagraphThenHrTestApp(tester);
 
         // Select the whole hr. Use a command instead of a user gesture to have
@@ -423,7 +426,7 @@ void main() {
         expect(document.getNodeById('hr'), isA<HorizontalRuleNode>());
       });
 
-      testWidgetsOnArbitraryDesktop('with an expanded upstream selection', (tester) async {
+      testWidgetsOnDesktop('with an expanded upstream selection', (tester) async {
         final testContext = await _pumpParagraphThenHrTestApp(tester);
 
         // Select the whole hr. Use a command instead of a user gesture to have
@@ -457,7 +460,7 @@ void main() {
         expect(document.getNodeById('hr'), isA<HorizontalRuleNode>());
       });
 
-      testWidgetsOnArbitraryDesktop('when multiple deletable and undeletable nodes are selected', (tester) async {
+      testWidgetsOnDesktop('when multiple deletable and undeletable nodes are selected', (tester) async {
         final testContext = await _pumpMultipleDeletableAndUndeletableNodesTestApp(tester);
 
         // Select from "Para>graph 1" to "Paragraph <3".
@@ -507,7 +510,7 @@ void main() {
         expect(document.getNodeById('hr3'), isA<HorizontalRuleNode>());
       });
 
-      testWidgetsOnArbitraryDesktop('when selection starts at upstream edge and ends at a downstream deletable node',
+      testWidgetsOnDesktop('when selection starts at upstream edge and ends at a downstream deletable node',
           (tester) async {
         final testContext = await _pumpHrThenParagraphTestApp(tester);
 
@@ -554,7 +557,7 @@ void main() {
         expect(document.getNodeById('hr'), isA<HorizontalRuleNode>());
       });
 
-      testWidgetsOnArbitraryDesktop('when selection starts at downstream edge and ends at an upstream deletable node',
+      testWidgetsOnDesktop('when selection starts at downstream edge and ends at an upstream deletable node',
           (tester) async {
         final testContext = await _pumpParagraphThenHrTestApp(tester);
 
@@ -601,8 +604,8 @@ void main() {
         expect(document.getNodeById('hr'), isA<HorizontalRuleNode>());
       });
 
-      testWidgetsOnArbitraryDesktop(
-          'when selection starts at an upstream deletable node and ends at the downstream edge', (tester) async {
+      testWidgetsOnDesktop('when selection starts at an upstream deletable node and ends at the downstream edge',
+          (tester) async {
         final testContext = await _pumpParagraphThenHrTestApp(tester);
 
         // Select from the "Para|graph 1" to the downstream edge of the horizontal rule.
@@ -645,8 +648,8 @@ void main() {
         expect(document.getNodeById('hr'), isA<HorizontalRuleNode>());
       });
 
-      testWidgetsOnArbitraryDesktop(
-          'when selection starts at a downstream deletable node and ends at the upstream edge', (tester) async {
+      testWidgetsOnDesktop('when selection starts at a downstream deletable node and ends at the upstream edge',
+          (tester) async {
         final testContext = await _pumpHrThenParagraphTestApp(tester);
 
         // Select from the "Para|graph 2" to the upstream edge of the second horizontal rule.
@@ -691,7 +694,7 @@ void main() {
     });
 
     group('when typing', () {
-      testWidgetsOnArbitraryDesktop('when typing with multiple nodes selected', (tester) async {
+      testWidgetsOnDesktop('when typing with multiple nodes selected', (tester) async {
         final testContext = await _pumpMultipleDeletableAndUndeletableNodesTestApp(tester);
 
         // Select from "Para>graph 1" to "Paragraph <3".

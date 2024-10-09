@@ -616,11 +616,11 @@ class ReplaceNodeCommand extends EditCommand {
 class ReplaceNodeWithEmptyParagraphWithCaretRequest implements EditRequest {
   const ReplaceNodeWithEmptyParagraphWithCaretRequest({
     required this.nodeId,
-    this.abortIfUndeletable = true,
+    this.ignoreIfUndeletable = true,
   });
 
   final String nodeId;
-  final bool abortIfUndeletable;
+  final bool ignoreIfUndeletable;
 
   @override
   bool operator ==(Object other) =>
@@ -628,20 +628,20 @@ class ReplaceNodeWithEmptyParagraphWithCaretRequest implements EditRequest {
       other is ReplaceNodeWithEmptyParagraphWithCaretRequest &&
           runtimeType == other.runtimeType &&
           nodeId == other.nodeId &&
-          abortIfUndeletable == other.abortIfUndeletable;
+          ignoreIfUndeletable == other.ignoreIfUndeletable;
 
   @override
-  int get hashCode => nodeId.hashCode ^ abortIfUndeletable.hashCode;
+  int get hashCode => nodeId.hashCode ^ ignoreIfUndeletable.hashCode;
 }
 
 class ReplaceNodeWithEmptyParagraphWithCaretCommand extends EditCommand {
   ReplaceNodeWithEmptyParagraphWithCaretCommand({
     required this.nodeId,
-    this.abortIfUndeletable = true,
+    this.ignoreIfUndeletable = true,
   });
 
   final String nodeId;
-  final bool abortIfUndeletable;
+  final bool ignoreIfUndeletable;
 
   @override
   HistoryBehavior get historyBehavior => HistoryBehavior.undoable;
@@ -655,7 +655,7 @@ class ReplaceNodeWithEmptyParagraphWithCaretCommand extends EditCommand {
       return;
     }
 
-    if (abortIfUndeletable && oldNode.metadata[NodeMetadata.isDeletable] == false) {
+    if (ignoreIfUndeletable && oldNode.metadata[NodeMetadata.isDeletable] == false) {
       return;
     }
 
@@ -729,7 +729,7 @@ class DeleteContentCommand extends EditCommand {
     if (nodes.length == 1) {
       // This is a selection within a single node.
 
-      if (nodes.first.metadata[NodeMetadata.isDeletable] == false) {
+      if (ignoreUndeletableNodes && nodes.first.metadata[NodeMetadata.isDeletable] == false) {
         // The node is not deletable. Abort the deletion.
         if (nodes.first is BlockNode && selection?.isCollapsed == false) {
           // On iOS, pressing backspace generates a non-text delta expanding the selection
@@ -791,7 +791,7 @@ class DeleteContentCommand extends EditCommand {
       ),
     );
 
-    if (startNode.metadata[NodeMetadata.isDeletable] != false) {
+    if (ignoreUndeletableNodes && startNode.metadata[NodeMetadata.isDeletable] != false) {
       _log.log('DeleteSelectionCommand', ' - deleting partial selection within the starting node.');
       executor.logChanges(
         _deleteRangeWithinNodeFromPositionToEnd(
@@ -803,7 +803,7 @@ class DeleteContentCommand extends EditCommand {
       );
     }
 
-    if (endNode.metadata[NodeMetadata.isDeletable] != false) {
+    if (ignoreUndeletableNodes && endNode.metadata[NodeMetadata.isDeletable] != false) {
       _log.log('DeleteSelectionCommand', ' - deleting partial selection within ending node.');
       executor.logChanges(
         _deleteRangeWithinNodeFromStartToPosition(
@@ -959,7 +959,7 @@ class DeleteContentCommand extends EditCommand {
     for (int i = endIndex - 1; i > startIndex; --i) {
       _log.log('_deleteNodesBetweenFirstAndLast', ' - deleting node $i: ${document.getNodeAt(i)?.id}');
       final removedNode = document.getNodeAt(i)!;
-      if (removedNode.metadata[NodeMetadata.isDeletable] == false) {
+      if (ignoreUndeletableNodes && removedNode.metadata[NodeMetadata.isDeletable] == false) {
         // This node is not deletable. Ignore it.
         continue;
       }
@@ -1124,10 +1124,10 @@ class DeleteContentCommand extends EditCommand {
 
 class DeleteSelectionRequest implements EditRequest {
   DeleteSelectionRequest({
-    this.abortIfUndeletable = true,
+    this.ignoreIfUndeletable = true,
   });
 
-  final bool abortIfUndeletable;
+  final bool ignoreIfUndeletable;
 }
 
 class DeleteSelectionCommand extends EditCommand {
@@ -1193,21 +1193,21 @@ class DeleteUpstreamAtBeginningOfNodeRequest implements EditRequest {
 class DeleteNodeRequest implements EditRequest {
   DeleteNodeRequest({
     required this.nodeId,
-    this.abortIfUndeletable = true,
+    this.ignoreIfUndeletable = true,
   });
 
   final String nodeId;
-  final bool abortIfUndeletable;
+  final bool ignoreIfUndeletable;
 }
 
 class DeleteNodeCommand extends EditCommand {
   DeleteNodeCommand({
     required this.nodeId,
-    this.abortIfUndeletable = true,
+    this.ignoreIfUndeletable = true,
   });
 
   final String nodeId;
-  final bool abortIfUndeletable;
+  final bool ignoreIfUndeletable;
 
   @override
   HistoryBehavior get historyBehavior => HistoryBehavior.undoable;
@@ -1223,7 +1223,7 @@ class DeleteNodeCommand extends EditCommand {
       return;
     }
 
-    if (abortIfUndeletable && node.metadata[NodeMetadata.isDeletable] == false) {
+    if (ignoreIfUndeletable && node.metadata[NodeMetadata.isDeletable] == false) {
       // The node is marked as undeletable. Fizzle.
       return;
     }

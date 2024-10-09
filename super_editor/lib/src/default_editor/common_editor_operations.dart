@@ -1252,16 +1252,16 @@ class CommonEditorOperations {
   /// This can be used, for example, to effectively delete an image by replacing
   /// it with an empty paragraph.
   ///
-  /// If [abortIfUndeletable] is `true`, the operation is be aborted if the
+  /// If [ignoreIfUndeletable] is `true`, the operation is be aborted if the
   /// node is not deletable.
   void replaceBlockNodeWithEmptyParagraphAndCollapsedSelection(
     String nodeId, {
-    bool abortIfUndeletable = true,
+    bool ignoreIfUndeletable = true,
   }) {
     editor.execute([
       ReplaceNodeWithEmptyParagraphWithCaretRequest(
         nodeId: nodeId,
-        abortIfUndeletable: abortIfUndeletable,
+        ignoreIfUndeletable: ignoreIfUndeletable,
       ),
     ]);
   }
