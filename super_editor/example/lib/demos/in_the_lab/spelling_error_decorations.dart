@@ -48,9 +48,7 @@ class _SpellingErrorDecorationsDemoState extends State<SpellingErrorDecorationsD
   Widget build(BuildContext context) {
     return InTheLabScaffold(
       content: Center(
-        child: IntrinsicHeight(
-          child: _buildEditor(),
-        ),
+        child: _buildEditor(),
       ),
       supplemental: _buildControlPanel(),
     );
@@ -59,6 +57,7 @@ class _SpellingErrorDecorationsDemoState extends State<SpellingErrorDecorationsD
   Widget _buildEditor() {
     return SuperEditor(
       editor: _editor,
+      shrinkWrap: true,
       componentBuilders: [
         // When `_decoration` is non-null, we apply it directly to our own
         // custom component to show direct application. When it's `null`,
