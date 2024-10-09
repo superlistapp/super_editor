@@ -100,16 +100,13 @@ final defaultRequestHandlers = List.unmodifiable(<EditRequestHandler>[
       ? ReplaceNodeCommand(existingNodeId: request.existingNodeId, newNode: request.newNode)
       : null,
   (request) => request is ReplaceNodeWithEmptyParagraphWithCaretRequest
-      ? ReplaceNodeWithEmptyParagraphWithCaretCommand(
-          nodeId: request.nodeId,
-          ignoreIfUndeletable: request.ignoreIfUndeletable,
-        )
+      ? ReplaceNodeWithEmptyParagraphWithCaretCommand(nodeId: request.nodeId)
       : null,
   (request) => request is DeleteContentRequest //
       ? DeleteContentCommand(documentRange: request.documentRange)
       : null,
   (request) => request is DeleteSelectionRequest //
-      ? DeleteSelectionCommand(ignoreUndeletableNodes: request.ignoreIfUndeletable)
+      ? DeleteSelectionCommand()
       : null,
   (request) => request is DeleteUpstreamAtBeginningOfNodeRequest && request.node is ListItemNode
       ? ConvertListItemToParagraphCommand(nodeId: request.node.id, paragraphMetadata: request.node.metadata)
@@ -121,10 +118,7 @@ final defaultRequestHandlers = List.unmodifiable(<EditRequestHandler>[
       ? DeleteUpstreamAtBeginningOfBlockNodeCommand(request.node)
       : null,
   (request) => request is DeleteNodeRequest //
-      ? DeleteNodeCommand(
-          nodeId: request.nodeId,
-          ignoreIfUndeletable: request.ignoreIfUndeletable,
-        )
+      ? DeleteNodeCommand(nodeId: request.nodeId)
       : null,
   (request) => request is DeleteUpstreamCharacterRequest //
       ? const DeleteUpstreamCharacterCommand()

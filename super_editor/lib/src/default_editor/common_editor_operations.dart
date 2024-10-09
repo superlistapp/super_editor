@@ -871,9 +871,15 @@ class CommonEditorOperations {
     if (composer.selection!.extent.nodePosition is UpstreamDownstreamNodePosition) {
       final nodePosition = composer.selection!.extent.nodePosition as UpstreamDownstreamNodePosition;
       if (nodePosition.affinity == TextAffinity.upstream) {
-        // The caret is sitting on the upstream edge of block-level content. Delete the
-        // whole block by replacing it with an empty paragraph.
+        // The caret is sitting on the upstream edge of block-level content.
         final nodeId = composer.selection!.extent.nodeId;
+
+        if (document.getNodeById(nodeId)!.metadata[NodeMetadata.isDeletable] == false) {
+          // The node is not deletable. Fizzle.
+          return false;
+        }
+
+        //Delete the whole block by replacing it with an empty paragraph.
         replaceBlockNodeWithEmptyParagraphAndCollapsedSelection(nodeId);
 
         return true;
@@ -1057,9 +1063,15 @@ class CommonEditorOperations {
     if (composer.selection!.extent.nodePosition is UpstreamDownstreamNodePosition) {
       final nodePosition = composer.selection!.extent.nodePosition as UpstreamDownstreamNodePosition;
       if (nodePosition.affinity == TextAffinity.downstream) {
-        // The caret is sitting on the downstream edge of block-level content. Delete the
-        // whole block by replacing it with an empty paragraph.
+        // The caret is sitting on the downstream edge of block-level content.
         final nodeId = composer.selection!.extent.nodeId;
+
+        if (document.getNodeById(nodeId)!.metadata[NodeMetadata.isDeletable] == false) {
+          // The node is not deletable. Fizzle.
+          return false;
+        }
+
+        // Delete the whole block by replacing it with an empty paragraph.
         replaceBlockNodeWithEmptyParagraphAndCollapsedSelection(nodeId);
 
         return true;
@@ -1251,18 +1263,9 @@ class CommonEditorOperations {
   ///
   /// This can be used, for example, to effectively delete an image by replacing
   /// it with an empty paragraph.
-  ///
-  /// If [ignoreIfUndeletable] is `true`, the operation is be aborted if the
-  /// node is not deletable.
-  void replaceBlockNodeWithEmptyParagraphAndCollapsedSelection(
-    String nodeId, {
-    bool ignoreIfUndeletable = true,
-  }) {
+  void replaceBlockNodeWithEmptyParagraphAndCollapsedSelection(String nodeId) {
     editor.execute([
-      ReplaceNodeWithEmptyParagraphWithCaretRequest(
-        nodeId: nodeId,
-        ignoreIfUndeletable: ignoreIfUndeletable,
-      ),
+      ReplaceNodeWithEmptyParagraphWithCaretRequest(nodeId: nodeId),
     ]);
   }
 
@@ -1288,7 +1291,7 @@ class CommonEditorOperations {
   void _deleteExpandedSelection() {
     // Delete the selected content.
     editor.execute([
-      DeleteSelectionRequest(),
+      const DeleteSelectionRequest(),
     ]);
   }
 
