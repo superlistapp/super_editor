@@ -141,9 +141,13 @@ class SuperEditor extends StatefulWidget {
     this.shrinkWrap = false,
   })  : stylesheet = stylesheet ?? defaultStylesheet,
         selectionStyles = selectionStyle ?? defaultSelectionStyle,
-        componentBuilders = componentBuilders != null
-            ? [...componentBuilders, const UnknownComponentBuilder()]
-            : [...defaultComponentBuilders, TaskComponentBuilder(editor), const UnknownComponentBuilder()],
+        componentBuilders = [
+          for (final plugin in plugins) ...plugin.componentBuilders,
+          if (componentBuilders != null)
+            ...componentBuilders
+          else ...[...defaultComponentBuilders, TaskComponentBuilder(editor)],
+          const UnknownComponentBuilder(),
+        ],
         super(key: key);
 
   /// [FocusNode] for the entire `SuperEditor`.
