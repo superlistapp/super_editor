@@ -16,6 +16,10 @@ final _log = Logger(scope: 'box_component.dart');
 
 /// Base implementation for a [DocumentNode] that only supports [UpstreamDownstreamNodeSelection]s.
 abstract class BlockNode extends DocumentNode {
+  BlockNode({
+    Map<String, dynamic>? metadata,
+  }) : super(metadata: metadata);
+
   @override
   UpstreamDownstreamNodePosition get beginningPosition => const UpstreamDownstreamNodePosition.upstream();
 
