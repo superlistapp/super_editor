@@ -429,7 +429,11 @@ class RenderLayoutAwareParagraph extends RenderParagraph {
           ..textDirection = textDirection
           ..textAlign = textAlign
           ..layout();
-        size = Size(size.width, _textPainter.height);
+
+        // Constrain the computed size because it can be bigger than the
+        // incoming constraints. Not respecting the incoming constraints
+        // is a Flutter violation and it causes a crash.
+        size = constraints.constrain(Size(size.width, _textPainter.height));
       }
     }
   }
