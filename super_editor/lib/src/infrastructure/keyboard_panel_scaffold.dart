@@ -87,6 +87,9 @@ class _KeyboardPanelScaffoldState extends State<KeyboardPanelScaffold>
   /// It's used to detect if the software keyboard is closed, open, collapsing or expanding.
   EdgeInsets _latestViewInsets = EdgeInsets.zero;
 
+  /// Whether or not we believe that the keyboard is currently open (or opening).
+  bool _isKeyboardOpen = false;
+
   /// Controls the exit animation of the keyboard panel when the software keyboard is closed.
   ///
   /// When we close the software keyboard, the `_keyboardPanelHeight` is adjusted automatically
@@ -296,6 +299,16 @@ class _KeyboardPanelScaffoldState extends State<KeyboardPanelScaffold>
     final newInsets = MediaQuery.of(context).viewInsets;
     final newBottomInset = newInsets.bottom;
     final isKeyboardCollapsing = newBottomInset < _latestViewInsets.bottom;
+
+    final isClosing = newBottomInset < _latestViewInsets.bottom;
+    if (_isKeyboardOpen && isClosing) {
+      // The keyboard went from open to closed. Update our cached state.
+      _isKeyboardOpen = false;
+    } else if (!_isKeyboardOpen && !isClosing) {
+      // The keyboard went from closed to open. If there's an open panel, close it.
+      _isKeyboardOpen = true;
+      widget.controller.hideKeyboardPanel();
+    }
 
     _latestViewInsets = newInsets;
 
