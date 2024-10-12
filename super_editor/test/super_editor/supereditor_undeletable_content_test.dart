@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_test_robots/flutter_test_robots.dart';
@@ -48,6 +49,34 @@ void main() {
           SuperEditorInspector.findDocumentSelection(),
           const DocumentSelection.collapsed(
             position: hrDownstreamEdgePosition,
+          ),
+        );
+      });
+
+      testWidgetsOnDesktop('at the beginning of the downstream node', (tester) async {
+        await _pumpParagraphThenHrThenParagraphTestApp(tester);
+
+        // Place the caret at the beginning of the second paragraph.
+        await tester.placeCaretInParagraph('2', 0);
+
+        // Press backspace trying to delete the horizontal rule.
+        await tester.pressBackspace();
+
+        // Ensure that the horizontal rule was not deleted.
+        final document = SuperEditorInspector.findDocument()!;
+        expect(document.getNodeById('hr'), isNotNull);
+        expect(document.getNodeById('hr'), isA<HorizontalRuleNode>());
+
+        // Ensure the caret moved to the end of the first paragraph.
+        expect(
+          SuperEditorInspector.findDocumentSelection(),
+          selectionEquivalentTo(
+            const DocumentSelection.collapsed(
+              position: DocumentPosition(
+                nodeId: '1',
+                nodePosition: TextNodePosition(offset: 11),
+              ),
+            ),
           ),
         );
       });
@@ -388,6 +417,34 @@ void main() {
           SuperEditorInspector.findDocumentSelection(),
           const DocumentSelection.collapsed(
             position: hrUpstreamEdgePosition,
+          ),
+        );
+      });
+
+      testWidgetsOnDesktop('at the end of the upstream node', (tester) async {
+        await _pumpParagraphThenHrThenParagraphTestApp(tester);
+
+        // Place the caret at the end of the first paragraph.
+        await tester.placeCaretInParagraph('1', 11);
+
+        // Press backspace trying to delete the horizontal rule.
+        await tester.pressDelete();
+
+        // Ensure that the horizontal rule was not deleted.
+        final document = SuperEditorInspector.findDocument()!;
+        expect(document.getNodeById('hr'), isNotNull);
+        expect(document.getNodeById('hr'), isA<HorizontalRuleNode>());
+
+        // Ensure the caret stayed where it was.
+        expect(
+          SuperEditorInspector.findDocumentSelection(),
+          selectionEquivalentTo(
+            const DocumentSelection.collapsed(
+              position: DocumentPosition(
+                nodeId: '1',
+                nodePosition: TextNodePosition(offset: 11),
+              ),
+            ),
           ),
         );
       });
@@ -1194,7 +1251,7 @@ void main() {
   });
 }
 
-/// Pumps a widget tree with a paragraph followed by a horizontal rule.
+/// Pumps a widget tree with a paragraph followed by a non-deletable horizontal rule.
 Future<TestDocumentContext> _pumpParagraphThenHrTestApp(WidgetTester tester) async {
   return await tester
       .createDocument()
@@ -1216,7 +1273,7 @@ Future<TestDocumentContext> _pumpParagraphThenHrTestApp(WidgetTester tester) asy
       .pump();
 }
 
-/// Pumps a widget tree with a horizontal rule followed by a paragraph.
+/// Pumps a widget tree with a non-deletable horizontal rule followed by a paragraph.
 Future<TestDocumentContext> _pumpHrThenParagraphTestApp(WidgetTester tester) async {
   return await tester
       .createDocument()
@@ -1233,6 +1290,36 @@ Future<TestDocumentContext> _pumpHrThenParagraphTestApp(WidgetTester tester) asy
           ],
         ),
       )
+      .withInputSource(TextInputSource.ime)
+      .autoFocus(true)
+      .pump();
+}
+
+/// Pumps a widget tree with containing:
+/// - Paragraph
+/// - Horizontal rule (non-selectable, non-deletable)
+/// - Paragraph
+Future<TestDocumentContext> _pumpParagraphThenHrThenParagraphTestApp(WidgetTester tester) async {
+  return await tester
+      .createDocument()
+      .withCustomContent(
+        MutableDocument(
+          nodes: [
+            ParagraphNode(
+              id: '1',
+              text: AttributedText('Paragraph 1'),
+            ),
+            HorizontalRuleNode(id: 'hr', metadata: {
+              NodeMetadata.isDeletable: false,
+            }),
+            ParagraphNode(
+              id: '2',
+              text: AttributedText('Paragraph 2'),
+            ),
+          ],
+        ),
+      )
+      .withAddedComponents([const _UnselectableHrComponentBuilder()])
       .withInputSource(TextInputSource.ime)
       .autoFocus(true)
       .pump();
@@ -1279,4 +1366,50 @@ Future<TestDocumentContext> _pumpMultipleDeletableAndUndeletableNodesTestApp(Wid
       .withInputSource(TextInputSource.ime)
       .autoFocus(true)
       .pump();
+}
+
+/// SuperEditor [ComponentBuilder] that builds a horizontal rule that is
+/// not selectable.
+class _UnselectableHrComponentBuilder implements ComponentBuilder {
+  const _UnselectableHrComponentBuilder();
+
+  @override
+  SingleColumnLayoutComponentViewModel? createViewModel(Document document, DocumentNode node) {
+    // This builder can work with the standard horizontal rule view model, so
+    // we'll defer to the standard horizontal rule builder.
+    return null;
+  }
+
+  @override
+  Widget? createComponent(
+      SingleColumnDocumentComponentContext componentContext, SingleColumnLayoutComponentViewModel componentViewModel) {
+    if (componentViewModel is! HorizontalRuleComponentViewModel) {
+      return null;
+    }
+
+    return _UnselectableHorizontalRuleComponent(
+      componentKey: componentContext.componentKey,
+    );
+  }
+}
+
+class _UnselectableHorizontalRuleComponent extends StatelessWidget {
+  const _UnselectableHorizontalRuleComponent({
+    Key? key,
+    required this.componentKey,
+  }) : super(key: key);
+
+  final GlobalKey componentKey;
+
+  @override
+  Widget build(BuildContext context) {
+    return BoxComponent(
+      key: componentKey,
+      isVisuallySelectable: false,
+      child: const Divider(
+        color: Color(0xFF000000),
+        thickness: 1.0,
+      ),
+    );
+  }
 }

@@ -416,6 +416,8 @@ abstract class DocumentNode implements ChangeNotifier {
 
   DocumentNode copy();
 
+  bool get isDeletable => _metadata[NodeMetadata.isDeletable] != false;
+
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||

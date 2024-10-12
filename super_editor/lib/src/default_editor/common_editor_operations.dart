@@ -912,7 +912,12 @@ class CommonEditorOperations {
             // next node.
             return _moveSelectionToBeginningOfNextNode();
           } else {
-            // The next node/component isn't selectable. Delete it.
+            // The next node/component isn't selectable.
+            if (!nodeAfter.isDeletable) {
+              // The next node isn't deletable. Fizzle.
+              return false;
+            }
+
             deleteNonSelectedNode(nodeAfter);
             return true;
           }
@@ -1095,13 +1100,13 @@ class CommonEditorOperations {
           return true;
         }
 
-        if (!componentBefore.isVisualSelectionSupported()) {
+        if (!componentBefore.isVisualSelectionSupported() && nodeBefore.isDeletable) {
           // The node/component above is not selectable. Delete it.
           deleteNonSelectedNode(nodeBefore);
           return true;
         }
 
-        return moveSelectionToEndOfPrecedingNode();
+        return moveSelectionToEndOfFirstSelectableUpstreamNode();
       }
     }
 
@@ -1120,7 +1125,13 @@ class CommonEditorOperations {
           // another TextNode. Merge the two TextNodes.
           return mergeTextNodeWithUpstreamTextNode();
         } else if (!componentBefore.isVisualSelectionSupported()) {
-          // The node/component above is not selectable. Delete it.
+          // The node/component above is not selectable.
+          if (!nodeBefore.isDeletable) {
+            // The node is not deletable, move the selection to the end of the upstream node.
+            moveSelectionToEndOfFirstSelectableUpstreamNode();
+            return true;
+          }
+
           deleteNonSelectedNode(nodeBefore);
           return true;
         } else if ((node as TextNode).text.text.isEmpty) {
@@ -1179,6 +1190,48 @@ class CommonEditorOperations {
     return true;
   }
 
+  bool moveSelectionToEndOfFirstSelectableUpstreamNode() {
+    if (composer.selection == null) {
+      return false;
+    }
+
+    final node = document.getNodeById(composer.selection!.extent.nodeId);
+    if (node == null) {
+      return false;
+    }
+
+    DocumentNode? nodeBefore = document.getNodeBefore(node);
+    while (nodeBefore != null) {
+      final component = documentLayoutResolver().getComponentByNodeId(nodeBefore.id);
+      if (component == null) {
+        // Assume we are in a transitive state where the node was created, but
+        // the component is not yet available.
+        return false;
+      }
+      if (component.isVisualSelectionSupported()) {
+        editor.execute([
+          ChangeSelectionRequest(
+            DocumentSelection.collapsed(
+              position: DocumentPosition(
+                nodeId: nodeBefore.id,
+                nodePosition: nodeBefore.endPosition,
+              ),
+            ),
+            SelectionChangeType.collapseSelection,
+            SelectionReason.userInteraction,
+          ),
+        ]);
+
+        return true;
+      }
+
+      nodeBefore = document.getNodeBefore(nodeBefore);
+    }
+
+    // We didn't find any selectable nodes before the current node.
+    return false;
+  }
+
   bool mergeTextNodeWithUpstreamTextNode() {
     final node = document.getNodeById(composer.selection!.extent.nodeId);
     if (node == null) {
@@ -1213,7 +1266,7 @@ class CommonEditorOperations {
       ),
       // Since two paragraphs were combined, the composing region might point
       // to a deleted paragraph. Clear it.
-      ClearComposingRegionRequest(),
+      const ClearComposingRegionRequest(),
     ]);
 
     return true;
