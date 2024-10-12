@@ -1616,6 +1616,54 @@ This is a paragraph
           ),
         );
       });
+
+      testWidgetsOnApple('with CMD + LEFT ARROW at the beginning of a paragraph', (tester) async {
+        await tester //
+            .createDocument()
+            .withLongTextContent()
+            .pump();
+
+        // Place caret at the beginning of the second paragraph.
+        await tester.placeCaretInParagraph('2', 0);
+
+        // Press the key combo to move to the beginning of the line.
+        await tester.pressCmdLeftArrow();
+
+        // Ensure that the caret didn't move, since we are already at the beginning.
+        expect(
+          SuperEditorInspector.findDocumentSelection(),
+          const DocumentSelection.collapsed(
+            position: DocumentPosition(
+              nodeId: "2",
+              nodePosition: TextNodePosition(offset: 0),
+            ),
+          ),
+        );
+      });
+
+      testWidgetsOnApple('with CMD + RIGHT ARROW at the end of a paragraph', (tester) async {
+        await tester //
+            .createDocument()
+            .withLongTextContent()
+            .pump();
+
+        // Place caret at the end of the first paragraph.
+        await tester.placeCaretInParagraph('1', 439);
+
+        // Press the key combo to move to the end of the line.
+        await tester.pressCmdRightArrow();
+
+        // Ensure that the caret didn't move, since we are already at the end.
+        expect(
+          SuperEditorInspector.findDocumentSelection(),
+          const DocumentSelection.collapsed(
+            position: DocumentPosition(
+              nodeId: "1",
+              nodePosition: TextNodePosition(offset: 439),
+            ),
+          ),
+        );
+      });
     });
 
     group("shortcuts for Windows and Linux do nothing on mac", () {

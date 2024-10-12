@@ -694,8 +694,7 @@ ExecutionInstruction moveToStartOrEndOfLineWithArrowKeysOnWeb({
   if ((CurrentPlatform.isApple && !HardwareKeyboard.instance.isMetaPressed) ||
       (const [TargetPlatform.windows, TargetPlatform.linux].contains(defaultTargetPlatform) &&
           !HardwareKeyboard.instance.isControlPressed)) {
-    // CMD or CTRL is not pressed. For character by character, word by word movement,
-    // we rely on the IME.
+    // CMD or CTRL is not pressed.
     return ExecutionInstruction.continueExecution;
   }
 
