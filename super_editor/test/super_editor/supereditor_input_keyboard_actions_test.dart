@@ -1632,10 +1632,12 @@ This is a paragraph
         // Ensure that the caret didn't move, since we are already at the beginning.
         expect(
           SuperEditorInspector.findDocumentSelection(),
-          const DocumentSelection.collapsed(
-            position: DocumentPosition(
-              nodeId: "2",
-              nodePosition: TextNodePosition(offset: 0),
+          selectionEquivalentTo(
+            const DocumentSelection.collapsed(
+              position: DocumentPosition(
+                nodeId: "2",
+                nodePosition: TextNodePosition(offset: 0),
+              ),
             ),
           ),
         );
@@ -1656,10 +1658,12 @@ This is a paragraph
         // Ensure that the caret didn't move, since we are already at the end.
         expect(
           SuperEditorInspector.findDocumentSelection(),
-          const DocumentSelection.collapsed(
-            position: DocumentPosition(
-              nodeId: "1",
-              nodePosition: TextNodePosition(offset: 439),
+          selectionEquivalentTo(
+            const DocumentSelection.collapsed(
+              position: DocumentPosition(
+                nodeId: "1",
+                nodePosition: TextNodePosition(offset: 439),
+              ),
             ),
           ),
         );
