@@ -310,6 +310,12 @@ class CommonEditorOperations {
         extentComponent.movePositionLeft(currentExtent.nodePosition, movementModifier);
 
     if (newExtentNodePosition == null) {
+      if (movementModifier == MovementModifier.line) {
+        // The user is trying to move to the beginning of the current line,
+        // and we're already there. Do nothing.
+        return false;
+      }
+
       // Move to next node
       final nextNode = _getUpstreamSelectableNodeBefore(node);
 
@@ -410,6 +416,12 @@ class CommonEditorOperations {
         extentComponent.movePositionRight(currentExtent.nodePosition, movementModifier);
 
     if (newExtentNodePosition == null) {
+      if (movementModifier == MovementModifier.line) {
+        // The user is trying to move to the end of the current line,
+        // and we're already there. Do nothing.
+        return false;
+      }
+
       // Move to next node
       final nextNode = _getDownstreamSelectableNodeAfter(node);
 
