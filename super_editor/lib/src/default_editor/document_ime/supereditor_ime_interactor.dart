@@ -185,6 +185,15 @@ class SuperEditorImeInteractorState extends State<SuperEditorImeInteractor> impl
     _imeConnection.addListener(_onImeConnectionChange);
 
     _textInputConfiguration = widget.imeConfiguration.toTextInputConfiguration();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      // Synchronize the IME connection notifier with our IME connection state. We run
+      // this in a post-frame callback because the very first pump of the Super Editor
+      // widget tree won't have Super Editor connected as an IME delegate, yet.
+      if (widget.softwareKeyboardController != null) {
+        widget.isImeConnected?.value = widget.softwareKeyboardController!.isConnectedToIme;
+      }
+    });
   }
 
   @override

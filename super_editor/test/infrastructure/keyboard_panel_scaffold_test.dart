@@ -5,7 +5,6 @@ import 'package:super_editor/src/test/super_editor_test/supereditor_robot.dart';
 import 'package:super_editor/super_editor.dart';
 
 import '../super_editor/supereditor_test_tools.dart';
-import '../test_tools_user_input.dart';
 
 void main() {
   group('Keyboard panel scaffold', () {
@@ -16,7 +15,7 @@ void main() {
       expect(find.byKey(_keyboardPanelKey), findsNothing);
     });
 
-    testWidgetsOnMobile('shows above-keyboard panel at the bottom when there is no keyboard', (tester) async {
+    testWidgetsOnMobile('shows keyboard panel at the bottom when there is no keyboard', (tester) async {
       final softwareKeyboardController = SoftwareKeyboardController();
       final controller = KeyboardPanelController(softwareKeyboardController);
 
@@ -47,7 +46,7 @@ void main() {
       expect(find.byKey(_keyboardPanelKey), findsNothing);
     });
 
-    testWidgetsOnMobile('shows above-keyboard panel above the keyboard', (tester) async {
+    testWidgetsOnMobile('shows keyboard toolbar above the keyboard', (tester) async {
       final softwareKeyboardController = SoftwareKeyboardController();
       final controller = KeyboardPanelController(softwareKeyboardController);
 
@@ -64,14 +63,14 @@ void main() {
       // Place the caret at the beginning of the document to show the software keyboard.
       await tester.placeCaretInParagraph('1', 0);
 
-      // Ensure the above-keyboard panel sits aboce the software keyboard.
+      // Ensure the above-keyboard panel sits above the software keyboard.
       expect(
         tester.getBottomLeft(find.byKey(_aboveKeyboardPanelKey)).dy,
         equals(tester.getSize(find.byType(MaterialApp)).height - _keyboardHeight),
       );
     });
 
-    testWidgetsOnMobile('shows above-keyboard panel above the keyboard when toggling panels and showing the keyboard',
+    testWidgetsOnMobile('shows keyboard toolbar above the keyboard when toggling panels and showing the keyboard',
         (tester) async {
       final softwareKeyboardController = SoftwareKeyboardController();
       final controller = KeyboardPanelController(softwareKeyboardController);
@@ -237,8 +236,39 @@ void main() {
       );
     });
 
-    testWidgetsOnMobile('shows above-keyboard panel at the bottom when closing the panel and the keyboard',
-        (tester) async {
+    testWidgetsOnMobile('hides the panel when IME connection closes', (tester) async {
+      final softwareKeyboardController = SoftwareKeyboardController();
+      final controller = KeyboardPanelController(softwareKeyboardController);
+
+      await _pumpTestApp(
+        tester,
+        controller: controller,
+        softwareKeyboardController: softwareKeyboardController,
+      );
+
+      // Request to show the keyboard toolbar.
+      controller.showToolbar();
+      await tester.pump();
+
+      // Place the caret at the beginning of the document to open the IME connection.
+      await tester.placeCaretInParagraph('1', 0);
+
+      // Request to show the keyboard panel and let the entrance animation run.
+      controller.showKeyboardPanel();
+      await tester.pumpAndSettle();
+
+      // Ensure the keyboard panel is visible.
+      expect(find.byKey(_keyboardPanelKey), findsOneWidget);
+
+      // Close the IME connection.
+      softwareKeyboardController.close();
+      await tester.pumpAndSettle();
+
+      // Ensure the keyboard panel is not visible.
+      expect(find.byKey(_keyboardPanelKey), findsNothing);
+    });
+
+    testWidgetsOnMobile('shows keyboard toolbar at the bottom when closing the panel and the keyboard', (tester) async {
       final softwareKeyboardController = SoftwareKeyboardController();
       final controller = KeyboardPanelController(softwareKeyboardController);
 
@@ -281,7 +311,7 @@ void main() {
 /// Pumps a tree that displays a panel at the software keyboard position.
 ///
 /// Simulates the software keyboard appearance and disappearance by animating
-/// the `MediaQuery` view insets when the app comunicates with the IME to show/hide
+/// the `MediaQuery` view insets when the app communicates with the IME to show/hide
 /// the software keyboard.
 Future<void> _pumpTestApp(
   WidgetTester tester, {
@@ -297,34 +327,34 @@ Future<void> _pumpTestApp(
       .createDocument()
       .withLongDoc()
       .withSoftwareKeyboardController(keyboardController)
+      .withImeConnectionNotifier(imeConnectionNotifier)
+      .simulateSoftwareKeyboardInsets(true)
       .withCustomWidgetTreeBuilder(
         (superEditor) => MaterialApp(
-          home: SoftwareKeyboardHeightSimulator(
-            tester: tester,
-            keyboardHeight: _keyboardHeight,
-            animateKeyboard: true,
-            child: Scaffold(
-              resizeToAvoidBottomInset: false,
-              body: KeyboardPanelScaffold(
+          home: Scaffold(
+            resizeToAvoidBottomInset: false,
+            body: Builder(builder: (context) {
+              return KeyboardPanelScaffold(
                 controller: keyboardPanelController,
                 isImeConnected: imeConnectionNotifier,
                 contentBuilder: (context, isKeyboardPanelVisible) => superEditor,
-                toolbarBuilder: (context, isKeyboardPanelVisible) => const SizedBox(
+                toolbarBuilder: (context, isKeyboardPanelVisible) => Container(
                   key: _aboveKeyboardPanelKey,
                   height: 54,
+                  color: Colors.blue,
                 ),
                 keyboardPanelBuilder: (context) => const ColoredBox(
                   key: _keyboardPanelKey,
                   color: Colors.red,
                 ),
-              ),
-            ),
+              );
+            }),
           ),
         ),
       )
       .pump();
 }
 
-const _keyboardHeight = 400.0;
+const _keyboardHeight = 300.0;
 const _aboveKeyboardPanelKey = ValueKey('aboveKeyboardPanel');
 const _keyboardPanelKey = ValueKey('keyboardPanel');

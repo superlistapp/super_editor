@@ -210,8 +210,13 @@ class TestSuperEditorConfigurator {
 
   /// When `true`, adds [MediaQuery] view insets to simulate the appearance of a software keyboard
   /// whenever the IME connection is active - when `false`, does nothing.
-  TestSuperEditorConfigurator simulateSoftwareKeyboardInsets(bool doSimulation) {
-    _config.simulateSoftwareKeyboardInsets = doSimulation;
+  TestSuperEditorConfigurator simulateSoftwareKeyboardInsets(
+    bool doSimulation, {
+    bool animateKeyboard = false,
+  }) {
+    _config
+      ..simulateSoftwareKeyboardInsets = doSimulation
+      ..animateSimulatedSoftwareKeyboard = animateKeyboard;
     return this;
   }
 
@@ -468,7 +473,9 @@ class TestSuperEditorConfigurator {
   /// Builds a complete screen experience, which includes the given [superEditor].
   Widget _buildWidgetTree(Widget superEditor) {
     if (_config.widgetTreeBuilder != null) {
-      return _config.widgetTreeBuilder!(superEditor);
+      return _buildSimulatedSoftwareKeyboard(
+        child: _config.widgetTreeBuilder!(superEditor),
+      );
     }
     return MaterialApp(
       theme: _config.appTheme,
@@ -479,21 +486,35 @@ class TestSuperEditorConfigurator {
       // Use our own version of the shortcuts, so we can set `debugIsWebOverride` to `true` to force
       // Flutter to pick the web shortcuts.
       shortcuts: defaultFlutterShortcuts,
-      home: Scaffold(
-        appBar: _config.appBarHeight != null
-            ? PreferredSize(
-                preferredSize: ui.Size(double.infinity, _config.appBarHeight!),
-                child: SafeArea(
-                  child: SizedBox(
-                    height: _config.appBarHeight!,
-                    child: const ColoredBox(color: Colors.yellow),
+      home: _buildSimulatedSoftwareKeyboard(
+        child: Scaffold(
+          appBar: _config.appBarHeight != null
+              ? PreferredSize(
+                  preferredSize: ui.Size(double.infinity, _config.appBarHeight!),
+                  child: SafeArea(
+                    child: SizedBox(
+                      height: _config.appBarHeight!,
+                      child: const ColoredBox(color: Colors.yellow),
+                    ),
                   ),
-                ),
-              )
-            : null,
-        body: superEditor,
+                )
+              : null,
+          body: superEditor,
+          resizeToAvoidBottomInset: false,
+        ),
       ),
       debugShowCheckedModeBanner: false,
+    );
+  }
+
+  Widget _buildSimulatedSoftwareKeyboard({
+    required Widget child,
+  }) {
+    return SoftwareKeyboardHeightSimulator(
+      tester: _config.tester,
+      isEnabled: _config.simulateSoftwareKeyboardInsets,
+      animateKeyboard: _config.animateSimulatedSoftwareKeyboard,
+      child: child,
     );
   }
 
@@ -592,12 +613,6 @@ class _TestSuperEditorState extends State<_TestSuperEditor> {
         child: testSuperEditor,
       );
     }
-
-    testSuperEditor = SoftwareKeyboardHeightSimulator(
-      tester: widget.testConfiguration.tester,
-      isEnabled: widget.testConfiguration.simulateSoftwareKeyboardInsets,
-      child: testSuperEditor,
-    );
 
     return testSuperEditor;
   }
@@ -725,6 +740,7 @@ class SuperEditorTestConfiguration {
 
   SoftwareKeyboardController? softwareKeyboardController;
   bool simulateSoftwareKeyboardInsets = false;
+  bool animateSimulatedSoftwareKeyboard = false;
   SuperEditorImePolicies? imePolicies;
   SuperEditorImeConfiguration? imeConfiguration;
   DeltaTextInputClientDecorator? imeOverrides;

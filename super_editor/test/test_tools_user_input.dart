@@ -46,7 +46,7 @@ class SoftwareKeyboardHeightSimulator extends StatefulWidget {
     required this.tester,
     this.isEnabled = true,
     this.enableForAllPlatforms = false,
-    this.keyboardHeight = 200,
+    this.keyboardHeight = 300,
     this.animateKeyboard = false,
     required this.child,
   });
