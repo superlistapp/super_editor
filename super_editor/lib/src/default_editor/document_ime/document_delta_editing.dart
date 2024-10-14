@@ -411,7 +411,7 @@ class TextDeltasDocumentEditor {
         docSelectionToDelete.isCollapsed ? SelectionChangeType.collapseSelection : SelectionChangeType.expandSelection,
         SelectionReason.contentChange,
       ),
-      const DeleteSelectionRequest(),
+      const DeleteSelectionRequest(affinity: TextAffinity.upstream),
     ]);
   }
 
@@ -576,7 +576,7 @@ class TextDeltasDocumentEditor {
 
   void _insertNewlineFromHardwareKey() {
     if (!selection.value!.isCollapsed) {
-      commonOps.deleteSelection();
+      commonOps.deleteSelection(TextAffinity.downstream);
     }
     commonOps.insertBlockLevelNewline();
   }

@@ -386,6 +386,172 @@ void main() {
         expect(document.getNodeById('hr'), isNotNull);
         expect(document.getNodeById('hr'), isA<HorizontalRuleNode>());
       });
+
+      testWidgetsOnDesktop(
+          'when selection starts at the dowstream edge and ends at the beginning of the downstream node',
+          (tester) async {
+        final testContext = await _pumpHrThenParagraphTestApp(tester);
+
+        const selection = DocumentSelection(
+          base: DocumentPosition(
+            nodeId: 'hr',
+            nodePosition: UpstreamDownstreamNodePosition.downstream(),
+          ),
+          extent: DocumentPosition(
+            nodeId: '1',
+            nodePosition: TextNodePosition(offset: 0),
+          ),
+        );
+
+        // Select from the end of the horizontal rule to the beginning of the downstream node.
+        testContext.editor.execute([
+          const ChangeSelectionRequest(
+            selection,
+            SelectionChangeType.expandSelection,
+            SelectionReason.userInteraction,
+          )
+        ]);
+        await tester.pump();
+
+        // Press backspace to delete the selected content.
+        await tester.pressBackspace();
+
+        // Ensure that the horizontal rule was not deleted.
+        final document = SuperEditorInspector.findDocument()!;
+        expect(document.getNodeById('hr'), isNotNull);
+        expect(document.getNodeById('hr'), isA<HorizontalRuleNode>());
+
+        // Ensure the selection didn't change.
+        expect(SuperEditorInspector.findDocumentSelection(), selection);
+      });
+
+      testWidgetsOnDesktop(
+          'when selection starts at the upstream edge and ends at the beginning of the downstream node',
+          (tester) async {
+        final testContext = await _pumpHrThenParagraphTestApp(tester);
+
+        const selection = DocumentSelection(
+          base: DocumentPosition(
+            nodeId: 'hr',
+            nodePosition: UpstreamDownstreamNodePosition.upstream(),
+          ),
+          extent: DocumentPosition(
+            nodeId: '1',
+            nodePosition: TextNodePosition(offset: 0),
+          ),
+        );
+
+        // Select from the beginning of the horizontal rule to the beginning of the downstream node.
+        testContext.editor.execute([
+          const ChangeSelectionRequest(
+            selection,
+            SelectionChangeType.expandSelection,
+            SelectionReason.userInteraction,
+          )
+        ]);
+        await tester.pump();
+
+        // Press backspace to delete the selected content.
+        await tester.pressBackspace();
+
+        // Ensure that the horizontal rule was not deleted.
+        final document = SuperEditorInspector.findDocument()!;
+        expect(document.getNodeById('hr'), isNotNull);
+        expect(document.getNodeById('hr'), isA<HorizontalRuleNode>());
+
+        // Ensure the selection didn't change.
+        expect(SuperEditorInspector.findDocumentSelection(), selection);
+      });
+
+      testWidgetsOnDesktop('when selection starts at upstream edge and ends at the end of the upstream node',
+          (tester) async {
+        final testContext = await _pumpParagraphThenHrTestApp(tester);
+
+        // Select from the beginning of the horizontal rule to the end of the upstream node.
+        testContext.editor.execute([
+          const ChangeSelectionRequest(
+            DocumentSelection(
+              base: DocumentPosition(
+                nodeId: 'hr',
+                nodePosition: UpstreamDownstreamNodePosition.upstream(),
+              ),
+              extent: DocumentPosition(
+                nodeId: '1',
+                nodePosition: TextNodePosition(offset: 11),
+              ),
+            ),
+            SelectionChangeType.expandSelection,
+            SelectionReason.userInteraction,
+          )
+        ]);
+        await tester.pump();
+
+        // Press backspace to delete the selected content.
+        await tester.pressBackspace();
+
+        // Ensure that the horizontal rule was not deleted.
+        final document = SuperEditorInspector.findDocument()!;
+        expect(document.getNodeById('hr'), isNotNull);
+        expect(document.getNodeById('hr'), isA<HorizontalRuleNode>());
+
+        // Ensure the selection moved to the end of the upstream node.
+        expect(
+          SuperEditorInspector.findDocumentSelection(),
+          selectionEquivalentTo(
+            const DocumentSelection.collapsed(
+              position: DocumentPosition(
+                nodeId: '1',
+                nodePosition: TextNodePosition(offset: 11),
+              ),
+            ),
+          ),
+        );
+      });
+
+      testWidgetsOnDesktop('when selection starts at downstream edge and ends at the end of the upstream node',
+          (tester) async {
+        final testContext = await _pumpParagraphThenHrTestApp(tester);
+
+        // Select from the end of the horizontal rule to the end of the downstream node.
+        testContext.editor.execute([
+          const ChangeSelectionRequest(
+            DocumentSelection(
+              base: DocumentPosition(
+                nodeId: 'hr',
+                nodePosition: UpstreamDownstreamNodePosition.downstream(),
+              ),
+              extent: DocumentPosition(
+                nodeId: '1',
+                nodePosition: TextNodePosition(offset: 11),
+              ),
+            ),
+            SelectionChangeType.expandSelection,
+            SelectionReason.userInteraction,
+          )
+        ]);
+        await tester.pump();
+
+        // Press backspace to delete the selected content.
+        await tester.pressBackspace();
+
+        // Ensure that the horizontal rule was not deleted.
+        final document = SuperEditorInspector.findDocument()!;
+        expect(document.getNodeById('hr'), isNotNull);
+        expect(document.getNodeById('hr'), isA<HorizontalRuleNode>());
+
+        // Ensure the selection moved to the end of the upstream node.
+        expect(
+          SuperEditorInspector.findDocumentSelection(),
+          selectionEquivalentTo(
+            const DocumentSelection.collapsed(
+              position: DocumentPosition(
+                nodeId: '1',
+                nodePosition: TextNodePosition(offset: 11),
+              ),
+            ),
+          ),
+        );
+      });
     });
 
     group('with delete', () {
@@ -759,6 +925,170 @@ void main() {
         final document = SuperEditorInspector.findDocument()!;
         expect(document.getNodeById('hr'), isNotNull);
         expect(document.getNodeById('hr'), isA<HorizontalRuleNode>());
+      });
+
+      testWidgetsOnDesktop('when selection starts at downstream edge and ends at the beginning of the downstream node',
+          (tester) async {
+        final testContext = await _pumpHrThenParagraphTestApp(tester);
+
+        // Select from the end of horizontal rule to the beginning of the downstream node.
+        testContext.editor.execute([
+          const ChangeSelectionRequest(
+            DocumentSelection(
+              base: DocumentPosition(
+                nodeId: 'hr',
+                nodePosition: UpstreamDownstreamNodePosition.downstream(),
+              ),
+              extent: DocumentPosition(
+                nodeId: '1',
+                nodePosition: TextNodePosition(offset: 0),
+              ),
+            ),
+            SelectionChangeType.expandSelection,
+            SelectionReason.userInteraction,
+          )
+        ]);
+        await tester.pump();
+
+        // Press backspace to delete the selected content.
+        await tester.pressDelete();
+
+        // Ensure that the horizontal rule was not deleted.
+        final document = SuperEditorInspector.findDocument()!;
+        expect(document.getNodeById('hr'), isNotNull);
+        expect(document.getNodeById('hr'), isA<HorizontalRuleNode>());
+
+        // Ensure the selection moved to the beginning of the downstream node.
+        expect(
+          SuperEditorInspector.findDocumentSelection(),
+          selectionEquivalentTo(
+            const DocumentSelection.collapsed(
+              position: DocumentPosition(
+                nodeId: '1',
+                nodePosition: TextNodePosition(offset: 0),
+              ),
+            ),
+          ),
+        );
+      });
+
+      testWidgetsOnDesktop('when selection starts at upstream edge and ends at the beginning of the downstream node',
+          (tester) async {
+        final testContext = await _pumpHrThenParagraphTestApp(tester);
+
+        // Select from the beginning of horizontal rule to the beginning of the downstream node.
+        testContext.editor.execute([
+          const ChangeSelectionRequest(
+            DocumentSelection(
+              base: DocumentPosition(
+                nodeId: 'hr',
+                nodePosition: UpstreamDownstreamNodePosition.upstream(),
+              ),
+              extent: DocumentPosition(
+                nodeId: '1',
+                nodePosition: TextNodePosition(offset: 0),
+              ),
+            ),
+            SelectionChangeType.expandSelection,
+            SelectionReason.userInteraction,
+          )
+        ]);
+        await tester.pump();
+
+        // Press backspace to delete the selected content.
+        await tester.pressDelete();
+
+        // Ensure that the horizontal rule was not deleted.
+        final document = SuperEditorInspector.findDocument()!;
+        expect(document.getNodeById('hr'), isNotNull);
+        expect(document.getNodeById('hr'), isA<HorizontalRuleNode>());
+
+        // Ensure the selection moved to the beginning of the downstream node.
+        expect(
+          SuperEditorInspector.findDocumentSelection(),
+          selectionEquivalentTo(
+            const DocumentSelection.collapsed(
+              position: DocumentPosition(
+                nodeId: '1',
+                nodePosition: TextNodePosition(offset: 0),
+              ),
+            ),
+          ),
+        );
+      });
+
+      testWidgetsOnDesktop('when selection starts at upstream edge and ends at the end of the upstream node',
+          (tester) async {
+        final testContext = await _pumpParagraphThenHrTestApp(tester);
+
+        const selection = DocumentSelection(
+          base: DocumentPosition(
+            nodeId: 'hr',
+            nodePosition: UpstreamDownstreamNodePosition.upstream(),
+          ),
+          extent: DocumentPosition(
+            nodeId: '1',
+            nodePosition: TextNodePosition(offset: 11),
+          ),
+        );
+
+        // Select from the beginning of the horizontal rule to the end of the upstream node.
+        testContext.editor.execute([
+          const ChangeSelectionRequest(
+            selection,
+            SelectionChangeType.expandSelection,
+            SelectionReason.userInteraction,
+          )
+        ]);
+        await tester.pump();
+
+        // Press delete to remove the selected content.
+        await tester.pressDelete();
+
+        // Ensure that the horizontal rule was not deleted.
+        final document = SuperEditorInspector.findDocument()!;
+        expect(document.getNodeById('hr'), isNotNull);
+        expect(document.getNodeById('hr'), isA<HorizontalRuleNode>());
+
+        // Ensure the selection didn't change.
+        expect(SuperEditorInspector.findDocumentSelection(), selection);
+      });
+
+      testWidgetsOnDesktop('when selection starts at downstream edge and ends at the end of the upstream node',
+          (tester) async {
+        final testContext = await _pumpParagraphThenHrTestApp(tester);
+
+        const selection = DocumentSelection(
+          base: DocumentPosition(
+            nodeId: 'hr',
+            nodePosition: UpstreamDownstreamNodePosition.downstream(),
+          ),
+          extent: DocumentPosition(
+            nodeId: '1',
+            nodePosition: TextNodePosition(offset: 11),
+          ),
+        );
+
+        // Select from the end of the horizontal rule to the end of the downstream node.
+        testContext.editor.execute([
+          const ChangeSelectionRequest(
+            selection,
+            SelectionChangeType.expandSelection,
+            SelectionReason.userInteraction,
+          )
+        ]);
+        await tester.pump();
+
+        // Press delete to remove the selected content.
+        await tester.pressDelete();
+
+        // Ensure that the horizontal rule was not deleted.
+        final document = SuperEditorInspector.findDocument()!;
+        expect(document.getNodeById('hr'), isNotNull);
+        expect(document.getNodeById('hr'), isA<HorizontalRuleNode>());
+
+        // Ensure the selection didn't change.
+        expect(SuperEditorInspector.findDocumentSelection(), selection);
       });
     });
 

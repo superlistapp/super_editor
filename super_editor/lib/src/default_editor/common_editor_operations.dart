@@ -865,7 +865,7 @@ class CommonEditorOperations {
 
     if (!composer.selection!.isCollapsed) {
       // A span of content is selected. Delete the selection.
-      _deleteExpandedSelection();
+      _deleteExpandedSelection(TextAffinity.downstream);
       return true;
     }
 
@@ -1056,7 +1056,7 @@ class CommonEditorOperations {
 
     if (!composer.selection!.isCollapsed) {
       // A span of content is selected. Delete the selection.
-      _deleteExpandedSelection();
+      _deleteExpandedSelection(TextAffinity.upstream);
       return true;
     }
 
@@ -1332,7 +1332,7 @@ class CommonEditorOperations {
   ///
   /// Returns [true] if content was deleted, or [false] if no content was
   /// selected.
-  bool deleteSelection() {
+  bool deleteSelection(TextAffinity affinity) {
     if (composer.selection == null) {
       return false;
     }
@@ -1343,14 +1343,14 @@ class CommonEditorOperations {
 
     // The document selection includes a span of content. It may or may not
     // cross nodes. Either way, delete the selected content.
-    _deleteExpandedSelection();
+    _deleteExpandedSelection(affinity);
     return true;
   }
 
-  void _deleteExpandedSelection() {
+  void _deleteExpandedSelection(TextAffinity affinity) {
     // Delete the selected content.
     editor.execute([
-      const DeleteSelectionRequest(),
+      DeleteSelectionRequest(affinity: affinity),
     ]);
   }
 
@@ -1602,7 +1602,7 @@ class CommonEditorOperations {
       // Without this, the new text doesn't preserve the attributions of the replaced text.
       final composerAttributions = {...composer.preferences.currentAttributions};
 
-      _deleteExpandedSelection();
+      _deleteExpandedSelection(TextAffinity.downstream);
 
       // Restore the previous attributions.
       composer.preferences
@@ -1659,7 +1659,7 @@ class CommonEditorOperations {
     }
 
     if (!composer.selection!.isCollapsed) {
-      _deleteExpandedSelection();
+      _deleteExpandedSelection(TextAffinity.downstream);
     }
 
     final extentNodePosition = composer.selection!.extent.nodePosition;
@@ -1745,7 +1745,7 @@ class CommonEditorOperations {
       // The selection is not collapsed. Delete the selected content first,
       // then continue the process.
       editorOpsLog.finer("Deleting selection before inserting block-level newline");
-      _deleteExpandedSelection();
+      _deleteExpandedSelection(TextAffinity.downstream);
     }
 
     final newNodeId = Editor.createNodeId();
@@ -2183,7 +2183,7 @@ class CommonEditorOperations {
     //       need to be carried out in response to user input.
     _saveToClipboard(textToCut);
 
-    deleteSelection();
+    deleteSelection(TextAffinity.downstream);
   }
 
   Future<void> _saveToClipboard(String text) {

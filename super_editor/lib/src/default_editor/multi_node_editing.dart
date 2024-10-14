@@ -1077,11 +1077,19 @@ class DeleteContentCommand extends EditCommand {
 }
 
 class DeleteSelectionRequest implements EditRequest {
-  const DeleteSelectionRequest();
+  const DeleteSelectionRequest({
+    required this.affinity,
+  });
+
+  final TextAffinity affinity;
 }
 
 class DeleteSelectionCommand extends EditCommand {
-  DeleteSelectionCommand();
+  DeleteSelectionCommand({
+    required this.affinity,
+  });
+
+  final TextAffinity affinity;
 
   @override
   HistoryBehavior get historyBehavior => HistoryBehavior.undoable;
@@ -1130,6 +1138,54 @@ class DeleteSelectionCommand extends EditCommand {
       document: document,
       selection: selection,
     );
+
+    final nodes = document.getNodesInside(selection.start, selection.end);
+    if (nodes.length == 2) {
+      final normalizedSelection = selection.normalize(document);
+      final nodeAbove = document.getNode(normalizedSelection.start)!;
+      final nodeBelow = document.getNode(normalizedSelection.end)!;
+
+      if (nodeAbove is BlockNode &&
+          !nodeAbove.isDeletable &&
+          normalizedSelection.end.nodePosition.isEquivalentTo(nodeBelow.beginningPosition)) {
+        // We have the following scenario, where |> and <| represent the selection:
+        //
+        // <non-deletable node>|>
+        // <|text
+
+        if (affinity == TextAffinity.upstream) {
+          // The user is trying to delete using backspace (we assume this because the deletion is in
+          // downstream direction). Do nothing.
+          return;
+        }
+
+        // The user is trying to delete using the delete key (we assume this because the deletion is in
+        // upstream direction). Move the selection to the node below.
+        executor.executeCommand(
+          ChangeSelectionCommand(
+            DocumentSelection.collapsed(position: normalizedSelection.end),
+            SelectionChangeType.deleteContent,
+            SelectionReason.userInteraction,
+          ),
+        );
+        return;
+      }
+
+      if (nodeBelow is BlockNode &&
+          !nodeBelow.isDeletable &&
+          normalizedSelection.start.nodePosition.isEquivalentTo(nodeAbove.endPosition)) {
+        // We have the following scenario, where |> and <| represent the selection:
+        //
+        // text|>
+        // <|<non-deletable node>
+
+        if (affinity == TextAffinity.downstream) {
+          // The user is trying to delete using the delete key (we assume this because the deletion is in
+          // downstream direction). Do nothing.
+          return;
+        }
+      }
+    }
 
     executor
       ..executeCommand(
