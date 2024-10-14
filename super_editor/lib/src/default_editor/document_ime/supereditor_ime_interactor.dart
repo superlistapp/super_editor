@@ -1,5 +1,6 @@
 import 'dart:math';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
@@ -44,6 +45,7 @@ class SuperEditorImeInteractor extends StatefulWidget {
     this.imePolicies = const SuperEditorImePolicies(),
     this.imeConfiguration = const SuperEditorImeConfiguration(),
     this.imeOverrides,
+    this.isImeConnected,
     this.hardwareKeyboardActions = const [],
     required this.selectorHandlers,
     this.floatingCursorController,
@@ -109,6 +111,12 @@ class SuperEditorImeInteractor extends StatefulWidget {
   /// Provide a [DeltaTextInputClientDecorator], to override the default behaviors
   /// for various IME messages.
   final DeltaTextInputClientDecorator? imeOverrides;
+
+  /// A (optional) notifier that's notified when the IME connection opens or closes.
+  ///
+  /// A `true` value means this interactor is connected to the platform's IME, a `false`
+  /// value means this interactor isn't connected to the platforms IME.
+  final ValueNotifier<bool>? isImeConnected;
 
   /// All the actions that the user can execute with physical hardware
   /// keyboard keys.
@@ -266,6 +274,7 @@ class SuperEditorImeInteractorState extends State<SuperEditorImeInteractor> impl
     if (_imeConnection.value == null) {
       _documentImeConnection.value = null;
       widget.imeOverrides?.client = null;
+      widget.isImeConnected?.value = false;
       return;
     }
 
@@ -273,6 +282,8 @@ class SuperEditorImeInteractorState extends State<SuperEditorImeInteractor> impl
     _documentImeConnection.value = _documentImeClient;
 
     _reportVisualInformationToIme();
+
+    widget.isImeConnected?.value = true;
   }
 
   void _configureImeClientDecorators() {

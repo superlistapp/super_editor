@@ -20,10 +20,11 @@ class _PanelBehindKeyboardDemoState extends State<PanelBehindKeyboardDemo> {
   late MutableDocument _doc;
   late MutableDocumentComposer _composer;
   late Editor _editor;
+
+  final _isImeConnected = ValueNotifier<bool>(false);
+
   final _keyboardController = SoftwareKeyboardController();
-
   late final KeyboardPanelController _keyboardPanelController;
-
   bool _isKeyboardPanelVisible = false;
 
   @override
@@ -42,6 +43,7 @@ class _PanelBehindKeyboardDemoState extends State<PanelBehindKeyboardDemo> {
 
   @override
   void dispose() {
+    _isImeConnected.dispose();
     _composer.dispose();
     _focusNode.dispose();
     super.dispose();
@@ -196,6 +198,7 @@ class _PanelBehindKeyboardDemoState extends State<PanelBehindKeyboardDemo> {
   Widget _buildTopPanelToggle(BuildContext context) {
     return KeyboardPanelScaffold(
       controller: _keyboardPanelController,
+      isImeConnected: _isImeConnected,
       toolbarBuilder: _buildTopPanel,
       keyboardPanelBuilder: _buildKeyboardPanel,
       contentBuilder: (context, wantsToShowKeyboardPanel) {

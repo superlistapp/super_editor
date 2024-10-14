@@ -102,7 +102,7 @@ class TestSuperEditorConfigurator {
   TestSuperEditorConfigurator._fromExistingConfiguration(this._widgetTester, this._config);
 
   TestSuperEditorConfigurator._(this._widgetTester, MutableDocument document)
-      : _config = SuperEditorTestConfiguration(document);
+      : _config = SuperEditorTestConfiguration(_widgetTester, document);
 
   final WidgetTester _widgetTester;
   final SuperEditorTestConfiguration _config;
@@ -208,6 +208,13 @@ class TestSuperEditorConfigurator {
     return this;
   }
 
+  /// When `true`, adds [MediaQuery] view insets to simulate the appearance of a software keyboard
+  /// whenever the IME connection is active - when `false`, does nothing.
+  TestSuperEditorConfigurator simulateSoftwareKeyboardInsets(bool doSimulation) {
+    _config.simulateSoftwareKeyboardInsets = doSimulation;
+    return this;
+  }
+
   /// Configures the [SuperEditor] with the given IME [policies], which dictate the interactions
   /// between focus, selection, and the platform IME, including software keyborads on mobile.
   TestSuperEditorConfigurator withImePolicies(SuperEditorImePolicies policies) {
@@ -225,6 +232,13 @@ class TestSuperEditorConfigurator {
   /// determined by the given [imeOverrides].
   TestSuperEditorConfigurator withImeOverrides(DeltaTextInputClientDecorator imeOverrides) {
     _config.imeOverrides = imeOverrides;
+    return this;
+  }
+
+  /// Configures the [SuperEditor] with the given [isImeConnected] notifier, which allows test
+  /// code to listen for changes to the IME connection from within [SuperEditor].
+  TestSuperEditorConfigurator withImeConnectionNotifier(ValueNotifier<bool>? isImeConnected) {
+    _config.isImeConnected = isImeConnected ?? ValueNotifier<bool>(false);
     return this;
   }
 
@@ -579,6 +593,12 @@ class _TestSuperEditorState extends State<_TestSuperEditor> {
       );
     }
 
+    testSuperEditor = SoftwareKeyboardHeightSimulator(
+      tester: widget.testConfiguration.tester,
+      isEnabled: widget.testConfiguration.simulateSoftwareKeyboardInsets,
+      child: testSuperEditor,
+    );
+
     return testSuperEditor;
   }
 
@@ -597,6 +617,7 @@ class _TestSuperEditorState extends State<_TestSuperEditor> {
       imePolicies: widget.testConfiguration.imePolicies ?? const SuperEditorImePolicies(),
       imeConfiguration: widget.testConfiguration.imeConfiguration,
       imeOverrides: widget.testConfiguration.imeOverrides,
+      isImeConnected: widget.testConfiguration.isImeConnected,
       keyboardActions: [
         ...widget.testConfiguration.prependedKeyboardActions,
         ...(widget.testConfiguration.inputSource == TextInputSource.ime
@@ -665,7 +686,9 @@ class _TestSuperEditorState extends State<_TestSuperEditor> {
 }
 
 class SuperEditorTestConfiguration {
-  SuperEditorTestConfiguration(this.document);
+  SuperEditorTestConfiguration(this.tester, this.document);
+
+  final WidgetTester tester;
 
   ThemeData? appTheme;
   Key? key;
@@ -701,9 +724,11 @@ class SuperEditorTestConfiguration {
   Color? androidCaretColor;
 
   SoftwareKeyboardController? softwareKeyboardController;
+  bool simulateSoftwareKeyboardInsets = false;
   SuperEditorImePolicies? imePolicies;
   SuperEditorImeConfiguration? imeConfiguration;
   DeltaTextInputClientDecorator? imeOverrides;
+  ValueNotifier<bool> isImeConnected = ValueNotifier<bool>(false);
   Map<String, SuperEditorSelectorHandler>? selectorHandlers;
   final prependedKeyboardActions = <DocumentKeyboardAction>[];
   final appendedKeyboardActions = <DocumentKeyboardAction>[];

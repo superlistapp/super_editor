@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_test_runners/flutter_test_runners.dart';
 import 'package:super_editor/src/test/super_editor_test/supereditor_robot.dart';
 import 'package:super_editor/super_editor.dart';
 
 import '../super_editor/supereditor_test_tools.dart';
+import '../test_tools_user_input.dart';
 
 void main() {
   group('Keyboard panel scaffold', () {
@@ -287,9 +287,11 @@ Future<void> _pumpTestApp(
   WidgetTester tester, {
   KeyboardPanelController? controller,
   SoftwareKeyboardController? softwareKeyboardController,
+  ValueNotifier<bool>? isImeConnected,
 }) async {
   final keyboardController = softwareKeyboardController ?? SoftwareKeyboardController();
   final keyboardPanelController = controller ?? KeyboardPanelController(keyboardController);
+  final imeConnectionNotifier = isImeConnected ?? ValueNotifier<bool>(false);
 
   await tester //
       .createDocument()
@@ -297,13 +299,15 @@ Future<void> _pumpTestApp(
       .withSoftwareKeyboardController(keyboardController)
       .withCustomWidgetTreeBuilder(
         (superEditor) => MaterialApp(
-          home: _SoftwareKeyboardHeightSimulator(
+          home: SoftwareKeyboardHeightSimulator(
             tester: tester,
             keyboardHeight: _keyboardHeight,
+            animateKeyboard: true,
             child: Scaffold(
               resizeToAvoidBottomInset: false,
               body: KeyboardPanelScaffold(
                 controller: keyboardPanelController,
+                isImeConnected: imeConnectionNotifier,
                 contentBuilder: (context, isKeyboardPanelVisible) => superEditor,
                 toolbarBuilder: (context, isKeyboardPanelVisible) => const SizedBox(
                   key: _aboveKeyboardPanelKey,
@@ -319,129 +323,6 @@ Future<void> _pumpTestApp(
         ),
       )
       .pump();
-}
-
-/// A widget that simulates the software keyboard appearance and disappearance.
-///
-/// This works by listening to platform messages that show/hide the software keyboard
-/// and animating the `MediaQuery` bottom insets to reflect the height of the keyboard.
-///
-/// Place this widget above the `Scaffold` in the widget tree.
-class _SoftwareKeyboardHeightSimulator extends StatefulWidget {
-  const _SoftwareKeyboardHeightSimulator({
-    required this.tester,
-    required this.keyboardHeight,
-    required this.child,
-  });
-
-  final WidgetTester tester;
-
-  /// The desired height of the software keyboard.
-  final double keyboardHeight;
-
-  final Widget child;
-
-  @override
-  State<_SoftwareKeyboardHeightSimulator> createState() => _SoftwareKeyboardHeightSimulatorState();
-}
-
-class _SoftwareKeyboardHeightSimulatorState extends State<_SoftwareKeyboardHeightSimulator>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _animationController;
-
-  @override
-  void initState() {
-    super.initState();
-    _animationController = AnimationController(
-      duration: const Duration(milliseconds: 600),
-      vsync: this,
-    );
-
-    _setupPlatformMethodInterception();
-  }
-
-  @override
-  void didUpdateWidget(covariant _SoftwareKeyboardHeightSimulator oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (widget.tester != oldWidget.tester) {
-      _setupPlatformMethodInterception();
-    }
-  }
-
-  @override
-  void dispose() {
-    _animationController.dispose();
-    super.dispose();
-  }
-
-  void _showKeyboard() {
-    if (_animationController.isForwardOrCompleted) {
-      // The keyboard is either fully visible or animating its entrance.
-      return;
-    }
-
-    _animationController.forward();
-  }
-
-  void _hideKeyboard() {
-    if (const [AnimationStatus.dismissed, AnimationStatus.reverse].contains(_animationController.status)) {
-      // The keyboard is either hidden or animating its exit.
-      return;
-    }
-
-    _animationController.reverse();
-  }
-
-  void _setupPlatformMethodInterception() {
-    widget.tester.interceptChannel(SystemChannels.textInput.name) //
-      ..interceptMethod(
-        'TextInput.show',
-        (methodCall) {
-          _showKeyboard();
-          return null;
-        },
-      )
-      ..interceptMethod(
-        'TextInput.setClient',
-        (methodCall) {
-          _showKeyboard();
-          return null;
-        },
-      )
-      ..interceptMethod(
-        'TextInput.clearClient',
-        (methodCall) {
-          _hideKeyboard();
-          return null;
-        },
-      )
-      ..interceptMethod(
-        'TextInput.hide',
-        (methodCall) {
-          _hideKeyboard();
-          return null;
-        },
-      );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final mediaQuery = MediaQuery.of(context);
-
-    return AnimatedBuilder(
-      animation: _animationController,
-      builder: (context, _) {
-        return MediaQuery(
-          data: mediaQuery.copyWith(
-            viewInsets: mediaQuery.viewInsets.copyWith(
-              bottom: widget.keyboardHeight * _animationController.value,
-            ),
-          ),
-          child: widget.child,
-        );
-      },
-    );
-  }
 }
 
 const _keyboardHeight = 400.0;

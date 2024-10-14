@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:super_editor/src/default_editor/document_ime/document_input_ime.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
@@ -34,6 +35,7 @@ class KeyboardPanelScaffold extends StatefulWidget {
   const KeyboardPanelScaffold({
     super.key,
     required this.controller,
+    required this.isImeConnected,
     required this.toolbarBuilder,
     required this.keyboardPanelBuilder,
     required this.contentBuilder,
@@ -41,6 +43,12 @@ class KeyboardPanelScaffold extends StatefulWidget {
 
   /// Controls the visibility of the keyboard toolbar, keyboard panel, and software keyboard.
   final KeyboardPanelController controller;
+
+  /// A [ValueListenable] that should notify this [KeyboardPanelScaffold] when the IME connects
+  /// and disconnects.
+  ///
+  /// This signal is used to automatically close any open panel when the IME disconnects.
+  final ValueListenable<bool> isImeConnected;
 
   /// Builds the toolbar that's docked to the top of the software keyboard area.
   final Widget Function(BuildContext context, bool isKeyboardPanelVisible) toolbarBuilder;
@@ -130,6 +138,8 @@ class _KeyboardPanelScaffoldState extends State<KeyboardPanelScaffold>
 
     widget.controller.attach(this);
 
+    widget.isImeConnected.addListener(_onImeConnectionChange);
+
     onNextFrame((ts) => _overlayPortalController.show());
   }
 
@@ -147,16 +157,28 @@ class _KeyboardPanelScaffoldState extends State<KeyboardPanelScaffold>
       oldWidget.controller.detach();
       widget.controller.attach(this);
     }
+
+    if (widget.isImeConnected != oldWidget.isImeConnected) {
+      oldWidget.isImeConnected.removeListener(_onImeConnectionChange);
+      widget.isImeConnected.addListener(_onImeConnectionChange);
+    }
   }
 
   @override
   void dispose() {
+    widget.isImeConnected.removeListener(_onImeConnectionChange);
+
     widget.controller.detach();
 
     _panelExitAnimation.removeListener(_updatePanelForExitAnimation);
     _panelExitAnimation.dispose();
 
-    _overlayPortalController.hide();
+    if (_overlayPortalController.isShowing) {
+      // WARNING: We can only call `hide()` if `isShowing` is `true`. If we blindly
+      // call `hide()` then we'll get a z-index error reported. Flutter should clean
+      // that up internally, but until then (written Oct 14, 2024) we guard it here.
+      _overlayPortalController.hide();
+    }
 
     super.dispose();
   }
@@ -169,6 +191,16 @@ class _KeyboardPanelScaffoldState extends State<KeyboardPanelScaffold>
   @override
   void onDetached() {
     _softwareKeyboardController = null;
+  }
+
+  void _onImeConnectionChange() {
+    final isImeConnected = widget.isImeConnected.value;
+    if (isImeConnected) {
+      return;
+    }
+
+    // The IME isn't connected. Ensure the panel is closed.
+    widget.controller.closeKeyboardAndPanel();
   }
 
   /// Whether the toolbar should be displayed, anchored to the top of the keyboard area.

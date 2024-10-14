@@ -15,6 +15,8 @@ class _MobileChatDemoState extends State<MobileChatDemo> {
   late final KeyboardPanelController _keyboardPanelController;
   final SoftwareKeyboardController _softwareKeyboardController = SoftwareKeyboardController();
 
+  final _imeConnectionNotifier = ValueNotifier<bool>(false);
+
   _Panel? _visiblePanel;
 
   @override
@@ -30,6 +32,7 @@ class _MobileChatDemoState extends State<MobileChatDemo> {
 
   @override
   void dispose() {
+    _imeConnectionNotifier.dispose();
     _keyboardPanelController.dispose();
     _focusNode.dispose();
     super.dispose();
@@ -94,6 +97,7 @@ class _MobileChatDemoState extends State<MobileChatDemo> {
           padding: const EdgeInsets.only(top: 16, bottom: 24),
           child: KeyboardPanelScaffold(
             controller: _keyboardPanelController,
+            isImeConnected: _imeConnectionNotifier,
             toolbarBuilder: _buildKeyboardToolbar,
             keyboardPanelBuilder: (context) {
               switch (_visiblePanel) {
@@ -125,6 +129,7 @@ class _MobileChatDemoState extends State<MobileChatDemo> {
                       clearSelectionWhenEditorLosesFocus: false,
                       clearSelectionWhenImeConnectionCloses: false,
                     ),
+                    isImeConnected: _imeConnectionNotifier,
                   ),
                 ],
               );
@@ -160,6 +165,11 @@ class _MobileChatDemoState extends State<MobileChatDemo> {
             isActive: _visiblePanel == _Panel.panel2,
             onPressed: () => _togglePanel(_Panel.panel2),
           ),
+          const SizedBox(width: 16),
+          _PanelButton(
+            icon: Icons.account_circle,
+            onPressed: () => _showBottomSheetWithOptions(context),
+          ),
           const Spacer(),
           GestureDetector(
             onTap: _keyboardPanelController.closeKeyboardAndPanel,
@@ -180,7 +190,7 @@ enum _Panel {
 class _PanelButton extends StatelessWidget {
   const _PanelButton({
     required this.icon,
-    required this.isActive,
+    this.isActive = false,
     required this.onPressed,
   });
 
@@ -235,3 +245,48 @@ final _chatStylesheet = defaultStylesheet.copyWith(
     ),
   ],
 );
+
+Future<void> _showBottomSheetWithOptions(BuildContext context) async {
+  return showModalBottomSheet(
+    context: context,
+    builder: (sheetContext) {
+      return _BottomSheetWithoutButtonOptions();
+    },
+  );
+}
+
+class _BottomSheetWithoutButtonOptions extends StatefulWidget {
+  const _BottomSheetWithoutButtonOptions();
+
+  @override
+  State<_BottomSheetWithoutButtonOptions> createState() => _BottomSheetWithoutButtonOptionsState();
+}
+
+class _BottomSheetWithoutButtonOptionsState extends State<_BottomSheetWithoutButtonOptions> {
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(24.0),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0),
+            child: Text(
+              "This bottom sheet represents a feature in which the user wants to temporarily leave the editor, and the toolbar, to review or select an option. We expect the keyboard or panel to close when this opens, and to re-open when this closes.",
+              textAlign: TextAlign.left,
+            ),
+          ),
+          const SizedBox(height: 16),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+            },
+            child: Text("Some Options"),
+          ),
+        ],
+      ),
+    );
+  }
+}

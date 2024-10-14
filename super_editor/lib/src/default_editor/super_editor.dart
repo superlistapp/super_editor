@@ -122,6 +122,7 @@ class SuperEditor extends StatefulWidget {
     this.imePolicies = const SuperEditorImePolicies(),
     this.imeConfiguration,
     this.imeOverrides,
+    this.isImeConnected,
     this.keyboardActions,
     this.selectorHandlers,
     this.gestureMode,
@@ -261,6 +262,12 @@ class SuperEditor extends StatefulWidget {
   /// Provide a [DeltaTextInputClientDecorator], to override the default [SuperEditor]
   /// behaviors for various IME messages.
   final DeltaTextInputClientDecorator? imeOverrides;
+
+  /// A (optional) notifier that's notified when the IME connection opens or closes.
+  ///
+  /// A `true` value means [SuperEditor] is connected to the platform's IME, a `false`
+  /// value means [SuperEditor] isn't connected to the platforms IME.
+  final ValueNotifier<bool>? isImeConnected;
 
   /// The `SuperEditor` gesture mode, e.g., mouse or touch.
   final DocumentGestureMode? gestureMode;
@@ -765,6 +772,7 @@ class SuperEditorState extends State<SuperEditor> {
             ..._keyboardActions,
           ],
           selectorHandlers: widget.selectorHandlers ?? defaultEditorSelectorHandlers,
+          isImeConnected: widget.isImeConnected,
           child: child,
         );
     }
