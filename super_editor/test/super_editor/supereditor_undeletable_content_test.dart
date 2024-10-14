@@ -67,7 +67,13 @@ void main() {
         expect(document.getNodeById('hr'), isNotNull);
         expect(document.getNodeById('hr'), isA<HorizontalRuleNode>());
 
-        // Ensure the caret moved to the end of the first paragraph.
+        // Ensure the two paragraphs were merged.
+        expect(
+          SuperEditorInspector.findTextInComponent('1').text,
+          'Paragraph 1Paragraph 2',
+        );
+
+        // Ensure the caret moved to the end of existing test of the first paragraph.
         expect(
           SuperEditorInspector.findDocumentSelection(),
           selectionEquivalentTo(
@@ -434,6 +440,12 @@ void main() {
         final document = SuperEditorInspector.findDocument()!;
         expect(document.getNodeById('hr'), isNotNull);
         expect(document.getNodeById('hr'), isA<HorizontalRuleNode>());
+
+        // Ensure the two paragraphs were merged.
+        expect(
+          SuperEditorInspector.findTextInComponent('1').text,
+          'Paragraph 1Paragraph 2',
+        );
 
         // Ensure the caret stayed where it was.
         expect(

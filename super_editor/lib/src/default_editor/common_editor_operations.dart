@@ -10,6 +10,7 @@ import 'package:super_editor/src/core/document_composer.dart';
 import 'package:super_editor/src/core/document_layout.dart';
 import 'package:super_editor/src/core/document_selection.dart';
 import 'package:super_editor/src/core/editor.dart';
+import 'package:super_editor/src/default_editor/box_component.dart';
 import 'package:super_editor/src/default_editor/default_document_editor_reactions.dart';
 import 'package:super_editor/src/default_editor/list_items.dart';
 import 'package:super_editor/src/default_editor/paragraph.dart';
@@ -906,18 +907,15 @@ class CommonEditorOperations {
         } else if (nodeAfter != null) {
           final componentAfter = documentLayoutResolver().getComponentByNodeId(nodeAfter.id)!;
 
-          if (componentAfter.isVisualSelectionSupported()) {
+          if (nodeAfter is BlockNode && !nodeAfter.isDeletable) {
+            return _mergeTextNodeWithDownstreamTextNode();
+          } else if (componentAfter.isVisualSelectionSupported()) {
             // The caret is at the end of a TextNode, but the next node
             // is not a TextNode. Move the document selection to the
             // next node.
             return _moveSelectionToBeginningOfNextNode();
           } else {
-            // The next node/component isn't selectable.
-            if (!nodeAfter.isDeletable) {
-              // The next node isn't deletable. Fizzle.
-              return false;
-            }
-
+            // The next node/component isn't selectable. Delete it.
             deleteNonSelectedNode(nodeAfter);
             return true;
           }
@@ -970,7 +968,11 @@ class CommonEditorOperations {
       return false;
     }
 
-    final nodeAfter = document.getNodeAfter(node);
+    DocumentNode? nodeAfter = document.getNodeAfter(node);
+    while (nodeAfter is BlockNode && !nodeAfter.isDeletable) {
+      nodeAfter = document.getNodeAfter(nodeAfter);
+    }
+
     if (nodeAfter == null) {
       return false;
     }
@@ -1124,14 +1126,10 @@ class CommonEditorOperations {
           // The caret is at the beginning of one TextNode and is preceded by
           // another TextNode. Merge the two TextNodes.
           return mergeTextNodeWithUpstreamTextNode();
+        } else if (nodeBefore is BlockNode && !nodeBefore.isDeletable) {
+          return mergeTextNodeWithUpstreamTextNode();
         } else if (!componentBefore.isVisualSelectionSupported()) {
-          // The node/component above is not selectable.
-          if (!nodeBefore.isDeletable) {
-            // The node is not deletable, move the selection to the end of the upstream node.
-            moveSelectionToEndOfFirstSelectableUpstreamNode();
-            return true;
-          }
-
+          // The node/component above is not selectable. Delete it.
           deleteNonSelectedNode(nodeBefore);
           return true;
         } else if ((node as TextNode).text.text.isEmpty) {
@@ -1232,13 +1230,21 @@ class CommonEditorOperations {
     return false;
   }
 
+  /// Merges the selected [TextNode] with the upstream [TextNode].
+  ///
+  /// If there are non-deletable [BlockNode]s between the two [TextNode]s,
+  /// the [BlockNode]s are ignored.
   bool mergeTextNodeWithUpstreamTextNode() {
     final node = document.getNodeById(composer.selection!.extent.nodeId);
     if (node == null) {
       return false;
     }
 
-    final nodeAbove = document.getNodeBefore(node);
+    DocumentNode? nodeAbove = document.getNodeBefore(node);
+    while (nodeAbove != null && nodeAbove is BlockNode && !nodeAbove.isDeletable) {
+      nodeAbove = document.getNodeBefore(nodeAbove);
+    }
+
     if (nodeAbove == null) {
       return false;
     }

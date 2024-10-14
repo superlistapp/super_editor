@@ -10,6 +10,7 @@ import 'package:super_editor/src/core/edit_context.dart';
 import 'package:super_editor/src/core/editor.dart';
 import 'package:super_editor/src/default_editor/attributions.dart';
 import 'package:super_editor/src/default_editor/blocks/indentation.dart';
+import 'package:super_editor/src/default_editor/box_component.dart';
 import 'package:super_editor/src/default_editor/multi_node_editing.dart';
 import 'package:super_editor/src/default_editor/text.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
@@ -476,12 +477,29 @@ class CombineParagraphsCommand extends EditCommand {
       return;
     }
 
-    final nodeAbove = document.getNodeBefore(secondNode);
+    DocumentNode? nodeAbove = document.getNodeBefore(secondNode);
     if (nodeAbove == null) {
       editorDocLog.info('At top of document. Cannot merge with node above.');
       return;
     }
-    if (nodeAbove.id != firstNodeId) {
+
+    // Search for the node above the second node that matches the first node.
+    //
+    // A `CombineParagraphsRequest` might reference nodes that are not contiguous.
+    // For example, we might have:
+    // - Paragraph 1
+    // - <hr> (non-selectable, non-deletable)
+    // - Paragraph 2
+    //
+    // If this case, it's possible to combine Paragraph 1 and Paragraph 2.
+    //
+    // Because of this, we need to loop until we find the node instead of just
+    // comparing with the node immediately above the second node.
+    while (nodeAbove != null && nodeAbove.id != firstNodeId) {
+      nodeAbove = document.getNodeBefore(nodeAbove);
+    }
+
+    if (nodeAbove == null) {
       editorDocLog.info('The specified `firstNodeId` is not the node before `secondNodeId`.');
       return;
     }
@@ -725,7 +743,11 @@ class DeleteUpstreamAtBeginningOfParagraphCommand extends EditCommand {
       return;
     }
 
-    final nodeBefore = document.getNodeBefore(node);
+    DocumentNode? nodeBefore = document.getNodeBefore(node);
+    while (nodeBefore is BlockNode && !nodeBefore.isDeletable) {
+      nodeBefore = document.getNodeBefore(nodeBefore);
+    }
+
     if (nodeBefore == null) {
       return;
     }
@@ -758,6 +780,10 @@ class DeleteUpstreamAtBeginningOfParagraphCommand extends EditCommand {
     }
   }
 
+  /// Merges the selected [TextNode] with the upstream [TextNode].
+  ///
+  /// If there are non-deletable [BlockNode]s between the two [TextNode]s,
+  /// the [BlockNode]s are ignored.
   bool mergeTextNodeWithUpstreamTextNode(
     CommandExecutor executor,
     MutableDocument document,
@@ -768,7 +794,11 @@ class DeleteUpstreamAtBeginningOfParagraphCommand extends EditCommand {
       return false;
     }
 
-    final nodeAbove = document.getNodeBefore(node);
+    DocumentNode? nodeAbove = document.getNodeBefore(node);
+    while (nodeAbove is BlockNode && !nodeAbove.isDeletable) {
+      nodeAbove = document.getNodeBefore(nodeAbove);
+    }
+
     if (nodeAbove == null) {
       return false;
     }
