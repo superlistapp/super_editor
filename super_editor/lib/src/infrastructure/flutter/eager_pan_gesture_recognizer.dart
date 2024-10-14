@@ -17,12 +17,21 @@ class EagerPanGestureRecognizer extends DragGestureRecognizer {
     super.allowedButtonsFilter,
   });
 
+  bool Function()? canAccept;
+
   @override
   bool isFlingGesture(VelocityEstimate estimate, PointerDeviceKind kind) {
     final minVelocity = minFlingVelocity ?? kMinFlingVelocity;
     final minDistance = minFlingDistance ?? computeHitSlop(kind, gestureSettings);
     return estimate.pixelsPerSecond.distanceSquared > minVelocity * minVelocity &&
         estimate.offset.distanceSquared > minDistance * minDistance;
+  }
+
+  @override
+  void acceptGesture(int pointer) {
+    if (canAccept?.call() ?? true) {
+      super.acceptGesture(pointer);
+    }
   }
 
   @override
@@ -45,7 +54,12 @@ class EagerPanGestureRecognizer extends DragGestureRecognizer {
     // Flutter's PanGestureRecognizer uses the pan slop, which is twice bigger than the hit slop,
     // to determine if the gesture should be accepted. Use the same distance used by the
     // VerticalDragGestureRecognizer.
-    return globalDistanceMoved.abs() > computeHitSlop(pointerDeviceKind, gestureSettings);
+    final res = globalDistanceMoved.abs() > computeHitSlop(pointerDeviceKind, gestureSettings);
+    if (res && canAccept != null) {
+      return canAccept!();
+    } else {
+      return res;
+    }
   }
 
   @override

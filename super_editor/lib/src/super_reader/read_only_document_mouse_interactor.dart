@@ -12,6 +12,7 @@ import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/document_gestures_interaction_overrides.dart';
 import 'package:super_editor/src/infrastructure/flutter/flutter_scheduler.dart';
 import 'package:super_editor/src/infrastructure/multi_tap_gesture.dart';
+import 'package:super_editor/src/infrastructure/sliver_hybrid_stack.dart';
 
 import 'reader_context.dart';
 
@@ -39,6 +40,7 @@ class ReadOnlyDocumentMouseInteractor extends StatefulWidget {
     required this.readerContext,
     this.contentTapHandler,
     required this.autoScroller,
+    required this.fillViewport,
     this.showDebugPaint = false,
     required this.child,
   }) : super(key: key);
@@ -54,6 +56,8 @@ class ReadOnlyDocumentMouseInteractor extends StatefulWidget {
 
   /// Auto-scrolling delegate.
   final AutoScrollController autoScroller;
+
+  final bool fillViewport;
 
   /// Paints some extra visual ornamentation to help with
   /// debugging, when `true`.
@@ -399,16 +403,6 @@ class _ReadOnlyDocumentMouseInteractorState extends State<ReadOnlyDocumentMouseI
     readerGesturesLog
         .info("Pan update on document, global offset: ${details.globalPosition}, device: $_panGestureDevice");
 
-    if (_panGestureDevice == PointerDeviceKind.trackpad) {
-      // The user dragged using two fingers on a trackpad.
-      // Scroll the document and keep the selection unchanged.
-      // We multiply by -1 because the scroll should be in the opposite
-      // direction of the drag, e.g., dragging up on a trackpad scrolls
-      // the document to downstream direction.
-      _scrollVertically(details.delta.dy * -1);
-      return;
-    }
-
     setState(() {
       _dragEndGlobal = details.globalPosition;
 
@@ -447,22 +441,6 @@ class _ReadOnlyDocumentMouseInteractorState extends State<ReadOnlyDocumentMouseI
     widget.autoScroller.disableAutoScrolling();
   }
 
-  /// We prevent SingleChildScrollView from processing mouse events because
-  /// it scrolls by drag by default, which we don't want. However, we do
-  /// still want mouse scrolling. This method re-implements a primitive
-  /// form of mouse scrolling.
-  void _scrollOnMouseWheel(PointerSignalEvent event) {
-    if (event is PointerScrollEvent) {
-      _scrollVertically(event.scrollDelta.dy);
-    }
-  }
-
-  /// Scrolls the document vertically by [delta] pixels.
-  void _scrollVertically(double delta) {
-    widget.autoScroller.jumpBy(delta);
-    _updateDragSelection();
-  }
-
   void _updateDragSelection() {
     if (_dragEndGlobal == null) {
       // User isn't dragging. No need to update drag selection.
@@ -497,16 +475,21 @@ Updating drag selection:
 
   @override
   Widget build(BuildContext context) {
-    return Listener(
-      onPointerHover: _onMouseMove,
-      onPointerSignal: _scrollOnMouseWheel,
-      child: _buildCursorStyle(
-        child: _buildGestureInput(
-          child: _buildDocumentContainer(
-            document: widget.child,
+    return SliverHybridStack(
+      fillViewport: widget.fillViewport,
+      children: [
+        Listener(
+          onPointerHover: _onMouseMove,
+          child: _buildCursorStyle(
+            child: _buildGestureInput(
+              child: _buildDocumentContainer(
+                document: const SizedBox(),
+              ),
+            ),
           ),
         ),
-      ),
+        widget.child,
+      ],
     );
   }
 
@@ -546,7 +529,10 @@ Updating drag selection:
           },
         ),
         PanGestureRecognizer: GestureRecognizerFactoryWithHandlers<PanGestureRecognizer>(
-          () => PanGestureRecognizer(),
+          () => PanGestureRecognizer(supportedDevices: {
+            PointerDeviceKind.mouse,
+            PointerDeviceKind.touch,
+          }),
           (PanGestureRecognizer recognizer) {
             recognizer
               ..onStart = _onPanStart
