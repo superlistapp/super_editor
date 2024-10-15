@@ -26,16 +26,18 @@ class _SuperEditorSpellcheckPluginAppState extends State<_SuperEditorSpellcheckP
       theme: ThemeData(
         brightness: _brightness,
       ),
-      home: Stack(
-        children: [
-          const _SuperEditorSpellcheckScreen(),
-          Positioned(
-            top: 0,
-            bottom: 0,
-            right: 0,
-            child: _buildToolbar(),
-          ),
-        ],
+      home: SafeArea(
+        child: Stack(
+          children: [
+            const _SuperEditorSpellcheckScreen(),
+            Positioned(
+              top: 0,
+              bottom: 0,
+              right: 0,
+              child: _buildToolbar(),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -65,11 +67,16 @@ class _SuperEditorSpellcheckScreen extends StatefulWidget {
 
 class _SuperEditorSpellcheckScreenState extends State<_SuperEditorSpellcheckScreen> {
   late final Editor _editor;
-  final _spellingAndGrammarPlugin = SpellingAndGrammarPlugin();
+  final _popoverController = SpellCheckerPopoverController();
+  late final SpellingAndGrammarPlugin _spellingAndGrammarPlugin;
 
   @override
   void initState() {
     super.initState();
+
+    _spellingAndGrammarPlugin = SpellingAndGrammarPlugin(
+      popoverController: _popoverController,
+    );
 
     _editor = createDefaultDocumentEditor(
       document: MutableDocument.empty(),
@@ -100,6 +107,7 @@ class _SuperEditorSpellcheckScreenState extends State<_SuperEditorSpellcheckScre
     return Scaffold(
       body: SuperEditor(
         editor: _editor,
+        spellCheckerPopoverController: _popoverController,
         customStylePhases: [
           _spellingAndGrammarPlugin.styler,
         ],
