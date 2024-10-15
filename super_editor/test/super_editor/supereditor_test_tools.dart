@@ -102,7 +102,7 @@ class TestSuperEditorConfigurator {
   TestSuperEditorConfigurator._fromExistingConfiguration(this._widgetTester, this._config);
 
   TestSuperEditorConfigurator._(this._widgetTester, MutableDocument document)
-      : _config = SuperEditorTestConfiguration(document);
+      : _config = SuperEditorTestConfiguration(_widgetTester, document);
 
   final WidgetTester _widgetTester;
   final SuperEditorTestConfiguration _config;
@@ -208,6 +208,18 @@ class TestSuperEditorConfigurator {
     return this;
   }
 
+  /// When `true`, adds [MediaQuery] view insets to simulate the appearance of a software keyboard
+  /// whenever the IME connection is active - when `false`, does nothing.
+  TestSuperEditorConfigurator simulateSoftwareKeyboardInsets(
+    bool doSimulation, {
+    bool animateKeyboard = false,
+  }) {
+    _config
+      ..simulateSoftwareKeyboardInsets = doSimulation
+      ..animateSimulatedSoftwareKeyboard = animateKeyboard;
+    return this;
+  }
+
   /// Configures the [SuperEditor] with the given IME [policies], which dictate the interactions
   /// between focus, selection, and the platform IME, including software keyborads on mobile.
   TestSuperEditorConfigurator withImePolicies(SuperEditorImePolicies policies) {
@@ -225,6 +237,13 @@ class TestSuperEditorConfigurator {
   /// determined by the given [imeOverrides].
   TestSuperEditorConfigurator withImeOverrides(DeltaTextInputClientDecorator imeOverrides) {
     _config.imeOverrides = imeOverrides;
+    return this;
+  }
+
+  /// Configures the [SuperEditor] with the given [isImeConnected] notifier, which allows test
+  /// code to listen for changes to the IME connection from within [SuperEditor].
+  TestSuperEditorConfigurator withImeConnectionNotifier(ValueNotifier<bool>? isImeConnected) {
+    _config.isImeConnected = isImeConnected ?? ValueNotifier<bool>(false);
     return this;
   }
 
@@ -454,7 +473,9 @@ class TestSuperEditorConfigurator {
   /// Builds a complete screen experience, which includes the given [superEditor].
   Widget _buildWidgetTree(Widget superEditor) {
     if (_config.widgetTreeBuilder != null) {
-      return _config.widgetTreeBuilder!(superEditor);
+      return _buildSimulatedSoftwareKeyboard(
+        child: _config.widgetTreeBuilder!(superEditor),
+      );
     }
     return MaterialApp(
       theme: _config.appTheme,
@@ -465,21 +486,35 @@ class TestSuperEditorConfigurator {
       // Use our own version of the shortcuts, so we can set `debugIsWebOverride` to `true` to force
       // Flutter to pick the web shortcuts.
       shortcuts: defaultFlutterShortcuts,
-      home: Scaffold(
-        appBar: _config.appBarHeight != null
-            ? PreferredSize(
-                preferredSize: ui.Size(double.infinity, _config.appBarHeight!),
-                child: SafeArea(
-                  child: SizedBox(
-                    height: _config.appBarHeight!,
-                    child: const ColoredBox(color: Colors.yellow),
+      home: _buildSimulatedSoftwareKeyboard(
+        child: Scaffold(
+          appBar: _config.appBarHeight != null
+              ? PreferredSize(
+                  preferredSize: ui.Size(double.infinity, _config.appBarHeight!),
+                  child: SafeArea(
+                    child: SizedBox(
+                      height: _config.appBarHeight!,
+                      child: const ColoredBox(color: Colors.yellow),
+                    ),
                   ),
-                ),
-              )
-            : null,
-        body: superEditor,
+                )
+              : null,
+          body: superEditor,
+          resizeToAvoidBottomInset: false,
+        ),
       ),
       debugShowCheckedModeBanner: false,
+    );
+  }
+
+  Widget _buildSimulatedSoftwareKeyboard({
+    required Widget child,
+  }) {
+    return SoftwareKeyboardHeightSimulator(
+      tester: _config.tester,
+      isEnabled: _config.simulateSoftwareKeyboardInsets,
+      animateKeyboard: _config.animateSimulatedSoftwareKeyboard,
+      child: child,
     );
   }
 
@@ -597,6 +632,7 @@ class _TestSuperEditorState extends State<_TestSuperEditor> {
       imePolicies: widget.testConfiguration.imePolicies ?? const SuperEditorImePolicies(),
       imeConfiguration: widget.testConfiguration.imeConfiguration,
       imeOverrides: widget.testConfiguration.imeOverrides,
+      isImeConnected: widget.testConfiguration.isImeConnected,
       keyboardActions: [
         ...widget.testConfiguration.prependedKeyboardActions,
         ...(widget.testConfiguration.inputSource == TextInputSource.ime
@@ -665,7 +701,9 @@ class _TestSuperEditorState extends State<_TestSuperEditor> {
 }
 
 class SuperEditorTestConfiguration {
-  SuperEditorTestConfiguration(this.document);
+  SuperEditorTestConfiguration(this.tester, this.document);
+
+  final WidgetTester tester;
 
   ThemeData? appTheme;
   Key? key;
@@ -701,9 +739,12 @@ class SuperEditorTestConfiguration {
   Color? androidCaretColor;
 
   SoftwareKeyboardController? softwareKeyboardController;
+  bool simulateSoftwareKeyboardInsets = false;
+  bool animateSimulatedSoftwareKeyboard = false;
   SuperEditorImePolicies? imePolicies;
   SuperEditorImeConfiguration? imeConfiguration;
   DeltaTextInputClientDecorator? imeOverrides;
+  ValueNotifier<bool> isImeConnected = ValueNotifier<bool>(false);
   Map<String, SuperEditorSelectorHandler>? selectorHandlers;
   final prependedKeyboardActions = <DocumentKeyboardAction>[];
   final appendedKeyboardActions = <DocumentKeyboardAction>[];

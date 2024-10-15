@@ -314,5 +314,6 @@ Future<void> _pumpSingleParagraphApp(WidgetTester tester) async {
       .createDocument()
       // Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor...
       .withSingleParagraph()
+      .simulateSoftwareKeyboardInsets(true)
       .pump();
 }
