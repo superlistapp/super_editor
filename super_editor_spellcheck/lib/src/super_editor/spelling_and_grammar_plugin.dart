@@ -1,6 +1,8 @@
 import 'dart:ui';
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:follow_the_leader/follow_the_leader.dart';
 import 'package:super_editor/super_editor.dart';
 import 'package:super_editor_spellcheck/src/platform/spell_checker.dart';
@@ -17,13 +19,15 @@ class SpellingAndGrammarPlugin extends SuperEditorPlugin {
     UnderlineStyle spellingErrorUnderlineStyle = defaultSpellingErrorUnderlineStyle,
     bool isGrammarCheckEnabled = true,
     UnderlineStyle grammarErrorUnderlineStyle = defaultGrammarErrorUnderlineStyle,
-    SpellingErrorSuggestionToolbarBuilder toolbarBuilder = desktopSpellingSuggestionToolbarBuilder,
+    SpellingErrorSuggestionToolbarBuilder toolbarBuilder = defaultSpellingSuggestionToolbarBuilder,
+    SpellCheckerPopoverController? popoverController,
   })  : _isSpellCheckEnabled = isSpellingCheckEnabled,
         _isGrammarCheckEnabled = isGrammarCheckEnabled {
     documentOverlayBuilders = <SuperEditorLayerBuilder>[
       SpellingErrorSuggestionOverlayBuilder(
         _spellingErrorSuggestions,
         _selectedWordLink,
+        popoverController: popoverController,
         toolbarBuilder: toolbarBuilder,
       ),
     ];
@@ -130,6 +134,34 @@ extension SpellingAndGrammarEditorExtensions on Editor {
       ),
     ]);
   }
+
+  void removeMisspelledWord(DocumentRange wordRange) {
+    execute([
+      // Move caret to start of mis-spelled word so that we ensure the
+      // caret location is legitimate after deleting the word. E.g.,
+      // consider what would happen if the mis-spelled word is the last
+      // word in the given paragraph.
+      ChangeSelectionRequest(
+        DocumentSelection.collapsed(
+          position: wordRange.start,
+        ),
+        SelectionChangeType.alteredContent,
+        SelectionReason.contentChange,
+      ),
+      // Delete the mis-spelled word.
+      DeleteContentRequest(
+        documentRange: DocumentRange(
+          start: wordRange.start,
+          end: wordRange.end.copyWith(
+            nodePosition: TextNodePosition(
+              // +1 to make end of range exclusive.
+              offset: (wordRange.end.nodePosition as TextNodePosition).offset + 1,
+            ),
+          ),
+        ),
+      ),
+    ]);
+  }
 }
 
 /// An [EditReaction] that runs spelling and grammar checks on all [TextNode]s
@@ -158,6 +190,8 @@ class SpellingAndGrammarReaction implements EditReaction {
   /// of receipt.
   final _asyncRequestIds = <String, int>{};
 
+  final _mobileSpellChecker = DefaultSpellCheckService();
+
   @override
   void modifyContent(EditContext editorContext, RequestDispatcher requestDispatcher, List<EditEvent> changeList) {
     // No-op - spelling and grammar checks style the document, they don't alter the document.
@@ -165,8 +199,9 @@ class SpellingAndGrammarReaction implements EditReaction {
 
   @override
   void react(EditContext editorContext, RequestDispatcher requestDispatcher, List<EditEvent> changeList) {
-    if (defaultTargetPlatform != TargetPlatform.macOS || kIsWeb) {
-      // We currently only support spell check when running on Mac desktop.
+    if (kIsWeb ||
+        !const [TargetPlatform.macOS, TargetPlatform.android, TargetPlatform.iOS].contains(defaultTargetPlatform)) {
+      // We currently only support spell check when running on Mac desktop or mobile platforms.
       return;
     }
 
@@ -230,6 +265,14 @@ class SpellingAndGrammarReaction implements EditReaction {
   }
 
   Future<void> _findSpellingAndGrammarErrors(TextNode textNode) async {
+    if (defaultTargetPlatform == TargetPlatform.macOS) {
+      await _findSpellingAndGrammarErrorsOnMac(textNode);
+    } else if (defaultTargetPlatform == TargetPlatform.android || defaultTargetPlatform == TargetPlatform.iOS) {
+      await _findSpellingAndGrammarErrorsOnMobile(textNode);
+    }
+  }
+
+  Future<void> _findSpellingAndGrammarErrorsOnMac(TextNode textNode) async {
     final spellChecker = SuperEditorSpellCheckerPlugin().macSpellChecker;
 
     // TODO: Investigate whether we can parallelize spelling and grammar checks
@@ -309,6 +352,60 @@ class SpellingAndGrammarReaction implements EditReaction {
           startingOffset = prevError.end;
         }
       } while (prevError.isValid);
+    }
+
+    if (requestId != _asyncRequestIds[textNode.id]) {
+      // Another request was started for this node while we were running our
+      // request. Fizzle.
+      return;
+    }
+    // Reset the request ID counter to zero so that we avoid increasing infinitely.
+    _asyncRequestIds[textNode.id] = 0;
+
+    // Display underlines on spelling and grammar errors.
+    _styler
+      ..clearErrorsForNode(textNode.id)
+      ..addErrors(textNode.id, textErrors);
+
+    // Update the shared repository of spelling suggestions so that the user can
+    // see suggestions and select them.
+    _suggestions.putSuggestions(textNode.id, spellingSuggestions);
+  }
+
+  Future<void> _findSpellingAndGrammarErrorsOnMobile(TextNode textNode) async {
+    final textErrors = <TextError>{};
+    final spellingSuggestions = <TextRange, SpellingErrorSuggestion>{};
+
+    // Track this spelling and grammar request to make sure we don't process
+    // the response out of order with other requests.
+    _asyncRequestIds[textNode.id] ??= 0;
+    final requestId = _asyncRequestIds[textNode.id]! + 1;
+    _asyncRequestIds[textNode.id] = requestId;
+
+    final suggestions = await _mobileSpellChecker.fetchSpellCheckSuggestions(
+      PlatformDispatcher.instance.locale,
+      textNode.text.text,
+    );
+    if (suggestions == null) {
+      return;
+    }
+
+    for (final suggestion in suggestions) {
+      final misspelledWord = textNode.text.substring(suggestion.range.start, suggestion.range.end);
+      spellingSuggestions[suggestion.range] = SpellingErrorSuggestion(
+        word: misspelledWord,
+        nodeId: textNode.id,
+        range: suggestion.range,
+        suggestions: suggestion.suggestions,
+      );
+      textErrors.add(
+        TextError.spelling(
+          nodeId: textNode.id,
+          range: suggestion.range,
+          value: misspelledWord,
+          suggestions: suggestion.suggestions,
+        ),
+      );
     }
 
     if (requestId != _asyncRequestIds[textNode.id]) {

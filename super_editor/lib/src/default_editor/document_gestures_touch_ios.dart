@@ -12,6 +12,7 @@ import 'package:super_editor/src/core/document_layout.dart';
 import 'package:super_editor/src/core/document_selection.dart';
 import 'package:super_editor/src/core/edit_context.dart';
 import 'package:super_editor/src/core/editor.dart';
+import 'package:super_editor/src/default_editor/spelling_and_grammar/spell_checker_popover_controller.dart';
 import 'package:super_editor/src/default_editor/super_editor.dart';
 import 'package:super_editor/src/default_editor/text.dart';
 import 'package:super_editor/src/default_editor/text_tools.dart';
@@ -249,6 +250,7 @@ class IosDocumentTouchInteractor extends StatefulWidget {
     required this.dragHandleAutoScroller,
     this.contentTapHandler,
     this.dragAutoScrollBoundary = const AxisOffset.symmetric(54),
+    this.spellCheckerPopoverController,
     this.showDebugPaint = false,
     this.child,
   }) : super(key: key);
@@ -277,6 +279,8 @@ class IosDocumentTouchInteractor extends StatefulWidget {
   /// The default value is `54.0` pixels for both the leading and trailing
   /// edges.
   final AxisOffset dragAutoScrollBoundary;
+
+  final SpellCheckerPopoverController? spellCheckerPopoverController;
 
   final bool showDebugPaint;
 
@@ -638,6 +642,8 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
       ..hideMagnifier()
       ..blinkCaret();
 
+    widget.spellCheckerPopoverController?.hide();
+
     if (_wasScrollingOnTapDown) {
       // The scrollable was scrolling when the user touched down. We expect that the
       // touch down stopped the scrolling momentum. We don't want to take any further
@@ -702,6 +708,10 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
       } else {
         // The user tapped somewhere else in the document. Hide the toolbar.
         _controlsController!.hideToolbar();
+      }
+
+      if (!didTapOnExistingSelection) {
+        widget.spellCheckerPopoverController?.show(DocumentSelection.collapsed(position: adjustedSelectionPosition));
       }
 
       final tappedComponent = _docLayout.getComponentByNodeId(adjustedSelectionPosition.nodeId)!;

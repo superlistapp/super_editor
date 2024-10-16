@@ -20,6 +20,7 @@ import 'package:super_editor/src/default_editor/document_gestures_touch_ios.dart
 import 'package:super_editor/src/default_editor/document_scrollable.dart';
 import 'package:super_editor/src/default_editor/layout_single_column/_styler_composing_region.dart';
 import 'package:super_editor/src/default_editor/list_items.dart';
+import 'package:super_editor/src/default_editor/spelling_and_grammar/spell_checker_popover_controller.dart';
 import 'package:super_editor/src/default_editor/tasks.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/content_layers.dart';
@@ -127,6 +128,7 @@ class SuperEditor extends StatefulWidget {
     this.selectorHandlers,
     this.gestureMode,
     this.contentTapDelegateFactory = superEditorLaunchLinkTapHandlerFactory,
+    this.spellCheckerPopoverController,
     this.selectionLayerLinks,
     this.documentUnderlayBuilders = const [],
     this.documentOverlayBuilders = defaultSuperEditorDocumentOverlayBuilders,
@@ -276,6 +278,15 @@ class SuperEditor extends StatefulWidget {
   /// A [ContentTapDelegate] might be used, for example, to launch a URL
   /// when a user taps on a link.
   final SuperEditorContentTapDelegateFactory? contentTapDelegateFactory;
+
+  /// Shows/hides a popover with spelling suggestions.
+  ///
+  /// A [SpellCheckerPopoverDelegate] must be attached to this controller
+  /// before it can be used.
+  ///
+  /// The `SpellingAndGrammarPlugin` provides a default implementation for
+  /// a [SpellCheckerPopoverDelegate].
+  final SpellCheckerPopoverController? spellCheckerPopoverController;
 
   /// Leader links that connect leader widgets near the user's selection
   /// to carets, handles, and other things that want to follow the selection.
@@ -860,6 +871,7 @@ class SuperEditorState extends State<SuperEditor> {
           selection: editContext.composer.selectionNotifier,
           openSoftwareKeyboard: _openSoftareKeyboard,
           contentTapHandler: _contentTapDelegate,
+          spellCheckerPopoverController: widget.spellCheckerPopoverController,
           scrollController: _scrollController,
           dragHandleAutoScroller: _dragHandleAutoScroller,
           showDebugPaint: widget.debugPaint.gestures,
@@ -875,6 +887,7 @@ class SuperEditorState extends State<SuperEditor> {
           contentTapHandler: _contentTapDelegate,
           scrollController: _scrollController,
           dragHandleAutoScroller: _dragHandleAutoScroller,
+          spellCheckerPopoverController: widget.spellCheckerPopoverController,
           showDebugPaint: widget.debugPaint.gestures,
         );
     }

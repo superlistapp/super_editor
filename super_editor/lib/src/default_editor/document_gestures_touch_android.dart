@@ -13,6 +13,7 @@ import 'package:super_editor/src/core/document_layout.dart';
 import 'package:super_editor/src/core/document_selection.dart';
 import 'package:super_editor/src/core/edit_context.dart';
 import 'package:super_editor/src/core/editor.dart';
+import 'package:super_editor/src/default_editor/spelling_and_grammar/spell_checker_popover_controller.dart';
 import 'package:super_editor/src/default_editor/super_editor.dart';
 import 'package:super_editor/src/default_editor/text_tools.dart';
 import 'package:super_editor/src/document_operations/selection_operations.dart';
@@ -407,6 +408,7 @@ class AndroidDocumentTouchInteractor extends StatefulWidget {
     required this.openSoftwareKeyboard,
     required this.scrollController,
     this.contentTapHandler,
+    this.spellCheckerPopoverController,
     this.dragAutoScrollBoundary = const AxisOffset.symmetric(54),
     required this.dragHandleAutoScroller,
     this.showDebugPaint = false,
@@ -426,6 +428,8 @@ class AndroidDocumentTouchInteractor extends StatefulWidget {
   /// Optional handler that responds to taps on content, e.g., opening
   /// a link when the user taps on text with a link attribution.
   final ContentTapDelegate? contentTapHandler;
+
+  final SpellCheckerPopoverController? spellCheckerPopoverController;
 
   final ScrollController scrollController;
 
@@ -976,6 +980,7 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
   void _showAndHideEditingControlsAfterTapSelection({
     required bool didTapOnExistingSelection,
   }) {
+    widget.spellCheckerPopoverController?.hide();
     if (widget.selection.value == null) {
       // There's no selection. Hide all controls.
       _controlsController!
@@ -1009,6 +1014,7 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
       } else {
         // The user tapped somewhere else in the document. Hide the toolbar.
         _controlsController!.hideToolbar();
+        widget.spellCheckerPopoverController?.show(widget.selection.value!);
       }
     }
   }
