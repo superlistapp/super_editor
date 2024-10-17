@@ -402,7 +402,9 @@ ExecutionInstruction anyCharacterOrDestructiveKeyToDeleteSelection({
     return ExecutionInstruction.continueExecution;
   }
 
-  editContext.commonOps.deleteSelection();
+  editContext.commonOps.deleteSelection(
+    keyEvent.logicalKey == LogicalKeyboardKey.backspace ? TextAffinity.upstream : TextAffinity.downstream,
+  );
 
   if (isCharacterKey) {
     // We continue handler execution even though we deleted the selection.
@@ -777,7 +779,7 @@ ExecutionInstruction deleteToStartOfLineWithCmdBackspaceOnMac({
   );
 
   if (didMove) {
-    return editContext.commonOps.deleteSelection()
+    return editContext.commonOps.deleteSelection(TextAffinity.upstream)
         ? ExecutionInstruction.haltExecution
         : ExecutionInstruction.continueExecution;
   }
@@ -810,7 +812,7 @@ ExecutionInstruction deleteToEndOfLineWithCmdDeleteOnMac({
   );
 
   if (didMove) {
-    return editContext.commonOps.deleteSelection()
+    return editContext.commonOps.deleteSelection(TextAffinity.downstream)
         ? ExecutionInstruction.haltExecution
         : ExecutionInstruction.continueExecution;
   }
@@ -843,7 +845,7 @@ ExecutionInstruction deleteWordUpstreamWithAltBackspaceOnMac({
   );
 
   if (didMove) {
-    return editContext.commonOps.deleteSelection()
+    return editContext.commonOps.deleteSelection(TextAffinity.upstream)
         ? ExecutionInstruction.haltExecution
         : ExecutionInstruction.continueExecution;
   }
@@ -876,7 +878,7 @@ ExecutionInstruction deleteWordUpstreamWithControlBackspaceOnWindowsAndLinux({
   );
 
   if (didMove) {
-    return editContext.commonOps.deleteSelection()
+    return editContext.commonOps.deleteSelection(TextAffinity.upstream)
         ? ExecutionInstruction.haltExecution
         : ExecutionInstruction.continueExecution;
   }
@@ -909,7 +911,7 @@ ExecutionInstruction deleteWordDownstreamWithAltDeleteOnMac({
   );
 
   if (didMove) {
-    return editContext.commonOps.deleteSelection()
+    return editContext.commonOps.deleteSelection(TextAffinity.downstream)
         ? ExecutionInstruction.haltExecution
         : ExecutionInstruction.continueExecution;
   }
@@ -942,7 +944,7 @@ ExecutionInstruction deleteWordDownstreamWithControlDeleteOnWindowsAndLinux({
   );
 
   if (didMove) {
-    return editContext.commonOps.deleteSelection()
+    return editContext.commonOps.deleteSelection(TextAffinity.downstream)
         ? ExecutionInstruction.haltExecution
         : ExecutionInstruction.continueExecution;
   }
