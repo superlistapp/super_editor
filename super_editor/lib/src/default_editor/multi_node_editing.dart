@@ -711,7 +711,7 @@ class DeleteContentCommand extends EditCommand {
     if (nodes.length == 1) {
       // This is a selection within a single node.
 
-      if (nodes.first.metadata[NodeMetadata.isDeletable] == false) {
+      if (!nodes.first.isDeletable) {
         // The node is not deletable. Abort the deletion.
         if (nodes.first is BlockNode && selection?.isCollapsed == false) {
           // On iOS, pressing backspace generates a non-text delta expanding the selection
@@ -763,7 +763,7 @@ class DeleteContentCommand extends EditCommand {
       ),
     );
 
-    if (startNode.metadata[NodeMetadata.isDeletable] != false) {
+    if (startNode.isDeletable) {
       _log.log('DeleteSelectionCommand', ' - deleting partial selection within the starting node.');
       executor.logChanges(
         _deleteRangeWithinNodeFromPositionToEnd(
@@ -775,7 +775,7 @@ class DeleteContentCommand extends EditCommand {
       );
     }
 
-    if (endNode.metadata[NodeMetadata.isDeletable] != false) {
+    if (endNode.isDeletable) {
       _log.log('DeleteSelectionCommand', ' - deleting partial selection within ending node.');
       executor.logChanges(
         _deleteRangeWithinNodeFromStartToPosition(
@@ -913,7 +913,7 @@ class DeleteContentCommand extends EditCommand {
     for (int i = endIndex - 1; i > startIndex; --i) {
       _log.log('_deleteNodesBetweenFirstAndLast', ' - deleting node $i: ${document.getNodeAt(i)?.id}');
       final removedNode = document.getNodeAt(i)!;
-      if (removedNode.metadata[NodeMetadata.isDeletable] == false) {
+      if (!removedNode.isDeletable) {
         // This node is not deletable. Ignore it.
         continue;
       }
@@ -1076,10 +1076,16 @@ class DeleteContentCommand extends EditCommand {
   }
 }
 
+/// Deletes the selected content within the document.
+///
+/// Any non-deletable nodes within the selection are ignored.
+///
+/// The [affinity] defines the direction to where the user is trying to
+/// delete. For example, if the users presses the backspace key, the
+/// [affinity] should be [TextAffinity.upstream]. If the user presses the
+/// delete key, the [affinity] should be [TextAffinity.downstream].
 class DeleteSelectionRequest implements EditRequest {
-  const DeleteSelectionRequest({
-    required this.affinity,
-  });
+  const DeleteSelectionRequest(this.affinity);
 
   final TextAffinity affinity;
 }
@@ -1112,7 +1118,7 @@ class DeleteSelectionCommand extends EditCommand {
       // if the node is non-deletable. When there are multiple nodes selected,
       // non-deletable nodes are ignored inside DeleteContentCommand.
       final node = document.getNodeById(selection.base.nodeId)!;
-      if (node.metadata[NodeMetadata.isDeletable] == false) {
+      if (!node.isDeletable) {
         if (node is BlockNode && !selection.isCollapsed) {
           // On iOS, pressing backspace generates a non-text delta expanding the selection
           // prior to its deletion. Since we can't delete the block, we'll just collapse the

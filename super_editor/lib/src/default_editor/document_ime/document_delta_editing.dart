@@ -411,7 +411,7 @@ class TextDeltasDocumentEditor {
         docSelectionToDelete.isCollapsed ? SelectionChangeType.collapseSelection : SelectionChangeType.expandSelection,
         SelectionReason.contentChange,
       ),
-      const DeleteSelectionRequest(affinity: TextAffinity.upstream),
+      const DeleteSelectionRequest(TextAffinity.upstream),
     ]);
   }
 

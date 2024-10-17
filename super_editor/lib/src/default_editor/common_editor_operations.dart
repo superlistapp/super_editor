@@ -875,7 +875,7 @@ class CommonEditorOperations {
         // The caret is sitting on the upstream edge of block-level content.
         final nodeId = composer.selection!.extent.nodeId;
 
-        if (document.getNodeById(nodeId)!.metadata[NodeMetadata.isDeletable] == false) {
+        if (!document.getNodeById(nodeId)!.isDeletable) {
           // The node is not deletable. Fizzle.
           return false;
         }
@@ -908,6 +908,9 @@ class CommonEditorOperations {
           final componentAfter = documentLayoutResolver().getComponentByNodeId(nodeAfter.id)!;
 
           if (nodeAfter is BlockNode && !nodeAfter.isDeletable) {
+            // The user is trying to delete at the end of a node, and the downstream node
+            // is not deletable. Skip the non-deletable node and try to merge the selected
+            // node with the next non-deletable node.
             return _mergeTextNodeWithDownstreamTextNode();
           } else if (componentAfter.isVisualSelectionSupported()) {
             // The caret is at the end of a TextNode, but the next node
@@ -1073,7 +1076,7 @@ class CommonEditorOperations {
         // The caret is sitting on the downstream edge of block-level content.
         final nodeId = composer.selection!.extent.nodeId;
 
-        if (document.getNodeById(nodeId)!.metadata[NodeMetadata.isDeletable] == false) {
+        if (!document.getNodeById(nodeId)!.isDeletable) {
           // The node is not deletable. Fizzle.
           return false;
         }
@@ -1108,7 +1111,7 @@ class CommonEditorOperations {
           return true;
         }
 
-        return moveSelectionToEndOfFirstSelectableUpstreamNode();
+        return _moveSelectionToEndOfFirstSelectableUpstreamNode();
       }
     }
 
@@ -1188,7 +1191,11 @@ class CommonEditorOperations {
     return true;
   }
 
-  bool moveSelectionToEndOfFirstSelectableUpstreamNode() {
+  /// Finds the first visually selectable node above the selection extent
+  /// and changes the selection to its end.
+  ///
+  /// Does nothing if no selectable node is found.
+  bool _moveSelectionToEndOfFirstSelectableUpstreamNode() {
     if (composer.selection == null) {
       return false;
     }
@@ -1330,6 +1337,11 @@ class CommonEditorOperations {
 
   /// Deletes all selected content.
   ///
+  /// The [affinity] defines the direction to where the user is trying to
+  /// delete. For example, if the users presses the backspace key, the
+  /// [affinity] should be [TextAffinity.upstream]. If the user presses the
+  /// delete key, the [affinity] should be [TextAffinity.downstream].
+  ///
   /// Returns [true] if content was deleted, or [false] if no content was
   /// selected.
   bool deleteSelection(TextAffinity affinity) {
@@ -1350,7 +1362,7 @@ class CommonEditorOperations {
   void _deleteExpandedSelection(TextAffinity affinity) {
     // Delete the selected content.
     editor.execute([
-      DeleteSelectionRequest(affinity: affinity),
+      DeleteSelectionRequest(affinity),
     ]);
   }
 
