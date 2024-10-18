@@ -11,9 +11,9 @@ import 'supereditor_test_tools.dart';
 
 void main() {
   group('SuperEditor > undeletable content > prevents deletion > ', () {
-    // The desktop tests run for all desktop platforms because on mac the backspace
-    // is handled by selectors and on the other platforms it is handled by the keyboard handlers.
-    // See `MacOsSelectors` for more information.
+    // Instead of only testing a single arbitrary desktop, the desktop tests run for all desktop
+    // platforms because on mac the backspace is handled by selectors and on the other platforms
+    // it is handled by the keyboard handlers. See `MacOsSelectors` for more information.
     group('with collapsed selection > ', () {
       group('with backspace', () {
         testWidgetsOnDesktop('at the downstream edge of the node', (tester) async {
