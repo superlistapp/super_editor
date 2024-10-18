@@ -483,7 +483,7 @@ class CombineParagraphsCommand extends EditCommand {
       return;
     }
 
-    // Search for the node above the second node that matches the first node.
+    // Search for a node above the second node that has the id equal to `firstNodeId`.
     //
     // A `CombineParagraphsRequest` might reference nodes that are not contiguous.
     // For example, we might have:
@@ -783,7 +783,7 @@ class DeleteUpstreamAtBeginningOfParagraphCommand extends EditCommand {
   /// Merges the selected [TextNode] with the upstream [TextNode].
   ///
   /// If there are non-deletable [BlockNode]s between the two [TextNode]s,
-  /// the [BlockNode]s are ignored.
+  /// the [BlockNode]s are retained without modification.
   bool mergeTextNodeWithUpstreamTextNode(
     CommandExecutor executor,
     MutableDocument document,

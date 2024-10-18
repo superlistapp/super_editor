@@ -1078,12 +1078,16 @@ class DeleteContentCommand extends EditCommand {
 
 /// Deletes the selected content within the document.
 ///
-/// Any non-deletable nodes within the selection are ignored.
+/// Any selected, non-deletable nodes are retained without removal.
 ///
 /// The [affinity] defines the direction to where the user is trying to
 /// delete. For example, if the users presses the backspace key, the
 /// [affinity] should be [TextAffinity.upstream]. If the user presses the
-/// delete key, the [affinity] should be [TextAffinity.downstream].
+/// delete key, the [affinity] should be [TextAffinity.downstream]. The
+/// [affinity] influences the new selection after the deletion when the
+/// dowstream of upstream node is non-deletable. For example, pressing
+/// backspace when the upstream node is not deletable doesn't change
+/// the selection, but pressing delete does.
 class DeleteSelectionRequest implements EditRequest {
   const DeleteSelectionRequest(this.affinity);
 
