@@ -9,7 +9,9 @@ class MobileChatDemo extends StatefulWidget {
 }
 
 class _MobileChatDemoState extends State<MobileChatDemo> {
-  final FocusNode _focusNode = FocusNode();
+  final FocusNode _screenFocusNode = FocusNode();
+
+  final FocusNode _editorFocusNode = FocusNode();
   late final Editor _editor;
 
   late final KeyboardPanelController _keyboardPanelController;
@@ -28,13 +30,18 @@ class _MobileChatDemoState extends State<MobileChatDemo> {
     _editor = createDefaultDocumentEditor(document: document, composer: composer);
 
     _keyboardPanelController = KeyboardPanelController(_softwareKeyboardController);
+
+    // Initially focus the overall screen so that the software keyboard isn't immediately
+    // visible.
+    _screenFocusNode.requestFocus();
   }
 
   @override
   void dispose() {
     _imeConnectionNotifier.dispose();
     _keyboardPanelController.dispose();
-    _focusNode.dispose();
+    _editorFocusNode.dispose();
+    _screenFocusNode.dispose();
     super.dispose();
   }
 
@@ -56,7 +63,15 @@ class _MobileChatDemoState extends State<MobileChatDemo> {
       child: Stack(
         children: [
           Positioned.fill(
-            child: ColoredBox(color: Colors.white),
+            child: GestureDetector(
+              onTap: () {
+                _screenFocusNode.requestFocus();
+              },
+              child: Focus(
+                focusNode: _screenFocusNode,
+                child: ColoredBox(color: Colors.white),
+              ),
+            ),
           ),
           Positioned(
             left: 0,
@@ -70,73 +85,83 @@ class _MobileChatDemoState extends State<MobileChatDemo> {
   }
 
   Widget _buildCommentEditor() {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Container(
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.only(
-              topLeft: Radius.circular(24),
-              topRight: Radius.circular(24),
-            ),
-            border: Border(
-              top: BorderSide(width: 1, color: Colors.grey),
-              left: BorderSide(width: 1, color: Colors.grey),
-              right: BorderSide(width: 1, color: Colors.grey),
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.075),
-                blurRadius: 8,
-                spreadRadius: 4,
-              ),
-            ],
-          ),
-          padding: const EdgeInsets.only(top: 16, bottom: 24),
-          child: KeyboardPanelScaffold(
-            controller: _keyboardPanelController,
-            isImeConnected: _imeConnectionNotifier,
-            toolbarBuilder: _buildKeyboardToolbar,
-            keyboardPanelBuilder: (context) {
-              switch (_visiblePanel) {
-                case _Panel.panel1:
-                  return Container(
-                    color: Colors.blue,
-                    height: double.infinity,
-                  );
-                case _Panel.panel2:
-                  return Container(
-                    color: Colors.red,
-                    height: double.infinity,
-                  );
-                default:
-                  return const SizedBox();
-              }
-            },
-            contentBuilder: (context, isKeyboardVisible) {
-              return CustomScrollView(
-                shrinkWrap: true,
-                slivers: [
-                  SuperEditor(
-                    editor: _editor,
-                    focusNode: _focusNode,
-                    softwareKeyboardController: _softwareKeyboardController,
-                    shrinkWrap: true,
-                    stylesheet: _chatStylesheet,
-                    selectionPolicies: const SuperEditorSelectionPolicies(
-                      clearSelectionWhenEditorLosesFocus: false,
-                      clearSelectionWhenImeConnectionCloses: false,
+    return Opacity(
+      opacity: 0.5,
+      child: KeyboardPanelScaffold(
+        controller: _keyboardPanelController,
+        isImeConnected: _imeConnectionNotifier,
+        toolbarBuilder: _buildKeyboardToolbar,
+        keyboardPanelBuilder: (context) {
+          switch (_visiblePanel) {
+            case _Panel.panel1:
+              return Row(
+                children: [
+                  Spacer(),
+                  Expanded(
+                    child: Container(
+                      color: Colors.blue.withOpacity(0.5),
+                      height: double.infinity,
                     ),
-                    isImeConnected: _imeConnectionNotifier,
                   ),
                 ],
               );
-            },
-          ),
-        ),
-      ],
+            case _Panel.panel2:
+              return Container(
+                color: Colors.red,
+                height: double.infinity,
+              );
+            default:
+              return const SizedBox();
+          }
+        },
+        contentBuilder: (context, isKeyboardVisible) {
+          return Container(
+            decoration: BoxDecoration(
+              color: Colors.yellow,
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(24),
+                topRight: Radius.circular(24),
+              ),
+              border: Border(
+                top: BorderSide(width: 1, color: Colors.grey),
+                left: BorderSide(width: 1, color: Colors.grey),
+                right: BorderSide(width: 1, color: Colors.grey),
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.075),
+                  blurRadius: 8,
+                  spreadRadius: 4,
+                ),
+              ],
+            ),
+            padding: const EdgeInsets.only(top: 16),
+            child: ColoredBox(
+              color: Colors.red,
+              child: CustomScrollView(
+                shrinkWrap: true,
+                slivers: [
+                  SliverPadding(
+                    padding: const EdgeInsets.only(bottom: 24),
+                    sliver: SuperEditor(
+                      editor: _editor,
+                      focusNode: _editorFocusNode,
+                      softwareKeyboardController: _softwareKeyboardController,
+                      shrinkWrap: true,
+                      stylesheet: _chatStylesheet,
+                      selectionPolicies: const SuperEditorSelectionPolicies(
+                        clearSelectionWhenEditorLosesFocus: false,
+                        clearSelectionWhenImeConnectionCloses: false,
+                      ),
+                      isImeConnected: _imeConnectionNotifier,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
     );
   }
 
@@ -145,39 +170,49 @@ class _MobileChatDemoState extends State<MobileChatDemo> {
       _visiblePanel = null;
     }
 
-    return Container(
-      width: double.infinity,
-      height: 54,
-      color: Colors.grey.shade100,
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Row(
-        children: [
-          const SizedBox(width: 24),
-          const Spacer(),
-          _PanelButton(
-            icon: Icons.text_fields,
-            isActive: _visiblePanel == _Panel.panel1,
-            onPressed: () => _togglePanel(_Panel.panel1),
+    return Row(
+      children: [
+        const SizedBox(width: 200),
+        Expanded(
+          child: Opacity(
+            opacity: 0.5,
+            child: Container(
+              width: double.infinity,
+              height: 54,
+              color: Colors.grey.shade100,
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              child: Row(
+                children: [
+                  const SizedBox(width: 24),
+                  const Spacer(),
+                  _PanelButton(
+                    icon: Icons.text_fields,
+                    isActive: _visiblePanel == _Panel.panel1,
+                    onPressed: () => _togglePanel(_Panel.panel1),
+                  ),
+                  const SizedBox(width: 16),
+                  _PanelButton(
+                    icon: Icons.align_horizontal_left,
+                    isActive: _visiblePanel == _Panel.panel2,
+                    onPressed: () => _togglePanel(_Panel.panel2),
+                  ),
+                  const SizedBox(width: 16),
+                  _PanelButton(
+                    icon: Icons.account_circle,
+                    onPressed: () => _showBottomSheetWithOptions(context),
+                  ),
+                  const Spacer(),
+                  GestureDetector(
+                    onTap: _keyboardPanelController.closeKeyboardAndPanel,
+                    child: Icon(Icons.keyboard_hide),
+                  ),
+                  const SizedBox(width: 24),
+                ],
+              ),
+            ),
           ),
-          const SizedBox(width: 16),
-          _PanelButton(
-            icon: Icons.align_horizontal_left,
-            isActive: _visiblePanel == _Panel.panel2,
-            onPressed: () => _togglePanel(_Panel.panel2),
-          ),
-          const SizedBox(width: 16),
-          _PanelButton(
-            icon: Icons.account_circle,
-            onPressed: () => _showBottomSheetWithOptions(context),
-          ),
-          const Spacer(),
-          GestureDetector(
-            onTap: _keyboardPanelController.closeKeyboardAndPanel,
-            child: Icon(Icons.keyboard_hide),
-          ),
-          const SizedBox(width: 24),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }
@@ -217,16 +252,18 @@ class _PanelButton extends StatelessWidget {
 }
 
 final _chatStylesheet = defaultStylesheet.copyWith(
-  addRulesAfter: [
+  addRulesBefore: [
     StyleRule(
       BlockSelector.all,
       (doc, docNode) {
         return {
-          Styles.maxWidth: null,
+          Styles.maxWidth: double.infinity,
           Styles.padding: const CascadingPadding.symmetric(horizontal: 24),
         };
       },
     ),
+  ],
+  addRulesAfter: [
     StyleRule(
       BlockSelector.all.first(),
       (doc, docNode) {

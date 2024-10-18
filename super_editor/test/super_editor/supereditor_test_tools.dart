@@ -212,10 +212,12 @@ class TestSuperEditorConfigurator {
   /// whenever the IME connection is active - when `false`, does nothing.
   TestSuperEditorConfigurator simulateSoftwareKeyboardInsets(
     bool doSimulation, {
+    double simulatedKeyboardHeight = 300,
     bool animateKeyboard = false,
   }) {
     _config
       ..simulateSoftwareKeyboardInsets = doSimulation
+      ..simulatedKeyboardHeight = simulatedKeyboardHeight
       ..animateSimulatedSoftwareKeyboard = animateKeyboard;
     return this;
   }
@@ -513,6 +515,7 @@ class TestSuperEditorConfigurator {
     return SoftwareKeyboardHeightSimulator(
       tester: _config.tester,
       isEnabled: _config.simulateSoftwareKeyboardInsets,
+      keyboardHeight: _config.simulatedKeyboardHeight,
       animateKeyboard: _config.animateSimulatedSoftwareKeyboard,
       child: child,
     );
@@ -740,6 +743,7 @@ class SuperEditorTestConfiguration {
 
   SoftwareKeyboardController? softwareKeyboardController;
   bool simulateSoftwareKeyboardInsets = false;
+  double simulatedKeyboardHeight = 300;
   bool animateSimulatedSoftwareKeyboard = false;
   SuperEditorImePolicies? imePolicies;
   SuperEditorImeConfiguration? imeConfiguration;
