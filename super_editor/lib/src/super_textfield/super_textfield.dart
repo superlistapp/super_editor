@@ -455,6 +455,7 @@ class SuperTextFieldState extends State<SuperTextField> implements ImeInputOwner
             imeConfiguration: widget.imeConfiguration,
             showComposingUnderline: widget.showComposingUnderline ?? true,
             blinkTimingMode: widget.blinkTimingMode,
+            popoverToolbarBuilder: iOSSystemPopoverTextFieldToolbarWithFallback,
           ),
         );
     }
