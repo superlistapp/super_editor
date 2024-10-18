@@ -1617,7 +1617,7 @@ This is a paragraph
         );
       });
 
-      testWidgetsOnApple('with CMD + LEFT ARROW at the beginning of a paragraph', (tester) async {
+      testWidgetsOnMacDesktopAndWeb('with CMD + LEFT ARROW at the beginning of a paragraph', (tester) async {
         await tester //
             .createDocument()
             .withLongTextContent()
@@ -1643,7 +1643,7 @@ This is a paragraph
         );
       });
 
-      testWidgetsOnApple('with CMD + RIGHT ARROW at the end of a paragraph', (tester) async {
+      testWidgetsOnMacDesktopAndWeb('with CMD + RIGHT ARROW at the end of a paragraph', (tester) async {
         await tester //
             .createDocument()
             .withLongTextContent()
