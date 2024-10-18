@@ -212,7 +212,6 @@ class _DocumentScrollableState extends State<DocumentScrollable> with SingleTick
         child: CustomScrollView(
           controller: _scrollController,
           shrinkWrap: widget.shrinkWrap,
-          physics: const NeverScrollableScrollPhysics(),
           slivers: [child],
         ),
       ),

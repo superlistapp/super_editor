@@ -29,6 +29,7 @@ import 'package:super_editor/src/infrastructure/documents/document_scaffold.dart
 import 'package:super_editor/src/infrastructure/documents/document_scroller.dart';
 import 'package:super_editor/src/infrastructure/documents/document_selection.dart';
 import 'package:super_editor/src/infrastructure/documents/selection_leader_document_layer.dart';
+import 'package:super_editor/src/infrastructure/flutter/build_context.dart';
 import 'package:super_editor/src/infrastructure/links.dart';
 import 'package:super_editor/src/infrastructure/platforms/ios/ios_document_controls.dart';
 import 'package:super_editor/src/infrastructure/platforms/ios/toolbar.dart';
@@ -483,7 +484,10 @@ class SuperReaderState extends State<SuperReader> {
     }
   }
 
-  Widget _buildGestureInteractor(BuildContext context) {
+  Widget _buildGestureInteractor(BuildContext context, {required Widget child}) {
+    // Ensure that gesture object fill entire viewport when not being
+    // in user specified scrollable.
+    final fillViewport = context.findAncestorScrollableWithVerticalScroll == null;
     switch (_gestureMode) {
       case DocumentGestureMode.mouse:
         return ReadOnlyDocumentMouseInteractor(
@@ -491,8 +495,9 @@ class SuperReaderState extends State<SuperReader> {
           readerContext: _readerContext,
           contentTapHandler: _contentTapDelegate,
           autoScroller: _autoScrollController,
+          fillViewport: fillViewport,
           showDebugPaint: widget.debugPaint.gestures,
-          child: const SizedBox(),
+          child: child,
         );
       case DocumentGestureMode.android:
         return ReadOnlyAndroidDocumentTouchInteractor(
@@ -510,6 +515,8 @@ class SuperReaderState extends State<SuperReader> {
           createOverlayControlsClipper: widget.createOverlayControlsClipper,
           showDebugPaint: widget.debugPaint.gestures,
           overlayController: widget.overlayController,
+          fillViewport: fillViewport,
+          child: child,
         );
       case DocumentGestureMode.iOS:
         return SuperReaderIosDocumentTouchInteractor(
@@ -520,7 +527,9 @@ class SuperReaderState extends State<SuperReader> {
           selection: _readerContext.selection,
           contentTapHandler: _contentTapDelegate,
           scrollController: _scrollController,
+          fillViewport: fillViewport,
           showDebugPaint: widget.debugPaint.gestures,
+          child: child,
         );
     }
   }
