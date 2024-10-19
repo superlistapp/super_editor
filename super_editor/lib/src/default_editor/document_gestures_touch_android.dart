@@ -1705,7 +1705,7 @@ class SuperEditorAndroidControlsOverlayManagerState extends State<SuperEditorAnd
           _buildMagnifier(),
           // Handles and toolbar are built after the magnifier so that they don't appear in the magnifier.
           _buildCollapsedHandle(),
-          ..._buildExpandedHandles(),
+          _buildExpandedHandles(),
           _buildToolbar(),
         ],
       ),
@@ -1722,6 +1722,24 @@ class SuperEditorAndroidControlsOverlayManagerState extends State<SuperEditorAnd
           // and then an expanded selection.
           // Return a SizedBox to avoid flashing the collapsed drag handle.
           return const SizedBox();
+        }
+
+        final gestureCallbacks = DocumentHandleGestureCallbacks(
+          onTap: _toggleToolbarOnCollapsedHandleTap,
+          onPanStart: (details) => _onHandlePanStart(details, HandleType.collapsed),
+          onPanUpdate: _onHandlePanUpdate,
+          onPanEnd: (details) => _onHandlePanEnd(details, HandleType.collapsed),
+          onPanCancel: () => _onHandlePanCancel(HandleType.collapsed),
+        );
+
+        if (_controlsController!.collapsedHandleBuilder != null) {
+          return _controlsController!.collapsedHandleBuilder!(
+            context,
+            handleKey: DocumentKeys.androidCaretHandle,
+            focalPoint: _controlsController!.collapsedHandleFocalPoint,
+            shouldShow: shouldShow,
+            gestureCallbacks: gestureCallbacks,
+          );
         }
 
         // Note: If we pass this widget as the `child` property, it causes repeated starts and stops
@@ -1748,11 +1766,11 @@ class SuperEditorAndroidControlsOverlayManagerState extends State<SuperEditorAnd
                 onTapDown: (_) {
                   // Register tap down to win gesture arena ASAP.
                 },
-                onTap: _toggleToolbarOnCollapsedHandleTap,
-                onPanStart: (details) => _onHandlePanStart(details, HandleType.collapsed),
-                onPanUpdate: _onHandlePanUpdate,
-                onPanEnd: (details) => _onHandlePanEnd(details, HandleType.collapsed),
-                onPanCancel: () => _onHandlePanCancel(HandleType.collapsed),
+                onTap: gestureCallbacks.onTap,
+                onPanStart: gestureCallbacks.onPanStart,
+                onPanUpdate: gestureCallbacks.onPanUpdate,
+                onPanEnd: gestureCallbacks.onPanEnd,
+                onPanCancel: gestureCallbacks.onPanCancel,
                 dragStartBehavior: DragStartBehavior.down,
                 child: AndroidSelectionHandle(
                   key: DocumentKeys.androidCaretHandle,
@@ -1767,73 +1785,95 @@ class SuperEditorAndroidControlsOverlayManagerState extends State<SuperEditorAnd
     );
   }
 
-  List<Widget> _buildExpandedHandles() {
-    return [
-      ValueListenableBuilder(
-        valueListenable: _controlsController!.shouldShowExpandedHandles,
-        builder: (context, shouldShow, child) {
-          if (!shouldShow) {
-            return const SizedBox();
-          }
+  Widget _buildExpandedHandles() {
+    final upstreamHandleGesturesCallbacks = DocumentHandleGestureCallbacks(
+      onTap: () {
+        // Register tap down to win gesture arena ASAP.
+      },
+      onPanStart: (details) => _onHandlePanStart(details, HandleType.upstream),
+      onPanUpdate: _onHandlePanUpdate,
+      onPanEnd: (details) => _onHandlePanEnd(details, HandleType.upstream),
+      onPanCancel: () => _onHandlePanCancel(HandleType.upstream),
+    );
 
-          return Follower.withOffset(
-            link: _controlsController!.upstreamHandleFocalPoint,
-            leaderAnchor: Alignment.bottomLeft,
-            followerAnchor: Alignment.topRight,
-            // Use the offset to account for the invisible expanded touch region around the handle.
-            offset:
-                -AndroidSelectionHandle.defaultTouchRegionExpansion.topRight * MediaQuery.devicePixelRatioOf(context),
-            child: GestureDetector(
-              onTapDown: (_) {
-                // Register tap down to win gesture arena ASAP.
-              },
-              onPanStart: (details) => _onHandlePanStart(details, HandleType.upstream),
-              onPanUpdate: _onHandlePanUpdate,
-              onPanEnd: (details) => _onHandlePanEnd(details, HandleType.upstream),
-              onPanCancel: () => _onHandlePanCancel(HandleType.upstream),
-              dragStartBehavior: DragStartBehavior.down,
-              child: AndroidSelectionHandle(
-                key: DocumentKeys.upstreamHandle,
-                handleType: HandleType.upstream,
-                color: _controlsController!.controlsColor ?? Theme.of(context).primaryColor,
+    final downtreamHandleGesturesCallbacks = DocumentHandleGestureCallbacks(
+      onTap: () {
+        // Register tap down to win gesture arena ASAP.
+      },
+      onPanStart: (details) => _onHandlePanStart(details, HandleType.downstream),
+      onPanUpdate: _onHandlePanUpdate,
+      onPanEnd: (details) => _onHandlePanEnd(details, HandleType.downstream),
+      onPanCancel: () => _onHandlePanCancel(HandleType.downstream),
+    );
+
+    return ValueListenableBuilder(
+      valueListenable: _controlsController!.shouldShowExpandedHandles,
+      builder: (context, shouldShow, child) {
+        if (_controlsController!.expandedHandlesBuilder != null) {
+          return _controlsController!.expandedHandlesBuilder!(
+            context,
+            upstreamHandleKey: DocumentKeys.upstreamHandle,
+            upstreamFocalPoint: _controlsController!.upstreamHandleFocalPoint,
+            upstreamGestureCallbacks: upstreamHandleGesturesCallbacks,
+            downstreamHandleKey: DocumentKeys.downstreamHandle,
+            downstreamFocalPoint: _controlsController!.downstreamHandleFocalPoint,
+            downstreamGestureCallbacks: downtreamHandleGesturesCallbacks,
+            shouldShow: shouldShow,
+          );
+        }
+
+        if (!shouldShow) {
+          return const SizedBox();
+        }
+
+        return Stack(
+          children: [
+            Follower.withOffset(
+              link: _controlsController!.upstreamHandleFocalPoint,
+              leaderAnchor: Alignment.bottomLeft,
+              followerAnchor: Alignment.topRight,
+              // Use the offset to account for the invisible expanded touch region around the handle.
+              offset:
+                  -AndroidSelectionHandle.defaultTouchRegionExpansion.topRight * MediaQuery.devicePixelRatioOf(context),
+              child: GestureDetector(
+                onTapDown: upstreamHandleGesturesCallbacks.onTapDown,
+                onPanStart: upstreamHandleGesturesCallbacks.onPanStart,
+                onPanUpdate: upstreamHandleGesturesCallbacks.onPanUpdate,
+                onPanEnd: upstreamHandleGesturesCallbacks.onPanEnd,
+                onPanCancel: upstreamHandleGesturesCallbacks.onPanCancel,
+                dragStartBehavior: DragStartBehavior.down,
+                child: AndroidSelectionHandle(
+                  key: DocumentKeys.upstreamHandle,
+                  handleType: HandleType.upstream,
+                  color: _controlsController!.controlsColor ?? Theme.of(context).primaryColor,
+                ),
               ),
             ),
-          );
-        },
-      ),
-      ValueListenableBuilder(
-        valueListenable: _controlsController!.shouldShowExpandedHandles,
-        builder: (context, shouldShow, child) {
-          if (!shouldShow) {
-            return const SizedBox();
-          }
-
-          return Follower.withOffset(
-            link: _controlsController!.downstreamHandleFocalPoint,
-            leaderAnchor: Alignment.bottomRight,
-            followerAnchor: Alignment.topLeft,
-            // Use the offset to account for the invisible expanded touch region around the handle.
-            offset:
-                -AndroidSelectionHandle.defaultTouchRegionExpansion.topLeft * MediaQuery.devicePixelRatioOf(context),
-            child: GestureDetector(
-              onTapDown: (_) {
-                // Register tap down to win gesture arena ASAP.
-              },
-              onPanStart: (details) => _onHandlePanStart(details, HandleType.downstream),
-              onPanUpdate: _onHandlePanUpdate,
-              onPanEnd: (details) => _onHandlePanEnd(details, HandleType.downstream),
-              onPanCancel: () => _onHandlePanCancel(HandleType.downstream),
-              dragStartBehavior: DragStartBehavior.down,
-              child: AndroidSelectionHandle(
-                key: DocumentKeys.downstreamHandle,
-                handleType: HandleType.downstream,
-                color: _controlsController!.controlsColor ?? Theme.of(context).primaryColor,
+            Follower.withOffset(
+              link: _controlsController!.downstreamHandleFocalPoint,
+              leaderAnchor: Alignment.bottomRight,
+              followerAnchor: Alignment.topLeft,
+              // Use the offset to account for the invisible expanded touch region around the handle.
+              offset:
+                  -AndroidSelectionHandle.defaultTouchRegionExpansion.topLeft * MediaQuery.devicePixelRatioOf(context),
+              child: GestureDetector(
+                onTapDown: downtreamHandleGesturesCallbacks.onTapDown,
+                onPanStart: downtreamHandleGesturesCallbacks.onPanStart,
+                onPanUpdate: downtreamHandleGesturesCallbacks.onPanUpdate,
+                onPanEnd: downtreamHandleGesturesCallbacks.onPanEnd,
+                onPanCancel: downtreamHandleGesturesCallbacks.onPanCancel,
+                dragStartBehavior: DragStartBehavior.down,
+                child: AndroidSelectionHandle(
+                  key: DocumentKeys.downstreamHandle,
+                  handleType: HandleType.downstream,
+                  color: _controlsController!.controlsColor ?? Theme.of(context).primaryColor,
+                ),
               ),
             ),
-          );
-        },
-      ),
-    ];
+          ],
+        );
+      },
+    );
   }
 
   Widget _buildToolbar() {
