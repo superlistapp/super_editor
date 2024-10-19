@@ -121,6 +121,7 @@ class SuperEditorIosControlsController {
     FloatingCursorController? floatingCursorController,
     this.magnifierBuilder,
     this.toolbarBuilder,
+    this.spellCheckerPopoverController,
     this.createOverlayControlsClipper,
   }) : floatingCursorController = floatingCursorController ?? FloatingCursorController();
 
@@ -206,6 +207,16 @@ class SuperEditorIosControlsController {
   ///
   /// If [toolbarBuilder] is `null`, a default iOS toolbar is displayed.
   final DocumentFloatingToolbarBuilder? toolbarBuilder;
+
+  final SpellCheckerPopoverController? spellCheckerPopoverController;
+
+  void hideSpellCheckerPopover() {
+    spellCheckerPopoverController?.hide();
+  }
+
+  void showSpellCheckerPopover(DocumentSelection selection) {
+    spellCheckerPopoverController?.show(selection);
+  }
 
   /// Creates a clipper that restricts where the toolbar and magnifier can
   /// appear in the overlay.
