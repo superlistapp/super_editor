@@ -63,15 +63,10 @@ class _MobileChatDemoState extends State<MobileChatDemo> {
             ],
           ),
           padding: const EdgeInsets.only(top: 16, bottom: 24),
-          child: CustomScrollView(
+          child: SuperEditor(
+            editor: _editor,
             shrinkWrap: true,
-            slivers: [
-              SuperEditor(
-                editor: _editor,
-                shrinkWrap: true,
-                stylesheet: _chatStylesheet,
-              ),
-            ],
+            stylesheet: _chatStylesheet,
           ),
         ),
       ],
