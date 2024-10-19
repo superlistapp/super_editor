@@ -12,6 +12,7 @@ import 'package:super_editor/src/core/document_layout.dart';
 import 'package:super_editor/src/core/document_selection.dart';
 import 'package:super_editor/src/core/edit_context.dart';
 import 'package:super_editor/src/core/editor.dart';
+import 'package:super_editor/src/default_editor/spelling_and_grammar/spell_checker_popover_controller.dart';
 import 'package:super_editor/src/default_editor/super_editor.dart';
 import 'package:super_editor/src/default_editor/text.dart';
 import 'package:super_editor/src/default_editor/text_tools.dart';
@@ -121,6 +122,7 @@ class SuperEditorIosControlsController {
     FloatingCursorController? floatingCursorController,
     this.magnifierBuilder,
     this.toolbarBuilder,
+    this.spellCheckerPopoverController,
     this.createOverlayControlsClipper,
   }) : floatingCursorController = floatingCursorController ?? FloatingCursorController();
 
@@ -204,6 +206,16 @@ class SuperEditorIosControlsController {
   ///
   /// If [toolbarBuilder] is `null`, a default iOS toolbar is displayed.
   final DocumentFloatingToolbarBuilder? toolbarBuilder;
+
+  final SpellCheckerPopoverController? spellCheckerPopoverController;
+
+  void hideSpellCheckerPopover() {
+    spellCheckerPopoverController?.hide();
+  }
+
+  void showSpellCheckerPopover(DocumentSelection selection) {
+    spellCheckerPopoverController?.show(selection);
+  }
 
   /// Creates a clipper that restricts where the toolbar and magnifier can
   /// appear in the overlay.
@@ -636,7 +648,8 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
     _tapDownLongPressTimer?.cancel();
     _controlsController!
       ..hideMagnifier()
-      ..blinkCaret();
+      ..blinkCaret()
+      ..hideSpellCheckerPopover();
 
     if (_wasScrollingOnTapDown) {
       // The scrollable was scrolling when the user touched down. We expect that the
@@ -702,6 +715,10 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
       } else {
         // The user tapped somewhere else in the document. Hide the toolbar.
         _controlsController!.hideToolbar();
+      }
+
+      if (!didTapOnExistingSelection) {
+        _controlsController!.showSpellCheckerPopover(DocumentSelection.collapsed(position: adjustedSelectionPosition));
       }
 
       final tappedComponent = _docLayout.getComponentByNodeId(adjustedSelectionPosition.nodeId)!;
