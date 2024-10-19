@@ -124,6 +124,7 @@ class SuperEditorAndroidControlsController {
     this.expandedHandlesBuilder,
     this.magnifierBuilder,
     this.toolbarBuilder,
+    this.spellCheckerPopoverController,
     this.createOverlayControlsClipper,
   })  : collapsedHandleFocalPoint = collapsedHandleFocalPoint ?? LeaderLink(),
         upstreamHandleFocalPoint = upstreamHandleFocalPoint ?? LeaderLink(),
@@ -313,6 +314,16 @@ class SuperEditorAndroidControlsController {
   ///
   /// If [toolbarBuilder] is `null`, a default Android toolbar is displayed.
   final DocumentFloatingToolbarBuilder? toolbarBuilder;
+
+  final SpellCheckerPopoverController? spellCheckerPopoverController;
+
+  void hideSpellCheckerPopover() {
+    spellCheckerPopoverController?.hide();
+  }
+
+  void showSpellCheckerPopover(DocumentSelection selection) {
+    spellCheckerPopoverController?.show(selection);
+  }
 
   /// Creates a clipper that restricts where the toolbar and magnifier can
   /// appear in the overlay.

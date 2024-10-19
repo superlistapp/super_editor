@@ -295,7 +295,7 @@ class SuperEditor extends StatefulWidget {
   ///
   /// The `SpellingAndGrammarPlugin` provides a default implementation for
   /// a [SpellCheckerPopoverDelegate].
-  final SpellCheckerPopoverController? spellCheckerPopoverController;
+  //final SpellCheckerPopoverController? spellCheckerPopoverController;
 
   /// Leader links that connect leader widgets near the user's selection
   /// to carets, handles, and other things that want to follow the selection.
