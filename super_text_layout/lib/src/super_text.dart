@@ -429,7 +429,13 @@ class RenderLayoutAwareParagraph extends RenderParagraph {
           ..textDirection = textDirection
           ..textAlign = textAlign
           ..layout();
-        size = Size(size.width, _textPainter.height);
+
+        // We have no text, so we set the height of this render object to the line height
+        // of an arbitrary character of the given style. However, it's possible that our
+        // parent render object imposed constraints that are shorter than a single line
+        // of text. To avoid breaking Flutter's layout rules, we take the minimum height
+        // between the single line of text, and the incoming height constraints.
+        size = constraints.constrain(Size(size.width, _textPainter.height));
       }
     }
   }
