@@ -91,19 +91,13 @@ class _MobileChatDemoState extends State<MobileChatDemo> {
         controller: _keyboardPanelController,
         isImeConnected: _imeConnectionNotifier,
         toolbarBuilder: _buildKeyboardToolbar,
+        fallbackPanelHeight: MediaQuery.sizeOf(context).height / 3,
         keyboardPanelBuilder: (context) {
           switch (_visiblePanel) {
             case _Panel.panel1:
-              return Row(
-                children: [
-                  Spacer(),
-                  Expanded(
-                    child: Container(
-                      color: Colors.blue.withOpacity(0.5),
-                      height: double.infinity,
-                    ),
-                  ),
-                ],
+              return Container(
+                color: Colors.blue,
+                height: double.infinity,
               );
             case _Panel.panel2:
               return Container(
@@ -117,7 +111,7 @@ class _MobileChatDemoState extends State<MobileChatDemo> {
         contentBuilder: (context, isKeyboardVisible) {
           return Container(
             decoration: BoxDecoration(
-              color: Colors.yellow,
+              color: Colors.white,
               borderRadius: BorderRadius.only(
                 topLeft: Radius.circular(24),
                 topRight: Radius.circular(24),
@@ -136,28 +130,25 @@ class _MobileChatDemoState extends State<MobileChatDemo> {
               ],
             ),
             padding: const EdgeInsets.only(top: 16),
-            child: ColoredBox(
-              color: Colors.red,
-              child: CustomScrollView(
-                shrinkWrap: true,
-                slivers: [
-                  SliverPadding(
-                    padding: const EdgeInsets.only(bottom: 24),
-                    sliver: SuperEditor(
-                      editor: _editor,
-                      focusNode: _editorFocusNode,
-                      softwareKeyboardController: _softwareKeyboardController,
-                      shrinkWrap: true,
-                      stylesheet: _chatStylesheet,
-                      selectionPolicies: const SuperEditorSelectionPolicies(
-                        clearSelectionWhenEditorLosesFocus: false,
-                        clearSelectionWhenImeConnectionCloses: false,
-                      ),
-                      isImeConnected: _imeConnectionNotifier,
+            child: CustomScrollView(
+              shrinkWrap: true,
+              slivers: [
+                SliverPadding(
+                  padding: const EdgeInsets.only(bottom: 24),
+                  sliver: SuperEditor(
+                    editor: _editor,
+                    focusNode: _editorFocusNode,
+                    softwareKeyboardController: _softwareKeyboardController,
+                    shrinkWrap: true,
+                    stylesheet: _chatStylesheet,
+                    selectionPolicies: const SuperEditorSelectionPolicies(
+                      clearSelectionWhenEditorLosesFocus: true,
+                      clearSelectionWhenImeConnectionCloses: false,
                     ),
+                    isImeConnected: _imeConnectionNotifier,
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
           );
         },
@@ -172,7 +163,6 @@ class _MobileChatDemoState extends State<MobileChatDemo> {
 
     return Row(
       children: [
-        const SizedBox(width: 200),
         Expanded(
           child: Opacity(
             opacity: 0.5,

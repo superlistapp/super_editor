@@ -1,5 +1,3 @@
-import 'dart:math';
-
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:super_editor/src/default_editor/document_ime/document_input_ime.dart';
@@ -160,7 +158,6 @@ class _KeyboardPanelScaffoldState extends State<KeyboardPanelScaffold>
   void didChangeDependencies() {
     super.didChangeDependencies();
 
-    print("didChangeDependencies()");
     _updateKeyboardHeightForCurrentViewInsets();
   }
 
@@ -232,7 +229,6 @@ class _KeyboardPanelScaffoldState extends State<KeyboardPanelScaffold>
   KeyboardToolbarVisibility _toolbarVisibility = KeyboardToolbarVisibility.auto;
   @override
   set toolbarVisibility(KeyboardToolbarVisibility value) {
-    print("Setting toolbar visibility: $value");
     if (value == _toolbarVisibility) {
       return;
     }
@@ -367,10 +363,8 @@ class _KeyboardPanelScaffoldState extends State<KeyboardPanelScaffold>
   // the current software keyboard height.
   void _updateKeyboardHeightForCurrentViewInsets() {
     final newInsets = MediaQuery.of(context).viewInsets;
-    print("New insets: $newInsets");
     final newBottomInset = newInsets.bottom;
     final isKeyboardCollapsing = newBottomInset < _latestViewInsets.bottom;
-    print(" - is keyboard collapsing? $isKeyboardCollapsing");
 
     if (_isKeyboardOpen && isKeyboardCollapsing) {
       // The keyboard went from open to closed. Update our cached state.
@@ -382,8 +376,6 @@ class _KeyboardPanelScaffoldState extends State<KeyboardPanelScaffold>
     }
 
     _latestViewInsets = newInsets;
-    // print("Setting _keyboardHeight to $newBottomInset");
-    // _keyboardHeight.value = newBottomInset;
 
     if (newBottomInset > _maxBottomInsets) {
       // The keyboard is expanding.
@@ -429,8 +421,6 @@ class _KeyboardPanelScaffoldState extends State<KeyboardPanelScaffold>
           ? _keyboardPanelHeight + (toolbarSize?.height ?? 0)
           : _keyboardHeight.value + (toolbarSize?.height ?? 0),
     );
-    print(
-        "Updating safe area - toolbar height: ${toolbarSize?.height}, keyboard height: ${_keyboardHeight.value}, total bottom insets: ${keyboardSafeAreaData.geometry.bottomInsets}");
   }
 
   double get _keyboardPanelHeight {
@@ -443,7 +433,6 @@ class _KeyboardPanelScaffoldState extends State<KeyboardPanelScaffold>
 
   @override
   Widget build(BuildContext context) {
-    print("Scaffold - build()");
     final wantsToShowKeyboardPanel = _wantsToShowKeyboardPanel ||
         // The keyboard panel should be kept visible while the software keyboard is expanding
         // and the keyboard panel was previously visible. Otherwise, there will be an empty
@@ -455,7 +444,6 @@ class _KeyboardPanelScaffoldState extends State<KeyboardPanelScaffold>
             ? widget.fallbackPanelHeight
             : 0.0
         : 0.0;
-    print("Fake keyboard height: $fakeKeyboardHeight");
 
     return OverlayPortal(
       controller: _overlayPortalController,
@@ -463,16 +451,6 @@ class _KeyboardPanelScaffoldState extends State<KeyboardPanelScaffold>
         return ValueListenableBuilder(
           valueListenable: _keyboardHeight,
           builder: (context, currentHeight, child) {
-            print("Building scaffold");
-            print("Is IME connected? ${widget.isImeConnected.value}");
-            print("Keyboard height: ${_keyboardHeight.value}");
-            print("Toolbar visibility: ${widget.controller.toolbarVisibility}");
-            print("Wants to show toolbar: $_wantsToShowToolbar");
-            print("Wants to show panel: $_wantsToShowKeyboardPanel");
-            if (wantsToShowKeyboardPanel) {
-              print("Building keyboard panel. Keyboard height: ${_keyboardHeight.value}");
-            }
-
             if (!_wantsToShowToolbar && !wantsToShowKeyboardPanel) {
               return const SizedBox.shrink();
             }
@@ -701,9 +679,7 @@ class _KeyboardScaffoldSafeAreaState extends State<KeyboardScaffoldSafeArea>
 
   @override
   set geometry(KeyboardSafeAreaGeometry geometry) {
-    print("Keyboard safe area - setting bottom insets to: ${geometry.bottomInsets}");
     if (geometry == _keyboardSafeAreaData) {
-      print(" - that's already our bottom insets. Ignoring.");
       return;
     }
 

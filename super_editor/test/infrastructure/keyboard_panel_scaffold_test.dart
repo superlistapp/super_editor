@@ -359,23 +359,21 @@ void main() {
         controller.showKeyboardPanel();
         await tester.pumpAndSettle();
 
-        // Ensure the keyboard panel is visible and positioned correctly.
+        // Ensure the keyboard panel is visible and positioned at the bottom of the screen.
         expect(find.byKey(_keyboardPanelKey), findsOneWidget);
 
         final panelSize = tester.getSize(find.byKey(_keyboardPanelKey));
         expect(panelSize.height, _keyboardPanelHeightForTabletWithMinimizedKeyboard);
 
-        await expectLater(find.byType(MaterialApp), matchesGoldenFile('deleteme.png'));
-
         expect(
           tester.getBottomLeft(find.byKey(_keyboardPanelKey)).dy,
-          screenHeight - _minimizedIPadKeyboardHeight,
+          screenHeight,
         );
 
         // Ensure the toolbar is above the panel.
         expect(
           tester.getBottomLeft(find.byKey(_aboveKeyboardToolbarKey)).dy,
-          screenHeight - (_minimizedIPadKeyboardHeight + _keyboardPanelHeightForTabletWithMinimizedKeyboard),
+          screenHeight - _keyboardPanelHeightForTabletWithMinimizedKeyboard,
         );
 
         // Request to hide the keyboard panel.
@@ -384,6 +382,12 @@ void main() {
 
         // Ensure the keyboard panel is gone.
         expect(find.byKey(_keyboardPanelKey), findsNothing);
+
+        // Ensure the toolbar is above the minimized keyboard area.
+        expect(
+          tester.getBottomLeft(find.byKey(_aboveKeyboardToolbarKey)).dy,
+          screenHeight - _minimizedIPadKeyboardHeight,
+        );
       });
     });
 
@@ -427,15 +431,46 @@ void main() {
         // Place the caret at the beginning of the document to show the software keyboard.
         await tester.placeCaretInParagraph('1', 0);
 
+        // Ensure the toolbar is above the minimized keyboard area.
+        final screenHeight = tester.view.physicalSize.height / tester.view.devicePixelRatio;
+        expect(
+          tester.getBottomLeft(find.byKey(_aboveKeyboardToolbarKey)).dy,
+          screenHeight - _minimizedAndroidTabletKeyboardHeight,
+        );
+
         // Request to show the keyboard panel and let the entrance animation run.
         controller.showKeyboardPanel();
         await tester.pumpAndSettle();
 
-        // Ensure the keyboard panel is visible.
+        // Ensure the keyboard panel is visible and positioned at the bottom of the screen.
         expect(find.byKey(_keyboardPanelKey), findsOneWidget);
 
         final panelSize = tester.getSize(find.byKey(_keyboardPanelKey));
         expect(panelSize.height, _keyboardPanelHeightForTabletWithMinimizedKeyboard);
+
+        expect(
+          tester.getBottomLeft(find.byKey(_keyboardPanelKey)).dy,
+          screenHeight,
+        );
+
+        // Ensure the toolbar is above the panel.
+        expect(
+          tester.getBottomLeft(find.byKey(_aboveKeyboardToolbarKey)).dy,
+          screenHeight - _keyboardPanelHeightForTabletWithMinimizedKeyboard,
+        );
+
+        // Request to hide the keyboard panel.
+        controller.hideKeyboardPanel();
+        await tester.pumpAndSettle();
+
+        // Ensure the keyboard panel is gone.
+        expect(find.byKey(_keyboardPanelKey), findsNothing);
+
+        // Ensure the toolbar is above the minimized keyboard area.
+        expect(
+          tester.getBottomLeft(find.byKey(_aboveKeyboardToolbarKey)).dy,
+          screenHeight - _minimizedAndroidTabletKeyboardHeight,
+        );
       });
     });
   });
