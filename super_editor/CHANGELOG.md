@@ -1,3 +1,49 @@
+## [0.3.0-dev.9] - Sept 26, 2024
+ * FEATURE: Indent for blockquotes.
+
+## [0.3.0-dev.8] - Sept 24, 2024
+ * ADJUSTMENT: Change mobile caret overlays to use `Timer`s instead of `Ticker`s
+   to prevent frame churn.
+
+## [0.3.0-dev.7] - Sept 24, 2024
+ * ADJUSTMENT: Change `super_text_layout` dependency from v0.1.13 to v0.1.14.
+
+## [0.3.0-dev.6] - Sept 15, 2024
+ * FIX: Don't cut off iOS drag handles in `SuperEditor`.
+ * ADJUSTMENT: Increase iOS drag handle interaction area in `SuperTextField`.
+
+## [0.3.0-dev.5] - Aug 27, 2024
+ * FEATURE: Add configurable underlines to `TextWithHintComponent`.
+ * ADJUSTMENT: Increase the types of attributions that are automatically extended when typing immediately after those attributions.
+ * ADJUSTMENT: Convert floating cursor geometry to document coordinates.
+ * FIX: Retain desired composing attributions when collapsing an expanded selection.
+ * FIX: (Android) auto-scroll when selection changes.
+
+## [0.3.0-dev.4] - Aug 17, 2024
+ * Package metadata update - no functional changes.
+
+## [0.3.0-dev.3] - Aug 16, 2024
+ * DEPENDENCY: Upgraded `super_text_layout` to `v0.1.11`.
+ * BREAKING: Remove `nodes` list from `Document` API in preparation for immutable `Document`s.
+ * BREAKING: When inserting new nodes, make copies of the provided nodes instead of
+   retaining the original node, so that undo/redo can restore the original state.
+ * FEATURE: Undo/redo (partial implementation, off by default).
+ * FEATURE: Can apply arbitrary underline decorations to text in documents.
+ * ADJUSTMENT: Deprecated `document` and `composer` properties of `SuperEditor` - they're not read
+   directly from the `Editor`.
+ * ADJUSTMENT: Added extension methods on `Editor` to access `document` and `composer` directly.
+ * ADJUSTMENT: Selection-by-word on Android.
+ * ADJUSTMENT: Mobile text selection handle appearance.
+ * ADJUSTMENT: Dragging to change selection on Android plays haptic feedback.
+ * FIX: Crash on long press over non-text node.
+ * FIX: Caret was blinking while being dragged (should stop blinking).
+ * FIX: Crash when merging paragraphs (Mac).
+ * FIX: Exception thrown when pressing ESC while composing an action tag.
+ * FIX: Vertical scrolling on multi-line `SuperTextField` now works.
+ * FIX: List item component styles are respected when the stylesheet doesn't specify 
+   list item styles.
+ * FIX: Horizontal drag and editor scrolling.
+
 ## [0.3.0-dev.2] - July 2, 2024
  * DEPENDENCY: Upgraded `attributed_text` to `v0.3.2`.
  * FEATURE: Tasks can now be indented.

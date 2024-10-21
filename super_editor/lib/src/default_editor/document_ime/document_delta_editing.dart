@@ -333,11 +333,12 @@ class TextDeltasDocumentEditor {
     editorOpsLog.fine("Executing text insertion command.");
     editorOpsLog.finer("Text before insertion: '${insertionNode.text.text}'");
     editor.execute([
-      ChangeSelectionRequest(
-        DocumentSelection.collapsed(position: insertionPosition),
-        SelectionChangeType.placeCaret,
-        SelectionReason.userInteraction,
-      ),
+      if (selection.value != DocumentSelection.collapsed(position: insertionPosition))
+        ChangeSelectionRequest(
+          DocumentSelection.collapsed(position: insertionPosition),
+          SelectionChangeType.placeCaret,
+          SelectionReason.userInteraction,
+        ),
       InsertTextRequest(
         documentPosition: insertionPosition,
         textToInsert: text,
@@ -410,8 +411,8 @@ class TextDeltasDocumentEditor {
         docSelectionToDelete.isCollapsed ? SelectionChangeType.collapseSelection : SelectionChangeType.expandSelection,
         SelectionReason.contentChange,
       ),
+      const DeleteSelectionRequest(TextAffinity.upstream),
     ]);
-    commonOps.deleteSelection();
   }
 
   void insertNewline() {
@@ -575,7 +576,7 @@ class TextDeltasDocumentEditor {
 
   void _insertNewlineFromHardwareKey() {
     if (!selection.value!.isCollapsed) {
-      commonOps.deleteSelection();
+      commonOps.deleteSelection(TextAffinity.downstream);
     }
     commonOps.insertBlockLevelNewline();
   }

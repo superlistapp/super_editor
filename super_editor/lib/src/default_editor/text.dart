@@ -509,11 +509,42 @@ mixin TextComponentViewModel on SingleColumnLayoutComponentViewModel {
   bool get highlightWhenEmpty;
   set highlightWhenEmpty(bool highlight);
 
-  TextRange? get composingRegion;
-  set composingRegion(TextRange? composingRegion);
+  /// The span of text that's currently sitting in the IME's composing region,
+  /// which is underlined by this component.
+  TextRange? composingRegion;
+  UnderlineStyle composingRegionUnderlineStyle = const StraightUnderlineStyle();
 
-  bool get showComposingUnderline;
-  set showComposingUnderline(bool showComposingUnderline);
+  /// Whether to underline the [composingRegion].
+  ///
+  /// Showing the underline is optional because the behavior differs between
+  /// platforms, e.g., Mac shows an underline but Windows and Linux don't.
+  bool showComposingRegionUnderline = true;
+
+  List<TextRange> spellingErrors = [];
+  UnderlineStyle spellingErrorUnderlineStyle = const SquiggleUnderlineStyle();
+
+  List<TextRange> grammarErrors = [];
+  UnderlineStyle grammarErrorUnderlineStyle = const SquiggleUnderlineStyle(color: Colors.blue);
+
+  List<Underlines> createUnderlines() {
+    return [
+      if (composingRegion != null && showComposingRegionUnderline)
+        Underlines(
+          style: composingRegionUnderlineStyle,
+          underlines: [composingRegion!],
+        ),
+      if (spellingErrors.isNotEmpty) //
+        Underlines(
+          style: spellingErrorUnderlineStyle,
+          underlines: spellingErrors,
+        ),
+      if (grammarErrors.isNotEmpty) //
+        Underlines(
+          style: grammarErrorUnderlineStyle,
+          underlines: grammarErrors,
+        ),
+    ];
+  }
 
   @override
   void applyStyles(Map<String, dynamic> styles) {
@@ -527,6 +558,12 @@ mixin TextComponentViewModel on SingleColumnLayoutComponentViewModel {
 
       return inlineTextStyler(attributions, baseStyle);
     };
+
+    composingRegionUnderlineStyle = styles[Styles.composingRegionUnderlineStyle] ?? composingRegionUnderlineStyle;
+    showComposingRegionUnderline = styles[Styles.showComposingRegionUnderline] ?? showComposingRegionUnderline;
+
+    spellingErrorUnderlineStyle = styles[Styles.spellingErrorUnderlineStyle] ?? spellingErrorUnderlineStyle;
+    grammarErrorUnderlineStyle = styles[Styles.grammarErrorUnderlineStyle] ?? grammarErrorUnderlineStyle;
   }
 }
 
@@ -547,8 +584,7 @@ class TextWithHintComponent extends StatefulWidget {
     this.textSelection,
     this.selectionColor = Colors.lightBlueAccent,
     this.highlightWhenEmpty = false,
-    this.composingRegion,
-    this.showComposingUnderline = false,
+    this.underlines = const [],
     this.showDebugPaint = false,
   }) : super(key: key);
 
@@ -562,8 +598,8 @@ class TextWithHintComponent extends StatefulWidget {
   final TextSelection? textSelection;
   final Color selectionColor;
   final bool highlightWhenEmpty;
-  final TextRange? composingRegion;
-  final bool showComposingUnderline;
+  final List<Underlines> underlines;
+
   final bool showDebugPaint;
 
   @override
@@ -612,8 +648,7 @@ class _TextWithHintComponentState extends State<TextWithHintComponent>
           textSelection: widget.textSelection,
           selectionColor: widget.selectionColor,
           highlightWhenEmpty: widget.highlightWhenEmpty,
-          composingRegion: widget.composingRegion,
-          showComposingUnderline: widget.showComposingUnderline,
+          underlines: widget.underlines,
           showDebugPaint: widget.showDebugPaint,
         ),
       ],
@@ -636,8 +671,7 @@ class TextComponent extends StatefulWidget {
     this.textSelection,
     this.selectionColor = Colors.lightBlueAccent,
     this.highlightWhenEmpty = false,
-    this.composingRegion,
-    this.showComposingUnderline = false,
+    this.underlines = const [],
     this.showDebugPaint = false,
   }) : super(key: key);
 
@@ -662,15 +696,12 @@ class TextComponent extends StatefulWidget {
 
   final bool highlightWhenEmpty;
 
-  /// The span of text that's currently sitting in the IME's composing region,
-  /// which is underlined by this component.
-  final TextRange? composingRegion;
-
-  /// Whether to underline the [composingRegion].
+  /// Groups of underlines.
   ///
-  /// Showing the underline is optional because the behavior differs between
-  /// platforms, e.g., Mac shows an underline but Windows and Linux don't.
-  final bool showComposingUnderline;
+  /// Each [Underlines] group contains some number of underlines, along with a style that
+  /// applies to those underlines. Multiple styles of underlines are displayed by providing
+  /// multiple [Underlines].
+  final List<Underlines> underlines;
 
   final bool showDebugPaint;
 
@@ -1112,18 +1143,13 @@ class TextComponentState extends State<TextComponent> with DocumentComponent imp
                     color: widget.selectionColor,
                   ),
                 ),
-              // Underline beneath the composing region.
-              if (widget.composingRegion != null)
+              for (final underlines in widget.underlines)
                 TextUnderlineLayer(
                   textLayout: textLayout,
+                  style: underlines.style,
                   underlines: [
-                    TextLayoutUnderline(
-                      style: UnderlineStyle(
-                        color: widget.textStyleBuilder({}).color ?? //
-                            (Theme.of(context).brightness == Brightness.light ? Colors.black : Colors.white),
-                      ),
-                      range: widget.composingRegion!,
-                    ),
+                    for (final range in underlines.underlines) //
+                      TextLayoutUnderline(range: range),
                   ],
                 ),
             ],
@@ -1185,6 +1211,18 @@ class _ProxyTextDocumentComponentState extends State<ProxyTextDocumentComponent>
   Widget build(BuildContext context) {
     return widget.child;
   }
+}
+
+/// A group of text ranges that should be displayed with underlines, along with the [style]
+/// of those underlines.
+class Underlines {
+  const Underlines({
+    required this.style,
+    required this.underlines,
+  });
+
+  final UnderlineStyle style;
+  final List<TextRange> underlines;
 }
 
 class AddTextAttributionsRequest implements EditRequest {
@@ -1401,7 +1439,7 @@ class RemoveTextAttributionsCommand extends EditCommand {
       nodesAndSelections.putIfAbsent(textNode, () => selectionRange);
     }
 
-    // Add attributions.
+    // Remove attributions.
     for (final entry in nodesAndSelections.entries) {
       var node = entry.key;
       final range = entry.value.toSpanRange();

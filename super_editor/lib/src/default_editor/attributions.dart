@@ -47,6 +47,12 @@ const subscriptAttribution = ScriptAttribution.subscript();
 /// Code style attribution.
 const codeAttribution = NamedAttribution('code');
 
+/// Spelling error attribution.
+const spellingErrorAttribution = NamedAttribution('spelling-error');
+
+/// Grammar error attribution.
+const grammarErrorAttribution = NamedAttribution('grammar-error');
+
 /// An attribution for superscript and subscript text.
 class ScriptAttribution implements Attribution {
   static const typeSuper = "superscript";

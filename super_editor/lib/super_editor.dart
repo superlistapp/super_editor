@@ -51,6 +51,7 @@ export 'src/default_editor/text_tokenizing/action_tags.dart';
 export 'src/default_editor/text_tokenizing/pattern_tags.dart';
 export 'src/default_editor/text_tokenizing/tags.dart';
 export 'src/default_editor/text_tokenizing/stable_tags.dart';
+export 'src/default_editor/spelling_and_grammar/spelling_and_grammar_styler.dart';
 export 'src/default_editor/unknown_component.dart';
 
 // Document operations used by SuperEditor and/or SuperReader,
@@ -75,6 +76,7 @@ export 'src/infrastructure/flutter/text_selection.dart';
 export 'src/infrastructure/platforms/android/android_document_controls.dart';
 export 'src/infrastructure/platforms/android/toolbar.dart';
 export 'src/infrastructure/platforms/ios/ios_document_controls.dart';
+export 'src/infrastructure/platforms/ios/ios_system_context_menu.dart';
 export 'src/infrastructure/platforms/ios/floating_cursor.dart';
 export 'src/infrastructure/platforms/ios/toolbar.dart';
 export 'src/infrastructure/platforms/ios/magnifier.dart';
@@ -87,7 +89,6 @@ export 'src/infrastructure/strings.dart';
 export 'src/super_textfield/super_textfield.dart';
 export 'src/infrastructure/touch_controls.dart';
 export 'src/infrastructure/text_input.dart';
-export 'src/infrastructure/viewport_size_reporting.dart';
 export 'src/infrastructure/popovers.dart';
 export 'src/infrastructure/selectable_list.dart';
 export 'src/infrastructure/actions.dart';
@@ -99,3 +100,15 @@ export 'src/super_reader/read_only_document_keyboard_interactor.dart';
 export 'src/super_reader/read_only_document_mouse_interactor.dart';
 export 'src/super_reader/reader_context.dart';
 export 'src/super_reader/super_reader.dart';
+
+// Export from super_text_layout so that downstream clients don't
+// have to add this package to get access to these classes.
+export 'package:super_text_layout/super_text_layout.dart'
+    show
+        UnderlineStyle,
+        SquiggleUnderlineStyle,
+        SquiggleUnderlinePainter,
+        DottedUnderlineStyle,
+        DottedUnderlinePainter,
+        StraightUnderlineStyle,
+        StraightUnderlinePainter;

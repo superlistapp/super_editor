@@ -1,4 +1,6 @@
 import 'package:attributed_text/attributed_text.dart';
+import 'package:collection/collection.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:super_editor/src/core/document.dart';
@@ -9,14 +11,16 @@ import 'package:super_editor/src/core/edit_context.dart';
 import 'package:super_editor/src/core/editor.dart';
 import 'package:super_editor/src/default_editor/attributions.dart';
 import 'package:super_editor/src/default_editor/blocks/indentation.dart';
+import 'package:super_editor/src/default_editor/box_component.dart';
 import 'package:super_editor/src/default_editor/multi_node_editing.dart';
 import 'package:super_editor/src/default_editor/text.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/attributed_text_styles.dart';
 import 'package:super_editor/src/infrastructure/composable_text.dart';
-import 'package:super_editor/src/infrastructure/keyboard.dart';
 import 'package:super_editor/src/infrastructure/key_event_extensions.dart';
+import 'package:super_editor/src/infrastructure/keyboard.dart';
 import 'package:super_editor/src/infrastructure/platforms/platform.dart';
+import 'package:super_text_layout/super_text_layout.dart';
 
 import 'layout_single_column/layout_single_column.dart';
 import 'text_tools.dart';
@@ -153,9 +157,22 @@ class ParagraphComponentViewModel extends SingleColumnLayoutComponentViewModel w
     this.selection,
     required this.selectionColor,
     this.highlightWhenEmpty = false,
-    this.composingRegion,
-    this.showComposingUnderline = false,
-  }) : super(nodeId: nodeId, maxWidth: maxWidth, padding: padding);
+    TextRange? composingRegion,
+    bool showComposingRegionUnderline = false,
+    UnderlineStyle spellingErrorUnderlineStyle = const SquiggleUnderlineStyle(color: Colors.red),
+    List<TextRange> spellingErrors = const <TextRange>[],
+    UnderlineStyle grammarErrorUnderlineStyle = const SquiggleUnderlineStyle(color: Colors.blue),
+    List<TextRange> grammarErrors = const <TextRange>[],
+  }) : super(nodeId: nodeId, maxWidth: maxWidth, padding: padding) {
+    this.composingRegion = composingRegion;
+    this.showComposingRegionUnderline = showComposingRegionUnderline;
+
+    this.spellingErrorUnderlineStyle = spellingErrorUnderlineStyle;
+    this.spellingErrors = spellingErrors;
+
+    this.grammarErrorUnderlineStyle = grammarErrorUnderlineStyle;
+    this.grammarErrors = grammarErrors;
+  }
 
   Attribution? blockType;
 
@@ -182,10 +199,6 @@ class ParagraphComponentViewModel extends SingleColumnLayoutComponentViewModel w
   Color selectionColor;
   @override
   bool highlightWhenEmpty;
-  @override
-  TextRange? composingRegion;
-  @override
-  bool showComposingUnderline;
 
   @override
   ParagraphComponentViewModel copy() {
@@ -204,8 +217,12 @@ class ParagraphComponentViewModel extends SingleColumnLayoutComponentViewModel w
       selection: selection,
       selectionColor: selectionColor,
       highlightWhenEmpty: highlightWhenEmpty,
+      spellingErrorUnderlineStyle: spellingErrorUnderlineStyle,
+      spellingErrors: List.from(spellingErrors),
+      grammarErrorUnderlineStyle: grammarErrorUnderlineStyle,
+      grammarErrors: List.from(grammarErrors),
       composingRegion: composingRegion,
-      showComposingUnderline: showComposingUnderline,
+      showComposingRegionUnderline: showComposingRegionUnderline,
     );
   }
 
@@ -225,8 +242,12 @@ class ParagraphComponentViewModel extends SingleColumnLayoutComponentViewModel w
           selection == other.selection &&
           selectionColor == other.selectionColor &&
           highlightWhenEmpty == other.highlightWhenEmpty &&
+          spellingErrorUnderlineStyle == other.spellingErrorUnderlineStyle &&
+          const DeepCollectionEquality().equals(spellingErrors, other.spellingErrors) &&
+          grammarErrorUnderlineStyle == other.grammarErrorUnderlineStyle &&
+          const DeepCollectionEquality().equals(grammarErrors, other.grammarErrors) &&
           composingRegion == other.composingRegion &&
-          showComposingUnderline == other.showComposingUnderline;
+          showComposingRegionUnderline == other.showComposingRegionUnderline;
 
   @override
   int get hashCode =>
@@ -241,8 +262,12 @@ class ParagraphComponentViewModel extends SingleColumnLayoutComponentViewModel w
       selection.hashCode ^
       selectionColor.hashCode ^
       highlightWhenEmpty.hashCode ^
+      spellingErrorUnderlineStyle.hashCode ^
+      spellingErrors.hashCode ^
+      grammarErrorUnderlineStyle.hashCode ^
+      grammarErrors.hashCode ^
       composingRegion.hashCode ^
-      showComposingUnderline.hashCode;
+      showComposingRegionUnderline.hashCode;
 }
 
 /// The standard [TextBlockIndentCalculator] used by paragraphs in `SuperEditor`.
@@ -303,8 +328,7 @@ class _ParagraphComponentState extends State<ParagraphComponent>
             textSelection: widget.viewModel.selection,
             selectionColor: widget.viewModel.selectionColor,
             highlightWhenEmpty: widget.viewModel.highlightWhenEmpty,
-            composingRegion: widget.viewModel.composingRegion,
-            showComposingUnderline: widget.viewModel.showComposingUnderline,
+            underlines: widget.viewModel.createUnderlines(),
             showDebugPaint: widget.showDebugPaint,
           ),
         ),
@@ -469,12 +493,29 @@ class CombineParagraphsCommand extends EditCommand {
       return;
     }
 
-    final nodeAbove = document.getNodeBefore(secondNode);
+    DocumentNode? nodeAbove = document.getNodeBefore(secondNode);
     if (nodeAbove == null) {
       editorDocLog.info('At top of document. Cannot merge with node above.');
       return;
     }
-    if (nodeAbove.id != firstNodeId) {
+
+    // Search for a node above the second node that has the id equal to `firstNodeId`.
+    //
+    // A `CombineParagraphsRequest` might reference nodes that are not contiguous.
+    // For example, we might have:
+    // - Paragraph 1
+    // - <hr> (non-selectable, non-deletable)
+    // - Paragraph 2
+    //
+    // If this case, it's possible to combine Paragraph 1 and Paragraph 2.
+    //
+    // Because of this, we need to loop until we find the node instead of just
+    // comparing with the node immediately above the second node.
+    while (nodeAbove != null && nodeAbove.id != firstNodeId) {
+      nodeAbove = document.getNodeBefore(nodeAbove);
+    }
+
+    if (nodeAbove == null) {
       editorDocLog.info('The specified `firstNodeId` is not the node before `secondNodeId`.');
       return;
     }
@@ -718,7 +759,11 @@ class DeleteUpstreamAtBeginningOfParagraphCommand extends EditCommand {
       return;
     }
 
-    final nodeBefore = document.getNodeBefore(node);
+    DocumentNode? nodeBefore = document.getNodeBefore(node);
+    while (nodeBefore is BlockNode && !nodeBefore.isDeletable) {
+      nodeBefore = document.getNodeBefore(nodeBefore);
+    }
+
     if (nodeBefore == null) {
       return;
     }
@@ -751,6 +796,10 @@ class DeleteUpstreamAtBeginningOfParagraphCommand extends EditCommand {
     }
   }
 
+  /// Merges the selected [TextNode] with the upstream [TextNode].
+  ///
+  /// If there are non-deletable [BlockNode]s between the two [TextNode]s,
+  /// the [BlockNode]s are retained without modification.
   bool mergeTextNodeWithUpstreamTextNode(
     CommandExecutor executor,
     MutableDocument document,
@@ -761,7 +810,11 @@ class DeleteUpstreamAtBeginningOfParagraphCommand extends EditCommand {
       return false;
     }
 
-    final nodeAbove = document.getNodeBefore(node);
+    DocumentNode? nodeAbove = document.getNodeBefore(node);
+    while (nodeAbove is BlockNode && !nodeAbove.isDeletable) {
+      nodeAbove = document.getNodeBefore(nodeAbove);
+    }
+
     if (nodeAbove == null) {
       return false;
     }

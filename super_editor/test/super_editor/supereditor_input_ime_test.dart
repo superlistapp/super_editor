@@ -1548,6 +1548,99 @@ Paragraph two
       // Ensure SuperEditor composing region was cleared.
       expect(testContext.composer.composingRegion.value, isNull);
     });
+
+    testWidgetsOnMac('clears composing region after merging paragraphs', (tester) async {
+      final testContext = await tester
+          .createDocument() //
+          .withTwoEmptyParagraphs()
+          .withInputSource(TextInputSource.ime)
+          .pump();
+
+      // Place the caret at the beginning of the second paragraph.
+      await tester.placeCaretInParagraph('2', 0);
+
+      // Ensure we don't have a composing region.
+      expect(testContext.composer.composingRegion.value, isNull);
+
+      // Simulate an insertion containing a composing region.
+      await tester.ime.sendDeltas(
+        [
+          TextEditingDeltaNonTextUpdate(
+            oldText: '. ',
+            selection: TextSelection.collapsed(offset: 2),
+            composing: TextRange(start: 2, end: 2),
+          ),
+          const TextEditingDeltaInsertion(
+            oldText: '. ',
+            textInserted: 'あ',
+            insertionOffset: 2,
+            selection: TextSelection.collapsed(offset: 3),
+            composing: TextRange(start: 2, end: 3),
+          ),
+        ],
+        getter: imeClientGetter,
+      );
+
+      // Ensure the editor applied the composing region.
+      expect(
+        testContext.composer.composingRegion.value,
+        isNotNull,
+      );
+
+      // Intercept the setEditingState message sent to the platform to check if we
+      // cleared the IME composing region when merging paragraphs.
+      int? composingBase;
+      int? composingExtent;
+      tester
+          .interceptChannel(SystemChannels.textInput.name) //
+          .interceptMethod(
+        'TextInput.setEditingState',
+        (methodCall) {
+          final params = methodCall.arguments as Map;
+          composingBase = params['composingBase'];
+          composingExtent = params['composingExtent'];
+
+          return null;
+        },
+      );
+
+      // Simulate the user pressing BACKSPACE to delete the first character.
+      // Even though the selection sits after a whitespace in the IME, mac still reports
+      // a composing region starting after the space.
+      await tester.ime.sendDeltas(
+        [
+          const TextEditingDeltaDeletion(
+            oldText: '. あ',
+            deletedRange: TextRange(start: 2, end: 3),
+            selection: TextSelection.collapsed(offset: 2),
+            composing: TextRange(start: 2, end: 2),
+          ),
+        ],
+        getter: imeClientGetter,
+      );
+
+      // Ensure we still have a composing region in the editor.
+      expect(
+        testContext.composer.composingRegion.value,
+        isNotNull,
+      );
+
+      // Simulate the user pressing BACKSPACE to merge the paragraphs.
+      // Now that we are deleting a whitespace, mac reports a deleteBackward: selector
+      // instead of a deletion delta.
+      await _receiveSelector('deleteBackward:');
+      await tester.pump();
+
+      // Ensure the composing region was cleared in the IME.
+      expect(composingBase, -1);
+      expect(composingExtent, -1);
+
+      // Ensure SuperEditor composing region was cleared.
+      expect(testContext.composer.composingRegion.value, isNull);
+
+      // Ensure the paragraphs were merged.
+      expect(testContext.document.nodeCount, equals(1));
+    });
   });
 }
 
@@ -1654,4 +1747,21 @@ Future<void> _typeSpaceAdaptive(WidgetTester tester) async {
   }
 
   await tester.typeImeText(' ');
+}
+
+/// Simulates a `TextInputClient.performSelectors` call from the platform.
+Future<void> _receiveSelector(String selectorName) async {
+  await TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger.handlePlatformMessage(
+    SystemChannels.textInput.name,
+    SystemChannels.textInput.codec.encodeMethodCall(
+      MethodCall(
+        "TextInputClient.performSelectors",
+        [
+          -1,
+          [selectorName],
+        ],
+      ),
+    ),
+    null,
+  );
 }

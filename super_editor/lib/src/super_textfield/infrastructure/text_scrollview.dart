@@ -423,7 +423,11 @@ class _TextScrollViewState extends State<TextScrollView>
       child: SingleChildScrollView(
         key: _textFieldViewportKey,
         controller: _scrollController,
-        physics: const NeverScrollableScrollPhysics(),
+        // For single-line text fields, we do not allow horizontal scrolling,
+        // therefor we apply NeverScrollableScrollPhysics. For multi-line text
+        // fields, we pass null to allow the SingleChildScrollView to default
+        // to the appropriate scroll physics based on the host platform.
+        physics: isMultiline ? null : const NeverScrollableScrollPhysics(),
         scrollDirection: isMultiline ? Axis.vertical : Axis.horizontal,
         child: Padding(
           padding: widget.padding ?? EdgeInsets.zero,

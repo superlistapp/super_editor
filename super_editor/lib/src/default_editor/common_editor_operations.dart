@@ -10,6 +10,7 @@ import 'package:super_editor/src/core/document_composer.dart';
 import 'package:super_editor/src/core/document_layout.dart';
 import 'package:super_editor/src/core/document_selection.dart';
 import 'package:super_editor/src/core/editor.dart';
+import 'package:super_editor/src/default_editor/box_component.dart';
 import 'package:super_editor/src/default_editor/default_document_editor_reactions.dart';
 import 'package:super_editor/src/default_editor/list_items.dart';
 import 'package:super_editor/src/default_editor/paragraph.dart';
@@ -310,6 +311,12 @@ class CommonEditorOperations {
         extentComponent.movePositionLeft(currentExtent.nodePosition, movementModifier);
 
     if (newExtentNodePosition == null) {
+      if (movementModifier == MovementModifier.line) {
+        // The user is trying to move to the beginning of the current line,
+        // and we're already there. Do nothing.
+        return false;
+      }
+
       // Move to next node
       final nextNode = _getUpstreamSelectableNodeBefore(node);
 
@@ -410,6 +417,12 @@ class CommonEditorOperations {
         extentComponent.movePositionRight(currentExtent.nodePosition, movementModifier);
 
     if (newExtentNodePosition == null) {
+      if (movementModifier == MovementModifier.line) {
+        // The user is trying to move to the end of the current line,
+        // and we're already there. Do nothing.
+        return false;
+      }
+
       // Move to next node
       final nextNode = _getDownstreamSelectableNodeAfter(node);
 
@@ -864,16 +877,22 @@ class CommonEditorOperations {
 
     if (!composer.selection!.isCollapsed) {
       // A span of content is selected. Delete the selection.
-      _deleteExpandedSelection();
+      _deleteExpandedSelection(TextAffinity.downstream);
       return true;
     }
 
     if (composer.selection!.extent.nodePosition is UpstreamDownstreamNodePosition) {
       final nodePosition = composer.selection!.extent.nodePosition as UpstreamDownstreamNodePosition;
       if (nodePosition.affinity == TextAffinity.upstream) {
-        // The caret is sitting on the upstream edge of block-level content. Delete the
-        // whole block by replacing it with an empty paragraph.
+        // The caret is sitting on the upstream edge of block-level content.
         final nodeId = composer.selection!.extent.nodeId;
+
+        if (!document.getNodeById(nodeId)!.isDeletable) {
+          // The node is not deletable. Fizzle.
+          return false;
+        }
+
+        //Delete the whole block by replacing it with an empty paragraph.
         replaceBlockNodeWithEmptyParagraphAndCollapsedSelection(nodeId);
 
         return true;
@@ -900,7 +919,12 @@ class CommonEditorOperations {
         } else if (nodeAfter != null) {
           final componentAfter = documentLayoutResolver().getComponentByNodeId(nodeAfter.id)!;
 
-          if (componentAfter.isVisualSelectionSupported()) {
+          if (nodeAfter is BlockNode && !nodeAfter.isDeletable) {
+            // The user is trying to delete at the end of a node, and the downstream node
+            // is not deletable. Skip the non-deletable node and try to merge the selected
+            // node with the next non-deletable node.
+            return _mergeTextNodeWithDownstreamTextNode();
+          } else if (componentAfter.isVisualSelectionSupported()) {
             // The caret is at the end of a TextNode, but the next node
             // is not a TextNode. Move the document selection to the
             // next node.
@@ -959,7 +983,11 @@ class CommonEditorOperations {
       return false;
     }
 
-    final nodeAfter = document.getNodeAfter(node);
+    DocumentNode? nodeAfter = document.getNodeAfter(node);
+    while (nodeAfter is BlockNode && !nodeAfter.isDeletable) {
+      nodeAfter = document.getNodeAfter(nodeAfter);
+    }
+
     if (nodeAfter == null) {
       return false;
     }
@@ -1043,7 +1071,7 @@ class CommonEditorOperations {
 
     if (!composer.selection!.isCollapsed) {
       // A span of content is selected. Delete the selection.
-      _deleteExpandedSelection();
+      _deleteExpandedSelection(TextAffinity.upstream);
       return true;
     }
 
@@ -1057,9 +1085,15 @@ class CommonEditorOperations {
     if (composer.selection!.extent.nodePosition is UpstreamDownstreamNodePosition) {
       final nodePosition = composer.selection!.extent.nodePosition as UpstreamDownstreamNodePosition;
       if (nodePosition.affinity == TextAffinity.downstream) {
-        // The caret is sitting on the downstream edge of block-level content. Delete the
-        // whole block by replacing it with an empty paragraph.
+        // The caret is sitting on the downstream edge of block-level content.
         final nodeId = composer.selection!.extent.nodeId;
+
+        if (!document.getNodeById(nodeId)!.isDeletable) {
+          // The node is not deletable. Fizzle.
+          return false;
+        }
+
+        // Delete the whole block by replacing it with an empty paragraph.
         replaceBlockNodeWithEmptyParagraphAndCollapsedSelection(nodeId);
 
         return true;
@@ -1083,13 +1117,13 @@ class CommonEditorOperations {
           return true;
         }
 
-        if (!componentBefore.isVisualSelectionSupported()) {
+        if (!componentBefore.isVisualSelectionSupported() && nodeBefore.isDeletable) {
           // The node/component above is not selectable. Delete it.
           deleteNonSelectedNode(nodeBefore);
           return true;
         }
 
-        return moveSelectionToEndOfPrecedingNode();
+        return _moveSelectionToEndOfFirstSelectableUpstreamNode();
       }
     }
 
@@ -1106,6 +1140,8 @@ class CommonEditorOperations {
         if (nodeBefore is TextNode) {
           // The caret is at the beginning of one TextNode and is preceded by
           // another TextNode. Merge the two TextNodes.
+          return mergeTextNodeWithUpstreamTextNode();
+        } else if (nodeBefore is BlockNode && !nodeBefore.isDeletable) {
           return mergeTextNodeWithUpstreamTextNode();
         } else if (!componentBefore.isVisualSelectionSupported()) {
           // The node/component above is not selectable. Delete it.
@@ -1167,13 +1203,67 @@ class CommonEditorOperations {
     return true;
   }
 
+  /// Finds the first visually selectable node above the selection extent
+  /// and changes the selection to its end.
+  ///
+  /// Does nothing if no selectable node is found.
+  bool _moveSelectionToEndOfFirstSelectableUpstreamNode() {
+    if (composer.selection == null) {
+      return false;
+    }
+
+    final node = document.getNodeById(composer.selection!.extent.nodeId);
+    if (node == null) {
+      return false;
+    }
+
+    DocumentNode? nodeBefore = document.getNodeBefore(node);
+    while (nodeBefore != null) {
+      final component = documentLayoutResolver().getComponentByNodeId(nodeBefore.id);
+      if (component == null) {
+        // Assume we are in a transitive state where the node was created, but
+        // the component is not yet available.
+        return false;
+      }
+      if (component.isVisualSelectionSupported()) {
+        editor.execute([
+          ChangeSelectionRequest(
+            DocumentSelection.collapsed(
+              position: DocumentPosition(
+                nodeId: nodeBefore.id,
+                nodePosition: nodeBefore.endPosition,
+              ),
+            ),
+            SelectionChangeType.collapseSelection,
+            SelectionReason.userInteraction,
+          ),
+        ]);
+
+        return true;
+      }
+
+      nodeBefore = document.getNodeBefore(nodeBefore);
+    }
+
+    // We didn't find any selectable nodes before the current node.
+    return false;
+  }
+
+  /// Merges the selected [TextNode] with the upstream [TextNode].
+  ///
+  /// If there are non-deletable [BlockNode]s between the two [TextNode]s,
+  /// the [BlockNode]s are ignored.
   bool mergeTextNodeWithUpstreamTextNode() {
     final node = document.getNodeById(composer.selection!.extent.nodeId);
     if (node == null) {
       return false;
     }
 
-    final nodeAbove = document.getNodeBefore(node);
+    DocumentNode? nodeAbove = document.getNodeBefore(node);
+    while (nodeAbove != null && nodeAbove is BlockNode && !nodeAbove.isDeletable) {
+      nodeAbove = document.getNodeBefore(nodeAbove);
+    }
+
     if (nodeAbove == null) {
       return false;
     }
@@ -1199,6 +1289,9 @@ class CommonEditorOperations {
         SelectionChangeType.deleteContent,
         SelectionReason.userInteraction,
       ),
+      // Since two paragraphs were combined, the composing region might point
+      // to a deleted paragraph. Clear it.
+      const ClearComposingRegionRequest(),
     ]);
 
     return true;
@@ -1256,9 +1349,14 @@ class CommonEditorOperations {
 
   /// Deletes all selected content.
   ///
+  /// The [affinity] defines the direction to where the user is trying to
+  /// delete. For example, if the users presses the backspace key, the
+  /// [affinity] should be [TextAffinity.upstream]. If the user presses the
+  /// delete key, the [affinity] should be [TextAffinity.downstream].
+  ///
   /// Returns [true] if content was deleted, or [false] if no content was
   /// selected.
-  bool deleteSelection() {
+  bool deleteSelection(TextAffinity affinity) {
     if (composer.selection == null) {
       return false;
     }
@@ -1269,24 +1367,14 @@ class CommonEditorOperations {
 
     // The document selection includes a span of content. It may or may not
     // cross nodes. Either way, delete the selected content.
-    _deleteExpandedSelection();
+    _deleteExpandedSelection(affinity);
     return true;
   }
 
-  void _deleteExpandedSelection() {
-    final newSelectionPosition = getDocumentPositionAfterExpandedDeletion(
-      document: document,
-      selection: composer.selection!,
-    );
-
+  void _deleteExpandedSelection(TextAffinity affinity) {
     // Delete the selected content.
     editor.execute([
-      DeleteContentRequest(documentRange: composer.selection!),
-      ChangeSelectionRequest(
-        DocumentSelection.collapsed(position: newSelectionPosition),
-        SelectionChangeType.deleteContent,
-        SelectionReason.userInteraction,
-      ),
+      DeleteSelectionRequest(affinity),
     ]);
   }
 
@@ -1538,7 +1626,7 @@ class CommonEditorOperations {
       // Without this, the new text doesn't preserve the attributions of the replaced text.
       final composerAttributions = {...composer.preferences.currentAttributions};
 
-      _deleteExpandedSelection();
+      _deleteExpandedSelection(TextAffinity.downstream);
 
       // Restore the previous attributions.
       composer.preferences
@@ -1595,7 +1683,7 @@ class CommonEditorOperations {
     }
 
     if (!composer.selection!.isCollapsed) {
-      _deleteExpandedSelection();
+      _deleteExpandedSelection(TextAffinity.downstream);
     }
 
     final extentNodePosition = composer.selection!.extent.nodePosition;
@@ -1681,7 +1769,7 @@ class CommonEditorOperations {
       // The selection is not collapsed. Delete the selected content first,
       // then continue the process.
       editorOpsLog.finer("Deleting selection before inserting block-level newline");
-      _deleteExpandedSelection();
+      _deleteExpandedSelection(TextAffinity.downstream);
     }
 
     final newNodeId = Editor.createNodeId();
@@ -2119,7 +2207,7 @@ class CommonEditorOperations {
     //       need to be carried out in response to user input.
     _saveToClipboard(textToCut);
 
-    deleteSelection();
+    deleteSelection(TextAffinity.downstream);
   }
 
   Future<void> _saveToClipboard(String text) {
@@ -2262,11 +2350,28 @@ class PasteEditorCommand extends EditCommand {
   final String _content;
   final DocumentPosition _pastePosition;
 
+  // The [_content] as [DocumentNode]s so that we only generate node IDs one
+  // time. This is critical for undo behavior to work as expected.
+  List<DocumentNode>? _parsedContent;
+
   @override
   HistoryBehavior get historyBehavior => HistoryBehavior.undoable;
 
   @override
   void execute(EditContext context, CommandExecutor executor) {
+    // Only parse the content if we haven't done it already. This command
+    // might be run 2+ times if the user runs an undo operation.
+    _parsedContent ??= _parseContent();
+
+    // Assign locally so we don't have to use a "!" everywhere we reference it.
+    // Also, make a copy of the existing nodes so that when the document mutates,
+    // our local copy doesn't change.
+    final parsedContent = _parsedContent!.map((node) => node.copy()).toList();
+    if (parsedContent.isEmpty) {
+      // No content to paste.
+      return;
+    }
+
     final document = context.document;
     final composer = context.find<MutableDocumentComposer>(Editor.composerKey);
     final currentNodeWithSelection = document.getNodeById(_pastePosition.nodeId);
@@ -2276,14 +2381,10 @@ class PasteEditorCommand extends EditCommand {
 
     editorOpsLog.info("Pasting clipboard content in document.");
 
-    // Split the pasted content at newlines, and apply attributions based
-    // on inspection of the pasted content, e.g., link attributions.
-    final attributedLines = _inferAttributionsForLinesOfPastedText(_content);
-
     final textNode = document.getNode(_pastePosition) as TextNode;
     final pasteTextOffset = (_pastePosition.nodePosition as TextPosition).offset;
 
-    if (attributedLines.length > 1 && pasteTextOffset < textNode.endPosition.offset) {
+    if (parsedContent.length > 1 && pasteTextOffset < textNode.endPosition.offset) {
       // There is more than 1 node of content being pasted. Therefore,
       // new nodes will need to be added, which means that the currently
       // selected text node will be split at the current text offset.
@@ -2300,20 +2401,20 @@ class PasteEditorCommand extends EditCommand {
       );
     }
 
-    // Paste the first piece of attributed content into the selected TextNode.
-    executor.executeCommand(
-      InsertAttributedTextCommand(
-        documentPosition: _pastePosition,
-        textToInsert: attributedLines.first,
-      ),
-    );
+    if (parsedContent.first is TextNode) {
+      // Paste the first piece of attributed content into the existing selected TextNode.
+      executor.executeCommand(
+        InsertAttributedTextCommand(
+          documentPosition: _pastePosition,
+          textToInsert: (parsedContent.first as TextNode).text,
+        ),
+      );
+    }
 
     // The first line of pasted text was added to the selected paragraph.
-    // Now, create new nodes for each additional line of pasted text and
-    // insert those nodes.
-    final pastedContentNodes = _convertLinesToParagraphs(attributedLines.sublist(1));
+    // Now, add all remaining pasted nodes to the document..
     DocumentNode previousNode = currentNodeWithSelection;
-    for (final pastedNode in pastedContentNodes) {
+    for (final pastedNode in parsedContent.sublist(1)) {
       document.insertNodeAfter(
         existingNode: previousNode,
         newNode: pastedNode,
@@ -2331,17 +2432,10 @@ class PasteEditorCommand extends EditCommand {
     executor.executeCommand(
       ChangeSelectionCommand(
         DocumentSelection.collapsed(
-          position: pastedContentNodes.isNotEmpty
-              ? DocumentPosition(
-                  nodeId: previousNode.id,
-                  nodePosition: previousNode.endPosition,
-                )
-              : DocumentPosition(
-                  nodeId: currentNodeWithSelection.id,
-                  nodePosition: TextNodePosition(
-                    offset: pasteTextOffset + attributedLines.first.text.length,
-                  ),
-                ),
+          position: DocumentPosition(
+            nodeId: previousNode.id,
+            nodePosition: previousNode.endPosition,
+          ),
         ),
         SelectionChangeType.insertContent,
         SelectionReason.userInteraction,
@@ -2349,6 +2443,13 @@ class PasteEditorCommand extends EditCommand {
     );
     editorOpsLog.fine('New selection after paste operation: ${composer.selection}');
     editorOpsLog.fine('Done with paste command.');
+  }
+
+  List<DocumentNode> _parseContent() {
+    // Split the pasted content at newlines, and apply attributions based
+    // on inspection of the pasted content, e.g., link attributions.
+    final attributedLines = _inferAttributionsForLinesOfPastedText(_content);
+    return _convertLinesToParagraphs(attributedLines).toList();
   }
 
   /// Breaks the given [content] at each newline, then applies any inferred

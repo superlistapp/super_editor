@@ -191,8 +191,7 @@ class HeaderWithHintComponentBuilder implements ComponentBuilder {
       ),
       textSelection: textSelection,
       selectionColor: componentViewModel.selectionColor,
-      composingRegion: componentViewModel.composingRegion,
-      showComposingUnderline: componentViewModel.showComposingUnderline,
+      underlines: componentViewModel.createUnderlines(),
     );
   }
 }

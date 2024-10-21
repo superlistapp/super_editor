@@ -18,6 +18,7 @@ void main() {
     // editorImeDeltasLog,
     // editorIosFloatingCursorLog,
     // editorKeyLog,
+    // editorEditsLog,
     // editorOpsLog,
     // editorLayoutLog,
     // editorDocLog,
@@ -64,7 +65,7 @@ class _DemoState extends State<_Demo> {
     super.initState();
     _document = createInitialDocument();
     _composer = MutableDocumentComposer();
-    _docEditor = createDefaultDocumentEditor(document: _document, composer: _composer);
+    _docEditor = createDefaultDocumentEditor(document: _document, composer: _composer, isHistoryEnabled: true);
   }
 
   @override
@@ -178,7 +179,9 @@ class _EditorHistoryPanelState extends State<_EditorHistoryPanel> {
                     titleTextStyle: TextStyle(
                       fontSize: 16,
                     ),
-                    subtitle: Text("${history.changes.map((event) => event.describe()).join("\n")}"),
+                    subtitle: Text(
+                      "${history.commands.map((command) => command.describe()).join("\n\n")}\n-------------\n${history.changes.map((event) => event.describe()).join("\n\n")}",
+                    ),
                     subtitleTextStyle: TextStyle(
                       color: Colors.white.withOpacity(0.5),
                       fontSize: 10,

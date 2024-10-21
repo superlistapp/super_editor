@@ -1,6 +1,7 @@
 import 'package:attributed_text/attributed_text.dart';
 import 'package:flutter/foundation.dart' show ValueListenable, defaultTargetPlatform;
 import 'package:flutter/material.dart' hide SelectableText;
+import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:follow_the_leader/follow_the_leader.dart';
 import 'package:super_editor/src/core/document.dart';
@@ -33,9 +34,11 @@ import 'package:super_editor/src/infrastructure/platforms/platform.dart';
 import 'package:super_editor/src/infrastructure/signal_notifier.dart';
 import 'package:super_editor/src/infrastructure/text_input.dart';
 import 'package:super_editor/src/undo_redo.dart';
+import 'package:super_editor/src/infrastructure/render_sliver_ext.dart';
 import 'package:super_text_layout/super_text_layout.dart';
 
 import '../infrastructure/document_gestures_interaction_overrides.dart';
+import '../infrastructure/platforms/ios/ios_system_context_menu.dart';
 import '../infrastructure/platforms/mobile_documents.dart';
 import 'attributions.dart';
 import 'blockquote.dart';
@@ -135,11 +138,16 @@ class SuperEditor extends StatefulWidget {
     this.createOverlayControlsClipper,
     this.plugins = const {},
     this.debugPaint = const DebugPaintConfig(),
+    this.shrinkWrap = false,
   })  : stylesheet = stylesheet ?? defaultStylesheet,
         selectionStyles = selectionStyle ?? defaultSelectionStyle,
-        componentBuilders = componentBuilders != null
-            ? [...componentBuilders, const UnknownComponentBuilder()]
-            : [...defaultComponentBuilders, TaskComponentBuilder(editor), const UnknownComponentBuilder()],
+        componentBuilders = [
+          for (final plugin in plugins) ...plugin.componentBuilders,
+          if (componentBuilders != null)
+            ...componentBuilders
+          else ...[...defaultComponentBuilders, TaskComponentBuilder(editor)],
+          const UnknownComponentBuilder(),
+        ],
         super(key: key);
 
   /// [FocusNode] for the entire `SuperEditor`.
@@ -344,6 +352,10 @@ class SuperEditor extends StatefulWidget {
   /// debugging.
   final DebugPaintConfig debugPaint;
 
+  /// Whether the scroll view used by the editor should shrink-wrap its contents.
+  /// Only used when editor is not inside an scrollable.
+  final bool shrinkWrap;
+
   @override
   SuperEditorState createState() => SuperEditorState();
 }
@@ -519,6 +531,7 @@ class SuperEditorState extends State<SuperEditor> {
     _scroller = DocumentScroller()..addScrollChangeListener(_scrollChangeSignal.notifyListeners);
 
     editContext = SuperEditorContext(
+      editorFocusNode: _focusNode,
       editor: widget.editor,
       document: widget.editor.document,
       composer: _composer,
@@ -645,45 +658,51 @@ class SuperEditorState extends State<SuperEditor> {
             document: widget.editor.document,
             selection: _composer.selectionNotifier,
             isDocumentLayoutAvailable: () =>
-                (_docLayoutKey.currentContext?.findRenderObject() as RenderBox?)?.hasSize == true,
+                (_docLayoutKey.currentContext?.findRenderObject() as RenderSliver?)?.hasSize == true,
             getDocumentLayout: () => editContext.documentLayout,
             placeCaretAtEndOfDocumentOnGainFocus: widget.selectionPolicies.placeCaretAtEndOfDocumentOnGainFocus,
             restorePreviousSelectionOnGainFocus: widget.selectionPolicies.restorePreviousSelectionOnGainFocus,
             clearSelectionWhenEditorLosesFocus: widget.selectionPolicies.clearSelectionWhenEditorLosesFocus,
-            child: _buildTextInputSystem(
-              child: _buildPlatformSpecificViewportDecorations(
-                controlsScopeContext,
-                child: DocumentScaffold(
-                  documentLayoutLink: _documentLayoutLink,
-                  documentLayoutKey: _docLayoutKey,
-                  gestureBuilder: _buildGestureInteractor,
-                  scrollController: _scrollController,
-                  autoScrollController: _autoScrollController,
-                  scroller: _scroller,
-                  presenter: presenter,
-                  componentBuilders: widget.componentBuilders,
-                  underlays: [
-                    // Add all underlays that the app wants.
-                    for (final underlayBuilder in widget.documentUnderlayBuilders) //
-                      (context) => underlayBuilder.build(context, editContext),
-                  ],
-                  overlays: [
-                    // Layer that positions and sizes leader widgets at the bounds
-                    // of the users selection so that carets, handles, toolbars, and
-                    // other things can follow the selection.
-                    (context) {
-                      return _SelectionLeadersDocumentLayerBuilder(
-                        links: _selectionLinks,
-                        showDebugLeaderBounds: false,
-                      ).build(context, editContext);
-                    },
-                    // Add all overlays that the app wants.
-                    for (final overlayBuilder in widget.documentOverlayBuilders) //
-                      (context) => overlayBuilder.build(context, editContext),
-                  ],
-                  debugPaint: widget.debugPaint,
-                ),
-              ),
+            child: DocumentScaffold(
+              documentLayoutLink: _documentLayoutLink,
+              documentLayoutKey: _docLayoutKey,
+              viewportDecorationBuilder: _buildPlatformSpecificViewportDecorations,
+              textInputBuilder: _buildTextInputSystem,
+              gestureBuilder: _buildGestureInteractor,
+              scrollController: _scrollController,
+              autoScrollController: _autoScrollController,
+              scroller: _scroller,
+              presenter: presenter,
+              componentBuilders: widget.componentBuilders,
+              shrinkWrap: widget.shrinkWrap,
+              underlays: [
+                // Add all underlays from plugins.
+                for (final plugin in widget.plugins) //
+                  for (final underlayBuilder in plugin.documentUnderlayBuilders) //
+                    (context) => underlayBuilder.build(context, editContext),
+                // Add all underlays that the app wants.
+                for (final underlayBuilder in widget.documentUnderlayBuilders) //
+                  (context) => underlayBuilder.build(context, editContext),
+              ],
+              overlays: [
+                // Layer that positions and sizes leader widgets at the bounds
+                // of the users selection so that carets, handles, toolbars, and
+                // other things can follow the selection.
+                (context) {
+                  return _SelectionLeadersDocumentLayerBuilder(
+                    links: _selectionLinks,
+                    showDebugLeaderBounds: false,
+                  ).build(context, editContext);
+                },
+                // Add all overlays from plugins.
+                for (final plugin in widget.plugins) //
+                  for (final overlayBuilder in plugin.documentOverlayBuilders) //
+                    (context) => overlayBuilder.build(context, editContext),
+                // Add all overlays that the app wants.
+                for (final overlayBuilder in widget.documentOverlayBuilders) //
+                  (context) => overlayBuilder.build(context, editContext),
+              ],
+              debugPaint: widget.debugPaint,
             ),
           ),
         );
@@ -723,7 +742,8 @@ class SuperEditorState extends State<SuperEditor> {
 
   /// Builds the widget tree that applies user input, e.g., key
   /// presses from a keyboard, or text deltas from the IME.
-  Widget _buildTextInputSystem({
+  Widget _buildTextInputSystem(
+    BuildContext context, {
     required Widget child,
   }) {
     switch (inputSource) {
@@ -859,6 +879,42 @@ class SuperEditorState extends State<SuperEditor> {
         );
     }
   }
+}
+
+/// A [DocumentFloatingToolbarBuilder] that displays the iOS system popover toolbar, if the version of
+/// iOS is recent enough, otherwise builds [defaultIosEditorToolbarBuilder].
+Widget iOSSystemPopoverEditorToolbarWithFallbackBuilder(
+  BuildContext context,
+  Key floatingToolbarKey,
+  LeaderLink focalPoint,
+  CommonEditorOperations editorOps,
+  SuperEditorIosControlsController editorControlsController,
+) {
+  if (CurrentPlatform.isWeb) {
+    // On web, we defer to the browser's internal overlay controls for mobile.
+    return const SizedBox();
+  }
+
+  if (focalPoint.offset == null || focalPoint.leaderSize == null) {
+    // It's unclear when/why this might happen. But there seem to be some
+    // cases, such as placing a caret in an empty document and tapping again
+    // to show the toolbar.
+    return const SizedBox();
+  }
+
+  if (IOSSystemContextMenu.isSupported(context)) {
+    return IOSSystemContextMenu(
+      anchor: focalPoint.offset! & focalPoint.leaderSize!,
+    );
+  }
+
+  return defaultIosEditorToolbarBuilder(
+    context,
+    floatingToolbarKey,
+    focalPoint,
+    editorOps,
+    editorControlsController,
+  );
 }
 
 /// Builds a standard editor-style iOS floating toolbar.
@@ -1002,7 +1058,10 @@ class DefaultAndroidEditorToolbar extends StatelessWidget {
 class _SelectionLeadersDocumentLayerBuilder implements SuperEditorLayerBuilder {
   const _SelectionLeadersDocumentLayerBuilder({
     required this.links,
-    // ignore: unused_element
+    // TODO(srawlins): `unused_element`, when reporting a parameter, is being
+    // renamed to `unused_element_parameter`. For now, ignore each; when the SDK
+    // constraint is >= 3.6.0, just ignore `unused_element_parameter`.
+    // ignore: unused_element, unused_element_parameter
     this.showDebugLeaderBounds = false,
   });
 
@@ -1036,10 +1095,12 @@ class _SelectionLeadersDocumentLayerBuilder implements SuperEditorLayerBuilder {
 /// [componentBuilders].
 ///
 /// An [Editor] is a logical pipeline of requests, commands, and reactions. It has no direct
-/// connection to a user interface. A [SuperEditor] widget is a complete editor user interface.
-/// When a plugin is given to a [SuperEditor] widget, the [SuperEditor] widget [attach]s the
-/// plugin to its [Editor], and then the [SuperEditor] widget pulls out UI related behaviors
-/// from the plugin for things like keyboard handlers and component builders.
+/// connection to a user interface.
+///
+/// A [SuperEditor] widget is a complete editor user interface. When a plugin is given to a
+/// [SuperEditor] widget, the [SuperEditor] widget [attach]s the plugin to its [Editor], and
+/// then the [SuperEditor] widget pulls out UI related behaviors from the plugin for things
+/// like keyboard handlers and component builders.
 ///
 /// [Editor] extensions are applied differently than the [SuperEditor] UI extensions, because
 /// an [Editor] is mutable, meaning it can be altered. But a [SuperEditor] widget, like all other
@@ -1061,6 +1122,12 @@ abstract class SuperEditorPlugin {
 
   /// Additional [ComponentBuilder]s that will be added to a given [SuperEditor] widget.
   List<ComponentBuilder> get componentBuilders => [];
+
+  /// Additional underlay [SuperEditorLayerBuilder]s that will be added to a given [SuperEditor].
+  List<SuperEditorLayerBuilder> get documentUnderlayBuilders => [];
+
+  /// Additional overlay [SuperEditorLayerBuilder]s that will be added to a given [SuperEditor].
+  List<SuperEditorLayerBuilder> get documentOverlayBuilders => [];
 }
 
 /// A collection of policies that dictate how a [SuperEditor]'s selection will change
@@ -1204,7 +1271,7 @@ const defaultComponentBuilders = <ComponentBuilder>[
 
 /// Default list of document overlays that are displayed on top of the document
 /// layout in a [SuperEditor].
-const defaultSuperEditorDocumentOverlayBuilders = [
+const defaultSuperEditorDocumentOverlayBuilders = <SuperEditorLayerBuilder>[
   // Adds a Leader around the document selection at a focal point for the
   // iOS floating toolbar.
   SuperEditorIosToolbarFocalPointDocumentLayerBuilder(),
@@ -1313,6 +1380,7 @@ final defaultImeKeyboardActions = <DocumentKeyboardAction>[
   scrollOnPageUpKeyPress,
   scrollOnPageDownKeyPress,
   moveUpAndDownWithArrowKeys,
+  moveToStartOrEndOfLineWithArrowKeysOnWeb,
   doNothingWithLeftRightArrowKeysAtMiddleOfTextOnWeb,
   moveLeftAndRightWithArrowKeys,
   moveToLineStartWithHome,

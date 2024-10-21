@@ -15,6 +15,7 @@ Editor createDefaultDocumentEditor({
   required MutableDocument document,
   required MutableDocumentComposer composer,
   HistoryGroupingPolicy historyGroupingPolicy = defaultMergePolicy,
+  bool isHistoryEnabled = false,
 }) {
   final editor = Editor(
     editables: {
@@ -24,6 +25,7 @@ Editor createDefaultDocumentEditor({
     requestHandlers: List.from(defaultRequestHandlers),
     historyGroupingPolicy: historyGroupingPolicy,
     reactionPipeline: List.from(defaultEditorReactions),
+    isHistoryEnabled: isHistoryEnabled,
   );
 
   return editor;
@@ -102,6 +104,9 @@ final defaultRequestHandlers = List.unmodifiable(<EditRequestHandler>[
       : null,
   (request) => request is DeleteContentRequest //
       ? DeleteContentCommand(documentRange: request.documentRange)
+      : null,
+  (request) => request is DeleteSelectionRequest //
+      ? DeleteSelectionCommand(affinity: request.affinity)
       : null,
   (request) => request is DeleteUpstreamAtBeginningOfNodeRequest && request.node is ListItemNode
       ? ConvertListItemToParagraphCommand(nodeId: request.node.id, paragraphMetadata: request.node.metadata)

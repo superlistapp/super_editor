@@ -1,7 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:golden_toolkit/golden_toolkit.dart';
 import 'package:super_editor/super_editor.dart';
 import 'package:super_editor_markdown/super_editor_markdown.dart';
 
@@ -10,24 +9,29 @@ import '../../test_tools_goldens.dart';
 void main() {
   group("SuperEditor > text entry > composing region >", () {
     testGoldensOnAndroid("is underlined in paragraph", _showsUnderlineInParagraph, windowSize: goldenSizeLongStrip);
+    testGoldensOnAndroid("is underlined in blockquote", _showsUnderlineInBlockquote, windowSize: goldenSizeLongStrip);
     testGoldensOnAndroid("is underlined in list item", _showsUnderlineInListItem, windowSize: goldenSizeLongStrip);
     testGoldensOnAndroid("is underlined in task", _showsUnderlineInTask, windowSize: goldenSizeLongStrip);
 
     testGoldensOniOS("is underlined in paragraph", _showsUnderlineInParagraph, windowSize: goldenSizeLongStrip);
+    testGoldensOniOS("is underlined in blockquote", _showsUnderlineInBlockquote, windowSize: goldenSizeLongStrip);
     testGoldensOniOS("is underlined in list item", _showsUnderlineInListItem, windowSize: goldenSizeLongStrip);
     testGoldensOniOS("is underlined in task", _showsUnderlineInTask, windowSize: goldenSizeLongStrip);
 
     testGoldensOnMac("is underlined in paragraph", _showsUnderlineInParagraph, windowSize: goldenSizeLongStrip);
+    testGoldensOnMac("is underlined in blockquote", _showsUnderlineInBlockquote, windowSize: goldenSizeLongStrip);
     testGoldensOnMac("is underlined in list item", _showsUnderlineInListItem, windowSize: goldenSizeLongStrip);
     testGoldensOnMac("is underlined in task", _showsUnderlineInTask, windowSize: goldenSizeLongStrip);
   });
 
   group("SuperEditor > text entry > composing region >", () {
     testGoldensOnWindows("shows nothing in paragraph", _showsNothingInParagraph, windowSize: goldenSizeLongStrip);
+    testGoldensOnWindows("shows nothing in blockquote", _showsNothingInBlockquote, windowSize: goldenSizeLongStrip);
     testGoldensOnWindows("shows nothing in list item", _showsNothingInListItem, windowSize: goldenSizeLongStrip);
     testGoldensOnWindows("shows nothing in task", _showsNothingInTask, windowSize: goldenSizeLongStrip);
 
     testGoldensOnLinux("shows nothing in paragraph", _showsNothingInParagraph, windowSize: goldenSizeLongStrip);
+    testGoldensOnLinux("shows nothing in blockquote", _showsNothingInBlockquote, windowSize: goldenSizeLongStrip);
     testGoldensOnLinux("shows nothing in list item", _showsNothingInListItem, windowSize: goldenSizeLongStrip);
     testGoldensOnLinux("shows nothing in task", _showsNothingInTask, windowSize: goldenSizeLongStrip);
   });
@@ -36,79 +40,165 @@ void main() {
 Future<void> _showsUnderlineInParagraph(WidgetTester tester) async {
   final (editor, document) = await _pumpScaffold(tester, _paragraphMarkdown);
 
-  _simulateComposingRegion(tester, editor, document);
+  await _simulateComposingRegion(tester, editor, document);
 
   // Ensure the composing region is underlined.
-  await screenMatchesGolden(
-      tester, "super-editor_text-entry_composing-region-shows-underline_paragraph_${defaultTargetPlatform.name}_1");
+  await expectLater(
+    find.byType(MaterialApp),
+    matchesGoldenFileWithPixelAllowance(
+      "goldens/super-editor_text-entry_composing-region-shows-underline_paragraph_${defaultTargetPlatform.name}_1.png",
+      7,
+    ),
+  );
 
-  _clearComposingRegion(tester, editor, document);
+  await _clearComposingRegion(tester, editor, document);
 
   // Ensure the underline disappeared now that the composing region is null.
-  await screenMatchesGolden(
-      tester, "super-editor_text-entry_composing-region-shows-underline_paragraph_${defaultTargetPlatform.name}_2");
+  await expectLater(
+    find.byType(MaterialApp),
+    matchesGoldenFileWithPixelAllowance(
+      "goldens/super-editor_text-entry_composing-region-shows-underline_paragraph_${defaultTargetPlatform.name}_2.png",
+      7,
+    ),
+  );
+}
+
+Future<void> _showsUnderlineInBlockquote(WidgetTester tester) async {
+  final (editor, document) = await _pumpScaffold(tester, _blockquoteMarkdown);
+
+  await _simulateComposingRegion(tester, editor, document);
+
+  // Ensure the composing region is underlined.
+  await expectLater(
+    find.byType(MaterialApp),
+    matchesGoldenFileWithPixelAllowance(
+      "goldens/super-editor_text-entry_composing-region-shows-underline_blockquote_${defaultTargetPlatform.name}_1.png",
+      7,
+    ),
+  );
+
+  await _clearComposingRegion(tester, editor, document);
+
+  // Ensure the underline disappeared now that the composing region is null.
+  await expectLater(
+    find.byType(MaterialApp),
+    matchesGoldenFileWithPixelAllowance(
+      "goldens/super-editor_text-entry_composing-region-shows-underline_blockquote_${defaultTargetPlatform.name}_2.png",
+      7,
+    ),
+  );
 }
 
 Future<void> _showsNothingInParagraph(WidgetTester tester) async {
   final (editor, document) = await _pumpScaffold(tester, _paragraphMarkdown);
 
-  _simulateComposingRegion(tester, editor, document);
+  await _simulateComposingRegion(tester, editor, document);
 
   // Ensure the composing region is underlined.
-  await screenMatchesGolden(
-      tester, "super-editor_text-entry_composing-region-showing-nothing_paragraph_${defaultTargetPlatform.name}");
+  await expectLater(
+    find.byType(MaterialApp),
+    matchesGoldenFileWithPixelAllowance(
+      "goldens/super-editor_text-entry_composing-region-showing-nothing_paragraph_${defaultTargetPlatform.name}.png",
+      7,
+    ),
+  );
+}
+
+Future<void> _showsNothingInBlockquote(WidgetTester tester) async {
+  final (editor, document) = await _pumpScaffold(tester, _blockquoteMarkdown);
+
+  await _simulateComposingRegion(tester, editor, document);
+
+  // Ensure the composing region is underlined.
+  await expectLater(
+    find.byType(MaterialApp),
+    matchesGoldenFileWithPixelAllowance(
+      "goldens/super-editor_text-entry_composing-region-showing-nothing_blockquote_${defaultTargetPlatform.name}.png",
+      7,
+    ),
+  );
 }
 
 Future<void> _showsUnderlineInListItem(WidgetTester tester) async {
   final (editor, document) = await _pumpScaffold(tester, _listItemMarkdown);
 
-  _simulateComposingRegion(tester, editor, document);
+  await _simulateComposingRegion(tester, editor, document);
 
   // Ensure the composing region is underlined.
-  await screenMatchesGolden(
-      tester, "super-editor_text-entry_composing-region-shows-underline_list-item_${defaultTargetPlatform.name}_1");
+  await expectLater(
+    find.byType(MaterialApp),
+    matchesGoldenFileWithPixelAllowance(
+      "goldens/super-editor_text-entry_composing-region-shows-underline_list-item_${defaultTargetPlatform.name}_1.png",
+      7,
+    ),
+  );
 
-  _clearComposingRegion(tester, editor, document);
+  await _clearComposingRegion(tester, editor, document);
 
   // Ensure the underline disappeared now that the composing region is null.
-  await screenMatchesGolden(
-      tester, "super-editor_text-entry_composing-region-shows-underline_list-item_${defaultTargetPlatform.name}_2");
+  await expectLater(
+    find.byType(MaterialApp),
+    matchesGoldenFileWithPixelAllowance(
+      "goldens/super-editor_text-entry_composing-region-shows-underline_list-item_${defaultTargetPlatform.name}_2.png",
+      7,
+    ),
+  );
 }
 
 Future<void> _showsNothingInListItem(WidgetTester tester) async {
   final (editor, document) = await _pumpScaffold(tester, _listItemMarkdown);
 
-  _simulateComposingRegion(tester, editor, document);
+  await _simulateComposingRegion(tester, editor, document);
 
   // Ensure the composing region is underlined.
-  await screenMatchesGolden(
-      tester, "super-editor_text-entry_composing-region-shows-nothing_list-item_${defaultTargetPlatform.name}");
+  await expectLater(
+    find.byType(MaterialApp),
+    matchesGoldenFileWithPixelAllowance(
+      "goldens/super-editor_text-entry_composing-region-shows-nothing_list-item_${defaultTargetPlatform.name}.png",
+      7,
+    ),
+  );
 }
 
 Future<void> _showsUnderlineInTask(WidgetTester tester) async {
   final (editor, document) = await _pumpScaffold(tester, _taskMarkdown);
 
-  _simulateComposingRegion(tester, editor, document);
+  await _simulateComposingRegion(tester, editor, document);
 
   // Ensure the composing region is underlined.
-  await screenMatchesGolden(
-      tester, "super-editor_text-entry_composing-region-shows-underline_task_${defaultTargetPlatform.name}_1");
+  await expectLater(
+    find.byType(MaterialApp),
+    matchesGoldenFileWithPixelAllowance(
+      "goldens/super-editor_text-entry_composing-region-shows-underline_task_${defaultTargetPlatform.name}_1.png",
+      7,
+    ),
+  );
 
-  _clearComposingRegion(tester, editor, document);
+  await _clearComposingRegion(tester, editor, document);
 
   // Ensure the underline disappeared now that the composing region is null.
-  await screenMatchesGolden(
-      tester, "super-editor_text-entry_composing-region-shows-underline_task_${defaultTargetPlatform.name}_2");
+  await expectLater(
+    find.byType(MaterialApp),
+    matchesGoldenFileWithPixelAllowance(
+      "goldens/super-editor_text-entry_composing-region-shows-underline_task_${defaultTargetPlatform.name}_2.png",
+      7,
+    ),
+  );
 }
 
 Future<void> _showsNothingInTask(WidgetTester tester) async {
   final (editor, document) = await _pumpScaffold(tester, _taskMarkdown);
 
-  _simulateComposingRegion(tester, editor, document);
+  await _simulateComposingRegion(tester, editor, document);
 
   // Ensure the composing region is underlined.
-  await screenMatchesGolden(
-      tester, "super-editor_text-entry_composing-region-shows-nothing_task_${defaultTargetPlatform.name}");
+  await expectLater(
+    find.byType(MaterialApp),
+    matchesGoldenFileWithPixelAllowance(
+      "goldens/super-editor_text-entry_composing-region-shows-nothing_task_${defaultTargetPlatform.name}.png",
+      7,
+    ),
+  );
 }
 
 Future<(Editor, Document)> _pumpScaffold(WidgetTester tester, String contentMarkdown) async {
@@ -185,6 +275,7 @@ Future<void> _clearComposingRegion(WidgetTester tester, Editor editor, Document 
 }
 
 const _paragraphMarkdown = "Typing with composing a";
+const _blockquoteMarkdown = "> Typing with composing a";
 const _listItemMarkdown = " * Typing with composing a";
 const _taskMarkdown = "- [ ] Typing with composing a";
 

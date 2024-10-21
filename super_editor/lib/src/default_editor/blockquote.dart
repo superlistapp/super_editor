@@ -1,13 +1,16 @@
 import 'package:attributed_text/attributed_text.dart';
+import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:super_editor/src/core/edit_context.dart';
 import 'package:super_editor/src/core/editor.dart';
 import 'package:super_editor/src/core/styles.dart';
 import 'package:super_editor/src/default_editor/attributions.dart';
+import 'package:super_editor/src/default_editor/blocks/indentation.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/attributed_text_styles.dart';
 import 'package:super_editor/src/infrastructure/keyboard.dart';
+import 'package:super_text_layout/super_text_layout.dart';
 
 import '../core/document.dart';
 import 'layout_single_column/layout_single_column.dart';
@@ -53,6 +56,7 @@ class BlockquoteComponentBuilder implements ComponentBuilder {
       nodeId: node.id,
       text: node.text,
       textStyleBuilder: noStyleBuilder,
+      indent: node.indent,
       backgroundColor: const Color(0x00000000),
       borderRadius: BorderRadius.zero,
       textDirection: textDirection,
@@ -72,13 +76,14 @@ class BlockquoteComponentBuilder implements ComponentBuilder {
       textKey: componentContext.componentKey,
       text: componentViewModel.text,
       styleBuilder: componentViewModel.textStyleBuilder,
+      indent: componentViewModel.indent,
+      indentCalculator: componentViewModel.indentCalculator,
       backgroundColor: componentViewModel.backgroundColor,
       borderRadius: componentViewModel.borderRadius,
       textSelection: componentViewModel.selection,
       selectionColor: componentViewModel.selectionColor,
       highlightWhenEmpty: componentViewModel.highlightWhenEmpty,
-      composingRegion: componentViewModel.composingRegion,
-      showComposingUnderline: componentViewModel.showComposingUnderline,
+      underlines: componentViewModel.createUnderlines(),
     );
   }
 }
@@ -92,14 +97,29 @@ class BlockquoteComponentViewModel extends SingleColumnLayoutComponentViewModel 
     required this.textStyleBuilder,
     this.textDirection = TextDirection.ltr,
     this.textAlignment = TextAlign.left,
+    this.indent = 0,
+    this.indentCalculator = defaultParagraphIndentCalculator,
     required this.backgroundColor,
     required this.borderRadius,
     this.selection,
     required this.selectionColor,
     this.highlightWhenEmpty = false,
-    this.composingRegion,
-    this.showComposingUnderline = false,
-  }) : super(nodeId: nodeId, maxWidth: maxWidth, padding: padding);
+    TextRange? composingRegion,
+    bool showComposingRegionUnderline = false,
+    UnderlineStyle spellingErrorUnderlineStyle = const SquiggleUnderlineStyle(color: Color(0xFFFF0000)),
+    List<TextRange> spellingErrors = const <TextRange>[],
+    UnderlineStyle grammarErrorUnderlineStyle = const SquiggleUnderlineStyle(color: Colors.blue),
+    List<TextRange> grammarErrors = const <TextRange>[],
+  }) : super(nodeId: nodeId, maxWidth: maxWidth, padding: padding) {
+    this.composingRegion = composingRegion;
+    this.showComposingRegionUnderline = showComposingRegionUnderline;
+
+    this.spellingErrorUnderlineStyle = spellingErrorUnderlineStyle;
+    this.spellingErrors = spellingErrors;
+
+    this.grammarErrorUnderlineStyle = grammarErrorUnderlineStyle;
+    this.grammarErrors = grammarErrors;
+  }
 
   @override
   AttributedText text;
@@ -109,16 +129,16 @@ class BlockquoteComponentViewModel extends SingleColumnLayoutComponentViewModel 
   TextDirection textDirection;
   @override
   TextAlign textAlignment;
+
+  int indent;
+  TextBlockIndentCalculator indentCalculator;
+
   @override
   TextSelection? selection;
   @override
   Color selectionColor;
   @override
   bool highlightWhenEmpty;
-  @override
-  TextRange? composingRegion;
-  @override
-  bool showComposingUnderline;
 
   Color backgroundColor;
   BorderRadius borderRadius;
@@ -140,13 +160,19 @@ class BlockquoteComponentViewModel extends SingleColumnLayoutComponentViewModel 
       textStyleBuilder: textStyleBuilder,
       textDirection: textDirection,
       textAlignment: textAlignment,
+      indent: indent,
+      indentCalculator: indentCalculator,
       backgroundColor: backgroundColor,
       borderRadius: borderRadius,
       selection: selection,
       selectionColor: selectionColor,
       highlightWhenEmpty: highlightWhenEmpty,
+      spellingErrorUnderlineStyle: spellingErrorUnderlineStyle,
+      spellingErrors: List.from(spellingErrors),
+      grammarErrorUnderlineStyle: grammarErrorUnderlineStyle,
+      grammarErrors: List.from(grammarErrors),
       composingRegion: composingRegion,
-      showComposingUnderline: showComposingUnderline,
+      showComposingRegionUnderline: showComposingRegionUnderline,
     );
   }
 
@@ -160,13 +186,18 @@ class BlockquoteComponentViewModel extends SingleColumnLayoutComponentViewModel 
           text == other.text &&
           textDirection == other.textDirection &&
           textAlignment == other.textAlignment &&
+          indent == other.indent &&
           backgroundColor == other.backgroundColor &&
           borderRadius == other.borderRadius &&
           selection == other.selection &&
           selectionColor == other.selectionColor &&
           highlightWhenEmpty == other.highlightWhenEmpty &&
+          spellingErrorUnderlineStyle == other.spellingErrorUnderlineStyle &&
+          const DeepCollectionEquality().equals(spellingErrors, other.spellingErrors) &&
+          grammarErrorUnderlineStyle == other.grammarErrorUnderlineStyle &&
+          const DeepCollectionEquality().equals(grammarErrors, other.grammarErrors) &&
           composingRegion == other.composingRegion &&
-          showComposingUnderline == other.showComposingUnderline;
+          showComposingRegionUnderline == other.showComposingRegionUnderline;
 
   @override
   int get hashCode =>
@@ -175,13 +206,18 @@ class BlockquoteComponentViewModel extends SingleColumnLayoutComponentViewModel 
       text.hashCode ^
       textDirection.hashCode ^
       textAlignment.hashCode ^
+      indent.hashCode ^
       backgroundColor.hashCode ^
       borderRadius.hashCode ^
       selection.hashCode ^
       selectionColor.hashCode ^
       highlightWhenEmpty.hashCode ^
+      spellingErrorUnderlineStyle.hashCode ^
+      spellingErrors.hashCode ^
+      grammarErrorUnderlineStyle.hashCode ^
+      grammarErrors.hashCode ^
       composingRegion.hashCode ^
-      showComposingUnderline.hashCode;
+      showComposingRegionUnderline.hashCode;
 }
 
 /// Displays a blockquote in a document.
@@ -192,12 +228,13 @@ class BlockquoteComponent extends StatelessWidget {
     required this.text,
     required this.styleBuilder,
     this.textSelection,
+    this.indent = 0,
+    this.indentCalculator = defaultParagraphIndentCalculator,
     this.selectionColor = Colors.lightBlueAccent,
     required this.backgroundColor,
     required this.borderRadius,
     this.highlightWhenEmpty = false,
-    this.composingRegion,
-    this.showComposingUnderline = false,
+    this.underlines = const [],
     this.showDebugPaint = false,
   }) : super(key: key);
 
@@ -205,12 +242,13 @@ class BlockquoteComponent extends StatelessWidget {
   final AttributedText text;
   final AttributionStyleBuilder styleBuilder;
   final TextSelection? textSelection;
+  final int indent;
+  final TextBlockIndentCalculator indentCalculator;
   final Color selectionColor;
   final Color backgroundColor;
   final BorderRadius borderRadius;
   final bool highlightWhenEmpty;
-  final TextRange? composingRegion;
-  final bool showComposingUnderline;
+  final List<Underlines> underlines;
   final bool showDebugPaint;
 
   @override
@@ -222,16 +260,29 @@ class BlockquoteComponent extends StatelessWidget {
           borderRadius: borderRadius,
           color: backgroundColor,
         ),
-        child: TextComponent(
-          key: textKey,
-          text: text,
-          textStyleBuilder: styleBuilder,
-          textSelection: textSelection,
-          selectionColor: selectionColor,
-          highlightWhenEmpty: highlightWhenEmpty,
-          composingRegion: composingRegion,
-          showComposingUnderline: showComposingUnderline,
-          showDebugPaint: showDebugPaint,
+        child: Row(
+          children: [
+            // Indent spacing on left.
+            SizedBox(
+              width: indentCalculator(
+                styleBuilder({}),
+                indent,
+              ),
+            ),
+            // The actual paragraph UI.
+            Expanded(
+              child: TextComponent(
+                key: textKey,
+                text: text,
+                textStyleBuilder: styleBuilder,
+                textSelection: textSelection,
+                selectionColor: selectionColor,
+                highlightWhenEmpty: highlightWhenEmpty,
+                underlines: underlines,
+                showDebugPaint: showDebugPaint,
+              ),
+            ),
+          ],
         ),
       ),
     );

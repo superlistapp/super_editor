@@ -332,7 +332,11 @@ void main() {
                 ),
                 extent: DocumentPosition(
                   nodeId: "1",
-                  nodePosition: TextNodePosition(offset: 45),
+                  // We are dragging until the middle of a word, but since Android
+                  // selects by word instead of by character, the selection expands
+                  // to the end of the word. The drag line in the golden won't match
+                  // the drag handle position.
+                  nodePosition: TextNodePosition(offset: 50),
                 ),
               ),
             );
@@ -700,9 +704,7 @@ Widget _buildScaffold({
     child: MaterialApp(
       home: Scaffold(
         body: Center(
-          child: IntrinsicHeight(
-            child: child,
-          ),
+          child: child,
         ),
       ),
       debugShowCheckedModeBanner: false,

@@ -60,6 +60,46 @@ void main() {
       await tester.pump(const Duration(milliseconds: 100));
     });
 
+    testWidgetsOnIos("does not blink caret while dragging it", (tester) async {
+      BlinkController.indeterminateAnimationsEnabled = true;
+      addTearDown(() => BlinkController.indeterminateAnimationsEnabled = false);
+
+      await _pumpSingleParagraphApp(tester);
+
+      // Place the caret.
+      await tester.tapInParagraph("1", 200);
+
+      // Press and drag the caret somewhere else in the paragraph.
+      final gesture = await tester.tapDownInParagraph("1", 200);
+      for (int i = 0; i < 5; i += 1) {
+        await gesture.moveBy(const Offset(24, 0));
+        await tester.pump();
+      }
+
+      // Duration for the caret to switch between visible and invisible.
+      final flashPeriod = SuperEditorInspector.caretFlashPeriod();
+
+      // Ensure caret is visible.
+      expect(SuperEditorInspector.isCaretVisible(), isTrue);
+
+      // Trigger a frame with an ellapsed time equal to the flashPeriod,
+      // so if the caret is blinking it will change from visible to invisible.
+      await tester.pump(flashPeriod);
+
+      // Ensure caret is still visible after the flash period, which means it isn't blinking.
+      expect(SuperEditorInspector.isCaretVisible(), isTrue);
+
+      // Trigger another frame.
+      await tester.pump(flashPeriod);
+
+      // Ensure caret is still visible.
+      expect(SuperEditorInspector.isCaretVisible(), isTrue);
+
+      // Resolve the gesture so that we don't have pending gesture timers.
+      await gesture.up();
+      await tester.pump(const Duration(milliseconds: 100));
+    });
+
     testWidgetsOnIos("shows toolbar when selection is expanded", (tester) async {
       await _pumpSingleParagraphApp(tester);
 

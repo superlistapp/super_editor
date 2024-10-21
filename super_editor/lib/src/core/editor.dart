@@ -58,6 +58,7 @@ class Editor implements RequestDispatcher {
     this.historyGroupingPolicy = neverMergePolicy,
     List<EditReaction>? reactionPipeline,
     List<EditListener>? listeners,
+    this.isHistoryEnabled = false,
   })  : requestHandlers = requestHandlers ?? [],
         reactionPipeline = reactionPipeline ?? [],
         _changeListeners = listeners ?? [] {
@@ -76,6 +77,12 @@ class Editor implements RequestDispatcher {
   /// Service Locator that provides all resources that are relevant for document editing.
   late final EditContext context;
 
+  /// Whether history tracking (and undo/redo) are enabled.
+  ///
+  /// When [isHistoryEnabled] is `false`, undo/redo is disabled, calling [undo] and [redo]
+  /// will have no effect, and [history] and [future] are always empty.
+  final bool isHistoryEnabled;
+
   /// Policies that determine when a new transaction of changes should be combined with the
   /// previous transaction, impacting what is undone by undo.
   final HistoryGroupingPolicy historyGroupingPolicy;
@@ -83,9 +90,17 @@ class Editor implements RequestDispatcher {
   /// Executes [EditCommand]s and collects a list of changes.
   late final _DocumentEditorCommandExecutor _commandExecutor;
 
+  /// A list of editor transactions that were run previously, leading to the current
+  /// state of the document, and other editables.
   List<CommandTransaction> get history => List.from(_history);
   final _history = <CommandTransaction>[];
 
+  /// A list of editor transactions that were undone since the last time a change was
+  /// made.
+  ///
+  /// As soon as a new change is made through the editor, the [future] list is cleared
+  /// out, because the editor no longer knows if the [future] changes can be applied
+  /// to the document and other editables.
   List<CommandTransaction> get future => List.from(_future);
   final _future = <CommandTransaction>[];
 
@@ -173,7 +188,7 @@ class Editor implements RequestDispatcher {
       return;
     }
 
-    if (_transaction!.commands.isNotEmpty) {
+    if (_transaction!.commands.isNotEmpty && isHistoryEnabled) {
       if (_history.isEmpty) {
         // Add this transaction onto the history stack.
         _history.add(_transaction!);
@@ -342,7 +357,7 @@ class Editor implements RequestDispatcher {
       reaction.react(context, this, _activeChangeList!);
     }
 
-    if (_transaction!.commands.isNotEmpty) {
+    if (_transaction!.commands.isNotEmpty && isHistoryEnabled) {
       _history.add(_transaction!);
     }
 
@@ -354,6 +369,11 @@ class Editor implements RequestDispatcher {
   }
 
   void undo() {
+    if (!isHistoryEnabled) {
+      // History is disabled, therefore undo/redo are disabled.
+      return;
+    }
+
     editorEditsLog.info("Running undo");
     if (_history.isEmpty) {
       return;
@@ -390,7 +410,6 @@ class Editor implements RequestDispatcher {
     final changeEvents = <EditEvent>[];
     for (final commandTransaction in _history) {
       for (final command in commandTransaction.commands) {
-        editorEditsLog.finer("Executing command: ${command.runtimeType}");
         // We re-run the commands without tracking changes and without running reactions
         // because any relevant reactions should have run the first time around, and already
         // submitted their commands.
@@ -412,6 +431,11 @@ class Editor implements RequestDispatcher {
   }
 
   void redo() {
+    if (!isHistoryEnabled) {
+      // History is disabled, therefore undo/redo are disabled.
+      return;
+    }
+
     editorEditsLog.info("Running redo");
     if (_future.isEmpty) {
       return;
@@ -1087,7 +1111,7 @@ class MutableDocument with Iterable<DocumentNode> implements Document, Editable 
   Iterator<DocumentNode> get iterator => _nodes.iterator;
 
   @override
-  DocumentNode? get firstOrNull => _nodes.lastOrNull;
+  DocumentNode? get firstOrNull => _nodes.firstOrNull;
 
   @override
   DocumentNode? get lastOrNull => _nodes.lastOrNull;

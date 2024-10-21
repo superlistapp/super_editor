@@ -25,7 +25,7 @@ void main() {
       // directions: right-to-left is upstream for a single line, and up-to-down is
       // downstream for multi-node. This test ensures that the single-line direction is
       // honored by the document layout, rather than the more common multi-node calculation.
-      final selection = layout.getDocumentSelectionInRegion(const Offset(200, 35), const Offset(150, 45));
+      final selection = layout.getDocumentSelectionInRegion(const Offset(1100, 35), const Offset(1050, 45));
       expect(selection, isNotNull);
 
       // Ensure that the document selection is upstream.
@@ -51,7 +51,7 @@ void main() {
       // directions: left-to-right is downstream for a single line, and down-to-up is
       // upstream for multi-node. This test ensures that the single-line direction is
       // honored by the document layout, rather than the more common multi-node calculation.
-      final selection = layout.getDocumentSelectionInRegion(const Offset(150, 45), const Offset(200, 35));
+      final selection = layout.getDocumentSelectionInRegion(const Offset(1050, 45), const Offset(1100, 35));
       expect(selection, isNotNull);
 
       // Ensure that the document selection is downstream.

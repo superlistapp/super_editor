@@ -1,3 +1,22 @@
+## [0.1.14] - Sept, 2024
+ * [FIX] - Flutter was reporting 1px height different between empty text and non-empty text.
+   We introduced a temporary hack fix to keep the reported height consistent until Flutter
+   ships its own fix.
+
+## [0.1.13] - Sept, 2024
+ * [FIX] - Caret size is as expected when placed at end of paragraph with preceding space. 
+   This bug was caused by Flutter and we introduced a temporary hack to solve it until 
+   Flutter ships its own fix.
+
+## [0.1.12] - Aug, 2024
+ * Package metadata update - no functional changes.
+
+## [0.1.11] - Aug, 2024
+ * [BREAKING] - Replaced singular `UnderlineStyle` in `TextUnderlineLayer` with a styler per 
+   underline (to support composing, spelling errors, and grammar errors).
+ * Text selection boxes now support rounded corners.
+ * Adjusted the precise positioning of text selection rectangles.
+
 ## [0.1.10] - June, 2024
  * `FillWidthIfConstrained` uses ancestor constraints instead of ancestor size.
  * Changed `getLineHeightAtPosition` and `getCharacterBox` to both use `RenderParagraph.getFullHeightForCaret()`.
