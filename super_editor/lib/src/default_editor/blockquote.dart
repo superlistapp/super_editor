@@ -404,7 +404,7 @@ class SplitBlockquoteCommand extends EditCommand {
     // Change the current node's content to just the text before the caret.
     document.replaceNodeById(
       blockquote.id,
-      blockquote.copyWithText(startText),
+      blockquote.copyParagraphWith(text: startText),
     );
 
     // Create a new node that will follow the current node. Set its text
@@ -418,7 +418,7 @@ class SplitBlockquoteCommand extends EditCommand {
 
     // Insert the new node after the current node.
     document.insertNodeAfter(
-      existingNode: node,
+      existingNodeId: node.id,
       newNode: newNode,
     );
 

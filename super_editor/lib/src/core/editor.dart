@@ -1153,13 +1153,23 @@ class MutableDocument with Iterable<DocumentNode> implements Document, Editable 
 
   @override
   DocumentNode? getNodeBefore(DocumentNode node) {
-    final nodeIndex = getNodeIndexById(node.id);
+    return getNodeBeforeById(node.id);
+  }
+
+  @override
+  DocumentNode? getNodeBeforeById(String nodeId) {
+    final nodeIndex = getNodeIndexById(nodeId);
     return nodeIndex > 0 ? getNodeAt(nodeIndex - 1) : null;
   }
 
   @override
   DocumentNode? getNodeAfter(DocumentNode node) {
-    final nodeIndex = getNodeIndexById(node.id);
+    return getNodeAfterById(node.id);
+  }
+
+  @override
+  DocumentNode? getNodeAfterById(String nodeId) {
+    final nodeIndex = getNodeIndexById(nodeId);
     return nodeIndex >= 0 && nodeIndex < _nodes.length - 1 ? getNodeAt(nodeIndex + 1) : null;
   }
 
@@ -1196,20 +1206,20 @@ class MutableDocument with Iterable<DocumentNode> implements Document, Editable 
 
   /// Inserts [newNode] immediately before the given [existingNode].
   void insertNodeBefore({
-    required DocumentNode existingNode,
+    required String existingNodeId,
     required DocumentNode newNode,
   }) {
-    final nodeIndex = _nodes.indexOf(existingNode);
+    final nodeIndex = getNodeIndexById(existingNodeId);
     _nodes.insert(nodeIndex, newNode);
     _refreshNodeIdCaches();
   }
 
   /// Inserts [newNode] immediately after the given [existingNode].
   void insertNodeAfter({
-    required DocumentNode existingNode,
+    required String existingNodeId,
     required DocumentNode newNode,
   }) {
-    final nodeIndex = _nodes.indexOf(existingNode);
+    final nodeIndex = getNodeIndexById(existingNodeId);
     if (nodeIndex >= 0 && nodeIndex < _nodes.length) {
       _nodes.insert(nodeIndex + 1, newNode);
       _refreshNodeIdCaches();
@@ -1235,13 +1245,16 @@ class MutableDocument with Iterable<DocumentNode> implements Document, Editable 
   }
 
   /// Deletes the given [node] from the [Document].
-  bool deleteNode(DocumentNode node) {
+  bool deleteNode(String nodeId) {
     bool isRemoved = false;
 
-    isRemoved = _nodes.remove(node);
-    if (isRemoved) {
-      _refreshNodeIdCaches();
+    final index = getNodeIndexById(nodeId);
+    if (index < 0) {
+      return false;
     }
+
+    _nodes.removeAt(index);
+    _refreshNodeIdCaches();
 
     return isRemoved;
   }
@@ -1263,6 +1276,7 @@ class MutableDocument with Iterable<DocumentNode> implements Document, Editable 
   }
 
   /// Replaces the given [oldNode] with the given [newNode]
+  @Deprecated("Use replaceNodeById() instead")
   void replaceNode({
     required DocumentNode oldNode,
     required DocumentNode newNode,

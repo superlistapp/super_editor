@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:super_editor/super_editor.dart';
 
 /// [DocumentNode] that represents a video at a URL.
+@immutable
 class VideoNode extends UrlMediaNode {
   static const videoAttribution = NamedAttribution("video");
 
@@ -19,6 +20,7 @@ class VideoNode extends UrlMediaNode {
 }
 
 /// [DocumentNode] that represents an audio source at a URL.
+@immutable
 class AudioNode extends UrlMediaNode {
   static const audioAttribution = NamedAttribution("audio");
 
@@ -36,6 +38,7 @@ class AudioNode extends UrlMediaNode {
 }
 
 /// [DocumentNode] that represents a file at a URL.
+@immutable
 class FileNode extends UrlMediaNode {
   static const fileAttribution = NamedAttribution("file");
 
@@ -53,39 +56,26 @@ class FileNode extends UrlMediaNode {
 }
 
 /// [DocumentNode] that represents a media source that exists a given [url].
-class UrlMediaNode extends BlockNode with ChangeNotifier {
+@immutable
+class UrlMediaNode extends BlockNode {
   UrlMediaNode({
     required this.id,
-    required String url,
-    String altText = '',
+    required this.url,
+    this.altText = '',
     required Attribution blockAttribution,
-    Map<String, dynamic>? metadata,
-  })  : _url = url,
-        _altText = altText {
-    this.metadata = metadata;
-    putMetadataValue("blockType", blockAttribution);
+    super.metadata,
+  }) {
+    initAddToMetadata({
+      "blockType": blockAttribution,
+    });
   }
 
   @override
   final String id;
 
-  String get url => _url;
-  String _url;
-  set url(String newUrl) {
-    if (newUrl != _url) {
-      _url = newUrl;
-      notifyListeners();
-    }
-  }
+  final String url;
 
-  String get altText => _altText;
-  String _altText;
-  set altText(String newAltText) {
-    if (newAltText != _altText) {
-      _altText = newAltText;
-      notifyListeners();
-    }
-  }
+  final String altText;
 
   @override
   String? copyContent(dynamic selection) {
@@ -93,12 +83,42 @@ class UrlMediaNode extends BlockNode with ChangeNotifier {
       throw Exception('ImageNode can only copy content from a UpstreamDownstreamNodeSelection.');
     }
 
-    return !selection.isCollapsed ? _url : null;
+    return !selection.isCollapsed ? url : null;
   }
 
   @override
   bool hasEquivalentContent(DocumentNode other) {
     return other is UrlMediaNode && url == other.url && altText == other.altText;
+  }
+
+  @override
+  UrlMediaNode copyAndReplaceMetadata(Map<String, dynamic> newMetadata) {
+    return copyUrlMediaWith(
+      metadata: newMetadata,
+    );
+  }
+
+  @override
+  UrlMediaNode copyWithAddedMetadata(Map<String, dynamic> newProperties) {
+    return copyUrlMediaWith(metadata: {
+      ...metadata,
+      ...newProperties,
+    });
+  }
+
+  UrlMediaNode copyUrlMediaWith({
+    String? id,
+    String? url,
+    String? altText,
+    Attribution? blockAttribution,
+    Map<String, dynamic>? metadata,
+  }) {
+    return UrlMediaNode(
+      id: id ?? this.id,
+      url: url ?? this.url,
+      blockAttribution: blockAttribution ?? this.metadata[NodeMetadata.blockType],
+      metadata: metadata ?? this.metadata,
+    );
   }
 
   @override
@@ -118,9 +138,9 @@ class UrlMediaNode extends BlockNode with ChangeNotifier {
       other is UrlMediaNode &&
           runtimeType == other.runtimeType &&
           id == other.id &&
-          _url == other._url &&
-          _altText == other._altText;
+          url == other.url &&
+          altText == other.altText;
 
   @override
-  int get hashCode => id.hashCode ^ _url.hashCode ^ _altText.hashCode;
+  int get hashCode => id.hashCode ^ url.hashCode ^ altText.hashCode;
 }

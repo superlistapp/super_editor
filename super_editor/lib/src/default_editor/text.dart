@@ -31,44 +31,30 @@ import 'paragraph.dart';
 import 'selection_upstream_downstream.dart';
 import 'text_tools.dart';
 
-class TextNode extends DocumentNode with ChangeNotifier {
+@immutable
+class TextNode extends DocumentNode {
   TextNode({
     required this.id,
-    required AttributedText text,
-    Map<String, dynamic>? metadata,
-  }) : _text = text {
-    this.metadata = metadata;
-    _text.addListener(notifyListeners);
-  }
-
-  @override
-  void dispose() {
-    _text.removeListener(notifyListeners);
-    super.dispose();
-  }
+    required this.text,
+    super.metadata,
+  });
 
   @override
   final String id;
 
-  AttributedText _text;
-
   /// The content text within this [TextNode].
-  AttributedText get text => _text;
-  set text(AttributedText newText) {
-    if (newText != _text) {
-      _text.removeListener(notifyListeners);
-      _text = newText;
-      _text.addListener(notifyListeners);
+  final AttributedText text;
 
-      notifyListeners();
-    }
-  }
-
-  TextNode copyWithText(AttributedText newText) => TextNode(
-        id: id,
-        text: newText,
-        metadata: metadata,
-      );
+  // TODO: remove this code once tests are passing again after going immutable.
+  // set text(AttributedText newText) {
+  //   if (newText != _text) {
+  //     _text.removeListener(notifyListeners);
+  //     _text = newText;
+  //     _text.addListener(notifyListeners);
+  //
+  //     notifyListeners();
+  //   }
+  // }
 
   @override
   TextNodePosition get beginningPosition => const TextNodePosition(offset: 0);
@@ -171,6 +157,32 @@ class TextNode extends DocumentNode with ChangeNotifier {
     return other is TextNode && text == other.text && super.hasEquivalentContent(other);
   }
 
+  TextNode copyTextNodeWith({
+    String? id,
+    AttributedText? text,
+    Map<String, dynamic>? metadata,
+  }) {
+    return TextNode(
+      id: id ?? this.id,
+      text: text ?? this.text,
+      metadata: metadata ?? this.metadata,
+    );
+  }
+
+  @override
+  DocumentNode copyAndReplaceMetadata(Map<String, dynamic> newMetadata) {
+    return copyTextNodeWith(
+      metadata: newMetadata,
+    );
+  }
+
+  @override
+  DocumentNode copyWithAddedMetadata(Map<String, dynamic> newProperties) {
+    return copyTextNodeWith(
+      metadata: {...metadata, ...newProperties},
+    );
+  }
+
   @override
   TextNode copy() {
     return TextNode(id: id, text: text.copyText(0), metadata: Map.from(metadata));
@@ -182,10 +194,10 @@ class TextNode extends DocumentNode with ChangeNotifier {
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      super == other && other is TextNode && runtimeType == other.runtimeType && id == other.id && _text == other._text;
+      super == other && other is TextNode && runtimeType == other.runtimeType && id == other.id && text == other.text;
 
   @override
-  int get hashCode => super.hashCode ^ id.hashCode ^ _text.hashCode;
+  int get hashCode => super.hashCode ^ id.hashCode ^ text.hashCode;
 }
 
 extension TextNodeExtensions on DocumentNode {
@@ -1325,8 +1337,8 @@ class AddTextAttributionsCommand extends EditCommand {
         // see that we made a change, and re-renders the text in the document.
         document.replaceNodeById(
           node.id,
-          node.copyWithText(
-            AttributedText(
+          node.copyTextNodeWith(
+            text: AttributedText(
               node.text.text,
               node.text.spans.copy()
                 ..addAttribution(
@@ -1449,8 +1461,8 @@ class RemoveTextAttributionsCommand extends EditCommand {
 
         // Create a new AttributedText with updated attribution spans, so that the presentation system can
         // see that we made a change, and re-renders the text in the document.
-        node = node.copyWithText(
-          AttributedText(
+        node = node.copyTextNodeWith(
+          text: AttributedText(
             node.text.text,
             node.text.spans.copy()
               ..removeAttribution(
@@ -1609,8 +1621,8 @@ class ToggleTextAttributionsCommand extends EditCommand {
 
           // Create a new AttributedText with updated attribution spans, so that the presentation system can
           // see that we made a change, and re-renders the text in the document.
-          node = node.copyWithText(
-            AttributedText(
+          node = node.copyTextNodeWith(
+            text: AttributedText(
               node.text.text,
               node.text.spans.copy(),
             )..removeAttribution(
@@ -1624,8 +1636,8 @@ class ToggleTextAttributionsCommand extends EditCommand {
 
           // Create a new AttributedText with updated attribution spans, so that the presentation system can
           // see that we made a change, and re-renders the text in the document.
-          node = node.copyWithText(
-            AttributedText(
+          node = node.copyTextNodeWith(
+            text: AttributedText(
               node.text.text,
               node.text.spans.copy()
                 ..addAttribution(
@@ -1727,7 +1739,10 @@ class ChangeSingleColumnLayoutComponentStylesCommand extends EditCommand {
     final document = context.document;
     final node = document.getNodeById(nodeId)!;
 
-    styles.applyTo(node);
+    document.replaceNodeById(
+      nodeId,
+      node.copyWithAddedMetadata(styles.toMetadata()),
+    );
 
     executor.logChanges([
       DocumentEdit(
@@ -1779,14 +1794,9 @@ class InsertTextCommand extends EditCommand {
 
     final textPosition = documentPosition.nodePosition as TextPosition;
     final textOffset = textPosition.offset;
-    // textNode.text = textNode.text.insertString(
-    //   textToInsert: textToInsert,
-    //   startOffset: textOffset,
-    //   applyAttributions: attributions,
-    // );
-    print("Inserting text into node ${textNode.id}: '$textToInsert'");
-    textNode = textNode.copyWithText(
-      textNode.text.insertString(
+
+    textNode = textNode.copyTextNodeWith(
+      text: textNode.text.insertString(
         textToInsert: textToInsert,
         startOffset: textOffset,
         applyAttributions: attributions,
@@ -1908,17 +1918,19 @@ class ConvertTextNodeToParagraphCommand extends EditCommand {
     final document = context.document;
 
     final extentNode = document.getNodeById(nodeId) as TextNode;
+    late ParagraphNode newParagraphNode;
     if (extentNode is ParagraphNode) {
-      extentNode.putMetadataValue('blockType', paragraphAttribution);
+      newParagraphNode = extentNode.copyWithAddedMetadata({
+        NodeMetadata.blockType: paragraphAttribution,
+      });
     } else {
-      final newParagraphNode = ParagraphNode(
+      newParagraphNode = ParagraphNode(
         id: extentNode.id,
         text: extentNode.text,
         metadata: newMetadata,
       );
-
-      document.replaceNode(oldNode: extentNode, newNode: newParagraphNode);
     }
+    document.replaceNode(oldNode: extentNode, newNode: newParagraphNode);
 
     executor.logChanges([
       DocumentEdit(
@@ -1958,9 +1970,14 @@ class InsertAttributedTextCommand extends EditCommand {
 
     final textOffset = (documentPosition.nodePosition as TextPosition).offset;
 
-    textNode.text = textNode.text.insert(
-      textToInsert: textToInsert,
-      startOffset: textOffset,
+    document.replaceNode(
+      oldNode: textNode,
+      newNode: textNode.copyTextNodeWith(
+        text: textNode.text.insert(
+          textToInsert: textToInsert,
+          startOffset: textOffset,
+        ),
+      ),
     );
 
     executor.logChanges([

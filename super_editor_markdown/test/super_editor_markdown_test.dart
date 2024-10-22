@@ -6,30 +6,100 @@ void main() {
   group('Markdown', () {
     group('serialization', () {
       test('headers', () {
-        final doc = MutableDocument(nodes: [
-          ParagraphNode(
-            id: '1',
-            text: AttributedText('My Header'),
+        final paragraph = ParagraphNode(
+          id: '1',
+          text: AttributedText('My Header'),
+        );
+
+        expect(
+          serializeDocumentToMarkdown(
+            MutableDocument(
+              nodes: [
+                paragraph.copyParagraphWith(
+                  metadata: const {
+                    "blockType": header1Attribution,
+                  },
+                ),
+              ],
+            ),
           ),
-        ]);
+          '# My Header',
+        );
 
-        (doc.getNodeAt(0)! as ParagraphNode).putMetadataValue('blockType', header1Attribution);
-        expect(serializeDocumentToMarkdown(doc), '# My Header');
+        expect(
+          serializeDocumentToMarkdown(
+            MutableDocument(
+              nodes: [
+                paragraph.copyParagraphWith(
+                  metadata: const {
+                    "blockType": header2Attribution,
+                  },
+                ),
+              ],
+            ),
+          ),
+          '## My Header',
+        );
 
-        (doc.getNodeAt(0)! as ParagraphNode).putMetadataValue('blockType', header2Attribution);
-        expect(serializeDocumentToMarkdown(doc), '## My Header');
+        expect(
+          serializeDocumentToMarkdown(
+            MutableDocument(
+              nodes: [
+                paragraph.copyParagraphWith(
+                  metadata: const {
+                    "blockType": header3Attribution,
+                  },
+                ),
+              ],
+            ),
+          ),
+          '### My Header',
+        );
 
-        (doc.getNodeAt(0)! as ParagraphNode).putMetadataValue('blockType', header3Attribution);
-        expect(serializeDocumentToMarkdown(doc), '### My Header');
+        expect(
+          serializeDocumentToMarkdown(
+            MutableDocument(
+              nodes: [
+                paragraph.copyParagraphWith(
+                  metadata: const {
+                    "blockType": header4Attribution,
+                  },
+                ),
+              ],
+            ),
+          ),
+          '#### My Header',
+        );
 
-        (doc.getNodeAt(0)! as ParagraphNode).putMetadataValue('blockType', header4Attribution);
-        expect(serializeDocumentToMarkdown(doc), '#### My Header');
+        expect(
+          serializeDocumentToMarkdown(
+            MutableDocument(
+              nodes: [
+                paragraph.copyParagraphWith(
+                  metadata: const {
+                    "blockType": header5Attribution,
+                  },
+                ),
+              ],
+            ),
+          ),
+          '##### My Header',
+        );
 
-        (doc.getNodeAt(0)! as ParagraphNode).putMetadataValue('blockType', header5Attribution);
-        expect(serializeDocumentToMarkdown(doc), '##### My Header');
-
-        (doc.getNodeAt(0)! as ParagraphNode).putMetadataValue('blockType', header6Attribution);
-        expect(serializeDocumentToMarkdown(doc), '###### My Header');
+        expect(
+          serializeDocumentToMarkdown(
+            MutableDocument(
+              nodes: [
+                paragraph.copyParagraphWith(
+                  metadata: const {
+                    "blockType": header6Attribution,
+                  },
+                ),
+              ],
+            ),
+          ),
+          '###### My Header',
+        );
       });
 
       test('header with left alignment', () {

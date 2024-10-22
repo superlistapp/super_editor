@@ -822,7 +822,7 @@ class CommonEditorOperations {
     DocumentNode prevNode = startingNode;
     DocumentNode? selectableNode;
     do {
-      selectableNode = document.getNodeBefore(prevNode);
+      selectableNode = document.getNodeBeforeById(prevNode.id);
 
       if (selectableNode != null) {
         final nextComponent = documentLayoutResolver().getComponentByNodeId(selectableNode.id);
@@ -843,7 +843,7 @@ class CommonEditorOperations {
     DocumentNode prevNode = startingNode;
     DocumentNode? selectableNode;
     do {
-      selectableNode = document.getNodeAfter(prevNode);
+      selectableNode = document.getNodeAfterById(prevNode.id);
 
       if (selectableNode != null) {
         final nextComponent = documentLayoutResolver().getComponentByNodeId(selectableNode.id);
@@ -910,7 +910,7 @@ class CommonEditorOperations {
       final text = (document.getNodeById(composer.selection!.extent.nodeId) as TextNode).text.text;
       if (textPosition.offset == text.length) {
         final node = document.getNodeById(composer.selection!.extent.nodeId)!;
-        final nodeAfter = document.getNodeAfter(node);
+        final nodeAfter = document.getNodeAfterById(node.id);
 
         if (nodeAfter is TextNode) {
           // The caret is at the end of one TextNode and is followed by
@@ -953,7 +953,7 @@ class CommonEditorOperations {
       return false;
     }
 
-    final nodeAfter = document.getNodeAfter(node);
+    final nodeAfter = document.getNodeAfterById(node.id);
     if (nodeAfter == null) {
       return false;
     }
@@ -983,9 +983,9 @@ class CommonEditorOperations {
       return false;
     }
 
-    DocumentNode? nodeAfter = document.getNodeAfter(node);
+    DocumentNode? nodeAfter = document.getNodeAfterById(node.id);
     while (nodeAfter is BlockNode && !nodeAfter.isDeletable) {
-      nodeAfter = document.getNodeAfter(nodeAfter);
+      nodeAfter = document.getNodeAfterById(nodeAfter.id);
     }
 
     if (nodeAfter == null) {
@@ -1103,7 +1103,7 @@ class CommonEditorOperations {
         //  * If the node above is an empty paragraph, delete it.
         //  * If the node above is non-selectable, delete it.
         //  * Otherwise, move the caret up to the node above.
-        final nodeBefore = document.getNodeBefore(node);
+        final nodeBefore = document.getNodeBeforeById(node.id);
         if (nodeBefore == null) {
           return false;
         }
@@ -1130,7 +1130,7 @@ class CommonEditorOperations {
     if (composer.selection!.extent.nodePosition is TextNodePosition) {
       final textPosition = composer.selection!.extent.nodePosition as TextNodePosition;
       if (textPosition.offset == 0) {
-        final nodeBefore = document.getNodeBefore(node);
+        final nodeBefore = document.getNodeBeforeById(node.id);
         if (nodeBefore == null) {
           return false;
         }
@@ -1182,7 +1182,7 @@ class CommonEditorOperations {
       return false;
     }
 
-    final nodeBefore = document.getNodeBefore(node);
+    final nodeBefore = document.getNodeBeforeById(node.id);
     if (nodeBefore == null) {
       return false;
     }
@@ -1217,7 +1217,7 @@ class CommonEditorOperations {
       return false;
     }
 
-    DocumentNode? nodeBefore = document.getNodeBefore(node);
+    DocumentNode? nodeBefore = document.getNodeBeforeById(node.id);
     while (nodeBefore != null) {
       final component = documentLayoutResolver().getComponentByNodeId(nodeBefore.id);
       if (component == null) {
@@ -1242,7 +1242,7 @@ class CommonEditorOperations {
         return true;
       }
 
-      nodeBefore = document.getNodeBefore(nodeBefore);
+      nodeBefore = document.getNodeBeforeById(nodeBefore.id);
     }
 
     // We didn't find any selectable nodes before the current node.
@@ -1259,9 +1259,9 @@ class CommonEditorOperations {
       return false;
     }
 
-    DocumentNode? nodeAbove = document.getNodeBefore(node);
+    DocumentNode? nodeAbove = document.getNodeBeforeById(node.id);
     while (nodeAbove != null && nodeAbove is BlockNode && !nodeAbove.isDeletable) {
-      nodeAbove = document.getNodeBefore(nodeAbove);
+      nodeAbove = document.getNodeBeforeById(nodeAbove.id);
     }
 
     if (nodeAbove == null) {
@@ -2413,10 +2413,11 @@ class PasteEditorCommand extends EditCommand {
 
     // The first line of pasted text was added to the selected paragraph.
     // Now, add all remaining pasted nodes to the document..
-    DocumentNode previousNode = currentNodeWithSelection;
+    DocumentNode previousNode = document.getNodeById(_pastePosition.nodeId)!;
+    // ^ re-query the node where the first paragraph was pasted because nodes are immutable.
     for (final pastedNode in parsedContent.sublist(1)) {
       document.insertNodeAfter(
-        existingNode: previousNode,
+        existingNodeId: previousNode.id,
         newNode: pastedNode,
       );
       previousNode = pastedNode;
@@ -2429,12 +2430,15 @@ class PasteEditorCommand extends EditCommand {
     }
 
     // Place the caret at the end of the pasted content.
+    final pastedNode = document.getNodeById(previousNode.id)!;
+    // ^ re-query the node where we pasted content because nodes are immutable.
+
     executor.executeCommand(
       ChangeSelectionCommand(
         DocumentSelection.collapsed(
           position: DocumentPosition(
-            nodeId: previousNode.id,
-            nodePosition: previousNode.endPosition,
+            nodeId: pastedNode.id,
+            nodePosition: pastedNode.endPosition,
           ),
         ),
         SelectionChangeType.insertContent,

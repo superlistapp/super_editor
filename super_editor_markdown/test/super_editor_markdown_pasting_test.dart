@@ -73,7 +73,7 @@ void main() {
     });
 
     testWidgetsOnArbitraryDesktop("can paste at the beginning of a document (without merging text)", (tester) async {
-      final (_, document, composer) = await _pumpSuperEditor(
+      final (editor, document, composer) = await _pumpSuperEditor(
         tester,
         deserializeMarkdownToDocument('''
 # Primary document

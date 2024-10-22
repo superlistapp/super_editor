@@ -150,7 +150,6 @@ void main() {
 Map<String, int> _findRebuildCountPerNode(Document document) {
   final rebuildCountPerNode = <String, int>{};
   for (final node in document) {
-    print("Checking rebuild count for node ${node.id}");
     final widget = SuperEditorInspector.findWidgetForComponent<Widget>(node.id);
 
     final superTextState = (find
