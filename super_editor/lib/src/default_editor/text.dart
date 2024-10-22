@@ -45,17 +45,6 @@ class TextNode extends DocumentNode {
   /// The content text within this [TextNode].
   final AttributedText text;
 
-  // TODO: remove this code once tests are passing again after going immutable.
-  // set text(AttributedText newText) {
-  //   if (newText != _text) {
-  //     _text.removeListener(notifyListeners);
-  //     _text = newText;
-  //     _text.addListener(notifyListeners);
-  //
-  //     notifyListeners();
-  //   }
-  // }
-
   @override
   TextNodePosition get beginningPosition => const TextNodePosition(offset: 0);
 

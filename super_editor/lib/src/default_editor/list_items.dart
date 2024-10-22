@@ -22,34 +22,26 @@ final _log = Logger(scope: 'list_items.dart');
 
 @immutable
 class ListItemNode extends TextNode {
-  factory ListItemNode.ordered({
-    required String id,
-    required AttributedText text,
-    Map<String, dynamic>? metadata,
-    int indent = 0,
-  }) {
-    return ListItemNode(
-      id: id,
-      itemType: ListItemType.ordered,
-      text: text,
-      metadata: metadata,
-      indent: indent,
-    );
+  ListItemNode.ordered({
+    required super.id,
+    required super.text,
+    super.metadata,
+    this.indent = 0,
+  }) : type = ListItemType.ordered {
+    initAddToMetadata({
+      NodeMetadata.blockType: listItemAttribution,
+    });
   }
 
-  factory ListItemNode.unordered({
-    required String id,
-    required AttributedText text,
-    Map<String, dynamic>? metadata,
-    int indent = 0,
-  }) {
-    return ListItemNode(
-      id: id,
-      itemType: ListItemType.unordered,
-      text: text,
-      metadata: metadata,
-      indent: indent,
-    );
+  ListItemNode.unordered({
+    required super.id,
+    required super.text,
+    super.metadata,
+    this.indent = 0,
+  }) : type = ListItemType.unordered {
+    initAddToMetadata({
+      NodeMetadata.blockType: listItemAttribution,
+    });
   }
 
   ListItemNode({
