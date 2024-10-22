@@ -1067,7 +1067,7 @@ class MutableDocument with Iterable<DocumentNode> implements Document, Editable 
   }) : _nodes = nodes ?? [] {
     _refreshNodeIdCaches();
 
-    _latestNodesSnapshot = _nodes.map((node) => node.copy()).toList();
+    _latestNodesSnapshot = List.from(_nodes);
   }
 
   /// Creates an [Document] with a single [ParagraphNode].
@@ -1364,7 +1364,7 @@ class MutableDocument with Iterable<DocumentNode> implements Document, Editable 
   void reset() {
     _nodes
       ..clear()
-      ..addAll(_latestNodesSnapshot.map((node) => node.copy()).toList());
+      ..addAll(_latestNodesSnapshot);
     _refreshNodeIdCaches();
 
     _didReset = true;

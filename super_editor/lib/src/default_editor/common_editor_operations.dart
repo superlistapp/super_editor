@@ -2364,9 +2364,7 @@ class PasteEditorCommand extends EditCommand {
     _parsedContent ??= _parseContent();
 
     // Assign locally so we don't have to use a "!" everywhere we reference it.
-    // Also, make a copy of the existing nodes so that when the document mutates,
-    // our local copy doesn't change.
-    final parsedContent = _parsedContent!.map((node) => node.copy()).toList();
+    final parsedContent = _parsedContent!.toList();
     if (parsedContent.isEmpty) {
       // No content to paste.
       return;

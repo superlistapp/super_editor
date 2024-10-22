@@ -328,15 +328,11 @@ class InsertNodeBeforeNodeCommand extends EditCommand {
     final document = context.document;
     final existingNode = document.getNodeById(existingNodeId)!;
 
-    // Make a copy of the node so that this command can be re-run without retaining
-    // future mutations of this node.
-    final newNodeCopy = newNode.copy();
-
-    document.insertNodeBefore(existingNodeId: existingNode.id, newNode: newNodeCopy);
+    document.insertNodeBefore(existingNodeId: existingNode.id, newNode: newNode);
 
     executor.logChanges([
       DocumentEdit(
-        NodeInsertedEvent(newNodeCopy.id, document.getNodeIndexById(newNodeCopy.id)),
+        NodeInsertedEvent(newNode.id, document.getNodeIndexById(newNode.id)),
       )
     ]);
   }
@@ -366,15 +362,11 @@ class InsertNodeAfterNodeCommand extends EditCommand {
     final document = context.document;
     final existingNode = document.getNodeById(existingNodeId)!;
 
-    // Make a copy of the node so that this command can be re-run without retaining
-    // future mutations of this node.
-    final newNodeCopy = newNode.copy();
-
-    document.insertNodeAfter(existingNodeId: existingNode.id, newNode: newNodeCopy);
+    document.insertNodeAfter(existingNodeId: existingNode.id, newNode: newNode);
 
     executor.logChanges([
       DocumentEdit(
-        NodeInsertedEvent(newNodeCopy.id, document.getNodeIndexById(newNodeCopy.id)),
+        NodeInsertedEvent(newNode.id, document.getNodeIndexById(newNode.id)),
       )
     ]);
   }
