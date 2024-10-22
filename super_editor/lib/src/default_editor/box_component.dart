@@ -15,6 +15,7 @@ import '../core/document_layout.dart';
 final _log = Logger(scope: 'box_component.dart');
 
 /// Base implementation for a [DocumentNode] that only supports [UpstreamDownstreamNodeSelection]s.
+@immutable
 abstract class BlockNode extends DocumentNode {
   BlockNode({
     Map<String, dynamic>? metadata,

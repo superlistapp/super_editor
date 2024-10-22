@@ -147,7 +147,7 @@ void main() {
           text: AttributedText("This is the third paragraph."),
         );
         document.insertNodeBefore(
-          existingNode: firstNode,
+          existingNodeId: firstNode.id,
           newNode: thirdNode,
         );
 
@@ -168,7 +168,7 @@ void main() {
           text: AttributedText("This is the third paragraph."),
         );
         document.insertNodeBefore(
-          existingNode: secondNode,
+          existingNodeId: secondNode.id,
           newNode: thirdNode,
         );
 
@@ -189,7 +189,7 @@ void main() {
           text: AttributedText("This is the third paragraph."),
         );
         document.insertNodeAfter(
-          existingNode: firstNode,
+          existingNodeId: firstNode.id,
           newNode: thirdNode,
         );
 
@@ -210,7 +210,7 @@ void main() {
           text: AttributedText("This is the third paragraph."),
         );
         document.insertNodeAfter(
-          existingNode: secondNode,
+          existingNodeId: secondNode.id,
           newNode: thirdNode,
         );
 
@@ -294,7 +294,7 @@ void main() {
         final secondNode = document.getNodeAt(1)!;
         final thirdNode = document.getNodeAt(2)!;
 
-        document.deleteNode(firstNode);
+        document.deleteNode(firstNode.id);
 
         // Ensure the indices are correct.
         expect(document.getNodeIndexById(firstNode.id), -1);
@@ -308,7 +308,7 @@ void main() {
         final secondNode = document.getNodeAt(1)!;
         final thirdNode = document.getNodeAt(2)!;
 
-        document.deleteNode(secondNode);
+        document.deleteNode(secondNode.id);
 
         // Ensure the indices are correct.
         expect(document.getNodeIndexById(secondNode.id), -1);
@@ -322,7 +322,7 @@ void main() {
         final secondNode = document.getNodeAt(1)!;
         final thirdNode = document.getNodeAt(2)!;
 
-        document.deleteNode(thirdNode);
+        document.deleteNode(thirdNode.id);
 
         // Ensure the indices are correct.
         expect(document.getNodeIndexById(thirdNode.id), -1);
@@ -341,9 +341,9 @@ void main() {
           text: AttributedText("This is the third paragraph."),
         );
 
-        document.replaceNode(
-          oldNode: firstNode,
-          newNode: fourthNode,
+        document.replaceNodeById(
+          firstNode.id,
+          fourthNode,
         );
 
         // Ensure the indices are correct.
@@ -364,9 +364,9 @@ void main() {
           text: AttributedText("This is the third paragraph."),
         );
 
-        document.replaceNode(
-          oldNode: secondNode,
-          newNode: fourthNode,
+        document.replaceNodeById(
+          secondNode.id,
+          fourthNode,
         );
 
         // Ensure the indices are correct.
@@ -387,9 +387,9 @@ void main() {
           text: AttributedText("This is the third paragraph."),
         );
 
-        document.replaceNode(
-          oldNode: thirdNode,
-          newNode: fourthNode,
+        document.replaceNodeById(
+          thirdNode.id,
+          fourthNode,
         );
 
         // Ensure the indices are correct.

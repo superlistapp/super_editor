@@ -226,14 +226,19 @@ class ClearTextAttributionsCommand extends EditCommand {
         resizeSpansToFitInRange: true,
       );
       for (final span in spans) {
-        node.text = AttributedText(
-          node.text.text,
-          node.text.spans.copy()
-            ..removeAttribution(
-              attributionToRemove: span.attribution,
-              start: span.start,
-              end: span.end,
+        document.replaceNode(
+          oldNode: node,
+          newNode: node.copyTextNodeWith(
+            text: AttributedText(
+              node.text.text,
+              node.text.spans.copy()
+                ..removeAttribution(
+                  attributionToRemove: span.attribution,
+                  start: span.start,
+                  end: span.end,
+                ),
             ),
+          ),
         );
 
         executor.logChanges([

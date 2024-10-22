@@ -8,32 +8,22 @@ import 'box_component.dart';
 import 'layout_single_column/layout_single_column.dart';
 
 /// [DocumentNode] that represents an image at a URL.
-class ImageNode extends BlockNode with ChangeNotifier {
+@immutable
+class ImageNode extends BlockNode {
   ImageNode({
     required this.id,
-    required String imageUrl,
-    ExpectedSize? expectedBitmapSize,
-    String altText = '',
-    Map<String, dynamic>? metadata,
-  })  : _imageUrl = imageUrl,
-        _expectedBitmapSize = expectedBitmapSize,
-        _altText = altText {
-    this.metadata = metadata;
-
-    putMetadataValue("blockType", const NamedAttribution("image"));
+    required this.imageUrl,
+    this.expectedBitmapSize,
+    this.altText = '',
+    super.metadata,
+  }) {
+    initAddToMetadata({"blockType": const NamedAttribution("image")});
   }
 
   @override
   final String id;
 
-  String _imageUrl;
-  String get imageUrl => _imageUrl;
-  set imageUrl(String newImageUrl) {
-    if (newImageUrl != _imageUrl) {
-      _imageUrl = newImageUrl;
-      notifyListeners();
-    }
-  }
+  final String imageUrl;
 
   /// The expected size of the image.
   ///
@@ -47,26 +37,9 @@ class ImageNode extends BlockNode with ChangeNotifier {
   /// in a vertical layout will likely take up more space or less space than the final
   /// image because the final image will probably be scaled. Therefore, to take
   /// advantage of [ExpectedSize], you should try to provide both dimensions.
-  ExpectedSize? get expectedBitmapSize => _expectedBitmapSize;
-  ExpectedSize? _expectedBitmapSize;
-  set expectedBitmapSize(ExpectedSize? newValue) {
-    if (newValue == _expectedBitmapSize) {
-      return;
-    }
+  final ExpectedSize? expectedBitmapSize;
 
-    _expectedBitmapSize = newValue;
-
-    notifyListeners();
-  }
-
-  String _altText;
-  String get altText => _altText;
-  set altText(String newAltText) {
-    if (newAltText != _altText) {
-      _altText = newAltText;
-      notifyListeners();
-    }
-  }
+  final String altText;
 
   @override
   String? copyContent(dynamic selection) {
@@ -74,12 +47,37 @@ class ImageNode extends BlockNode with ChangeNotifier {
       throw Exception('ImageNode can only copy content from a UpstreamDownstreamNodeSelection.');
     }
 
-    return !selection.isCollapsed ? _imageUrl : null;
+    return !selection.isCollapsed ? imageUrl : null;
   }
 
   @override
   bool hasEquivalentContent(DocumentNode other) {
     return other is ImageNode && imageUrl == other.imageUrl && altText == other.altText;
+  }
+
+  @override
+  DocumentNode copyWithAddedMetadata(Map<String, dynamic> newProperties) {
+    return ImageNode(
+      id: id,
+      imageUrl: imageUrl,
+      expectedBitmapSize: expectedBitmapSize,
+      altText: altText,
+      metadata: {
+        ...metadata,
+        ...newProperties,
+      },
+    );
+  }
+
+  @override
+  DocumentNode copyAndReplaceMetadata(Map<String, dynamic> newMetadata) {
+    return ImageNode(
+      id: id,
+      imageUrl: imageUrl,
+      expectedBitmapSize: expectedBitmapSize,
+      altText: altText,
+      metadata: newMetadata,
+    );
   }
 
   @override
@@ -99,11 +97,11 @@ class ImageNode extends BlockNode with ChangeNotifier {
       other is ImageNode &&
           runtimeType == other.runtimeType &&
           id == other.id &&
-          _imageUrl == other._imageUrl &&
-          _altText == other._altText;
+          imageUrl == other.imageUrl &&
+          altText == other.altText;
 
   @override
-  int get hashCode => id.hashCode ^ _imageUrl.hashCode ^ _altText.hashCode;
+  int get hashCode => id.hashCode ^ imageUrl.hashCode ^ altText.hashCode;
 }
 
 class ImageComponentBuilder implements ComponentBuilder {

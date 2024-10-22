@@ -834,19 +834,19 @@ void main() {
               .withInputSource(inputSourceVariant.currentValue!)
               .pump();
 
-          final node = testContext.findEditContext().document.first;
+          final document = testContext.document;
 
           // Place caret at "A| header"
-          await tester.placeCaretInParagraph(node.id, 1);
+          await tester.placeCaretInParagraph(document.first.id, 1);
 
           // Delete "A".
           await tester.pressBackspace();
 
           // Ensure the first character was deleted.
-          expect((node as TextNode).text.text, ' header');
+          expect(document.first.asTextNode.text.text, ' header');
 
           // Ensure the node is still a header.
-          expect(node.getMetadataValue("blockType"), header1Attribution);
+          expect(document.first.getMetadataValue("blockType"), header1Attribution);
         },
         variant: inputSourceVariant,
       );
@@ -860,19 +860,19 @@ void main() {
               .withInputSource(inputSourceVariant.currentValue!)
               .pump();
 
-          final node = testContext.findEditContext().document.first;
+          final document = testContext.document;
 
           // Place caret at the start of the header.
-          await tester.placeCaretInParagraph(node.id, 0);
+          await tester.placeCaretInParagraph(document.first.id, 0);
 
           // Press backspace to clear the metadata.
           await tester.pressBackspace();
 
           // Ensure the text remains the same.
-          expect((node as TextNode).text.text, 'A header');
+          expect(document.first.asTextNode.text.text, 'A header');
 
           // Ensure the header was converted to a paragraph.
-          expect(node.getMetadataValue("blockType"), paragraphAttribution);
+          expect(document.first.getMetadataValue("blockType"), paragraphAttribution);
         },
         variant: inputSourceVariant,
       );
