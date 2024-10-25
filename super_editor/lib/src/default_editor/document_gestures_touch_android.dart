@@ -13,7 +13,6 @@ import 'package:super_editor/src/core/document_layout.dart';
 import 'package:super_editor/src/core/document_selection.dart';
 import 'package:super_editor/src/core/edit_context.dart';
 import 'package:super_editor/src/core/editor.dart';
-import 'package:super_editor/src/default_editor/spelling_and_grammar/spell_checker_popover_controller.dart';
 import 'package:super_editor/src/default_editor/super_editor.dart';
 import 'package:super_editor/src/default_editor/text_tools.dart';
 import 'package:super_editor/src/document_operations/selection_operations.dart';
@@ -124,7 +123,6 @@ class SuperEditorAndroidControlsController {
     this.expandedHandlesBuilder,
     this.magnifierBuilder,
     this.toolbarBuilder,
-    this.spellCheckerPopoverController,
     this.createOverlayControlsClipper,
   })  : collapsedHandleFocalPoint = collapsedHandleFocalPoint ?? LeaderLink(),
         upstreamHandleFocalPoint = upstreamHandleFocalPoint ?? LeaderLink(),
@@ -314,16 +312,6 @@ class SuperEditorAndroidControlsController {
   ///
   /// If [toolbarBuilder] is `null`, a default Android toolbar is displayed.
   final DocumentFloatingToolbarBuilder? toolbarBuilder;
-
-  final SpellCheckerPopoverController? spellCheckerPopoverController;
-
-  void hideSpellCheckerPopover() {
-    spellCheckerPopoverController?.hide();
-  }
-
-  void showSpellCheckerPopover(DocumentSelection selection) {
-    spellCheckerPopoverController?.show(selection);
-  }
 
   /// Creates a clipper that restricts where the toolbar and magnifier can
   /// appear in the overlay.

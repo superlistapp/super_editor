@@ -11,6 +11,8 @@ class SpellingAndGrammarStyler extends SingleColumnLayoutStylePhase {
   SpellingAndGrammarStyler({
     UnderlineStyle? spellingErrorUnderlineStyle,
     UnderlineStyle? grammarErrorUnderlineStyle,
+    this.selectionStyles = defaultSelectionStyle,
+    this.selectionHighlightColor = Colors.transparent,
   })  : _spellingErrorUnderlineStyle = spellingErrorUnderlineStyle,
         _grammarErrorUnderlineStyle = grammarErrorUnderlineStyle;
 
@@ -33,6 +35,8 @@ class SpellingAndGrammarStyler extends SingleColumnLayoutStylePhase {
     _grammarErrorUnderlineStyle = style;
     markDirty();
   }
+
+  bool _overrideSelectionColor = false;
 
   final _errorsByNode = <String, Set<TextError>>{};
   final _dirtyNodes = <String>{};
@@ -59,13 +63,28 @@ class SpellingAndGrammarStyler extends SingleColumnLayoutStylePhase {
     markDirty();
   }
 
+  void overrideSelectionColor() {
+    _overrideSelectionColor = true;
+    markDirty();
+  }
+
+  void useDefaultSelectionColor() {
+    _overrideSelectionColor = false;
+    markDirty();
+  }
+
+  //final SpellingErrorSuggestion? Function()? onGetCurrentSuggestion;
+  final Color selectionHighlightColor;
+
+  final SelectionStyles selectionStyles;
+
   @override
   SingleColumnLayoutViewModel style(Document document, SingleColumnLayoutViewModel viewModel) {
     final updatedViewModel = SingleColumnLayoutViewModel(
       padding: viewModel.padding,
       componentViewModels: [
         for (final previousViewModel in viewModel.componentViewModels) //
-          _applyErrors(previousViewModel),
+          _applyErrors(previousViewModel.copy()),
       ],
     );
 
@@ -95,6 +114,10 @@ class SpellingAndGrammarStyler extends SingleColumnLayoutStylePhase {
       ..addAll([
         for (final spellingError in spellingErrors) spellingError.range,
       ]);
+
+    if (_overrideSelectionColor) {
+      viewModel.selectionColor = selectionHighlightColor;
+    }
 
     final grammarErrors = _errorsByNode[viewModel.nodeId]!.where((error) => error.type == TextErrorType.grammar);
     if (_grammarErrorUnderlineStyle != null) {

@@ -4,6 +4,7 @@ import 'package:follow_the_leader/follow_the_leader.dart';
 import 'package:overlord/follow_the_leader.dart';
 import 'package:overlord/overlord.dart';
 import 'package:super_editor/super_editor.dart';
+import 'package:super_editor_spellcheck/src/super_editor/spell_checker_popover_controller.dart';
 import 'package:super_editor_spellcheck/src/super_editor/spelling_and_grammar_plugin.dart';
 import 'package:super_editor_spellcheck/src/super_editor/spelling_error_suggestions.dart';
 
@@ -87,11 +88,12 @@ class _SpellingErrorSuggestionOverlayState
 
   final _boundsKey = GlobalKey();
 
-  DocumentRange? _requestedRange;
+  //DocumentRange? _requestedRange;
+  SpellingErrorSuggestion? _spellingErrorSuggestionForRequestedRange;
 
-  DocumentRange? get _rangeToQuerySuggestions => widget.popoverController == null //
-      ? widget.editor.context.composer.selection
-      : _requestedRange;
+  // DocumentRange? get _rangeToQuerySuggestions => widget.popoverController == null //
+  //     ? widget.editor.context.composer.selection
+  //     : _requestedRange;
 
   @override
   void initState() {
@@ -142,14 +144,42 @@ class _SpellingErrorSuggestionOverlayState
   @override
   void hideSuggestionsPopover() {
     setState(() {
-      _requestedRange = null;
+      //_requestedRange = null;
+      _spellingErrorSuggestionForRequestedRange = null;
+      //_wantsToShowSuggestionsPopover = false;
     });
   }
 
   @override
   void showSuggestionsForWordAt(DocumentRange targetRange) {
     setState(() {
-      _requestedRange = targetRange;
+      //_requestedRange = targetRange;
+      //_wantsToShowSuggestionsPopover = true;
+      _spellingErrorSuggestionForRequestedRange = _findSpellingSuggestionAtRange(widget.suggestions, targetRange);
+    });
+  }
+
+  @override
+  SpellingErrorSuggestion? findSuggestionsForWordAt(DocumentRange wordRange) {
+    final spellingSuggestion = _findSpellingSuggestionAtRange(widget.suggestions, wordRange);
+    if (spellingSuggestion == null) {
+      // No selected mis-spelled word. Fizzle.
+      return null;
+    }
+
+    final misspelledWordRange = spellingSuggestion.toDocumentRange;
+    if (misspelledWordRange == _ignoredSpellingErrorRange) {
+      // The user already cancelled the suggestions for this word.
+      return null;
+    }
+
+    return spellingSuggestion;
+  }
+
+  @override
+  void showSuggestions(SpellingErrorSuggestion suggestions) {
+    setState(() {
+      _spellingErrorSuggestionForRequestedRange = suggestions;
     });
   }
 
@@ -224,21 +254,31 @@ class _SpellingErrorSuggestionOverlayState
       }
     });
 
-    final range = _rangeToQuerySuggestions;
-    if (range == null) {
-      // No selection upon which to base spell check suggestions.
-      return null;
-    }
-    if (range.start.nodeId != range.end.nodeId) {
-      // Spelling error suggestions don't display when the user selects across nodes.
-      return null;
-    }
-    if (range.end.nodePosition is! TextNodePosition) {
-      // The user isn't selecting text. Fizzle.
+    if (widget.editor.context.composer.selection == null) {
       return null;
     }
 
-    final spellingSuggestion = _findSpellingSuggestionAtRange(widget.suggestions, range);
+    // final range = _rangeToQuerySuggestions;
+    // if (range == null) {
+    //   // No selection upon which to base spell check suggestions.
+    //   return null;
+    // }
+    // if (range.start.nodeId != range.end.nodeId) {
+    //   // Spelling error suggestions don't display when the user selects across nodes.
+    //   return null;
+    // }
+    // if (range.end.nodePosition is! TextNodePosition) {
+    //   // The user isn't selecting text. Fizzle.
+    //   return null;
+    // }
+
+    // final spellingSuggestion = _findSpellingSuggestionAtRange(widget.suggestions, range);
+    // if (spellingSuggestion == null) {
+    //   // No selected mis-spelled word. Fizzle.
+    //   return null;
+    // }
+
+    final spellingSuggestion = _spellingErrorSuggestionForRequestedRange;
     if (spellingSuggestion == null) {
       // No selected mis-spelled word. Fizzle.
       return null;
@@ -362,6 +402,7 @@ class _SpellingErrorSuggestionOverlayState
             selectedWordRange: layoutData.selectedWordRange!,
             suggestions: layoutData.suggestions,
             onCancelPressed: _onCancelPressed,
+            closeToolbar: hideSuggestionsPopover,
             selectedWordBounds: layoutData.selectedWordBounds!,
           ),
         );
@@ -415,37 +456,6 @@ class _SpellingErrorSuggestionOverlayState
   }
 }
 
-class SpellingErrorSuggestionUnderlayBuilder implements SuperEditorLayerBuilder {
-  @override
-  ContentLayerWidget build(BuildContext context, SuperEditorContext editContext) {
-    return SpellingErrorSuggestionUnderlay();
-  }
-}
-
-class SpellingErrorSuggestionUnderlay extends DocumentLayoutLayerStatefulWidget {
-  const SpellingErrorSuggestionUnderlay({super.key});
-
-  @override
-  DocumentLayoutLayerState<ContentLayerStatefulWidget, dynamic> createState() =>
-      _SpellingErrorSuggestionUnderlayState();
-}
-
-class _SpellingErrorSuggestionUnderlayState
-    extends DocumentLayoutLayerState<SpellingErrorSuggestionOverlay, SpellingErrorSuggestionLayout> {
-  @override
-  SpellingErrorSuggestionLayout? computeLayoutDataWithDocumentLayout(
-      BuildContext contentLayersContext, BuildContext documentContext, DocumentLayout documentLayout) {
-    // TODO: implement computeLayoutDataWithDocumentLayout
-    throw UnimplementedError();
-  }
-
-  @override
-  Widget doBuild(BuildContext context, SpellingErrorSuggestionLayout? layoutData) {
-    // TODO: implement doBuild
-    throw UnimplementedError();
-  }
-}
-
 class SpellingErrorSuggestionLayout {
   SpellingErrorSuggestionLayout({
     required this.selectedWordBounds,
@@ -465,6 +475,7 @@ typedef SpellingErrorSuggestionToolbarBuilder = Widget Function(
   required DocumentRange selectedWordRange,
   required List<String> suggestions,
   required VoidCallback onCancelPressed,
+  required VoidCallback closeToolbar,
   required Rect selectedWordBounds,
 });
 
@@ -475,6 +486,7 @@ Widget defaultSpellingSuggestionToolbarBuilder(
   required DocumentRange selectedWordRange,
   required List<String> suggestions,
   required VoidCallback onCancelPressed,
+  required VoidCallback closeToolbar,
   required Rect selectedWordBounds,
 }) {
   switch (defaultTargetPlatform) {
@@ -485,6 +497,7 @@ Widget defaultSpellingSuggestionToolbarBuilder(
         selectedWordRange: selectedWordRange,
         suggestions: suggestions,
         selectedWordBounds: selectedWordBounds,
+        closeToolbar: closeToolbar,
       );
     case TargetPlatform.android:
       return AndroidSpellingSuggestionToolbar(
@@ -493,6 +506,7 @@ Widget defaultSpellingSuggestionToolbarBuilder(
         selectedWordRange: selectedWordRange,
         suggestions: suggestions,
         selectedWordBounds: selectedWordBounds,
+        closeToolbar: closeToolbar,
       );
     default:
       return DesktopSpellingSuggestionToolbar(
@@ -501,6 +515,7 @@ Widget defaultSpellingSuggestionToolbarBuilder(
         selectedWordRange: selectedWordRange,
         suggestions: suggestions,
         onCancelPressed: onCancelPressed,
+        closeToolbar: closeToolbar,
       );
   }
 }
@@ -512,6 +527,7 @@ Widget desktopSpellingSuggestionToolbarBuilder(
   required DocumentRange selectedWordRange,
   required List<String> suggestions,
   required VoidCallback onCancelPressed,
+  required VoidCallback closeToolbar,
 }) {
   return DesktopSpellingSuggestionToolbar(
     editorFocusNode: editorFocusNode,
@@ -519,6 +535,7 @@ Widget desktopSpellingSuggestionToolbarBuilder(
     selectedWordRange: selectedWordRange,
     suggestions: suggestions,
     onCancelPressed: onCancelPressed,
+    closeToolbar: closeToolbar,
   );
 }
 
@@ -537,6 +554,7 @@ class DesktopSpellingSuggestionToolbar extends StatefulWidget {
     required this.selectedWordRange,
     required this.suggestions,
     required this.onCancelPressed,
+    required this.closeToolbar,
   });
 
   final FocusNode editorFocusNode;
@@ -545,6 +563,7 @@ class DesktopSpellingSuggestionToolbar extends StatefulWidget {
   final DocumentRange? selectedWordRange;
   final List<String> suggestions;
   final VoidCallback onCancelPressed;
+  final VoidCallback closeToolbar;
 
   @override
   State<DesktopSpellingSuggestionToolbar> createState() => _DesktopSpellingSuggestionToolbarState();
@@ -553,6 +572,7 @@ class DesktopSpellingSuggestionToolbar extends StatefulWidget {
 class _DesktopSpellingSuggestionToolbarState extends State<DesktopSpellingSuggestionToolbar> {
   void _applySpellingFix(String replacement) {
     widget.editor.fixMisspelledWord(widget.selectedWordRange!, replacement);
+    widget.closeToolbar();
   }
 
   @override
@@ -655,6 +675,7 @@ class AndroidSpellingSuggestionToolbar extends StatefulWidget {
     required this.selectedWordRange,
     required this.suggestions,
     required this.selectedWordBounds,
+    required this.closeToolbar,
   });
 
   final FocusNode editorFocusNode;
@@ -663,6 +684,7 @@ class AndroidSpellingSuggestionToolbar extends StatefulWidget {
   final DocumentRange selectedWordRange;
   final List<String> suggestions;
   final Rect selectedWordBounds;
+  final VoidCallback closeToolbar;
 
   @override
   State<AndroidSpellingSuggestionToolbar> createState() => _AndroidSpellingSuggestionToolbarState();
@@ -671,10 +693,14 @@ class AndroidSpellingSuggestionToolbar extends StatefulWidget {
 class _AndroidSpellingSuggestionToolbarState extends State<AndroidSpellingSuggestionToolbar> {
   void _applySpellingFix(String replacement) {
     widget.editor.fixMisspelledWord(widget.selectedWordRange, replacement);
+    SuperEditorAndroidControlsScope.rootOf(context).allowSelectionHandles();
+    widget.closeToolbar();
   }
 
   void _removeWord() {
     widget.editor.removeMisspelledWord(widget.selectedWordRange);
+    SuperEditorAndroidControlsScope.rootOf(context).allowSelectionHandles();
+    widget.closeToolbar();
   }
 
   Color _getTextColor(Brightness brightness) {
@@ -746,6 +772,7 @@ class IosSpellingSuggestionToolbar extends StatefulWidget {
     required this.selectedWordRange,
     required this.suggestions,
     required this.selectedWordBounds,
+    required this.closeToolbar,
   });
 
   final FocusNode editorFocusNode;
@@ -754,6 +781,7 @@ class IosSpellingSuggestionToolbar extends StatefulWidget {
   final DocumentRange selectedWordRange;
   final List<String> suggestions;
   final Rect selectedWordBounds;
+  final VoidCallback closeToolbar;
 
   @override
   State<IosSpellingSuggestionToolbar> createState() => _IosSpellingSuggestionToolbarState();
@@ -762,6 +790,8 @@ class IosSpellingSuggestionToolbar extends StatefulWidget {
 class _IosSpellingSuggestionToolbarState extends State<IosSpellingSuggestionToolbar> {
   void _applySpellingFix(String replacement) {
     widget.editor.fixMisspelledWord(widget.selectedWordRange, replacement);
+    SuperEditorIosControlsScope.rootOf(context).allowSelectionHandles();
+    widget.closeToolbar();
   }
 
   @override
