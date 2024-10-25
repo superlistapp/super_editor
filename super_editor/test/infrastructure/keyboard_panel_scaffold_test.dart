@@ -9,11 +9,11 @@ import '../super_editor/supereditor_test_tools.dart';
 void main() {
   group('Keyboard panel scaffold >', () {
     group('phones >', () {
-      testWidgetsOnMobilePhone('does not show toolbar upon initialization', (tester) async {
+      testWidgetsOnMobilePhone('does not show toolbar upon initialization when IME is disconnected', (tester) async {
         await _pumpTestApp(tester);
 
-        // Ensure the keyboard panel is not visible.
-        expect(find.byKey(_keyboardPanelKey), findsNothing);
+        // Ensure the toolbar isn't visible.
+        expect(find.byKey(_aboveKeyboardToolbarKey), findsNothing);
       });
 
       testWidgetsOnMobilePhone('shows toolbar at the bottom when there is no keyboard', (tester) async {
@@ -35,16 +35,6 @@ void main() {
           tester.getBottomLeft(find.byKey(_aboveKeyboardToolbarKey)).dy,
           equals(tester.getSize(find.byType(MaterialApp)).height),
         );
-      });
-
-      testWidgetsOnMobilePhone('does not show keyboard panel upon keyboard appearance', (tester) async {
-        await _pumpTestApp(tester);
-
-        // Place the caret at the beginning of the document to show the software keyboard.
-        await tester.placeCaretInParagraph('1', 0);
-
-        // Ensure the keyboard panel is not visible.
-        expect(find.byKey(_keyboardPanelKey), findsNothing);
       });
 
       testWidgetsOnMobilePhone('shows keyboard toolbar above the keyboard', (tester) async {
@@ -72,39 +62,51 @@ void main() {
       });
 
       testWidgetsOnMobilePhone(
-          'shows keyboard toolbar above the keyboard when toggling panels and showing the keyboard', (tester) async {
-        final softwareKeyboardController = SoftwareKeyboardController();
-        final controller = KeyboardPanelController(softwareKeyboardController);
+        'shows keyboard toolbar above the keyboard when toggling panels and showing the keyboard',
+        (tester) async {
+          final softwareKeyboardController = SoftwareKeyboardController();
+          final controller = KeyboardPanelController(softwareKeyboardController);
 
-        await _pumpTestApp(
-          tester,
-          controller: controller,
-          softwareKeyboardController: softwareKeyboardController,
-        );
+          await _pumpTestApp(
+            tester,
+            controller: controller,
+            softwareKeyboardController: softwareKeyboardController,
+          );
 
-        // Request to show the above-keyboard panel.
-        controller.showToolbar();
-        await tester.pump();
+          // Request to show the above-keyboard panel.
+          controller.showToolbar();
+          await tester.pump();
+
+          // Place the caret at the beginning of the document to show the software keyboard.
+          await tester.placeCaretInParagraph('1', 0);
+
+          // Request to show the keyboard panel.
+          controller.showKeyboardPanel();
+          await tester.pumpAndSettle();
+
+          // Hide both the keyboard panel and the software keyboard.
+          controller.closeKeyboardAndPanel();
+          await tester.pumpAndSettle();
+
+          // Place the caret at the beginning of the document to show the software keyboard again.
+          await tester.placeCaretInParagraph('1', 0);
+
+          // Ensure the top panel sits above the keyboard.
+          expect(
+            tester.getBottomLeft(find.byKey(_aboveKeyboardToolbarKey)).dy,
+            equals(tester.getSize(find.byType(MaterialApp)).height - _expandedPhoneKeyboardHeight),
+          );
+        },
+      );
+
+      testWidgetsOnMobilePhone('does not show keyboard panel upon keyboard appearance', (tester) async {
+        await _pumpTestApp(tester);
 
         // Place the caret at the beginning of the document to show the software keyboard.
         await tester.placeCaretInParagraph('1', 0);
 
-        // Request to show the keyboard panel.
-        controller.showKeyboardPanel();
-        await tester.pumpAndSettle();
-
-        // Hide both the keyboard panel and the software keyboard.
-        controller.closeKeyboardAndPanel();
-        await tester.pumpAndSettle();
-
-        // Place the caret at the beginning of the document to show the software keyboard again.
-        await tester.placeCaretInParagraph('1', 0);
-
-        // Ensure the top panel sits above the keyboard.
-        expect(
-          tester.getBottomLeft(find.byKey(_aboveKeyboardToolbarKey)).dy,
-          equals(tester.getSize(find.byType(MaterialApp)).height - _expandedPhoneKeyboardHeight),
-        );
+        // Ensure the keyboard panel is not visible.
+        expect(find.byKey(_keyboardPanelKey), findsNothing);
       });
 
       testWidgetsOnMobilePhone('shows keyboard panel upon request', (tester) async {

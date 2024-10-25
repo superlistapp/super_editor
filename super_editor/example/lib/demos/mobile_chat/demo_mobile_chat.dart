@@ -69,7 +69,32 @@ class _MobileChatDemoState extends State<MobileChatDemo> {
               },
               child: Focus(
                 focusNode: _screenFocusNode,
-                child: ColoredBox(color: Colors.white),
+                child: ColoredBox(
+                  color: Colors.white,
+                  child: ListView.builder(
+                    // Add gap that's about as tall as the editor to push content above it.
+                    padding: const EdgeInsets.only(bottom: 90),
+                    itemCount: 10,
+                    itemBuilder: (context, index) {
+                      return Container(
+                        height: 150,
+                        margin: EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: Colors.grey.shade200),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.2),
+                              blurRadius: 16,
+                              offset: Offset(0, 8),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+                ),
               ),
             ),
           ),
@@ -86,7 +111,7 @@ class _MobileChatDemoState extends State<MobileChatDemo> {
 
   Widget _buildCommentEditor() {
     return Opacity(
-      opacity: 0.5,
+      opacity: 0.75,
       child: KeyboardPanelScaffold(
         controller: _keyboardPanelController,
         isImeConnected: _imeConnectionNotifier,
@@ -134,7 +159,10 @@ class _MobileChatDemoState extends State<MobileChatDemo> {
               shrinkWrap: true,
               slivers: [
                 SliverPadding(
-                  padding: const EdgeInsets.only(bottom: 24),
+                  padding: EdgeInsets.only(
+                    bottom: KeyboardScaffoldSafeArea.of(context).geometry.bottomPadding,
+                    // ^ Push the editor up above the OS bottom notch.
+                  ),
                   sliver: SuperEditor(
                     editor: _editor,
                     focusNode: _editorFocusNode,

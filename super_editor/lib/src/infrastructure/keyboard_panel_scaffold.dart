@@ -100,6 +100,7 @@ class _KeyboardPanelScaffoldState extends State<KeyboardPanelScaffold>
   ///
   /// It's used to detect if the software keyboard is closed, open, collapsing or expanding.
   EdgeInsets _latestViewInsets = EdgeInsets.zero;
+  bool _didInitializeViewInsets = false;
 
   /// Whether or not we believe that the keyboard is currently open (or opening).
   bool _isKeyboardOpen = false;
@@ -157,6 +158,13 @@ class _KeyboardPanelScaffoldState extends State<KeyboardPanelScaffold>
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+    if (!_didInitializeViewInsets) {
+      // Initialize our view insets cache with the existing ancestor value so
+      // that if the keyboard happens to already be raised, we don't treat the
+      // situation as the keyboard starting to come up.
+      _latestViewInsets = MediaQuery.viewInsetsOf(context);
+      _didInitializeViewInsets = true;
+    }
 
     _updateKeyboardHeightForCurrentViewInsets();
   }
@@ -216,6 +224,11 @@ class _KeyboardPanelScaffoldState extends State<KeyboardPanelScaffold>
   void _onImeConnectionChange() {
     final isImeConnected = widget.isImeConnected.value;
     if (isImeConnected) {
+      setState(() {
+        // Rebuild because we may need to show the toolbar now that the IME
+        // is connected.
+      });
+
       return;
     }
 
@@ -362,14 +375,15 @@ class _KeyboardPanelScaffoldState extends State<KeyboardPanelScaffold>
   // Updates our local cache of the current bottom window insets, which we assume reflects
   // the current software keyboard height.
   void _updateKeyboardHeightForCurrentViewInsets() {
-    final newInsets = MediaQuery.of(context).viewInsets;
+    final newInsets = MediaQuery.viewInsetsOf(context);
     final newBottomInset = newInsets.bottom;
+    final isKeyboardOpening = newBottomInset > _latestViewInsets.bottom;
     final isKeyboardCollapsing = newBottomInset < _latestViewInsets.bottom;
 
     if (_isKeyboardOpen && isKeyboardCollapsing) {
       // The keyboard went from open to closed. Update our cached state.
       _isKeyboardOpen = false;
-    } else if (!_isKeyboardOpen && !isKeyboardCollapsing) {
+    } else if (!_isKeyboardOpen && isKeyboardOpening) {
       // The keyboard went from closed to open. If there's an open panel, close it.
       _isKeyboardOpen = true;
       widget.controller.hideKeyboardPanel();
@@ -393,6 +407,8 @@ class _KeyboardPanelScaffoldState extends State<KeyboardPanelScaffold>
       onNextFrame((ts) => _updateSafeArea());
       return;
     }
+
+    onNextFrame((ts) => _updateSafeArea());
   }
 
   /// Animates the panel height when the software keyboard is closed and the user wants
@@ -415,11 +431,18 @@ class _KeyboardPanelScaffoldState extends State<KeyboardPanelScaffold>
       return;
     }
 
+    final bottomPadding = _wantsToShowKeyboardPanel //
+        ? 0.0
+        : _wantsToShowSoftwareKeyboard //
+            ? 0.0
+            : MediaQuery.paddingOf(context).bottom;
+
     final toolbarSize = (_toolbarKey.currentContext?.findRenderObject() as RenderBox?)?.size;
     keyboardSafeAreaData.geometry = keyboardSafeAreaData.geometry.copyWith(
       bottomInsets: _wantsToShowKeyboardPanel //
           ? _keyboardPanelHeight + (toolbarSize?.height ?? 0)
           : _keyboardHeight.value + (toolbarSize?.height ?? 0),
+      bottomPadding: bottomPadding,
     );
   }
 
@@ -672,10 +695,23 @@ class KeyboardScaffoldSafeArea extends StatefulWidget {
 
 class _KeyboardScaffoldSafeAreaState extends State<KeyboardScaffoldSafeArea>
     implements KeyboardScaffoldSafeAreaMutator {
-  KeyboardSafeAreaGeometry _keyboardSafeAreaData = KeyboardSafeAreaGeometry();
+  KeyboardSafeAreaGeometry? _keyboardSafeAreaData;
 
   @override
-  KeyboardSafeAreaGeometry get geometry => _keyboardSafeAreaData;
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+
+    // Initialize the keyboard insets and padding to whatever MediaQuery reports.
+    // We only do this for the very first frame because we don't yet know what our
+    // values should be (because that's reported by descendants in the tree).
+    _keyboardSafeAreaData ??= KeyboardSafeAreaGeometry(
+      bottomInsets: MediaQuery.viewInsetsOf(context).bottom,
+      bottomPadding: MediaQuery.paddingOf(context).bottom,
+    );
+  }
+
+  @override
+  KeyboardSafeAreaGeometry get geometry => _keyboardSafeAreaData!;
 
   @override
   set geometry(KeyboardSafeAreaGeometry geometry) {
@@ -691,9 +727,16 @@ class _KeyboardScaffoldSafeAreaState extends State<KeyboardScaffoldSafeArea>
   @override
   Widget build(BuildContext context) {
     return _InheritedKeyboardScaffoldSafeArea(
-      keyboardSafeAreaData: _keyboardSafeAreaData,
+      keyboardSafeAreaData: _keyboardSafeAreaData!,
       child: Padding(
-        padding: EdgeInsets.only(bottom: _keyboardSafeAreaData.bottomInsets),
+        padding: EdgeInsets.only(bottom: _keyboardSafeAreaData!.bottomInsets),
+        // ^ We inject bottom insets to push content above the keyboard. However, we don't
+        //   inject the `bottomPadding` because that would take away styling opportunities
+        //   from the user. Consider a chat message editor at the bottom of the screen. That
+        //   chat editor should push its content up above the bottom notch, but the chat editor
+        //   itself should still extend its background to the bottom of the screen. If we
+        //   enforce bottom padding here, then the whole chat editor would get pushed up and
+        //   and leave an ugly visual gap between the editor and the bottom of the screen.
         child: widget.child,
       ),
     );
@@ -724,23 +767,73 @@ class _InheritedKeyboardScaffoldSafeArea extends InheritedWidget {
 class KeyboardSafeAreaGeometry {
   const KeyboardSafeAreaGeometry({
     this.bottomInsets = 0,
+    this.bottomPadding = 0,
   });
 
+  /// The space taken up by the keyboard or a keyboard panel.
   final double bottomInsets;
+
+  /// The space taken up by the bottom notch of the OS, but only when the IME
+  /// connection is closed.
+  ///
+  /// This property is our version of `MediaQuery.paddingOf(context).bottom`.
+  /// The standard `MediaQuery` value can't be used because the rules for when
+  /// to apply the bottom padding is different in an app that shows keyboard
+  /// panels.
+  ///
+  /// There are 3 possible visual states that are relevant to the bottom notch
+  /// padding:
+  ///
+  ///  1. Regular UI - no keyboard visible, no keyboard panel visible.
+  ///  2. Keyboard open.
+  ///  3. Keyboard panel open (keyboard closed).
+  ///
+  /// When displaying regular UI (#1), content should be pushed up above the
+  /// bottom notch so that it's clearly visible, and interactable. `SafeArea`
+  /// does this for you by default. But we can't use `SafeArea` because the
+  /// rules for when to apply bottom notch padding is different when showing
+  /// keyboard panels. Therefore, users of this scaffold must apply this
+  /// padding themselves. This property follows the rules needed for expected
+  /// behavior when showing keyboard panels. Use this property instead of
+  /// `SafeArea` and instead of `MediaQuery.paddingOf(context).bottom`.
+  ///
+  /// When displaying the keyboard (#2), the OS consumes its own notch height,
+  /// so no additional padding is needed. If you push above the keyboard, then
+  /// you automatically push above the notch. `SafeArea` does this automatically
+  /// but we can't use `SafeArea` because the padding rules for the keyboard
+  /// panel are different.
+  ///
+  /// The major difference we need to handle is when a keyboard panel is open (#3).
+  /// This is the situation that Flutter doesn't handle correctly, because Flutter
+  /// doesn't have a concept of keyboard panels. In the case of a keyboard panel,
+  /// the keyboard is closed, but we don't want to push the content up above the
+  /// notch. This is because the keyboard panel, itself, covers the notch. It's
+  /// the same situation as when the keyboard is up, except the keyboard is closed
+  /// and a keyboard panel is up. In this situation, we want bottom padding to
+  /// be zero, instead of bottom padding that pushes above the notch.
+  ///
+  /// By blindly applying this padding to your content, you will get the desired
+  /// bottom padding at the relevant time.
+  final double bottomPadding;
 
   KeyboardSafeAreaGeometry copyWith({
     double? bottomInsets,
+    double? bottomPadding,
   }) {
     return KeyboardSafeAreaGeometry(
       bottomInsets: bottomInsets ?? this.bottomInsets,
+      bottomPadding: bottomPadding ?? this.bottomPadding,
     );
   }
 
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      other is KeyboardSafeAreaGeometry && runtimeType == other.runtimeType && bottomInsets == other.bottomInsets;
+      other is KeyboardSafeAreaGeometry &&
+          runtimeType == other.runtimeType &&
+          bottomInsets == other.bottomInsets &&
+          bottomPadding == other.bottomPadding;
 
   @override
-  int get hashCode => bottomInsets.hashCode;
+  int get hashCode => bottomInsets.hashCode ^ bottomPadding.hashCode;
 }
