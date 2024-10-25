@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:follow_the_leader/follow_the_leader.dart';
 import 'package:super_editor/super_editor.dart';
 import 'package:super_editor_spellcheck/src/platform/spell_checker.dart';
+import 'package:super_editor_spellcheck/src/super_editor/spell_checker_popover_controller.dart';
 import 'package:super_editor_spellcheck/src/super_editor/spelling_error_suggestion_overlay.dart';
 import 'package:super_editor_spellcheck/src/super_editor/spelling_error_suggestions.dart';
 
@@ -20,22 +21,45 @@ class SpellingAndGrammarPlugin extends SuperEditorPlugin {
     bool isGrammarCheckEnabled = true,
     UnderlineStyle grammarErrorUnderlineStyle = defaultGrammarErrorUnderlineStyle,
     SpellingErrorSuggestionToolbarBuilder toolbarBuilder = defaultSpellingSuggestionToolbarBuilder,
-    SpellCheckerPopoverController? popoverController,
+    Color selectedWordHighlightColor = Colors.transparent,
+    SelectionStyles? selectionStyles,
+    SuperEditorAndroidControlsController? androidControlsController,
+    SuperEditorIosControlsController? iosControlsController,
   })  : _isSpellCheckEnabled = isSpellingCheckEnabled,
         _isGrammarCheckEnabled = isGrammarCheckEnabled {
     documentOverlayBuilders = <SuperEditorLayerBuilder>[
       SpellingErrorSuggestionOverlayBuilder(
         _spellingErrorSuggestions,
         _selectedWordLink,
-        popoverController: popoverController,
+        popoverController: _popoverController,
         toolbarBuilder: toolbarBuilder,
       ),
     ];
+    _styler = SpellingAndGrammarStyler(
+      selectionHighlightColor: selectedWordHighlightColor,
+      selectionStyles: selectionStyles ?? defaultSelectionStyle,
+    );
+
+    _contentTapDelegate = switch (defaultTargetPlatform) {
+      TargetPlatform.android => SuperEditorAndroidSpellCheckerTapHandler(
+          popoverController: _popoverController,
+          controlsController: androidControlsController!,
+          styler: _styler,
+        ),
+      TargetPlatform.iOS => SuperEditorIosSpellCheckerTapHandler(
+          popoverController: _popoverController,
+          controlsController: iosControlsController!,
+          styler: _styler,
+        ),
+      _ => SuperEditorDesktopSpellCheckerTapHandler(popoverController: _popoverController),
+    };
   }
+
+  final _popoverController = SpellCheckerPopoverController();
 
   final _spellingErrorSuggestions = SpellingErrorSuggestions();
 
-  final _styler = SpellingAndGrammarStyler();
+  late final SpellingAndGrammarStyler _styler;
 
   /// Leader attached to an invisible rectangle around the currently selected
   /// misspelled word.
@@ -75,8 +99,13 @@ class SpellingAndGrammarPlugin extends SuperEditorPlugin {
   late final List<SuperEditorLayerBuilder> documentOverlayBuilders;
 
   @override
+  ContentTapDelegate? get contentTapDelegate => _contentTapDelegate;
+  late final _SpellCheckerContentTapDelegate? _contentTapDelegate;
+
+  @override
   void attach(Editor editor) {
     editor.context.put(spellingErrorSuggestionsKey, _spellingErrorSuggestions);
+    _contentTapDelegate?.editor = editor;
 
     _reaction = SpellingAndGrammarReaction(_spellingErrorSuggestions, _styler);
     editor.reactionPipeline.add(_reaction);
@@ -86,6 +115,7 @@ class SpellingAndGrammarPlugin extends SuperEditorPlugin {
   void detach(Editor editor) {
     _styler.clearAllErrors();
     editor.reactionPipeline.remove(_reaction);
+    _contentTapDelegate?.editor = null;
 
     editor.context.remove(spellingErrorSuggestionsKey);
     _spellingErrorSuggestions.clear();
@@ -132,6 +162,29 @@ extension SpellingAndGrammarEditorExtensions on Editor {
         textToInsert: correctSpelling,
         attributions: {},
       ),
+      ChangeComposingRegionRequest(
+        DocumentSelection.collapsed(
+          position: DocumentPosition(
+            nodeId: wordRange.start.nodeId,
+            nodePosition: TextNodePosition(
+              offset: (wordRange.start.nodePosition as TextNodePosition).offset + correctSpelling.length,
+            ),
+          ),
+        ),
+      ),
+      // // Places the caret at the end of the corrected word.
+      // ChangeSelectionRequest(
+      //   DocumentSelection.collapsed(
+      //     position: DocumentPosition(
+      //       nodeId: wordRange.start.nodeId,
+      //       nodePosition: TextNodePosition(
+      //         offset: (wordRange.start.nodePosition as TextNodePosition).offset + correctSpelling.length,
+      //       ),
+      //     ),
+      //   ),
+      //   SelectionChangeType.alteredContent,
+      //   SelectionReason.contentChange,
+      // ),
     ]);
   }
 
@@ -383,7 +436,7 @@ class SpellingAndGrammarReaction implements EditReaction {
     _asyncRequestIds[textNode.id] = requestId;
 
     final suggestions = await _mobileSpellChecker.fetchSpellCheckSuggestions(
-      PlatformDispatcher.instance.locale,
+      Locale('en', 'US'),
       textNode.text.text,
     );
     if (suggestions == null) {
@@ -425,4 +478,194 @@ class SpellingAndGrammarReaction implements EditReaction {
     // see suggestions and select them.
     _suggestions.putSuggestions(textNode.id, spellingSuggestions);
   }
+}
+
+class SuperEditorIosSpellCheckerTapHandler extends _SpellCheckerContentTapDelegate {
+  SuperEditorIosSpellCheckerTapHandler({
+    required this.popoverController,
+    required this.controlsController,
+    required this.styler,
+    super.editor,
+  });
+
+  final SpellCheckerPopoverController popoverController;
+  final SuperEditorIosControlsController controlsController;
+  final SpellingAndGrammarStyler styler;
+
+  @override
+  TapHandlingInstruction onTap(DocumentPosition tapPosition) {
+    if (editor == null) {
+      return TapHandlingInstruction.continueHandling;
+    }
+
+    final spelling = popoverController.findSuggestionsForWordAt(DocumentSelection.collapsed(position: tapPosition));
+    if (spelling == null || spelling.suggestions.isEmpty) {
+      _hideSpellCheckerPopover();
+      return TapHandlingInstruction.continueHandling;
+    }
+
+    controlsController
+      ..hideToolbar()
+      ..hideMagnifier()
+      ..preventSelectionHandles();
+
+    editor!.execute([
+      ChangeSelectionRequest(
+        DocumentSelection(
+          base: DocumentPosition(
+            nodeId: tapPosition.nodeId,
+            nodePosition: TextNodePosition(offset: spelling.range.start),
+          ),
+          extent: DocumentPosition(
+            nodeId: tapPosition.nodeId,
+            nodePosition: TextNodePosition(offset: spelling.range.end),
+          ),
+        ),
+        SelectionChangeType.expandSelection,
+        SelectionReason.userInteraction,
+      ),
+    ]);
+
+    //controlsController.
+
+    popoverController.show(DocumentSelection.collapsed(position: tapPosition));
+
+    styler.overrideSelectionColor();
+
+    return TapHandlingInstruction.halt;
+  }
+
+  @override
+  TapHandlingInstruction onDoubleTap(DocumentPosition tapPosition) {
+    _hideSpellCheckerPopover();
+    return TapHandlingInstruction.continueHandling;
+  }
+
+  void _hideSpellCheckerPopover() {
+    styler.useDefaultSelectionColor();
+    popoverController.hide();
+    controlsController.allowSelectionHandles();
+  }
+}
+
+class SuperEditorAndroidSpellCheckerTapHandler extends _SpellCheckerContentTapDelegate {
+  SuperEditorAndroidSpellCheckerTapHandler({
+    required this.popoverController,
+    required this.controlsController,
+    required this.styler,
+    super.editor,
+  });
+
+  final SpellCheckerPopoverController popoverController;
+  final SuperEditorAndroidControlsController controlsController;
+  final SpellingAndGrammarStyler styler;
+
+  @override
+  TapHandlingInstruction onTap(DocumentPosition tapPosition) {
+    if (editor == null) {
+      return TapHandlingInstruction.continueHandling;
+    }
+
+    final suggestions = popoverController.findSuggestionsForWordAt(DocumentSelection.collapsed(position: tapPosition));
+    if (suggestions == null) {
+      _hideSpellCheckerPopover();
+      return TapHandlingInstruction.continueHandling;
+    }
+
+    controlsController
+      ..hideToolbar()
+      ..hideMagnifier()
+      ..hideToolbar()
+      ..preventSelectionHandles();
+
+    final wordSelection = DocumentSelection(
+      base: DocumentPosition(
+        nodeId: tapPosition.nodeId,
+        nodePosition: TextNodePosition(offset: suggestions.range.start),
+      ),
+      extent: DocumentPosition(
+        nodeId: tapPosition.nodeId,
+        nodePosition: TextNodePosition(offset: suggestions.range.end),
+      ),
+    );
+
+    editor!.execute([
+      ChangeSelectionRequest(
+        wordSelection,
+        SelectionChangeType.expandSelection,
+        SelectionReason.userInteraction,
+      ),
+      ChangeComposingRegionRequest(wordSelection),
+    ]);
+
+    popoverController.show(DocumentSelection.collapsed(position: tapPosition));
+
+    styler.overrideSelectionColor();
+
+    return TapHandlingInstruction.halt;
+  }
+
+  @override
+  TapHandlingInstruction onDoubleTap(DocumentPosition tapPosition) {
+    _hideSpellCheckerPopover();
+    return TapHandlingInstruction.continueHandling;
+  }
+
+  void _hideSpellCheckerPopover() {
+    controlsController.allowSelectionHandles();
+    styler.useDefaultSelectionColor();
+    popoverController.hide();
+  }
+}
+
+class SuperEditorDesktopSpellCheckerTapHandler extends _SpellCheckerContentTapDelegate {
+  SuperEditorDesktopSpellCheckerTapHandler({
+    required this.popoverController,
+    super.editor,
+  });
+
+  final SpellCheckerPopoverController popoverController;
+
+  @override
+  TapHandlingInstruction onTap(DocumentPosition tapPosition) {
+    if (editor == null) {
+      return TapHandlingInstruction.continueHandling;
+    }
+
+    final spelling = popoverController.findSuggestionsForWordAt(DocumentSelection.collapsed(position: tapPosition));
+    if (spelling == null || spelling.suggestions.isEmpty) {
+      _hideSpellCheckerPopover();
+      return TapHandlingInstruction.continueHandling;
+    }
+
+    editor!.execute([
+      ChangeSelectionRequest(
+        DocumentSelection.collapsed(position: tapPosition),
+        SelectionChangeType.expandSelection,
+        SelectionReason.userInteraction,
+      ),
+    ]);
+
+    popoverController.show(DocumentSelection.collapsed(position: tapPosition));
+
+    return TapHandlingInstruction.halt;
+  }
+
+  @override
+  TapHandlingInstruction onDoubleTap(DocumentPosition tapPosition) {
+    _hideSpellCheckerPopover();
+    return TapHandlingInstruction.continueHandling;
+  }
+
+  void _hideSpellCheckerPopover() {
+    popoverController.hide();
+  }
+}
+
+class _SpellCheckerContentTapDelegate extends ContentTapDelegate {
+  _SpellCheckerContentTapDelegate({
+    this.editor,
+  });
+
+  Editor? editor;
 }

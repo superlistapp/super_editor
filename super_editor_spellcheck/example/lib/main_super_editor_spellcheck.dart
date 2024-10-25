@@ -67,15 +67,22 @@ class _SuperEditorSpellcheckScreen extends StatefulWidget {
 
 class _SuperEditorSpellcheckScreenState extends State<_SuperEditorSpellcheckScreen> {
   late final Editor _editor;
-  final _popoverController = SpellCheckerPopoverController();
   late final SpellingAndGrammarPlugin _spellingAndGrammarPlugin;
+
+  late final SuperEditorIosControlsController _iosControlsController;
+  late final SuperEditorAndroidControlsController _androidControlsController;
 
   @override
   void initState() {
     super.initState();
 
+    _iosControlsController = SuperEditorIosControlsController();
+    _androidControlsController = SuperEditorAndroidControlsController();
+
     _spellingAndGrammarPlugin = SpellingAndGrammarPlugin(
-      popoverController: _popoverController,
+      iosControlsController: _iosControlsController,
+      androidControlsController: _androidControlsController,
+      selectedWordHighlightColor: Colors.red.withOpacity(0.3),
     );
 
     _editor = createDefaultDocumentEditor(
@@ -84,6 +91,13 @@ class _SuperEditorSpellcheckScreenState extends State<_SuperEditorSpellcheckScre
     );
 
     _insertMisspelledText();
+  }
+
+  @override
+  void dispose() {
+    _iosControlsController.dispose();
+    _androidControlsController.dispose();
+    super.dispose();
   }
 
   void _insertMisspelledText() {
@@ -105,20 +119,25 @@ class _SuperEditorSpellcheckScreenState extends State<_SuperEditorSpellcheckScre
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: SuperEditor(
-        editor: _editor,
-        spellCheckerPopoverController: _popoverController,
-        customStylePhases: [
-          _spellingAndGrammarPlugin.styler,
-        ],
-        stylesheet: defaultStylesheet.copyWith(
-          addRulesAfter: [
-            if (Theme.of(context).brightness == Brightness.dark) ..._darkModeStyles,
-          ],
+      body: SuperEditorAndroidControlsScope(
+        controller: _androidControlsController,
+        child: SuperEditorIosControlsScope(
+          controller: _iosControlsController,
+          child: SuperEditor(
+            editor: _editor,
+            appendedStylePhases: [
+              _spellingAndGrammarPlugin.styler,
+            ],
+            stylesheet: defaultStylesheet.copyWith(
+              addRulesAfter: [
+                if (Theme.of(context).brightness == Brightness.dark) ..._darkModeStyles,
+              ],
+            ),
+            plugins: {
+              _spellingAndGrammarPlugin,
+            },
+          ),
         ),
-        plugins: {
-          _spellingAndGrammarPlugin,
-        },
       ),
     );
   }

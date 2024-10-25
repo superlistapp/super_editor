@@ -11,7 +11,6 @@ import 'package:super_editor/src/core/document_layout.dart';
 import 'package:super_editor/src/core/document_selection.dart';
 import 'package:super_editor/src/core/edit_context.dart';
 import 'package:super_editor/src/core/editor.dart';
-import 'package:super_editor/src/default_editor/spelling_and_grammar/spell_checker_popover_controller.dart';
 import 'package:super_editor/src/default_editor/super_editor.dart';
 import 'package:super_editor/src/default_editor/text.dart';
 import 'package:super_editor/src/default_editor/text_tools.dart';
@@ -121,7 +120,6 @@ class SuperEditorIosControlsController {
     FloatingCursorController? floatingCursorController,
     this.magnifierBuilder,
     this.toolbarBuilder,
-    this.spellCheckerPopoverController,
     this.createOverlayControlsClipper,
   }) : floatingCursorController = floatingCursorController ?? FloatingCursorController();
 
@@ -157,6 +155,13 @@ class SuperEditorIosControlsController {
 
   /// Tells the caret to stop blinking by setting [shouldCaretBlink] to `false`.
   void doNotBlinkCaret() => _shouldCaretBlink.value = false;
+
+  ValueListenable<bool> get areSelectionHandlesAllowed => _areSelectionHandlesAllowed;
+  final _areSelectionHandlesAllowed = ValueNotifier<bool>(true);
+
+  void allowSelectionHandles() => _areSelectionHandlesAllowed.value = true;
+
+  void preventSelectionHandles() => _areSelectionHandlesAllowed.value = false;
 
   /// Controls the iOS floating cursor.
   late final FloatingCursorController floatingCursorController;
@@ -207,16 +212,6 @@ class SuperEditorIosControlsController {
   ///
   /// If [toolbarBuilder] is `null`, a default iOS toolbar is displayed.
   final DocumentFloatingToolbarBuilder? toolbarBuilder;
-
-  final SpellCheckerPopoverController? spellCheckerPopoverController;
-
-  void hideSpellCheckerPopover() {
-    spellCheckerPopoverController?.hide();
-  }
-
-  void showSpellCheckerPopover(DocumentSelection selection) {
-    spellCheckerPopoverController?.show(selection);
-  }
 
   /// Creates a clipper that restricts where the toolbar and magnifier can
   /// appear in the overlay.
@@ -592,14 +587,6 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
       ..hideMagnifier()
       ..blinkCaret();
 
-    final selection = widget.selection.value;
-    if (selection != null &&
-        !selection.isCollapsed &&
-        (_isOverBaseHandle(details.localPosition) || _isOverExtentHandle(details.localPosition))) {
-      _controlsController!.toggleToolbar();
-      return;
-    }
-
     editorGesturesLog.info("Tap down on document");
     final docOffset = _interactorOffsetToDocumentOffset(details.localPosition);
     editorGesturesLog.fine(" - document offset: $docOffset");
@@ -623,6 +610,7 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
 
     final docPosition = _docLayout.getDocumentPositionNearestToOffset(docOffset);
     editorGesturesLog.fine(" - tapped document position: $docPosition");
+    final selection = widget.selection.value;
     if (docPosition != null &&
         selection != null &&
         !selection.isCollapsed &&
@@ -725,13 +713,6 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
   }
 
   void _onDoubleTapUp(TapUpDetails details) {
-    final selection = widget.selection.value;
-    if (selection != null &&
-        !selection.isCollapsed &&
-        (_isOverBaseHandle(details.localPosition) || _isOverExtentHandle(details.localPosition))) {
-      return;
-    }
-
     editorGesturesLog.info("Double tap down on document");
     final docOffset = _interactorOffsetToDocumentOffset(details.localPosition);
     editorGesturesLog.fine(" - document offset: $docOffset");
@@ -1901,6 +1882,8 @@ class SuperEditorIosHandlesDocumentLayerBuilder implements SuperEditorLayerBuild
       return const ContentLayerProxyWidget(child: SizedBox());
     }
 
+    final controlsController = SuperEditorIosControlsScope.rootOf(context);
+
     return IosHandlesDocumentLayer(
       document: editContext.document,
       documentLayout: editContext.documentLayout,
@@ -1911,13 +1894,12 @@ class SuperEditorIosHandlesDocumentLayerBuilder implements SuperEditorLayerBuild
           const ClearComposingRegionRequest(),
         ]);
       },
-      handleColor: handleColor ??
-          SuperEditorIosControlsScope.maybeRootOf(context)?.handleColor ??
-          Theme.of(context).primaryColor,
+      areSelectionHandlesAllowed: controlsController.areSelectionHandlesAllowed,
+      handleColor: handleColor ?? controlsController.handleColor ?? Theme.of(context).primaryColor,
       caretWidth: caretWidth ?? 2,
       handleBallDiameter: handleBallDiameter ?? defaultIosHandleBallDiameter,
-      shouldCaretBlink: SuperEditorIosControlsScope.rootOf(context).shouldCaretBlink,
-      floatingCursorController: SuperEditorIosControlsScope.rootOf(context).floatingCursorController,
+      shouldCaretBlink: controlsController.shouldCaretBlink,
+      floatingCursorController: controlsController.floatingCursorController,
     );
   }
 }

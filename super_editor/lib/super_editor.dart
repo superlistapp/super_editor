@@ -104,9 +104,6 @@ export 'src/super_reader/read_only_document_mouse_interactor.dart';
 export 'src/super_reader/reader_context.dart';
 export 'src/super_reader/super_reader.dart';
 
-// SpellChecker
-export 'src/default_editor/spelling_and_grammar/spell_checker_popover_controller.dart';
-
 // Export from super_text_layout so that downstream clients don't
 // have to add this package to get access to these classes.
 export 'package:super_text_layout/super_text_layout.dart'
