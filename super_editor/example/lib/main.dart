@@ -15,11 +15,13 @@ import 'package:example/demos/flutter_features/demo_inline_widgets.dart';
 import 'package:example/demos/flutter_features/textinputclient/basic_text_input_client.dart';
 import 'package:example/demos/flutter_features/textinputclient/textfield.dart';
 import 'package:example/demos/in_the_lab/feature_action_tags.dart';
+import 'package:example/demos/in_the_lab/feature_ios_native_context_menu.dart';
 import 'package:example/demos/in_the_lab/feature_pattern_tags.dart';
 import 'package:example/demos/in_the_lab/feature_stable_tags.dart';
 import 'package:example/demos/in_the_lab/selected_text_colors_demo.dart';
 import 'package:example/demos/in_the_lab/spelling_error_decorations.dart';
 import 'package:example/demos/interaction_spot_checks/toolbar_following_content_in_layer.dart';
+import 'package:example/demos/mobile_chat/demo_mobile_chat.dart';
 import 'package:example/demos/scrolling/demo_task_and_chat_with_customscrollview.dart';
 import 'package:example/demos/sliver_example_editor.dart';
 import 'package:example/demos/styles/demo_doc_styles.dart';
@@ -225,6 +227,13 @@ final _menu = <_MenuGroup>[
       ),
       _MenuItem(
         icon: Icons.description,
+        title: 'Chat Demo',
+        pageBuilder: (context) {
+          return MobileChatDemo();
+        },
+      ),
+      _MenuItem(
+        icon: Icons.description,
         title: 'Switch Docs Demo',
         pageBuilder: (context) {
           return SwitchDocumentDemo();
@@ -314,6 +323,13 @@ final _menu = <_MenuGroup>[
         title: 'Action Tags',
         pageBuilder: (context) {
           return const ActionTagsFeatureDemo();
+        },
+      ),
+      _MenuItem(
+        icon: Icons.apple,
+        title: 'Native iOS Toolbar',
+        pageBuilder: (context) {
+          return const NativeIosContextMenuFeatureDemo();
         },
       ),
     ],

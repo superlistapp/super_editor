@@ -8,175 +8,211 @@ import 'package:super_editor_markdown/super_editor_markdown.dart';
 import '../../test_tools_goldens.dart';
 
 void main() {
-  group("SuperEditor > text entry > spelling error >", () {
+  group("SuperEditor > text entry > text errors >", () {
     group("direct styling >", () {
-      testGoldensOnMobile(
-        "is underlined in paragraph",
-        _createWidgetTest(
-          contentTypeName: "paragraph",
-          testNameQualifier: "no-stylesheet",
-          stylesheet: _stylesheetWithNoSpellingErrorStyles,
-          content: _paragraphMarkdown,
-        ),
-        windowSize: goldenSizeLongStrip,
-      );
-      testGoldensOnMobile(
-        "is underlined in blockquote",
-        _createWidgetTest(
-          contentTypeName: "blockquote",
-          testNameQualifier: "no-stylesheet",
-          stylesheet: _stylesheetWithNoSpellingErrorStyles,
-          content: _blockquoteMarkdown,
-        ),
-        windowSize: goldenSizeLongStrip,
-      );
-      testGoldensOnMobile(
-        "is underlined in list item",
-        _createWidgetTest(
-          contentTypeName: "list-item",
-          testNameQualifier: "no-stylesheet",
-          stylesheet: _stylesheetWithNoSpellingErrorStyles,
-          content: _listItemMarkdown,
-        ),
-        windowSize: goldenSizeLongStrip,
-      );
-      testGoldensOnMobile(
-        "is underlined in task",
-        _createWidgetTest(
-          contentTypeName: "task",
-          testNameQualifier: "no-stylesheet",
-          stylesheet: _stylesheetWithNoSpellingErrorStyles,
-          content: _taskMarkdown,
-        ),
-        windowSize: goldenSizeLongStrip,
-      );
+      group("spelling >", () {
+        _createDirectStylingTests(_ErrorType.spelling);
+      });
 
-      testGoldensOnMac(
-        "is underlined in paragraph",
-        _createWidgetTest(
-          contentTypeName: "paragraph",
-          testNameQualifier: "no-stylesheet",
-          stylesheet: _stylesheetWithNoSpellingErrorStyles,
-          content: _paragraphMarkdown,
-        ),
-        windowSize: goldenSizeLongStrip,
-      );
-      testGoldensOnMac(
-        "is underlined in blockquote",
-        _createWidgetTest(
-          contentTypeName: "blockquote",
-          testNameQualifier: "no-stylesheet",
-          stylesheet: _stylesheetWithNoSpellingErrorStyles,
-          content: _blockquoteMarkdown,
-        ),
-        windowSize: goldenSizeLongStrip,
-      );
-      testGoldensOnMac(
-        "is underlined in list item",
-        _createWidgetTest(
-          contentTypeName: "list-item",
-          testNameQualifier: "no-stylesheet",
-          stylesheet: _stylesheetWithNoSpellingErrorStyles,
-          content: _listItemMarkdown,
-        ),
-        windowSize: goldenSizeLongStrip,
-      );
-      testGoldensOnMac(
-        "is underlined in task",
-        _createWidgetTest(
-          contentTypeName: "task",
-          testNameQualifier: "no-stylesheet",
-          stylesheet: _stylesheetWithNoSpellingErrorStyles,
-          content: _taskMarkdown,
-        ),
-        windowSize: goldenSizeLongStrip,
-      );
+      group("grammar >", () {
+        _createDirectStylingTests(_ErrorType.grammar);
+      });
     });
 
     group("stylesheet styling >", () {
-      testGoldensOnMobile(
-        "is underlined in paragraph",
-        _createWidgetTest(
-          contentTypeName: "paragraph",
-          testNameQualifier: "with-stylesheet",
-          stylesheet: _stylesheetWithSpellingErrorStyles,
-          content: _paragraphMarkdown,
-        ),
-        windowSize: goldenSizeLongStrip,
-      );
-      testGoldensOnMobile(
-        "is underlined in blockquote",
-        _createWidgetTest(
-          contentTypeName: "blockquote",
-          testNameQualifier: "with-stylesheet",
-          stylesheet: _stylesheetWithSpellingErrorStyles,
-          content: _blockquoteMarkdown,
-        ),
-        windowSize: goldenSizeLongStrip,
-      );
-      testGoldensOnMobile(
-        "is underlined in list item",
-        _createWidgetTest(
-          contentTypeName: "list-item",
-          testNameQualifier: "with-stylesheet",
-          stylesheet: _stylesheetWithSpellingErrorStyles,
-          content: _listItemMarkdown,
-        ),
-        windowSize: goldenSizeLongStrip,
-      );
-      testGoldensOnMobile(
-        "is underlined in task",
-        _createWidgetTest(
-          contentTypeName: "task",
-          testNameQualifier: "with-stylesheet",
-          stylesheet: _stylesheetWithSpellingErrorStyles,
-          content: _taskMarkdown,
-        ),
-        windowSize: goldenSizeLongStrip,
-      );
+      group("spelling >", () {
+        _createStylesheetStylingTests(_ErrorType.spelling);
+      });
 
-      testGoldensOnMac(
-        "is underlined in paragraph",
-        _createWidgetTest(
-          contentTypeName: "paragraph",
-          testNameQualifier: "with-stylesheet",
-          stylesheet: _stylesheetWithSpellingErrorStyles,
-          content: _paragraphMarkdown,
-        ),
-        windowSize: goldenSizeLongStrip,
-      );
-      testGoldensOnMac(
-        "is underlined in blockquote",
-        _createWidgetTest(
-          contentTypeName: "blockquote",
-          testNameQualifier: "with-stylesheet",
-          stylesheet: _stylesheetWithSpellingErrorStyles,
-          content: _blockquoteMarkdown,
-        ),
-        windowSize: goldenSizeLongStrip,
-      );
-      testGoldensOnMac(
-        "is underlined in list item",
-        _createWidgetTest(
-          contentTypeName: "list-item",
-          testNameQualifier: "with-stylesheet",
-          stylesheet: _stylesheetWithSpellingErrorStyles,
-          content: _listItemMarkdown,
-        ),
-        windowSize: goldenSizeLongStrip,
-      );
-      testGoldensOnMac(
-        "is underlined in task",
-        _createWidgetTest(
-          contentTypeName: "task",
-          testNameQualifier: "with-stylesheet",
-          stylesheet: _stylesheetWithSpellingErrorStyles,
-          content: _taskMarkdown,
-        ),
-        windowSize: goldenSizeLongStrip,
-      );
+      group("grammar >", () {
+        _createStylesheetStylingTests(_ErrorType.grammar);
+      });
     });
   });
+}
+
+void _createDirectStylingTests(_ErrorType type) {
+  testGoldensOnMobile(
+    "is underlined in paragraph",
+    _createWidgetTest(
+      contentTypeName: "paragraph",
+      testNameQualifier: "no-stylesheet",
+      stylesheet: _stylesheetWithNoSpellingErrorStyles,
+      content: _paragraphMarkdown,
+      errorType: type,
+    ),
+    windowSize: goldenSizeLongStrip,
+  );
+  testGoldensOnMobile(
+    "is underlined in blockquote",
+    _createWidgetTest(
+      contentTypeName: "blockquote",
+      testNameQualifier: "no-stylesheet",
+      stylesheet: _stylesheetWithNoSpellingErrorStyles,
+      content: _blockquoteMarkdown,
+      errorType: type,
+    ),
+    windowSize: goldenSizeLongStrip,
+  );
+  testGoldensOnMobile(
+    "is underlined in list item",
+    _createWidgetTest(
+      contentTypeName: "list-item",
+      testNameQualifier: "no-stylesheet",
+      stylesheet: _stylesheetWithNoSpellingErrorStyles,
+      content: _listItemMarkdown,
+      errorType: type,
+    ),
+    windowSize: goldenSizeLongStrip,
+  );
+  testGoldensOnMobile(
+    "is underlined in task",
+    _createWidgetTest(
+      contentTypeName: "task",
+      testNameQualifier: "no-stylesheet",
+      stylesheet: _stylesheetWithNoSpellingErrorStyles,
+      content: _taskMarkdown,
+      errorType: type,
+    ),
+    windowSize: goldenSizeLongStrip,
+  );
+
+  testGoldensOnMac(
+    "is underlined in paragraph",
+    _createWidgetTest(
+      contentTypeName: "paragraph",
+      testNameQualifier: "no-stylesheet",
+      stylesheet: _stylesheetWithNoSpellingErrorStyles,
+      content: _paragraphMarkdown,
+      errorType: type,
+    ),
+    windowSize: goldenSizeLongStrip,
+  );
+  testGoldensOnMac(
+    "is underlined in blockquote",
+    _createWidgetTest(
+      contentTypeName: "blockquote",
+      testNameQualifier: "no-stylesheet",
+      stylesheet: _stylesheetWithNoSpellingErrorStyles,
+      content: _blockquoteMarkdown,
+      errorType: type,
+    ),
+    windowSize: goldenSizeLongStrip,
+  );
+  testGoldensOnMac(
+    "is underlined in list item",
+    _createWidgetTest(
+      contentTypeName: "list-item",
+      testNameQualifier: "no-stylesheet",
+      stylesheet: _stylesheetWithNoSpellingErrorStyles,
+      content: _listItemMarkdown,
+      errorType: type,
+    ),
+    windowSize: goldenSizeLongStrip,
+  );
+  testGoldensOnMac(
+    "is underlined in task",
+    _createWidgetTest(
+      contentTypeName: "task",
+      testNameQualifier: "no-stylesheet",
+      stylesheet: _stylesheetWithNoSpellingErrorStyles,
+      content: _taskMarkdown,
+      errorType: type,
+    ),
+    windowSize: goldenSizeLongStrip,
+  );
+}
+
+void _createStylesheetStylingTests(_ErrorType type) {
+  testGoldensOnMobile(
+    "is underlined in paragraph",
+    _createWidgetTest(
+      contentTypeName: "paragraph",
+      testNameQualifier: "with-stylesheet",
+      stylesheet: _stylesheetWithSpellingErrorStyles,
+      content: _paragraphMarkdown,
+      errorType: type,
+    ),
+    windowSize: goldenSizeLongStrip,
+  );
+  testGoldensOnMobile(
+    "is underlined in blockquote",
+    _createWidgetTest(
+      contentTypeName: "blockquote",
+      testNameQualifier: "with-stylesheet",
+      stylesheet: _stylesheetWithSpellingErrorStyles,
+      content: _blockquoteMarkdown,
+      errorType: type,
+    ),
+    windowSize: goldenSizeLongStrip,
+  );
+  testGoldensOnMobile(
+    "is underlined in list item",
+    _createWidgetTest(
+      contentTypeName: "list-item",
+      testNameQualifier: "with-stylesheet",
+      stylesheet: _stylesheetWithSpellingErrorStyles,
+      content: _listItemMarkdown,
+      errorType: type,
+    ),
+    windowSize: goldenSizeLongStrip,
+  );
+  testGoldensOnMobile(
+    "is underlined in task",
+    _createWidgetTest(
+      contentTypeName: "task",
+      testNameQualifier: "with-stylesheet",
+      stylesheet: _stylesheetWithSpellingErrorStyles,
+      content: _taskMarkdown,
+      errorType: type,
+    ),
+    windowSize: goldenSizeLongStrip,
+  );
+
+  testGoldensOnMac(
+    "is underlined in paragraph",
+    _createWidgetTest(
+      contentTypeName: "paragraph",
+      testNameQualifier: "with-stylesheet",
+      stylesheet: _stylesheetWithSpellingErrorStyles,
+      content: _paragraphMarkdown,
+      errorType: type,
+    ),
+    windowSize: goldenSizeLongStrip,
+  );
+  testGoldensOnMac(
+    "is underlined in blockquote",
+    _createWidgetTest(
+      contentTypeName: "blockquote",
+      testNameQualifier: "with-stylesheet",
+      stylesheet: _stylesheetWithSpellingErrorStyles,
+      content: _blockquoteMarkdown,
+      errorType: type,
+    ),
+    windowSize: goldenSizeLongStrip,
+  );
+  testGoldensOnMac(
+    "is underlined in list item",
+    _createWidgetTest(
+      contentTypeName: "list-item",
+      testNameQualifier: "with-stylesheet",
+      stylesheet: _stylesheetWithSpellingErrorStyles,
+      content: _listItemMarkdown,
+      errorType: type,
+    ),
+    windowSize: goldenSizeLongStrip,
+  );
+  testGoldensOnMac(
+    "is underlined in task",
+    _createWidgetTest(
+      contentTypeName: "task",
+      testNameQualifier: "with-stylesheet",
+      stylesheet: _stylesheetWithSpellingErrorStyles,
+      content: _taskMarkdown,
+      errorType: type,
+    ),
+    windowSize: goldenSizeLongStrip,
+  );
 }
 
 Future<void> Function(WidgetTester) _createWidgetTest({
@@ -184,23 +220,69 @@ Future<void> Function(WidgetTester) _createWidgetTest({
   required String testNameQualifier,
   required Stylesheet stylesheet,
   required String content,
+  required _ErrorType errorType,
 }) {
   return (WidgetTester tester) async {
-    final (editor, document) = await _pumpScaffold(tester, stylesheet, content);
+    final document = deserializeMarkdownToDocument(content);
 
-    _addSpellingError(tester, editor, document);
+    final (_, _) = await _pumpScaffold(
+      tester,
+      stylesheet,
+      document,
+      spellingError: errorType == _ErrorType.spelling
+          ? TextError(
+              nodeId: document.first.id,
+              range: const TextRange(start: 22, end: 23),
+              type: TextErrorType.spelling,
+              value: "a",
+            )
+          : null,
+      grammarError: errorType == _ErrorType.grammar
+          ? TextError(
+              nodeId: document.first.id,
+              range: const TextRange(start: 7, end: 11),
+              type: TextErrorType.grammar,
+              value: "with",
+            )
+          : null,
+    );
 
-    await screenMatchesGolden(tester,
-        "super-editor_text-entry_spelling-error-shows-underline_${contentTypeName}_${defaultTargetPlatform.name}_${testNameQualifier}");
+    late final String goldenName;
+    switch (errorType) {
+      case _ErrorType.spelling:
+        goldenName =
+            "super-editor_text-entry_spelling-error-shows-underline_${contentTypeName}_${defaultTargetPlatform.name}_$testNameQualifier";
+      case _ErrorType.grammar:
+        goldenName =
+            "super-editor_text-entry_grammar-error-shows-underline_${contentTypeName}_${defaultTargetPlatform.name}_$testNameQualifier";
+    }
+
+    await screenMatchesGolden(tester, goldenName);
   };
 }
 
-Future<(Editor, Document)> _pumpScaffold(WidgetTester tester, Stylesheet stylesheet, String contentMarkdown) async {
+enum _ErrorType {
+  spelling,
+  grammar;
+}
+
+Future<(Editor, Document)> _pumpScaffold(
+  WidgetTester tester,
+  Stylesheet stylesheet,
+  MutableDocument document, {
+  TextError? spellingError,
+  TextError? grammarError,
+}) async {
   // TODO: Whenever we're able to create a TaskComponentBuilder without passing the Editor, refactor
   //       this setup to look like a normal SuperEditor test.
-  final document = deserializeMarkdownToDocument(contentMarkdown);
   final composer = MutableDocumentComposer();
   final editor = createDefaultDocumentEditor(document: document, composer: composer);
+
+  final spellingAndGrammarStyler = SpellingAndGrammarStyler()
+    ..addErrors(document.first.id, {
+      if (spellingError != null) spellingError,
+      if (grammarError != null) grammarError,
+    });
 
   await tester.pumpWidget(MaterialApp(
     home: Scaffold(
@@ -212,6 +294,9 @@ Future<(Editor, Document)> _pumpScaffold(WidgetTester tester, Stylesheet stylesh
             ...defaultComponentBuilders,
           ],
           stylesheet: stylesheet,
+          customStylePhases: [
+            spellingAndGrammarStyler,
+          ],
         ),
       ),
     ),
@@ -219,26 +304,6 @@ Future<(Editor, Document)> _pumpScaffold(WidgetTester tester, Stylesheet stylesh
   ));
 
   return (editor, document);
-}
-
-Future<void> _addSpellingError(WidgetTester tester, Editor editor, Document document) async {
-  final nodeId = document.first.id;
-  editor.execute([
-    AddTextAttributionsRequest(
-      documentRange: DocumentRange(
-        start: DocumentPosition(
-          nodeId: nodeId,
-          nodePosition: const TextNodePosition(offset: 22),
-        ),
-        end: DocumentPosition(
-          nodeId: nodeId,
-          nodePosition: const TextNodePosition(offset: 23),
-        ),
-      ),
-      attributions: {spellingErrorAttribution},
-    ),
-  ]);
-  await tester.pumpAndSettle();
 }
 
 const _paragraphMarkdown = "Typing with composing a";
@@ -271,7 +336,10 @@ final _stylesheetWithSpellingErrorStyles = defaultStylesheet.copyWith(
           fontFamily: 'Roboto',
         ),
         Styles.spellingErrorUnderlineStyle: const SquiggleUnderlineStyle(
-          color: Colors.blue,
+          color: Colors.orange,
+        ),
+        Styles.grammarErrorUnderlineStyle: const SquiggleUnderlineStyle(
+          color: Colors.green,
         ),
       };
     })

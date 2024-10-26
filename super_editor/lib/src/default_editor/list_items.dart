@@ -141,10 +141,6 @@ class ListItemComponentBuilder implements ComponentBuilder {
           text: node.text,
           textStyleBuilder: noStyleBuilder,
           selectionColor: const Color(0x00000000),
-          spellingErrors: node.text
-              .getAttributionSpansByFilter((a) => a == spellingErrorAttribution)
-              .map((a) => TextRange(start: a.start, end: a.end + 1)) // +1 because text range end is exclusive
-              .toList(),
         ),
       ListItemType.ordered => OrderedListItemComponentViewModel(
           nodeId: node.id,
@@ -153,10 +149,6 @@ class ListItemComponentBuilder implements ComponentBuilder {
           text: node.text,
           textStyleBuilder: noStyleBuilder,
           selectionColor: const Color(0x00000000),
-          spellingErrors: node.text
-              .getAttributionSpansByFilter((a) => a == spellingErrorAttribution)
-              .map((a) => TextRange(start: a.start, end: a.end + 1)) // +1 because text range end is exclusive
-              .toList(),
         ),
     };
   }
@@ -217,14 +209,19 @@ abstract class ListItemComponentViewModel extends SingleColumnLayoutComponentVie
     this.highlightWhenEmpty = false,
     TextRange? composingRegion,
     bool showComposingRegionUnderline = false,
-    UnderlineStyle spellingErrorUnderlineStyle = const SquiggleUnderlineStyle(color: Color(0xFFFF0000)),
+    UnderlineStyle spellingErrorUnderlineStyle = const SquiggleUnderlineStyle(color: Colors.red),
     List<TextRange> spellingErrors = const <TextRange>[],
+    UnderlineStyle grammarErrorUnderlineStyle = const SquiggleUnderlineStyle(color: Colors.blue),
+    List<TextRange> grammarErrors = const <TextRange>[],
   }) : super(nodeId: nodeId, maxWidth: maxWidth, padding: padding) {
     this.composingRegion = composingRegion;
     this.showComposingRegionUnderline = showComposingRegionUnderline;
 
     this.spellingErrorUnderlineStyle = spellingErrorUnderlineStyle;
     this.spellingErrors = spellingErrors;
+
+    this.grammarErrorUnderlineStyle = grammarErrorUnderlineStyle;
+    this.grammarErrors = grammarErrors;
   }
 
   int indent;
@@ -259,6 +256,8 @@ abstract class ListItemComponentViewModel extends SingleColumnLayoutComponentVie
           highlightWhenEmpty == other.highlightWhenEmpty &&
           spellingErrorUnderlineStyle == other.spellingErrorUnderlineStyle &&
           const DeepCollectionEquality().equals(spellingErrors, spellingErrors) &&
+          grammarErrorUnderlineStyle == other.grammarErrorUnderlineStyle &&
+          const DeepCollectionEquality().equals(grammarErrors, grammarErrors) &&
           composingRegion == other.composingRegion &&
           showComposingRegionUnderline == other.showComposingRegionUnderline;
 
@@ -274,6 +273,8 @@ abstract class ListItemComponentViewModel extends SingleColumnLayoutComponentVie
       highlightWhenEmpty.hashCode ^
       spellingErrorUnderlineStyle.hashCode ^
       spellingErrors.hashCode ^
+      grammarErrorUnderlineStyle.hashCode ^
+      grammarErrors.hashCode ^
       composingRegion.hashCode ^
       showComposingRegionUnderline.hashCode;
 }
@@ -296,6 +297,8 @@ class UnorderedListItemComponentViewModel extends ListItemComponentViewModel {
     super.showComposingRegionUnderline = false,
     super.spellingErrorUnderlineStyle,
     super.spellingErrors,
+    super.grammarErrorUnderlineStyle,
+    super.grammarErrors,
   });
 
   ListItemDotStyle dotStyle;
@@ -327,6 +330,8 @@ class UnorderedListItemComponentViewModel extends ListItemComponentViewModel {
       showComposingRegionUnderline: showComposingRegionUnderline,
       spellingErrorUnderlineStyle: spellingErrorUnderlineStyle,
       spellingErrors: List.from(spellingErrors),
+      grammarErrorUnderlineStyle: grammarErrorUnderlineStyle,
+      grammarErrors: List.from(grammarErrors),
     );
   }
 
@@ -361,6 +366,8 @@ class OrderedListItemComponentViewModel extends ListItemComponentViewModel {
     super.showComposingRegionUnderline = false,
     super.spellingErrorUnderlineStyle,
     super.spellingErrors,
+    super.grammarErrorUnderlineStyle,
+    super.grammarErrors,
   });
 
   final int? ordinalValue;
@@ -390,6 +397,8 @@ class OrderedListItemComponentViewModel extends ListItemComponentViewModel {
       showComposingRegionUnderline: showComposingRegionUnderline,
       spellingErrorUnderlineStyle: spellingErrorUnderlineStyle,
       spellingErrors: List.from(spellingErrors),
+      grammarErrorUnderlineStyle: grammarErrorUnderlineStyle,
+      grammarErrors: List.from(grammarErrors),
     );
   }
 

@@ -564,7 +564,7 @@ class IosControlsDocumentLayerState extends DocumentLayoutLayerState<IosHandlesD
   @override
   void initState() {
     super.initState();
-    _caretBlinkController = BlinkController(tickerProvider: this);
+    _caretBlinkController = BlinkController.withTimer();
 
     widget.selection.addListener(_onSelectionChange);
     widget.shouldCaretBlink.addListener(_onBlinkModeChange);
@@ -790,6 +790,7 @@ class IosControlsDocumentLayerState extends DocumentLayoutLayerState<IosHandlesD
     }
 
     return Stack(
+      clipBehavior: Clip.none,
       children: [
         if (layoutData.caret != null) //
           _buildCollapsedHandle(caret: layoutData.caret!),

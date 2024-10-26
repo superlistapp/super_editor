@@ -513,6 +513,9 @@ mixin TextComponentViewModel on SingleColumnLayoutComponentViewModel {
   List<TextRange> spellingErrors = [];
   UnderlineStyle spellingErrorUnderlineStyle = const SquiggleUnderlineStyle();
 
+  List<TextRange> grammarErrors = [];
+  UnderlineStyle grammarErrorUnderlineStyle = const SquiggleUnderlineStyle(color: Colors.blue);
+
   List<Underlines> createUnderlines() {
     return [
       if (composingRegion != null && showComposingRegionUnderline)
@@ -524,6 +527,11 @@ mixin TextComponentViewModel on SingleColumnLayoutComponentViewModel {
         Underlines(
           style: spellingErrorUnderlineStyle,
           underlines: spellingErrors,
+        ),
+      if (grammarErrors.isNotEmpty) //
+        Underlines(
+          style: grammarErrorUnderlineStyle,
+          underlines: grammarErrors,
         ),
     ];
   }
@@ -545,6 +553,7 @@ mixin TextComponentViewModel on SingleColumnLayoutComponentViewModel {
     showComposingRegionUnderline = styles[Styles.showComposingRegionUnderline] ?? showComposingRegionUnderline;
 
     spellingErrorUnderlineStyle = styles[Styles.spellingErrorUnderlineStyle] ?? spellingErrorUnderlineStyle;
+    grammarErrorUnderlineStyle = styles[Styles.grammarErrorUnderlineStyle] ?? grammarErrorUnderlineStyle;
   }
 }
 

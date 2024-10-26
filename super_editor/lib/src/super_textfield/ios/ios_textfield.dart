@@ -15,17 +15,20 @@ import 'package:super_editor/src/super_textfield/infrastructure/fill_width_if_co
 import 'package:super_editor/src/super_textfield/infrastructure/hint_text.dart';
 import 'package:super_editor/src/super_textfield/infrastructure/text_scrollview.dart';
 import 'package:super_editor/src/super_textfield/input_method_engine/_ime_text_editing_controller.dart';
-import 'package:super_editor/src/super_textfield/ios/_editing_controls.dart';
+import 'package:super_editor/src/super_textfield/ios/editing_controls.dart';
 import 'package:super_text_layout/super_text_layout.dart';
 
 import '../metrics.dart';
 import '../styles.dart';
-import '_floating_cursor.dart';
-import '_user_interaction.dart';
+import 'floating_cursor.dart';
+import '../../infrastructure/platforms/ios/ios_system_context_menu.dart';
+import 'user_interaction.dart';
 
 export '../infrastructure/magnifier.dart';
-export '_caret.dart';
-export '_user_interaction.dart';
+export 'caret.dart';
+export 'editing_controls.dart';
+export '../../infrastructure/platforms/ios/ios_system_context_menu.dart';
+export 'user_interaction.dart';
 
 final _log = iosTextFieldLog;
 
@@ -50,7 +53,7 @@ class SuperIOSTextField extends StatefulWidget {
     this.textInputAction,
     this.imeConfiguration,
     this.showComposingUnderline = true,
-    this.popoverToolbarBuilder = _defaultPopoverToolbarBuilder,
+    this.popoverToolbarBuilder = defaultIosPopoverToolbarBuilder,
     this.showDebugPaint = false,
   }) : super(key: key);
 
@@ -149,7 +152,7 @@ class SuperIOSTextField extends StatefulWidget {
   final bool showComposingUnderline;
 
   /// Builder that creates the popover toolbar widget that appears when text is selected.
-  final Widget Function(BuildContext, IOSEditingOverlayController) popoverToolbarBuilder;
+  final IOSPopoverToolbarBuilder popoverToolbarBuilder;
 
   /// Whether to paint debug guides.
   final bool showDebugPaint;
@@ -694,7 +697,23 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField>
   }
 }
 
-Widget _defaultPopoverToolbarBuilder(BuildContext context, IOSEditingOverlayController controller) {
+/// Builder that returns a widget for an iOS-style popover editing toolbar.
+typedef IOSPopoverToolbarBuilder = Widget Function(BuildContext, IOSEditingOverlayController);
+
+/// An [IOSPopoverToolbarBuilder] that displays the iOS system popover toolbar, if the version of
+/// iOS is recent enough, otherwise builds [defaultIosPopoverToolbarBuilder].
+Widget iOSSystemPopoverTextFieldToolbarWithFallback(BuildContext context, IOSEditingOverlayController controller) {
+  if (IOSSystemContextMenu.isSupported(context)) {
+    return IOSSystemContextMenu(
+      anchor: controller.toolbarFocalPoint.offset! & controller.toolbarFocalPoint.leaderSize!,
+    );
+  }
+
+  return defaultIosPopoverToolbarBuilder(context, controller);
+}
+
+/// Returns a widget for the default/standard iOS-style popover provided by Super Text Field.
+Widget defaultIosPopoverToolbarBuilder(BuildContext context, IOSEditingOverlayController controller) {
   return IOSTextEditingFloatingToolbar(
     focalPoint: controller.toolbarFocalPoint,
     onCutPressed: () {

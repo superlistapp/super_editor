@@ -17,7 +17,8 @@ import 'package:super_editor/src/default_editor/text.dart';
 /// be automatically applied to newly typed text. This reaction identifies these
 /// situations and activates the desired styles in the [DocumentComposer].
 ///
-/// Only the given `stylesToExtend` are automatically activated.
+/// Only the given [styleValuesToExtend], [styleTypesToExtend], [styleSelectorsToExtend]
+/// are automatically activated.
 ///
 /// Styles are activated when placing the caret at the beginning of a paragraph,
 /// and the first character has a style:
@@ -39,10 +40,22 @@ import 'package:super_editor/src/default_editor/text.dart';
 /// styles.
 class UpdateComposerTextStylesReaction extends EditReaction {
   UpdateComposerTextStylesReaction({
+    @Deprecated("Use styleValuesToExtend instead") //
     Set<Attribution>? stylesToExtend,
-  }) : _stylesToExtend = stylesToExtend ?? defaultExtendableStyles;
+    Set<Attribution>? styleValuesToExtend,
+    Set<Type> styleTypesToExtend = defaultExtendableTypes,
+    Set<AttributionExtensionSelector> styleSelectorsToExtend = const {},
+  })  : assert(
+          stylesToExtend == null || styleValuesToExtend == null,
+          "stylesToExtend and styleValuesToExtend are the same thing - you should only provide one",
+        ),
+        _styleValuesToExtend = styleValuesToExtend ?? stylesToExtend ?? defaultExtendableStyles,
+        _styleTypesToExtend = styleTypesToExtend,
+        _styleSelectorsToExtend = styleSelectorsToExtend;
 
-  final Set<Attribution> _stylesToExtend;
+  final Set<Attribution> _styleValuesToExtend;
+  final Set<Type> _styleTypesToExtend;
+  final Set<AttributionExtensionSelector> _styleSelectorsToExtend;
 
   DocumentSelection? _previousSelection;
 
@@ -140,7 +153,19 @@ class UpdateComposerTextStylesReaction extends EditReaction {
     Set<Attribution> allAttributions = node.text.getAllAttributionsAt(offsetWithAttributionsToExtend);
 
     // Add desired expandable styles.
-    final newStyles = allAttributions.where((attribution) => _stylesToExtend.contains(attribution)).toSet();
+    final newStyles = {
+      // Extend any attributions whose value matches a desired value.
+      ...allAttributions.where((attribution) => _styleValuesToExtend.contains(attribution)).toSet(),
+      // Extend any attribution whose class type matches a desired attribution type.
+      if (_styleTypesToExtend.isNotEmpty) //
+        ...allAttributions.where((attribution) => _styleTypesToExtend.contains(attribution.runtimeType)).toSet(),
+      // Extend any attribution that's explicitly selected by a given selector.
+      if (_styleSelectorsToExtend.isNotEmpty) //
+        ...allAttributions
+            .where(
+                (attribution) => _styleSelectorsToExtend.firstWhereOrNull((selector) => selector(attribution)) != null)
+            .toSet(),
+    };
 
     // TODO: we shouldn't have such specific behavior in here. Figure out how to generalize this.
     // Add a link attribution only if the selection sits at the middle of the link.
@@ -160,9 +185,27 @@ class UpdateComposerTextStylesReaction extends EditReaction {
   }
 }
 
+/// A function that returns `true` if the given [attribution] should be automatically
+/// extended when the caret is placed after such an attributed character, and the
+/// user continues to type - or `false` to ignore the [attribution] for future typing.
+///
+/// Example: Typically, when a user places the caret immediately following a bold character,
+/// additional user typing also applies the bold attribution.
+///
+/// Example: Typically, when a user places the caret immediately following a link, the link
+/// doesn't extend to include additional characters.
+typedef AttributionExtensionSelector = bool Function(Attribution attribution);
+
 final defaultExtendableStyles = Set.unmodifiable({
   boldAttribution,
   italicsAttribution,
   underlineAttribution,
   strikethroughAttribution,
+  codeAttribution,
 });
+
+const defaultExtendableTypes = {
+  FontSizeAttribution,
+  ColorAttribution,
+  BackgroundColorAttribution,
+};

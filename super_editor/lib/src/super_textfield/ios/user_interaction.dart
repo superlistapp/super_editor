@@ -10,7 +10,7 @@ import 'package:super_editor/src/super_textfield/super_textfield.dart';
 import 'package:super_editor/src/test/test_globals.dart';
 import 'package:super_text_layout/super_text_layout.dart';
 
-import '_editing_controls.dart';
+import 'editing_controls.dart';
 
 final _log = iosTextFieldLog;
 

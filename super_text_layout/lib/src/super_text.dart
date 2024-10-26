@@ -417,7 +417,30 @@ class RenderLayoutAwareParagraph extends RenderParagraph {
   void performLayout() {
     super.performLayout();
     _needsLayout = false;
+
+    // FIXME: Remove this after Flutter #155620 is fixed.
+    // Directly measure the line height for non-empty text because Flutter's
+    // measurement for empty text is wrong for a random set of font sizes.
+    if (text.toPlainText().isEmpty) {
+      final textStyle = text.style;
+      if (textStyle != null) {
+        _textPainter
+          ..text = TextSpan(text: "a", style: textStyle)
+          ..textDirection = textDirection
+          ..textAlign = textAlign
+          ..layout();
+
+        // We have no text, so we set the height of this render object to the line height
+        // of an arbitrary character of the given style. However, it's possible that our
+        // parent render object imposed constraints that are shorter than a single line
+        // of text. To avoid breaking Flutter's layout rules, we take the minimum height
+        // between the single line of text, and the incoming height constraints.
+        size = constraints.constrain(Size(size.width, _textPainter.height));
+      }
+    }
   }
+
+  final _textPainter = TextPainter();
 }
 
 typedef SuperTextLayerBuilder = Widget Function(BuildContext, TextLayout textLayout);

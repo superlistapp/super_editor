@@ -68,27 +68,27 @@ class _HashTagsFeatureDemoState extends State<HashTagsFeatureDemo> {
         inlineTextStyler: (attributions, existingStyle) {
           TextStyle style = defaultInlineTextStyler(attributions, existingStyle);
 
-        if (attributions.whereType<PatternTagAttribution>().isNotEmpty) {
-          style = style.copyWith(
-            color: Colors.orange,
-          );
-        }
+          if (attributions.whereType<PatternTagAttribution>().isNotEmpty) {
+            style = style.copyWith(
+              color: Colors.orange,
+            );
+          }
 
-        return style;
-      },
-      addRulesAfter: [
-        ...darkModeStyles,
-      ],
-    ),
-    documentOverlayBuilders: [
-      DefaultCaretOverlayBuilder(
-        caretStyle: CaretStyle().copyWith(color: Colors.redAccent),
+          return style;
+        },
+        addRulesAfter: [
+          ...darkModeStyles,
+        ],
       ),
-    ],
-    plugins: {
-      _hashTagPlugin,
-    },
-        );
+      documentOverlayBuilders: [
+        DefaultCaretOverlayBuilder(
+          caretStyle: CaretStyle().copyWith(color: Colors.redAccent),
+        ),
+      ],
+      plugins: {
+        _hashTagPlugin,
+      },
+    );
   }
 
   Widget _buildTagList() {

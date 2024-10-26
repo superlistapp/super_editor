@@ -1,3 +1,24 @@
+## [0.3.0-dev.9] - Sept 26, 2024
+ * FEATURE: Indent for blockquotes.
+
+## [0.3.0-dev.8] - Sept 24, 2024
+ * ADJUSTMENT: Change mobile caret overlays to use `Timer`s instead of `Ticker`s
+   to prevent frame churn.
+
+## [0.3.0-dev.7] - Sept 24, 2024
+ * ADJUSTMENT: Change `super_text_layout` dependency from v0.1.13 to v0.1.14.
+
+## [0.3.0-dev.6] - Sept 15, 2024
+ * FIX: Don't cut off iOS drag handles in `SuperEditor`.
+ * ADJUSTMENT: Increase iOS drag handle interaction area in `SuperTextField`.
+
+## [0.3.0-dev.5] - Aug 27, 2024
+ * FEATURE: Add configurable underlines to `TextWithHintComponent`.
+ * ADJUSTMENT: Increase the types of attributions that are automatically extended when typing immediately after those attributions.
+ * ADJUSTMENT: Convert floating cursor geometry to document coordinates.
+ * FIX: Retain desired composing attributions when collapsing an expanded selection.
+ * FIX: (Android) auto-scroll when selection changes.
+
 ## [0.3.0-dev.4] - Aug 17, 2024
  * Package metadata update - no functional changes.
 

@@ -574,10 +574,16 @@ class _RebuildableWidget extends StatefulWidget {
     Key? key,
     this.rebuildSignal,
     this.buildTracker,
-    // ignore: unused_element
+    // TODO(srawlins): `unused_element`, when reporting a parameter, is being
+    // renamed to `unused_element_parameter`. For now, ignore each; when the SDK
+    // constraint is >= 3.6.0, just ignore `unused_element_parameter`.
+    // ignore: unused_element, unused_element_parameter
     this.elementTracker,
     this.onBuildScheduled,
-    // ignore: unused_element
+    // TODO(srawlins): `unused_element`, when reporting a parameter, is being
+    // renamed to `unused_element_parameter`. For now, ignore each; when the SDK
+    // constraint is >= 3.6.0, just ignore `unused_element_parameter`.
+    // ignore: unused_element, unused_element_parameter
     this.onBuild,
     this.builder,
     this.child,
@@ -672,7 +678,10 @@ class _RebuildableContentLayerWidget extends ContentLayerStatefulWidget {
     this.rebuildSignal,
     this.buildTracker,
     this.elementTracker,
-    // ignore: unused_element
+    // TODO(srawlins): `unused_element`, when reporting a parameter, is being
+    // renamed to `unused_element_parameter`. For now, ignore each; when the SDK
+    // constraint is >= 3.6.0, just ignore `unused_element_parameter`.
+    // ignore: unused_element, unused_element_parameter
     this.onBuildScheduled,
     this.onBuild,
     this.builder,

@@ -309,6 +309,10 @@ class DocumentPosition {
 
 /// A single content node within a [Document].
 abstract class DocumentNode implements ChangeNotifier {
+  DocumentNode({
+    Map<String, dynamic>? metadata,
+  }) : _metadata = metadata ?? {};
+
   /// ID that is unique within a [Document].
   String get id;
 
@@ -373,7 +377,7 @@ abstract class DocumentNode implements ChangeNotifier {
   /// Returns all metadata attached to this [DocumentNode].
   Map<String, dynamic> get metadata => _metadata;
 
-  final Map<String, dynamic> _metadata = {};
+  final Map<String, dynamic> _metadata;
 
   /// Sets all metadata for this [DocumentNode], removing all
   /// existing values.
@@ -411,6 +415,8 @@ abstract class DocumentNode implements ChangeNotifier {
   Map<String, dynamic> copyMetadata() => Map.from(_metadata);
 
   DocumentNode copy();
+
+  bool get isDeletable => _metadata[NodeMetadata.isDeletable] != false;
 
   @override
   bool operator ==(Object other) =>
@@ -721,4 +727,21 @@ abstract class NodePosition {
   /// text offset, but have different affinities, returns `true` from [isEquivalentTo],
   /// even though [==] returns `false`.
   bool isEquivalentTo(NodePosition other);
+}
+
+/// Keys to access metadata on a [DocumentNode].
+class NodeMetadata {
+  /// Applies an [Attribution] to the node.
+  static const String blockType = 'blockType';
+
+  /// Whether or not the node is deletable.
+  ///
+  /// A non-deletable node cannot be removed from the document by user
+  /// interaction. For exammple, selecting a non-deletable node and pressing
+  /// backspace has no effect.
+  ///
+  /// Apps can still remove non-deletable nodes by issuing a `DeleteNodeRequest`.
+  ///
+  /// If the node doesn't have this metadata, it is assumed to be deletable.
+  static const String isDeletable = 'isDeletable';
 }

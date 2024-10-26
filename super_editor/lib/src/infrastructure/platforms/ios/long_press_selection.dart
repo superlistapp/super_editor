@@ -50,11 +50,11 @@ class IosLongPressSelectionStrategy {
       _longPressInitialSelection = DocumentSelection(
         base: DocumentPosition(
           nodeId: docPosition.nodeId,
-          nodePosition: UpstreamDownstreamNodePosition.upstream(),
+          nodePosition: const UpstreamDownstreamNodePosition.upstream(),
         ),
         extent: DocumentPosition(
           nodeId: docPosition.nodeId,
-          nodePosition: UpstreamDownstreamNodePosition.downstream(),
+          nodePosition: const UpstreamDownstreamNodePosition.downstream(),
         ),
       );
     } else {
