@@ -124,6 +124,7 @@ class _SuperEditorSpellcheckScreenState extends State<_SuperEditorSpellcheckScre
         child: SuperEditorIosControlsScope(
           controller: _iosControlsController,
           child: SuperEditor(
+            autofocus: true,
             editor: _editor,
             appendedStylePhases: [
               _spellingAndGrammarPlugin.styler,
