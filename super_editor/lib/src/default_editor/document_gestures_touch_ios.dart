@@ -278,6 +278,8 @@ class IosDocumentTouchInteractor extends StatefulWidget {
   /// edges.
   final AxisOffset dragAutoScrollBoundary;
 
+  /// Whether the document gesture detector should fill the entire viewport
+  /// even if the actual content is smaller.
   final bool fillViewport;
 
   final bool showDebugPaint;
@@ -319,6 +321,8 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
   // Cached view metrics to ignore unnecessary didChangeMetrics calls.
   Size? _lastSize;
   ViewPadding? _lastInsets;
+
+  final _interactor = GlobalKey();
 
   @override
   void initState() {
@@ -472,8 +476,7 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
     return viewportBox.globalToLocal(globalOffset);
   }
 
-  final _interactor = GlobalKey();
-
+  /// Returns the render box for the interactor gesture detector.
   RenderBox get interactorBox => _interactor.currentContext!.findRenderObject() as RenderBox;
 
   /// Converts the given [interactorOffset] from the [DocumentInteractor]'s coordinate

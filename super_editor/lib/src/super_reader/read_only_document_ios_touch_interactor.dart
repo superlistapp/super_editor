@@ -220,6 +220,8 @@ class SuperReaderIosDocumentTouchInteractor extends StatefulWidget {
   /// edges.
   final AxisOffset dragAutoScrollBoundary;
 
+  /// Whether the document gesture detector should fill the entire viewport
+  /// even if the actual content is smaller.
   final bool fillViewport;
 
   final bool showDebugPaint;
@@ -256,6 +258,8 @@ class _SuperReaderIosDocumentTouchInteractorState extends State<SuperReaderIosDo
   Offset? _globalTapDownOffset;
   bool get _isLongPressInProgress => _longPressStrategy != null;
   IosLongPressSelectionStrategy? _longPressStrategy;
+
+  final _interactor = GlobalKey();
 
   @override
   void initState() {
@@ -398,8 +402,7 @@ class _SuperReaderIosDocumentTouchInteractorState extends State<SuperReaderIosDo
   /// is the viewport `RenderBox`.
   RenderBox get viewportBox => context.findViewportBox();
 
-  final _interactor = GlobalKey();
-
+  /// Returns the render box for the interactor gesture detector.
   RenderBox get interactorBox => _interactor.currentContext!.findRenderObject() as RenderBox;
 
   /// Converts the given [interactorOffset] from the [DocumentInteractor]'s coordinate

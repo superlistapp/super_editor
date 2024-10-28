@@ -51,9 +51,9 @@ class DocumentMouseInteractor extends StatefulWidget {
     required this.selectionChanges,
     this.contentTapHandler,
     required this.autoScroller,
+    required this.fillViewport,
     this.showDebugPaint = false,
     required this.child,
-    required this.fillViewport,
   }) : super(key: key);
 
   final FocusNode? focusNode;
@@ -71,6 +71,8 @@ class DocumentMouseInteractor extends StatefulWidget {
   /// Auto-scrolling delegate.
   final AutoScrollController autoScroller;
 
+  /// Whether the document gesture detector should fill the entire viewport
+  /// even if the actual content is smaller.
   final bool fillViewport;
 
   /// Paints some extra visual ornamentation to help with

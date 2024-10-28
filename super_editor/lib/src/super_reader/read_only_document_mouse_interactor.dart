@@ -57,6 +57,8 @@ class ReadOnlyDocumentMouseInteractor extends StatefulWidget {
   /// Auto-scrolling delegate.
   final AutoScrollController autoScroller;
 
+  /// Whether the document gesture detector should fill the entire viewport
+  /// even if the actual content is smaller.
   final bool fillViewport;
 
   /// Paints some extra visual ornamentation to help with

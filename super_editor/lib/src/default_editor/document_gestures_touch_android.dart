@@ -440,6 +440,8 @@ class AndroidDocumentTouchInteractor extends StatefulWidget {
 
   final ValueNotifier<DragHandleAutoScroller?> dragHandleAutoScroller;
 
+  /// Whether the document gesture detector should fill the entire viewport
+  /// even if the actual content is smaller.
   final bool fillViewport;
 
   final bool showDebugPaint;
@@ -476,6 +478,8 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
   // Cached view metrics to ignore unnecessary didChangeMetrics calls.
   Size? _lastSize;
   ViewPadding? _lastInsets;
+
+  final _interactor = GlobalKey();
 
   @override
   void initState() {
@@ -598,8 +602,7 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
     return viewportBox.globalToLocal(globalOffset);
   }
 
-  final _interactor = GlobalKey();
-
+  /// Returns the render box for the interactor gesture detector.
   RenderBox get interactorBox => _interactor.currentContext!.findRenderObject() as RenderBox;
 
   /// Maps the given [interactorOffset] within the interactor's coordinate space

@@ -105,6 +105,8 @@ class ReadOnlyAndroidDocumentTouchInteractor extends StatefulWidget {
   /// Shows, hides, and positions a floating toolbar and magnifier.
   final MagnifierAndToolbarController? overlayController;
 
+  /// Whether the document gesture detector should fill the entire viewport
+  /// even if the actual content is smaller.
   final bool fillViewport;
 
   final bool showDebugPaint;
@@ -149,6 +151,8 @@ class _ReadOnlyAndroidDocumentTouchInteractorState extends State<ReadOnlyAndroid
   bool get _isLongPressInProgress => _longPressStrategy != null;
   AndroidDocumentLongPressSelectionStrategy? _longPressStrategy;
   final _longPressMagnifierGlobalOffset = ValueNotifier<Offset?>(null);
+
+  final _interactor = GlobalKey();
 
   @override
   void initState() {
@@ -419,8 +423,7 @@ class _ReadOnlyAndroidDocumentTouchInteractorState extends State<ReadOnlyAndroid
   /// is the viewport `RenderBox`.
   RenderBox get viewportBox => context.findViewportBox();
 
-  final _interactor = GlobalKey();
-
+  /// Returns the render box for the interactor gesture detector.
   RenderBox get interactorBox => _interactor.currentContext!.findRenderObject() as RenderBox;
 
   Offset _getDocumentOffsetFromGlobalOffset(Offset globalOffset) {
