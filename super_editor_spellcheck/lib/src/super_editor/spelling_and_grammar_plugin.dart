@@ -172,19 +172,6 @@ extension SpellingAndGrammarEditorExtensions on Editor {
           ),
         ),
       ),
-      // // Places the caret at the end of the corrected word.
-      // ChangeSelectionRequest(
-      //   DocumentSelection.collapsed(
-      //     position: DocumentPosition(
-      //       nodeId: wordRange.start.nodeId,
-      //       nodePosition: TextNodePosition(
-      //         offset: (wordRange.start.nodePosition as TextNodePosition).offset + correctSpelling.length,
-      //       ),
-      //     ),
-      //   ),
-      //   SelectionChangeType.alteredContent,
-      //   SelectionReason.contentChange,
-      // ),
     ]);
   }
 

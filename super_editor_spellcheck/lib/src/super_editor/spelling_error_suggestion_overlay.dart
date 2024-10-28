@@ -13,7 +13,7 @@ class SpellingErrorSuggestionOverlayBuilder implements SuperEditorLayerBuilder {
     this.suggestions,
     this.selectedWordLink, {
     this.toolbarBuilder = defaultSpellingSuggestionToolbarBuilder,
-    this.popoverController,
+    required this.popoverController,
   });
 
   final SpellingErrorSuggestions suggestions;
@@ -23,7 +23,7 @@ class SpellingErrorSuggestionOverlayBuilder implements SuperEditorLayerBuilder {
   /// the currently selected mis-spelled word.
   final SpellingErrorSuggestionToolbarBuilder toolbarBuilder;
 
-  final SpellCheckerPopoverController? popoverController;
+  final SpellCheckerPopoverController popoverController;
 
   @override
   ContentLayerWidget build(BuildContext context, SuperEditorContext editContext) {
@@ -99,6 +99,7 @@ class _SpellingErrorSuggestionOverlayState
   void initState() {
     super.initState();
 
+    widget.editor.context.document.addListener(_onDocumentChange);
     widget.editor.context.composer.selectionNotifier.addListener(_onSelectionChange);
     widget.editor.context.spellingErrorSuggestions.addListener(_onSpellingSuggestionsChange);
 
@@ -110,6 +111,11 @@ class _SpellingErrorSuggestionOverlayState
   @override
   void didUpdateWidget(SpellingErrorSuggestionOverlay oldWidget) {
     super.didUpdateWidget(oldWidget);
+
+    if (widget.editor.context.document != oldWidget.editor.context.document) {
+      oldWidget.editor.context.document.removeListener(_onDocumentChange);
+      widget.editor.context.document.addListener(_onDocumentChange);
+    }
 
     if (widget.editor.context.composer.selectionNotifier != oldWidget.editor.context.composer.selectionNotifier) {
       oldWidget.editor.context.composer.selectionNotifier.removeListener(_onSelectionChange);
@@ -133,6 +139,7 @@ class _SpellingErrorSuggestionOverlayState
       _suggestionToolbarOverlayController.hide();
     }
 
+    widget.editor.document.removeListener(_onDocumentChange);
     widget.editor.context.composer.selectionNotifier.removeListener(_onSelectionChange);
     widget.editor.context.spellingErrorSuggestions.removeListener(_onSpellingSuggestionsChange);
 
@@ -144,9 +151,7 @@ class _SpellingErrorSuggestionOverlayState
   @override
   void hideSuggestionsPopover() {
     setState(() {
-      //_requestedRange = null;
       _spellingErrorSuggestionForRequestedRange = null;
-      //_wantsToShowSuggestionsPopover = false;
     });
   }
 
@@ -224,6 +229,10 @@ class _SpellingErrorSuggestionOverlayState
         }
       }
     });
+  }
+
+  void _onDocumentChange(DocumentChangeLog changeLog) {
+    hideSuggestionsPopover();
   }
 
   void _onSpellingSuggestionsChange() {
@@ -570,8 +579,33 @@ class DesktopSpellingSuggestionToolbar extends StatefulWidget {
 }
 
 class _DesktopSpellingSuggestionToolbarState extends State<DesktopSpellingSuggestionToolbar> {
+  @override
+  void initState() {
+    widget.editor.document.addListener(_onDocumentChange);
+    super.initState();
+  }
+
+  @override
+  void didUpdateWidget(covariant DesktopSpellingSuggestionToolbar oldWidget) {
+    if (widget.editor.document != oldWidget.editor.document) {
+      oldWidget.editor.document.removeListener(_onDocumentChange);
+      widget.editor.document.addListener(_onDocumentChange);
+    }
+    super.didUpdateWidget(oldWidget);
+  }
+
+  @override
+  void dispose() {
+    widget.editor.document.removeListener(_onDocumentChange);
+    super.dispose();
+  }
+
   void _applySpellingFix(String replacement) {
     widget.editor.fixMisspelledWord(widget.selectedWordRange!, replacement);
+    widget.closeToolbar();
+  }
+
+  void _onDocumentChange(DocumentChangeLog changeLog) {
     widget.closeToolbar();
   }
 
@@ -691,16 +725,38 @@ class AndroidSpellingSuggestionToolbar extends StatefulWidget {
 }
 
 class _AndroidSpellingSuggestionToolbarState extends State<AndroidSpellingSuggestionToolbar> {
-  void _applySpellingFix(String replacement) {
-    widget.editor.fixMisspelledWord(widget.selectedWordRange, replacement);
+  @override
+  void initState() {
+    super.initState();
+    widget.editor.document.addListener(_onDocumentChange);
+  }
+
+  @override
+  void didUpdateWidget(AndroidSpellingSuggestionToolbar oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.editor.document != oldWidget.editor.document) {
+      oldWidget.editor.document.removeListener(_onDocumentChange);
+      widget.editor.document.addListener(_onDocumentChange);
+    }
+  }
+
+  @override
+  void dispose() {
+    widget.editor.document.removeListener(_onDocumentChange);
+    super.dispose();
+  }
+
+  void _onDocumentChange(DocumentChangeLog changeLog) {
     SuperEditorAndroidControlsScope.rootOf(context).allowSelectionHandles();
     widget.closeToolbar();
   }
 
+  void _applySpellingFix(String replacement) {
+    widget.editor.fixMisspelledWord(widget.selectedWordRange, replacement);
+  }
+
   void _removeWord() {
     widget.editor.removeMisspelledWord(widget.selectedWordRange);
-    SuperEditorAndroidControlsScope.rootOf(context).allowSelectionHandles();
-    widget.closeToolbar();
   }
 
   Color _getTextColor(Brightness brightness) {
@@ -788,10 +844,34 @@ class IosSpellingSuggestionToolbar extends StatefulWidget {
 }
 
 class _IosSpellingSuggestionToolbarState extends State<IosSpellingSuggestionToolbar> {
-  void _applySpellingFix(String replacement) {
-    widget.editor.fixMisspelledWord(widget.selectedWordRange, replacement);
+  @override
+  void initState() {
+    super.initState();
+    widget.editor.document.addListener(_onDocumentChange);
+  }
+
+  @override
+  void didUpdateWidget(covariant IosSpellingSuggestionToolbar oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.editor.document != oldWidget.editor.document) {
+      oldWidget.editor.document.removeListener(_onDocumentChange);
+      widget.editor.document.addListener(_onDocumentChange);
+    }
+  }
+
+  @override
+  void dispose() {
+    widget.editor.document.removeListener(_onDocumentChange);
+    super.dispose();
+  }
+
+  void _onDocumentChange(DocumentChangeLog changeLog) {
     SuperEditorIosControlsScope.rootOf(context).allowSelectionHandles();
     widget.closeToolbar();
+  }
+
+  void _applySpellingFix(String replacement) {
+    widget.editor.fixMisspelledWord(widget.selectedWordRange, replacement);
   }
 
   @override
