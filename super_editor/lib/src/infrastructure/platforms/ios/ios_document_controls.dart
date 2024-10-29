@@ -516,6 +516,7 @@ class IosHandlesDocumentLayer extends DocumentLayoutLayerStatefulWidget {
 
   final void Function(DocumentSelection?, SelectionChangeType, String selectionReason) changeSelection;
 
+  /// {@macro are_selection_handles_allowed}
   final ValueListenable<bool>? areSelectionHandlesAllowed;
 
   /// Color the iOS-style text selection drag handles.
@@ -725,7 +726,8 @@ class IosControlsDocumentLayerState extends DocumentLayoutLayerState<IosHandlesD
       return null;
     }
 
-    if (widget.areSelectionHandlesAllowed!.value == false) {
+    if (widget.areSelectionHandlesAllowed?.value == false) {
+      /// We don't want to show any selection handles.
       return null;
     }
 

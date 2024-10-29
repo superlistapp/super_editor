@@ -88,12 +88,7 @@ class _SpellingErrorSuggestionOverlayState
 
   final _boundsKey = GlobalKey();
 
-  //DocumentRange? _requestedRange;
-  SpellingErrorSuggestion? _spellingErrorSuggestionForRequestedRange;
-
-  // DocumentRange? get _rangeToQuerySuggestions => widget.popoverController == null //
-  //     ? widget.editor.context.composer.selection
-  //     : _requestedRange;
+  SpellingErrorSuggestion? _currentSpellingSuggestions;
 
   @override
   void initState() {
@@ -149,18 +144,16 @@ class _SpellingErrorSuggestionOverlayState
   }
 
   @override
-  void hideSuggestionsPopover() {
+  void showSuggestions(SpellingErrorSuggestion suggestions) {
     setState(() {
-      _spellingErrorSuggestionForRequestedRange = null;
+      _currentSpellingSuggestions = suggestions;
     });
   }
 
   @override
-  void showSuggestionsForWordAt(DocumentRange targetRange) {
+  void hideSuggestionsPopover() {
     setState(() {
-      //_requestedRange = targetRange;
-      //_wantsToShowSuggestionsPopover = true;
-      _spellingErrorSuggestionForRequestedRange = _findSpellingSuggestionAtRange(widget.suggestions, targetRange);
+      _currentSpellingSuggestions = null;
     });
   }
 
@@ -179,13 +172,6 @@ class _SpellingErrorSuggestionOverlayState
     }
 
     return spellingSuggestion;
-  }
-
-  @override
-  void showSuggestions(SpellingErrorSuggestion suggestions) {
-    setState(() {
-      _spellingErrorSuggestionForRequestedRange = suggestions;
-    });
   }
 
   void _onSelectionChange() {
@@ -232,6 +218,8 @@ class _SpellingErrorSuggestionOverlayState
   }
 
   void _onDocumentChange(DocumentChangeLog changeLog) {
+    // After the document changes, the currently visible suggestions
+    // might not be valid anymore. Hide the popover.
     hideSuggestionsPopover();
   }
 
@@ -267,27 +255,7 @@ class _SpellingErrorSuggestionOverlayState
       return null;
     }
 
-    // final range = _rangeToQuerySuggestions;
-    // if (range == null) {
-    //   // No selection upon which to base spell check suggestions.
-    //   return null;
-    // }
-    // if (range.start.nodeId != range.end.nodeId) {
-    //   // Spelling error suggestions don't display when the user selects across nodes.
-    //   return null;
-    // }
-    // if (range.end.nodePosition is! TextNodePosition) {
-    //   // The user isn't selecting text. Fizzle.
-    //   return null;
-    // }
-
-    // final spellingSuggestion = _findSpellingSuggestionAtRange(widget.suggestions, range);
-    // if (spellingSuggestion == null) {
-    //   // No selected mis-spelled word. Fizzle.
-    //   return null;
-    // }
-
-    final spellingSuggestion = _spellingErrorSuggestionForRequestedRange;
+    final spellingSuggestion = _currentSpellingSuggestions;
     if (spellingSuggestion == null) {
       // No selected mis-spelled word. Fizzle.
       return null;
@@ -488,6 +456,8 @@ typedef SpellingErrorSuggestionToolbarBuilder = Widget Function(
   required Rect selectedWordBounds,
 });
 
+/// Creates a spelling suggestion toolbar depending on the
+/// current platform.
 Widget defaultSpellingSuggestionToolbarBuilder(
   BuildContext context, {
   required FocusNode editorFocusNode,
@@ -700,6 +670,12 @@ class _DesktopSpellingSuggestionToolbarState extends State<DesktopSpellingSugges
   }
 }
 
+/// A spelling suggestion toolbar, designed for the Android platform,
+/// which displays a vertical list alternative spellings for a given mis-spelled
+/// word and an option to remove the miss-pelled word.
+///
+/// When the user taps on a suggested spelling, the mis-spelled word
+/// is replaced by selected word.
 class AndroidSpellingSuggestionToolbar extends StatefulWidget {
   const AndroidSpellingSuggestionToolbar({
     super.key,
@@ -819,6 +795,12 @@ class _AndroidSpellingSuggestionToolbarState extends State<AndroidSpellingSugges
   }
 }
 
+/// A spelling suggestion toolbar, designed for the iOS platform,
+/// which displays a horizontal list alternative spellings for a given
+/// mis-spelled word.
+///
+/// When the user taps on a suggested spelling, the mis-spelled word
+/// is replaced by selected word.
 class IosSpellingSuggestionToolbar extends StatefulWidget {
   const IosSpellingSuggestionToolbar({
     super.key,
