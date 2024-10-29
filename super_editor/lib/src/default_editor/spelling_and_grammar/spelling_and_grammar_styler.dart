@@ -11,7 +11,6 @@ class SpellingAndGrammarStyler extends SingleColumnLayoutStylePhase {
   SpellingAndGrammarStyler({
     UnderlineStyle? spellingErrorUnderlineStyle,
     UnderlineStyle? grammarErrorUnderlineStyle,
-    this.selectionStyles = defaultSelectionStyle,
     this.selectionHighlightColor = Colors.transparent,
   })  : _spellingErrorUnderlineStyle = spellingErrorUnderlineStyle,
         _grammarErrorUnderlineStyle = grammarErrorUnderlineStyle;
@@ -36,7 +35,14 @@ class SpellingAndGrammarStyler extends SingleColumnLayoutStylePhase {
     markDirty();
   }
 
+  /// Whether or not we should to override the default selection color with [selectionHighlightColor].
+  ///
+  /// On mobile platforms, when the suggestions popover is opened, the selected text uses a different
+  /// highlight color.
   bool _overrideSelectionColor = false;
+
+  /// The color to use for the selection highlight [overrideSelectionColor] is called.
+  final Color selectionHighlightColor;
 
   final _errorsByNode = <String, Set<TextError>>{};
   final _dirtyNodes = <String>{};
@@ -63,20 +69,17 @@ class SpellingAndGrammarStyler extends SingleColumnLayoutStylePhase {
     markDirty();
   }
 
+  /// Temporarily use the [selectionHighlightColor] to override the default selection color.
   void overrideSelectionColor() {
     _overrideSelectionColor = true;
     markDirty();
   }
 
+  /// Restore the default selection color.
   void useDefaultSelectionColor() {
     _overrideSelectionColor = false;
     markDirty();
   }
-
-  //final SpellingErrorSuggestion? Function()? onGetCurrentSuggestion;
-  final Color selectionHighlightColor;
-
-  final SelectionStyles selectionStyles;
 
   @override
   SingleColumnLayoutViewModel style(Document document, SingleColumnLayoutViewModel viewModel) {

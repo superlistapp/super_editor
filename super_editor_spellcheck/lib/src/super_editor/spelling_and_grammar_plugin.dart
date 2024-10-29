@@ -22,7 +22,6 @@ class SpellingAndGrammarPlugin extends SuperEditorPlugin {
     UnderlineStyle grammarErrorUnderlineStyle = defaultGrammarErrorUnderlineStyle,
     SpellingErrorSuggestionToolbarBuilder toolbarBuilder = defaultSpellingSuggestionToolbarBuilder,
     Color selectedWordHighlightColor = Colors.transparent,
-    SelectionStyles? selectionStyles,
     SuperEditorAndroidControlsController? androidControlsController,
     SuperEditorIosControlsController? iosControlsController,
   })  : _isSpellCheckEnabled = isSpellingCheckEnabled,
@@ -37,21 +36,20 @@ class SpellingAndGrammarPlugin extends SuperEditorPlugin {
     ];
     _styler = SpellingAndGrammarStyler(
       selectionHighlightColor: selectedWordHighlightColor,
-      selectionStyles: selectionStyles ?? defaultSelectionStyle,
     );
 
     _contentTapDelegate = switch (defaultTargetPlatform) {
-      TargetPlatform.android => SuperEditorAndroidSpellCheckerTapHandler(
+      TargetPlatform.android => _SuperEditorAndroidSpellCheckerTapHandler(
           popoverController: _popoverController,
           controlsController: androidControlsController!,
           styler: _styler,
         ),
-      TargetPlatform.iOS => SuperEditorIosSpellCheckerTapHandler(
+      TargetPlatform.iOS => _SuperEditorIosSpellCheckerTapHandler(
           popoverController: _popoverController,
           controlsController: iosControlsController!,
           styler: _styler,
         ),
-      _ => SuperEditorDesktopSpellCheckerTapHandler(popoverController: _popoverController),
+      _ => _SuperEditorDesktopSpellCheckerTapHandler(popoverController: _popoverController),
     };
   }
 
@@ -423,7 +421,7 @@ class SpellingAndGrammarReaction implements EditReaction {
     _asyncRequestIds[textNode.id] = requestId;
 
     final suggestions = await _mobileSpellChecker.fetchSpellCheckSuggestions(
-      Locale('en', 'US'),
+      PlatformDispatcher.instance.locale,
       textNode.text.text,
     );
     if (suggestions == null) {
@@ -467,12 +465,16 @@ class SpellingAndGrammarReaction implements EditReaction {
   }
 }
 
-class SuperEditorIosSpellCheckerTapHandler extends _SpellCheckerContentTapDelegate {
-  SuperEditorIosSpellCheckerTapHandler({
+/// A [ContentTapDelegate] that shows the suggestions popover when the user taps on
+/// a misspelled word.
+///
+/// When the suggestions popover is displayed, the selection expands to the whole word
+/// and the selection handles are hidden.
+class _SuperEditorIosSpellCheckerTapHandler extends _SpellCheckerContentTapDelegate {
+  _SuperEditorIosSpellCheckerTapHandler({
     required this.popoverController,
     required this.controlsController,
     required this.styler,
-    super.editor,
   });
 
   final SpellCheckerPopoverController popoverController;
@@ -496,6 +498,7 @@ class SuperEditorIosSpellCheckerTapHandler extends _SpellCheckerContentTapDelega
       ..hideMagnifier()
       ..preventSelectionHandles();
 
+    // Select the whole word.
     editor!.execute([
       ChangeSelectionRequest(
         DocumentSelection(
@@ -513,11 +516,10 @@ class SuperEditorIosSpellCheckerTapHandler extends _SpellCheckerContentTapDelega
       ),
     ]);
 
-    //controlsController.
-
-    popoverController.show(DocumentSelection.collapsed(position: tapPosition));
-
+    // Change the selection color while the suggestions popover is visible.
     styler.overrideSelectionColor();
+
+    popoverController.showSuggestions(spelling);
 
     return TapHandlingInstruction.halt;
   }
@@ -530,17 +532,21 @@ class SuperEditorIosSpellCheckerTapHandler extends _SpellCheckerContentTapDelega
 
   void _hideSpellCheckerPopover() {
     styler.useDefaultSelectionColor();
-    popoverController.hide();
     controlsController.allowSelectionHandles();
+    popoverController.hide();
   }
 }
 
-class SuperEditorAndroidSpellCheckerTapHandler extends _SpellCheckerContentTapDelegate {
-  SuperEditorAndroidSpellCheckerTapHandler({
+/// A [ContentTapDelegate] that shows the suggestions popover when the user taps on
+/// a misspelled word.
+///
+/// When the suggestions popover is displayed, the selection and the composing region
+/// expand to the whole word and the selection handles are hidden.
+class _SuperEditorAndroidSpellCheckerTapHandler extends _SpellCheckerContentTapDelegate {
+  _SuperEditorAndroidSpellCheckerTapHandler({
     required this.popoverController,
     required this.controlsController,
     required this.styler,
-    super.editor,
   });
 
   final SpellCheckerPopoverController popoverController;
@@ -553,8 +559,8 @@ class SuperEditorAndroidSpellCheckerTapHandler extends _SpellCheckerContentTapDe
       return TapHandlingInstruction.continueHandling;
     }
 
-    final suggestions = popoverController.findSuggestionsForWordAt(DocumentSelection.collapsed(position: tapPosition));
-    if (suggestions == null) {
+    final spelling = popoverController.findSuggestionsForWordAt(DocumentSelection.collapsed(position: tapPosition));
+    if (spelling == null || spelling.suggestions.isEmpty) {
       _hideSpellCheckerPopover();
       return TapHandlingInstruction.continueHandling;
     }
@@ -568,14 +574,17 @@ class SuperEditorAndroidSpellCheckerTapHandler extends _SpellCheckerContentTapDe
     final wordSelection = DocumentSelection(
       base: DocumentPosition(
         nodeId: tapPosition.nodeId,
-        nodePosition: TextNodePosition(offset: suggestions.range.start),
+        nodePosition: TextNodePosition(offset: spelling.range.start),
       ),
       extent: DocumentPosition(
         nodeId: tapPosition.nodeId,
-        nodePosition: TextNodePosition(offset: suggestions.range.end),
+        nodePosition: TextNodePosition(offset: spelling.range.end),
       ),
     );
 
+    // Select the whole word and update the composing region to match
+    // the Android behavior of placing the whole word on the composing
+    // region when tapping at a word.
     editor!.execute([
       ChangeSelectionRequest(
         wordSelection,
@@ -585,9 +594,10 @@ class SuperEditorAndroidSpellCheckerTapHandler extends _SpellCheckerContentTapDe
       ChangeComposingRegionRequest(wordSelection),
     ]);
 
-    popoverController.show(DocumentSelection.collapsed(position: tapPosition));
-
+    // Change the selection color while the suggestion popover is visible.
     styler.overrideSelectionColor();
+
+    popoverController.showSuggestions(spelling);
 
     return TapHandlingInstruction.halt;
   }
@@ -605,10 +615,11 @@ class SuperEditorAndroidSpellCheckerTapHandler extends _SpellCheckerContentTapDe
   }
 }
 
-class SuperEditorDesktopSpellCheckerTapHandler extends _SpellCheckerContentTapDelegate {
-  SuperEditorDesktopSpellCheckerTapHandler({
+/// A [ContentTapDelegate] that shows the suggestions popover when the user taps on
+/// a misspelled word.
+class _SuperEditorDesktopSpellCheckerTapHandler extends _SpellCheckerContentTapDelegate {
+  _SuperEditorDesktopSpellCheckerTapHandler({
     required this.popoverController,
-    super.editor,
   });
 
   final SpellCheckerPopoverController popoverController;
@@ -633,7 +644,7 @@ class SuperEditorDesktopSpellCheckerTapHandler extends _SpellCheckerContentTapDe
       ),
     ]);
 
-    popoverController.show(DocumentSelection.collapsed(position: tapPosition));
+    popoverController.showSuggestions(spelling);
 
     return TapHandlingInstruction.halt;
   }
@@ -649,10 +660,10 @@ class SuperEditorDesktopSpellCheckerTapHandler extends _SpellCheckerContentTapDe
   }
 }
 
+/// A [ContentTapDelegate] that has access to the [editor] while the
+/// plugin is attached to it.
 class _SpellCheckerContentTapDelegate extends ContentTapDelegate {
-  _SpellCheckerContentTapDelegate({
-    this.editor,
-  });
+  _SpellCheckerContentTapDelegate();
 
   Editor? editor;
 }

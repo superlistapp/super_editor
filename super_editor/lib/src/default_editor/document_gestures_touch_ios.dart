@@ -156,11 +156,18 @@ class SuperEditorIosControlsController {
   /// Tells the caret to stop blinking by setting [shouldCaretBlink] to `false`.
   void doNotBlinkCaret() => _shouldCaretBlink.value = false;
 
+  /// {@macro are_selection_handles_allowed}
   ValueListenable<bool> get areSelectionHandlesAllowed => _areSelectionHandlesAllowed;
   final _areSelectionHandlesAllowed = ValueNotifier<bool>(true);
 
+  /// Temporarily prevents any selection handles from being displayed.
+  ///
+  /// Call this when you want to select some content, but don't want to show the drag handles.
+  /// [allowSelectionHandles] must be called to allow the drag handles to be displayed again.
   void allowSelectionHandles() => _areSelectionHandlesAllowed.value = true;
 
+  /// Allows the selection handles to be displayed after they have been temporarily
+  /// prevented by [preventSelectionHandles].
   void preventSelectionHandles() => _areSelectionHandlesAllowed.value = false;
 
   /// Controls the iOS floating cursor.

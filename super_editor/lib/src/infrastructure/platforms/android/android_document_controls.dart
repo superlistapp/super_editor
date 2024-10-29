@@ -174,6 +174,7 @@ class AndroidHandlesDocumentLayer extends DocumentLayoutLayerStatefulWidget {
   /// is retrieved from the root [SuperEditorAndroidControlsController].
   final Color? caretColor;
 
+  /// {@macro are_selection_handles_allowed}
   final ValueListenable<bool>? areSelectionHandlesAllowed;
 
   final bool showDebugPaint;
@@ -323,6 +324,7 @@ class AndroidControlsDocumentLayerState
     }
 
     if (widget.areSelectionHandlesAllowed?.value == false) {
+      // We don't want to show any selection handles.
       return null;
     }
 

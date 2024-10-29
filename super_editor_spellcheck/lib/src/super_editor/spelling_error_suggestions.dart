@@ -1,6 +1,5 @@
 import 'dart:ui';
 
-import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
 import 'package:super_editor/super_editor.dart';
 import 'package:super_editor_spellcheck/src/super_editor/spell_checker_popover_controller.dart';
