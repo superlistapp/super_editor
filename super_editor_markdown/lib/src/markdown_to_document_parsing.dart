@@ -64,7 +64,7 @@ MutableDocument deserializeMarkdownToDocument(
   // Add 1 hanging line for every 2 blank lines at the end, need this to preserve behavior pre markdown 7.2.1
   final hangingEmptyLines = markdownLines.reversed.takeWhile((md.Line l) => l.isBlankLine);
   if(hangingEmptyLines.isNotEmpty && documentNodes.lastOrNull is ListItemNode) {
-    for(var i = 0; i < hangingEmptyLines.length >> 1; i++) {
+    for(var i = 0; i < hangingEmptyLines.length ~/ 2; i++) {
       documentNodes.add(ParagraphNode(id: Editor.createNodeId(), text: AttributedText()));
     }
   }
