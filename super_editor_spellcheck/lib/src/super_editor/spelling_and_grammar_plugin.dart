@@ -198,6 +198,7 @@ extension SpellingAndGrammarEditorExtensions on Editor {
           ),
         ),
       ),
+      const ClearComposingRegionRequest(),
     ]);
   }
 }
