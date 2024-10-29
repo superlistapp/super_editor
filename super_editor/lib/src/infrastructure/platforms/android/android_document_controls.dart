@@ -156,7 +156,6 @@ class AndroidHandlesDocumentLayer extends DocumentLayoutLayerStatefulWidget {
     required this.changeSelection,
     this.caretWidth = 2,
     this.caretColor,
-    this.areSelectionHandlesAllowed,
     this.showDebugPaint = false,
   });
 
@@ -173,9 +172,6 @@ class AndroidHandlesDocumentLayer extends DocumentLayoutLayerStatefulWidget {
   /// Color used to render the Android-style caret (not handles), by default the color
   /// is retrieved from the root [SuperEditorAndroidControlsController].
   final Color? caretColor;
-
-  /// {@macro are_selection_handles_allowed}
-  final ValueListenable<bool>? areSelectionHandlesAllowed;
 
   final bool showDebugPaint;
 
@@ -211,11 +207,13 @@ class AndroidControlsDocumentLayerState
       _controlsController!.shouldCaretBlink.removeListener(_onBlinkModeChange);
       _controlsController!.caretJumpToOpaqueSignal.removeListener(_caretJumpToOpaque);
       _controlsController!.shouldShowCollapsedHandle.removeListener(_onShouldShowCollapsedHandleChange);
+      _controlsController!.areSelectionHandlesAllowed.removeListener(_onSelectionHandlesAllowedChange);
     }
 
     _controlsController = SuperEditorAndroidControlsScope.rootOf(context);
     _controlsController!.shouldCaretBlink.addListener(_onBlinkModeChange);
     _controlsController!.caretJumpToOpaqueSignal.addListener(_caretJumpToOpaque);
+    _controlsController!.areSelectionHandlesAllowed.addListener(_onSelectionHandlesAllowedChange);
 
     /// Listen for changes about whether we want to show the collapsed handle
     /// or whether we want to show expanded handles for a selection. We listen to
@@ -242,6 +240,7 @@ class AndroidControlsDocumentLayerState
     widget.selection.removeListener(_onSelectionChange);
     _controlsController?.shouldCaretBlink.removeListener(_onBlinkModeChange);
     _controlsController!.shouldShowCollapsedHandle.removeListener(_onShouldShowCollapsedHandleChange);
+    _controlsController!.areSelectionHandlesAllowed.removeListener(_onSelectionHandlesAllowedChange);
 
     _caretBlinkController.dispose();
     super.dispose();
@@ -315,6 +314,12 @@ class AndroidControlsDocumentLayerState
     });
   }
 
+  void _onSelectionHandlesAllowedChange() {
+    setState(() {
+      //
+    });
+  }
+
   @override
   DocumentSelectionLayout? computeLayoutDataWithDocumentLayout(
       BuildContext contentLayersContext, BuildContext documentContext, DocumentLayout documentLayout) {
@@ -323,7 +328,7 @@ class AndroidControlsDocumentLayerState
       return null;
     }
 
-    if (widget.areSelectionHandlesAllowed?.value == false) {
+    if (_controlsController!.areSelectionHandlesAllowed.value == false) {
       // We don't want to show any selection handles.
       return null;
     }
