@@ -10,11 +10,15 @@ import 'package:super_editor/src/default_editor/text.dart';
 class TagFinder {
   /// Finds a tag that touches the given [expansionPosition] and returns that tag,
   /// indexed within the document, along with the [expansionPosition].
+  ///
+  /// If [endPosition] is provided, the search will be limited to the range between
+  /// the [expansionPosition] and the [endPosition].
   static TagAroundPosition? findTagAroundPosition({
     required TagRule tagRule,
     required String nodeId,
     required AttributedText text,
     required TextNodePosition expansionPosition,
+    TextNodePosition? endPosition,
     required bool Function(Set<Attribution> tokenAttributions) isTokenCandidate,
   }) {
     final rawText = text.text;
@@ -31,7 +35,7 @@ class TagFinder {
     final charactersBefore = rawText.substring(0, splitIndex).characters;
     final iteratorUpstream = charactersBefore.iteratorAtEnd;
 
-    final charactersAfter = rawText.substring(splitIndex).characters;
+    final charactersAfter = rawText.substring(splitIndex, endPosition?.offset).characters;
     final iteratorDownstream = charactersAfter.iterator;
 
     if (charactersBefore.isNotEmpty && tagRule.excludedCharacters.contains(charactersBefore.last)) {
@@ -282,6 +286,9 @@ class IndexedTag {
 
   /// The [DocumentRange] from [start] to [end].
   DocumentRange get range => DocumentRange(start: start, end: end);
+
+  /// The length of the [tag]'s text.
+  int get length => tag.raw.length;
 
   /// Collects and returns all attributions in this tag's [TextNode], between the
   /// [start] of the tag and the [end] of the tag.

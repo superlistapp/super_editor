@@ -138,6 +138,7 @@ class SubmitComposingActionTagCommand extends EditCommand {
       nodeId: composer.selection!.extent.nodeId,
       text: textNode.text,
       expansionPosition: extentPosition,
+      endPosition: extentPosition,
       isTokenCandidate: (attributions) => !attributions.contains(actionTagCancelledAttribution),
     );
 
@@ -214,6 +215,11 @@ class CancelComposingActionTagCommand extends EditCommand {
     TagAroundPosition? composingToken;
     TextNode? textNode;
 
+    final normalizedSelection = selection.normalize(document);
+    final endPosition = normalizedSelection.end.nodePosition is TextNodePosition
+        ? normalizedSelection.end.nodePosition as TextNodePosition
+        : null;
+
     if (base.nodePosition is TextNodePosition) {
       textNode = document.getNodeById(selection.base.nodeId) as TextNode;
       composingToken = TagFinder.findTagAroundPosition(
@@ -221,6 +227,7 @@ class CancelComposingActionTagCommand extends EditCommand {
         nodeId: textNode.id,
         text: textNode.text,
         expansionPosition: base.nodePosition as TextNodePosition,
+        endPosition: endPosition,
         isTokenCandidate: (tokenAttributions) => tokenAttributions.contains(actionTagComposingAttribution),
       );
     }
@@ -231,6 +238,7 @@ class CancelComposingActionTagCommand extends EditCommand {
         nodeId: textNode.id,
         text: textNode.text,
         expansionPosition: base.nodePosition as TextNodePosition,
+        endPosition: endPosition,
         isTokenCandidate: (tokenAttributions) => tokenAttributions.contains(actionTagComposingAttribution),
       );
     }
@@ -300,6 +308,11 @@ class ActionTagComposingReaction extends EditReaction {
     TagAroundPosition? tagAroundPosition;
     TextNode? textNode;
 
+    final normalizedSelection = selection.normalize(document);
+    final endPosition = normalizedSelection.end.nodePosition is TextNodePosition
+        ? normalizedSelection.end.nodePosition as TextNodePosition
+        : null;
+
     if (base.nodePosition is TextNodePosition) {
       textNode = document.getNodeById(selection.base.nodeId) as TextNode;
       tagAroundPosition = TagFinder.findTagAroundPosition(
@@ -307,6 +320,7 @@ class ActionTagComposingReaction extends EditReaction {
         nodeId: textNode.id,
         text: textNode.text,
         expansionPosition: base.nodePosition as TextNodePosition,
+        endPosition: endPosition,
         isTokenCandidate: (attributions) => !attributions.contains(actionTagCancelledAttribution),
       );
     }
@@ -317,6 +331,7 @@ class ActionTagComposingReaction extends EditReaction {
         nodeId: textNode.id,
         text: textNode.text,
         expansionPosition: extent.nodePosition as TextNodePosition,
+        endPosition: endPosition,
         isTokenCandidate: (attributions) => !attributions.contains(actionTagCancelledAttribution),
       );
     }
@@ -442,15 +457,17 @@ class ActionTagComposingReaction extends EditReaction {
         ),
         attributions: {actionTagComposingAttribution},
       ),
-      AddTextAttributionsRequest(
-        documentRange: DocumentSelection(
-          base: composingTag.start,
-          extent: composingTag.start.copyWith(
-            nodePosition: TextNodePosition(offset: composingTag.startOffset + 1),
+      // Only cancel the attribution if the tag is longer than just the trigger.
+      if (composingTag.length > 1)
+        AddTextAttributionsRequest(
+          documentRange: DocumentSelection(
+            base: composingTag.start,
+            extent: composingTag.start.copyWith(
+              nodePosition: TextNodePosition(offset: composingTag.startOffset + 1),
+            ),
           ),
+          attributions: {actionTagCancelledAttribution},
         ),
-        attributions: {actionTagCancelledAttribution},
-      ),
     ]);
   }
 }
