@@ -981,57 +981,57 @@ class _ReadOnlyAndroidDocumentTouchInteractorState extends State<ReadOnlyAndroid
   @override
   Widget build(BuildContext context) {
     final gestureSettings = MediaQuery.maybeOf(context)?.gestureSettings;
-    final layerAbove = OverlayPortal(
-      controller: _overlayPortalController,
-      overlayChildBuilder: _buildControlsOverlay,
-      child: RawGestureDetector(
-        key: _interactor,
-        behavior: HitTestBehavior.translucent,
-        gestures: <Type, GestureRecognizerFactory>{
-          EagerPanGestureRecognizer: GestureRecognizerFactoryWithHandlers<EagerPanGestureRecognizer>(
-            () => EagerPanGestureRecognizer(),
-            (EagerPanGestureRecognizer recognizer) {
-              recognizer
-                ..shouldAccept = () {
-                  if (_globalTapDownOffset == null) {
-                    return false;
-                  }
-                  return _isLongPressInProgress;
-                }
-                ..dragStartBehavior = DragStartBehavior.down
-                ..onStart = _onPanStart
-                ..onUpdate = _onPanUpdate
-                ..onEnd = _onPanEnd
-                ..onCancel = _onPanCancel
-                ..gestureSettings = gestureSettings;
-            },
-          ),
-        },
-      ),
-    );
-    final layerBelow = RawGestureDetector(
-      behavior: HitTestBehavior.translucent,
-      gestures: <Type, GestureRecognizerFactory>{
-        TapSequenceGestureRecognizer: GestureRecognizerFactoryWithHandlers<TapSequenceGestureRecognizer>(
-          () => TapSequenceGestureRecognizer(),
-          (TapSequenceGestureRecognizer recognizer) {
-            recognizer
-              ..onTapDown = _onTapDown
-              ..onTapCancel = _onTapCancel
-              ..onTapUp = _onTapUp
-              ..onDoubleTapDown = _onDoubleTapDown
-              ..onTripleTapDown = _onTripleTapDown
-              ..gestureSettings = gestureSettings;
-          },
-        ),
-      },
-    );
     return SliverHybridStack(
       fillViewport: widget.fillViewport,
       children: [
-        layerBelow,
+        // Layer below
+        RawGestureDetector(
+          behavior: HitTestBehavior.translucent,
+          gestures: <Type, GestureRecognizerFactory>{
+            TapSequenceGestureRecognizer: GestureRecognizerFactoryWithHandlers<TapSequenceGestureRecognizer>(
+              () => TapSequenceGestureRecognizer(),
+              (TapSequenceGestureRecognizer recognizer) {
+                recognizer
+                  ..onTapDown = _onTapDown
+                  ..onTapCancel = _onTapCancel
+                  ..onTapUp = _onTapUp
+                  ..onDoubleTapDown = _onDoubleTapDown
+                  ..onTripleTapDown = _onTripleTapDown
+                  ..gestureSettings = gestureSettings;
+              },
+            ),
+          },
+        ),
         widget.child,
-        layerAbove,
+        // Layer above
+        OverlayPortal(
+          controller: _overlayPortalController,
+          overlayChildBuilder: _buildControlsOverlay,
+          child: RawGestureDetector(
+            key: _interactor,
+            behavior: HitTestBehavior.translucent,
+            gestures: <Type, GestureRecognizerFactory>{
+              EagerPanGestureRecognizer: GestureRecognizerFactoryWithHandlers<EagerPanGestureRecognizer>(
+                () => EagerPanGestureRecognizer(),
+                (EagerPanGestureRecognizer recognizer) {
+                  recognizer
+                    ..shouldAccept = () {
+                      if (_globalTapDownOffset == null) {
+                        return false;
+                      }
+                      return _isLongPressInProgress;
+                    }
+                    ..dragStartBehavior = DragStartBehavior.down
+                    ..onStart = _onPanStart
+                    ..onUpdate = _onPanUpdate
+                    ..onEnd = _onPanEnd
+                    ..onCancel = _onPanCancel
+                    ..gestureSettings = gestureSettings;
+                },
+              ),
+            },
+          ),
+        ),
       ],
     );
   }

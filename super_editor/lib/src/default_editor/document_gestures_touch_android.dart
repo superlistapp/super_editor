@@ -1210,53 +1210,53 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
     // gestures that are over caret or handles or when a long press is in progress.
     // TapGestureRecognizer is below contents so that it doesn't interferes with buttons and other
     // tappable widgets.
-    final layerAbove = RawGestureDetector(
-      key: _interactor,
-      behavior: HitTestBehavior.translucent,
-      gestures: <Type, GestureRecognizerFactory>{
-        EagerPanGestureRecognizer: GestureRecognizerFactoryWithHandlers<EagerPanGestureRecognizer>(
-          () => EagerPanGestureRecognizer(),
-          (EagerPanGestureRecognizer instance) {
-            instance
-              ..shouldAccept = () {
-                if (_globalTapDownOffset == null) {
-                  return false;
-                }
-                return _isOverCaret(_globalTapDownOffset!) || _isLongPressInProgress;
-              }
-              ..dragStartBehavior = DragStartBehavior.down
-              ..onStart = _onPanStart
-              ..onUpdate = _onPanUpdate
-              ..onEnd = _onPanEnd
-              ..onCancel = _onPanCancel
-              ..gestureSettings = gestureSettings;
-          },
-        ),
-      },
-    );
-    final layerBelow = RawGestureDetector(
-      behavior: HitTestBehavior.translucent,
-      gestures: <Type, GestureRecognizerFactory>{
-        TapSequenceGestureRecognizer: GestureRecognizerFactoryWithHandlers<TapSequenceGestureRecognizer>(
-          () => TapSequenceGestureRecognizer(),
-          (TapSequenceGestureRecognizer recognizer) {
-            recognizer
-              ..onTapDown = _onTapDown
-              ..onTapCancel = _onTapCancel
-              ..onTapUp = _onTapUp
-              ..onDoubleTapDown = _onDoubleTapDown
-              ..onTripleTapDown = _onTripleTapDown
-              ..gestureSettings = gestureSettings;
-          },
-        ),
-      },
-    );
     return SliverHybridStack(
       fillViewport: widget.fillViewport,
       children: [
-        layerBelow,
+        // Layer below
+        RawGestureDetector(
+          behavior: HitTestBehavior.translucent,
+          gestures: <Type, GestureRecognizerFactory>{
+            TapSequenceGestureRecognizer: GestureRecognizerFactoryWithHandlers<TapSequenceGestureRecognizer>(
+              () => TapSequenceGestureRecognizer(),
+              (TapSequenceGestureRecognizer recognizer) {
+                recognizer
+                  ..onTapDown = _onTapDown
+                  ..onTapCancel = _onTapCancel
+                  ..onTapUp = _onTapUp
+                  ..onDoubleTapDown = _onDoubleTapDown
+                  ..onTripleTapDown = _onTripleTapDown
+                  ..gestureSettings = gestureSettings;
+              },
+            ),
+          },
+        ),
         widget.child,
-        layerAbove,
+        // Layer above
+        RawGestureDetector(
+          key: _interactor,
+          behavior: HitTestBehavior.translucent,
+          gestures: <Type, GestureRecognizerFactory>{
+            EagerPanGestureRecognizer: GestureRecognizerFactoryWithHandlers<EagerPanGestureRecognizer>(
+              () => EagerPanGestureRecognizer(),
+              (EagerPanGestureRecognizer instance) {
+                instance
+                  ..shouldAccept = () {
+                    if (_globalTapDownOffset == null) {
+                      return false;
+                    }
+                    return _isOverCaret(_globalTapDownOffset!) || _isLongPressInProgress;
+                  }
+                  ..dragStartBehavior = DragStartBehavior.down
+                  ..onStart = _onPanStart
+                  ..onUpdate = _onPanUpdate
+                  ..onEnd = _onPanEnd
+                  ..onCancel = _onPanCancel
+                  ..gestureSettings = gestureSettings;
+              },
+            ),
+          },
+        ),
       ],
     );
   }
