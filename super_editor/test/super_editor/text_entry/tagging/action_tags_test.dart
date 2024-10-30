@@ -560,8 +560,9 @@ void main() {
         // Ensure nothing is attributed, because we didn't type any characters
         // after the initial "/".
         expect(
-          SuperEditorInspector.findTextInComponent("1").getAllAttributionsThroughout(
-            const SpanRange(0, 13),
+          SuperEditorInspector.findTextInComponent("1").getAttributionSpansInRange(
+            attributionFilter: (candidate) => candidate == actionTagComposingAttribution,
+            range: const SpanRange(0, 13),
           ),
           isEmpty,
         );
@@ -623,8 +624,9 @@ void main() {
         // Ensure nothing is attributed, because we didn't type any characters
         // after the initial "/".
         expect(
-          SuperEditorInspector.findTextInComponent("1").getAllAttributionsThroughout(
-            const SpanRange(0, 13),
+          SuperEditorInspector.findTextInComponent("1").getAttributionSpansInRange(
+            attributionFilter: (candidate) => candidate == actionTagComposingAttribution,
+            range: const SpanRange(0, 13),
           ),
           isEmpty,
         );
@@ -645,6 +647,57 @@ void main() {
             start: 7,
             end: 13,
           ),
+        );
+      });
+
+      testWidgetsOnAllPlatforms("does not re-apply a canceled tag", (tester) async {
+        await _pumpTestEditor(
+          tester,
+          MutableDocument(
+            nodes: [
+              ParagraphNode(
+                id: "1",
+                text: AttributedText("before  after"),
+              ),
+            ],
+          ),
+        );
+
+        // Place the caret at "before | after"
+        await tester.placeCaretInParagraph("1", 7);
+
+        // Start composing a tag.
+        await tester.typeImeText("/");
+
+        // Ensure that we're composing.
+        var text = SuperEditorInspector.findTextInComponent("1");
+        expect(
+          text.getAttributedRange({actionTagComposingAttribution}, 7),
+          const SpanRange(7, 7),
+        );
+
+        // Move the caret to "before |/ after"
+        await tester.pressLeftArrow();
+
+        // Ensure we are not composing anymore.
+        expect(
+          SuperEditorInspector.findTextInComponent("1").getAttributionSpansInRange(
+            attributionFilter: (candidate) => candidate == actionTagComposingAttribution,
+            range: const SpanRange(0, 14),
+          ),
+          isEmpty,
+        );
+
+        // Move the caret to "before /| after"
+        await tester.pressRightArrow();
+
+        // Ensure we are still not composing.
+        expect(
+          SuperEditorInspector.findTextInComponent("1").getAttributionSpansInRange(
+            attributionFilter: (candidate) => candidate == actionTagComposingAttribution,
+            range: const SpanRange(0, 14),
+          ),
+          isEmpty,
         );
       });
 

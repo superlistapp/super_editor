@@ -457,17 +457,15 @@ class ActionTagComposingReaction extends EditReaction {
         ),
         attributions: {actionTagComposingAttribution},
       ),
-      // Only cancel the attribution if the tag is longer than just the trigger.
-      if (composingTag.length > 1)
-        AddTextAttributionsRequest(
-          documentRange: DocumentSelection(
-            base: composingTag.start,
-            extent: composingTag.start.copyWith(
-              nodePosition: TextNodePosition(offset: composingTag.startOffset + 1),
-            ),
+      AddTextAttributionsRequest(
+        documentRange: DocumentSelection(
+          base: composingTag.start,
+          extent: composingTag.start.copyWith(
+            nodePosition: TextNodePosition(offset: composingTag.startOffset + 1),
           ),
-          attributions: {actionTagCancelledAttribution},
         ),
+        attributions: {actionTagCancelledAttribution},
+      ),
     ]);
   }
 }
