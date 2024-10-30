@@ -992,7 +992,7 @@ class _ReadOnlyAndroidDocumentTouchInteractorState extends State<ReadOnlyAndroid
             () => EagerPanGestureRecognizer(),
             (EagerPanGestureRecognizer recognizer) {
               recognizer
-                ..canAccept = () {
+                ..shouldAccept = () {
                   if (_globalTapDownOffset == null) {
                     return false;
                   }

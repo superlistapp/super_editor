@@ -1218,7 +1218,7 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
           () => EagerPanGestureRecognizer(),
           (EagerPanGestureRecognizer instance) {
             instance
-              ..canAccept = () {
+              ..shouldAccept = () {
                 if (_globalTapDownOffset == null) {
                   return false;
                 }

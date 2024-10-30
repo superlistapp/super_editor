@@ -17,7 +17,8 @@ class EagerPanGestureRecognizer extends DragGestureRecognizer {
     super.allowedButtonsFilter,
   });
 
-  bool Function()? canAccept;
+  /// Allows to dynamically decide if the gesture should be accepted.
+  bool Function()? shouldAccept;
 
   @override
   bool isFlingGesture(VelocityEstimate estimate, PointerDeviceKind kind) {
@@ -29,7 +30,7 @@ class EagerPanGestureRecognizer extends DragGestureRecognizer {
 
   @override
   void acceptGesture(int pointer) {
-    if (canAccept?.call() ?? true) {
+    if (shouldAccept?.call() ?? true) {
       super.acceptGesture(pointer);
     }
   }
@@ -55,8 +56,8 @@ class EagerPanGestureRecognizer extends DragGestureRecognizer {
     // to determine if the gesture should be accepted. Use the same distance used by the
     // VerticalDragGestureRecognizer.
     final res = globalDistanceMoved.abs() > computeHitSlop(pointerDeviceKind, gestureSettings);
-    if (res && canAccept != null) {
-      return canAccept!();
+    if (res && shouldAccept != null) {
+      return shouldAccept!();
     } else {
       return res;
     }

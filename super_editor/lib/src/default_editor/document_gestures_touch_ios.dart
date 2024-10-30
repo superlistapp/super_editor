@@ -1248,7 +1248,7 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
           () => EagerPanGestureRecognizer(),
           (EagerPanGestureRecognizer instance) {
             instance
-              ..canAccept = () {
+              ..shouldAccept = () {
                 if (_globalTapDownOffset == null) {
                   return false;
                 }

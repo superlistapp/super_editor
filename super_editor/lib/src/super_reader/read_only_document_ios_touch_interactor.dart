@@ -923,7 +923,7 @@ class _SuperReaderIosDocumentTouchInteractorState extends State<SuperReaderIosDo
           () => EagerPanGestureRecognizer(),
           (EagerPanGestureRecognizer instance) {
             instance
-              ..canAccept = () {
+              ..shouldAccept = () {
                 if (_globalTapDownOffset == null) {
                   return false;
                 }
