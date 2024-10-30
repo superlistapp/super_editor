@@ -27,6 +27,15 @@ abstract class BlockNode extends DocumentNode {
   UpstreamDownstreamNodePosition get endPosition => const UpstreamDownstreamNodePosition.downstream();
 
   @override
+  bool containsPosition(Object position) {
+    if (position is! UpstreamDownstreamNodePosition) {
+      return false;
+    }
+
+    return true;
+  }
+
+  @override
   UpstreamDownstreamNodePosition selectUpstreamPosition(NodePosition position1, NodePosition position2) {
     if (position1 is! UpstreamDownstreamNodePosition) {
       throw Exception(
