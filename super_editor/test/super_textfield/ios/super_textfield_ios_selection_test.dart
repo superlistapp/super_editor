@@ -4,7 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_test_runners/flutter_test_runners.dart';
 import 'package:super_editor/src/infrastructure/platforms/ios/toolbar.dart';
+import 'package:super_editor/super_editor_test.dart';
 import 'package:super_editor/super_text_field.dart';
+import 'package:super_text_layout/super_text_layout.dart';
 
 import '../super_textfield_inspector.dart';
 import '../super_textfield_robot.dart';
@@ -107,6 +109,38 @@ void main() {
 
       // Ensure that the text field toolbar is visible.
       expect(find.byType(IOSTextEditingFloatingToolbar), findsOneWidget);
+    });
+
+    testWidgetsOnIos('displays selection highlight for expanded selection', (tester) async {
+      // Pump a tree with a SuperIOSTextField without providing it a controller.
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: ConstrainedBox(
+              constraints: const BoxConstraints(minWidth: 300),
+              child: const SuperIOSTextField(
+                padding: EdgeInsets.all(12),
+                caretStyle: CaretStyle(color: Colors.red),
+                selectionColor: defaultSelectionColor,
+                handlesColor: Colors.red,
+                textStyleBuilder: defaultTextFieldStyleBuilder,
+              ),
+            ),
+          ),
+        ),
+      );
+
+      // Place the caret at the beginning of the text.
+      await tester.placeCaretInSuperTextField(0, find.byType(SuperIOSTextField));
+
+      // Type some text.
+      await tester.typeImeText('This is some text');
+
+      // Double tap to select the word "some".
+      await tester.doubleTapAtSuperTextField(10, find.byType(SuperIOSTextField));
+
+      // Ensure the selection highlight is displayed.
+      expect(find.byType(TextLayoutSelectionHighlight), findsOneWidget);
     });
   });
 }
