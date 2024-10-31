@@ -116,7 +116,7 @@ void main() {
           // Ensure selection was cleared.
           expect(SuperEditorInspector.findDocumentSelection(), isNull);
 
-          // Replace the paragraph with a horizontal rule.
+          // Delete text to make selection invalid.
           final textNode = testContext.document.first as TextNode;
           testContext.editor.execute([
             DeleteContentRequest(

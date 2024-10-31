@@ -180,7 +180,7 @@ class _EditorSelectionAndFocusPolicyState extends State<EditorSelectionAndFocusP
             return;
           }
 
-          restoredSelection = DocumentSelection.collapsed(position: previousSelection.extent);
+          restoredSelection = DocumentSelection.collapsed(position: previousSelection.base);
         }
 
         widget.editor.execute([
