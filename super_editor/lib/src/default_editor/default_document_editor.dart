@@ -47,6 +47,12 @@ final defaultRequestHandlers = List.unmodifiable(<EditRequestHandler>[
           SelectionReason.userInteraction,
         )
       : null,
+  (request) => request is SelectNearestSelectableNodeRequest
+      ? SelectNearestSelectableNodeCommand(
+          targetNodeId: request.targetNodeId,
+          nearestSelection: request.nearestSelection,
+        )
+      : null,
   (request) => request is ChangeComposingRegionRequest //
       ? ChangeComposingRegionCommand(request.composingRegion)
       : null,

@@ -4,6 +4,9 @@ import 'dart:ui';
 import 'package:attributed_text/attributed_text.dart';
 import 'package:flutter/foundation.dart';
 import 'package:super_editor/src/core/document.dart';
+import 'package:super_editor/src/default_editor/multi_node_editing.dart';
+import 'package:super_editor/src/default_editor/paragraph.dart';
+import 'package:super_editor/src/default_editor/text.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/pausable_value_notifier.dart';
 
@@ -382,6 +385,85 @@ class ChangeSelectionCommand extends EditCommand {
         reason: reason,
       )
     ]);
+  }
+}
+
+/// An [EditRequest] that represents a user's desire to move the selection
+/// to a selectable node that is near to the non-selectable node with
+/// the given [targetNodeId].
+class SelectNearestSelectableNodeRequest implements EditRequest {
+  const SelectNearestSelectableNodeRequest({
+    required this.targetNodeId,
+    required this.nearestSelection,
+  });
+
+  /// The id of the non-selectable node that the user is trying to move away from.
+  final String targetNodeId;
+
+  /// The selection that points to the nearest selectable node.
+  final DocumentSelection? nearestSelection;
+}
+
+class SelectNearestSelectableNodeCommand extends EditCommand {
+  const SelectNearestSelectableNodeCommand({
+    required this.targetNodeId,
+    required this.nearestSelection,
+  });
+
+  final String targetNodeId;
+  final DocumentSelection? nearestSelection;
+
+  @override
+  void execute(EditContext context, CommandExecutor executor) {
+    final document = context.document;
+
+    final node = document.getNodeById(targetNodeId);
+    if (node != null) {
+      final isLastNode = document.getNodeIndexById(targetNodeId) == document.nodeCount - 1;
+      if (isLastNode) {
+        // The user is trying to select a non-selectable node at the end of the document.
+        // Create a new empty paragraph after the non-selectable node and place the caret there.
+        final newNodeId = Editor.createNodeId();
+        executor
+          ..executeCommand(
+            InsertNodeAfterNodeCommand(
+              existingNodeId: targetNodeId,
+              newNode: ParagraphNode(
+                id: newNodeId,
+                text: AttributedText(''),
+              ),
+            ),
+          )
+          ..executeCommand(
+            ChangeSelectionCommand(
+              DocumentSelection.collapsed(
+                position: DocumentPosition(
+                  nodeId: newNodeId,
+                  nodePosition: const TextNodePosition(offset: 0),
+                ),
+              ),
+              SelectionChangeType.placeCaret,
+              SelectionReason.userInteraction,
+            ),
+          );
+
+        return;
+      }
+    }
+
+    if (nearestSelection == null) {
+      return;
+    }
+
+    executor.executeCommand(
+      ChangeSelectionCommand(
+        nearestSelection,
+        nearestSelection!.isCollapsed //
+            ? SelectionChangeType.placeCaret
+            : SelectionChangeType.expandSelection,
+        SelectionReason.userInteraction,
+      ),
+    );
   }
 }
 

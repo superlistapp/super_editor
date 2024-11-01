@@ -268,11 +268,23 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor> with 
     final expandSelection = _isShiftPressed && _currentSelection != null;
 
     if (!tappedComponent.isVisualSelectionSupported()) {
-      _moveToNearestSelectableComponent(
-        docPosition.nodeId,
-        tappedComponent,
-        expandSelection: expandSelection,
+      final nearestSelection = findSelectionToNearestSelectableNode(
+        document: widget.document,
+        documentLayoutResolver: widget.getDocumentLayout,
+        currentSelection: _currentSelection,
+        startingNode: widget.document.getNodeById(docPosition.nodeId)!,
       );
+      widget.editor.execute([
+        SelectNearestSelectableNodeRequest(
+          targetNodeId: docPosition.nodeId,
+          nearestSelection: nearestSelection,
+        ),
+      ]);
+
+      if (!expandSelection) {
+        _selectionType = SelectionType.position;
+      }
+
       return;
     }
 

@@ -31,6 +31,59 @@ bool moveSelectionToNearestSelectableNode({
   required DocumentNode startingNode,
   bool expand = false,
 }) {
+  final selection = findSelectionToNearestSelectableNode(
+    document: document,
+    documentLayoutResolver: documentLayoutResolver,
+    currentSelection: currentSelection,
+    startingNode: startingNode,
+    expand: expand,
+  );
+
+  if (selection == null) {
+    return false;
+  }
+
+  if (expand) {
+    // Selection should be expanded.
+    editor.execute([
+      ChangeSelectionRequest(
+        selection,
+        SelectionChangeType.expandSelection,
+        SelectionReason.userInteraction,
+      ),
+      const ClearComposingRegionRequest(),
+    ]);
+  } else {
+    // Selection should be replaced by new collapsed position.
+    editor.execute([
+      ChangeSelectionRequest(
+        selection,
+        SelectionChangeType.placeCaret,
+        SelectionReason.userInteraction,
+      ),
+      const ClearComposingRegionRequest(),
+    ]);
+  }
+
+  return true;
+}
+
+/// Finds the selection to the nearest node to [startingNode],
+/// whose [DocumentComponent] is visually selectable.
+///
+/// Expands the selection if [expand] is `true`, otherwise collapses the selection.
+///
+/// If a downstream selectable node if found, it will be used, otherwise,
+/// a upstream selectable node will be searched.
+///
+/// Returns `true` if a selectable node was found and `false` otherwise.
+DocumentSelection? findSelectionToNearestSelectableNode({
+  required Document document,
+  required DocumentLayoutResolver documentLayoutResolver,
+  required DocumentSelection? currentSelection,
+  required DocumentNode startingNode,
+  bool expand = false,
+}) {
   String? newNodeId;
   NodePosition? newPosition;
 
@@ -53,7 +106,7 @@ bool moveSelectionToNearestSelectableNode({
   }
 
   if (newNodeId == null || newPosition == null) {
-    return false;
+    return null;
   }
 
   final newExtent = DocumentPosition(
@@ -63,27 +116,11 @@ bool moveSelectionToNearestSelectableNode({
 
   if (expand) {
     // Selection should be expanded.
-    editor.execute([
-      ChangeSelectionRequest(
-        currentSelection!.expandTo(newExtent),
-        SelectionChangeType.expandSelection,
-        SelectionReason.userInteraction,
-      ),
-      const ClearComposingRegionRequest(),
-    ]);
+    return currentSelection!.expandTo(newExtent);
   } else {
     // Selection should be replaced by new collapsed position.
-    editor.execute([
-      ChangeSelectionRequest(
-        DocumentSelection.collapsed(position: newExtent),
-        SelectionChangeType.placeCaret,
-        SelectionReason.userInteraction,
-      ),
-      const ClearComposingRegionRequest(),
-    ]);
+    return DocumentSelection.collapsed(position: newExtent);
   }
-
-  return true;
 }
 
 /// Returns the first [DocumentNode] after [startingNode] whose
