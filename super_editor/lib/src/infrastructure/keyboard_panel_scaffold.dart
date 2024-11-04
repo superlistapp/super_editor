@@ -701,12 +701,24 @@ class _KeyboardScaffoldSafeAreaState extends State<KeyboardScaffoldSafeArea>
   void didChangeDependencies() {
     super.didChangeDependencies();
 
-    // Initialize the keyboard insets and padding to whatever MediaQuery reports.
-    // We only do this for the very first frame because we don't yet know what our
-    // values should be (because that's reported by descendants in the tree).
+    // Initialize the keyboard insets and padding.
+    //
+    // First, it's possible that this safe area sits beneath another safe area. In that
+    // case, we defer to the ancestor safe area. This makes it possible to create a keyboard
+    // safe area in one subtree, and communicate that safe are to another subtree, by
+    // sharing an ancestor. For example, consider a widget tree where a chat editor sits in
+    // a Stack, and the content sits behind that editor, in the same Stack. In that case,
+    // we want to apply a keyboard safe area to the content, but that content is a cousin
+    // of the editor, not a direct ancestor or descendant. So we need to be able to coordinate
+    // the safe area across independent trees by sharing an ancestor.
+    //
+    // If there's no existing ancestor KeyboardScaffoldSafeArea, then defer to whatever
+    // MediaQuery reports. We only do this for the very first frame because we don't yet
+    // know what our values should be (because that's reported by descendants in the tree).
+    final ancestorSafeArea = KeyboardScaffoldSafeArea.maybeOf(context);
     _keyboardSafeAreaData ??= KeyboardSafeAreaGeometry(
-      bottomInsets: MediaQuery.viewInsetsOf(context).bottom,
-      bottomPadding: MediaQuery.paddingOf(context).bottom,
+      bottomInsets: ancestorSafeArea?.geometry.bottomInsets ?? MediaQuery.viewInsetsOf(context).bottom,
+      bottomPadding: ancestorSafeArea?.geometry.bottomPadding ?? MediaQuery.paddingOf(context).bottom,
     );
   }
 
@@ -719,6 +731,11 @@ class _KeyboardScaffoldSafeAreaState extends State<KeyboardScaffoldSafeArea>
       return;
     }
 
+    print("Changing safe area geometry - insets: ${geometry.bottomInsets}, padding: ${geometry.bottomPadding}");
+
+    // Propagate this geometry to any ancestor keyboard safe areas.
+    KeyboardScaffoldSafeArea.maybeOf(context)?.geometry = geometry;
+
     setState(() {
       _keyboardSafeAreaData = geometry;
     });
@@ -726,6 +743,11 @@ class _KeyboardScaffoldSafeAreaState extends State<KeyboardScaffoldSafeArea>
 
   @override
   Widget build(BuildContext context) {
+    if (KeyboardScaffoldSafeArea.maybeOf(context) != null) {
+      // An ancestor safe area was already applied to our subtree.
+      return widget.child;
+    }
+
     return _InheritedKeyboardScaffoldSafeArea(
       keyboardSafeAreaData: _keyboardSafeAreaData!,
       child: Padding(
