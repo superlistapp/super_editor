@@ -123,6 +123,8 @@ class _KeyboardPanelScaffoldState extends State<KeyboardPanelScaffold>
 
   SoftwareKeyboardController? _softwareKeyboardController;
 
+  KeyboardScaffoldSafeAreaMutator? _ancestorSafeArea;
+
   @override
   void initState() {
     super.initState();
@@ -158,6 +160,8 @@ class _KeyboardPanelScaffoldState extends State<KeyboardPanelScaffold>
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+
+    _ancestorSafeArea = KeyboardScaffoldSafeArea.maybeOf(context);
     if (!_didInitializeViewInsets) {
       // Initialize our view insets cache with the existing ancestor value so
       // that if the keyboard happens to already be raised, we don't treat the
@@ -194,6 +198,8 @@ class _KeyboardPanelScaffoldState extends State<KeyboardPanelScaffold>
 
   @override
   void dispose() {
+    _ancestorSafeArea?.geometry = const KeyboardSafeAreaGeometry();
+
     widget.isImeConnected.removeListener(_onImeConnectionChange);
 
     widget.controller.detach();
@@ -426,8 +432,7 @@ class _KeyboardPanelScaffoldState extends State<KeyboardPanelScaffold>
 
   /// Update the bottom insets of the enclosing [KeyboardScaffoldSafeArea].
   void _updateSafeArea() {
-    final keyboardSafeAreaData = KeyboardScaffoldSafeArea.maybeOf(context);
-    if (keyboardSafeAreaData == null) {
+    if (_ancestorSafeArea == null) {
       return;
     }
 
@@ -438,7 +443,7 @@ class _KeyboardPanelScaffoldState extends State<KeyboardPanelScaffold>
             : MediaQuery.paddingOf(context).bottom;
 
     final toolbarSize = (_toolbarKey.currentContext?.findRenderObject() as RenderBox?)?.size;
-    keyboardSafeAreaData.geometry = keyboardSafeAreaData.geometry.copyWith(
+    _ancestorSafeArea!.geometry = _ancestorSafeArea!.geometry.copyWith(
       bottomInsets: _wantsToShowKeyboardPanel //
           ? _keyboardPanelHeight + (toolbarSize?.height ?? 0)
           : _keyboardHeight.value + (toolbarSize?.height ?? 0),
@@ -736,7 +741,7 @@ class _KeyboardScaffoldSafeAreaState extends State<KeyboardScaffoldSafeArea>
     // Propagate this geometry to any ancestor keyboard safe areas.
     KeyboardScaffoldSafeArea.maybeOf(context)?.geometry = geometry;
 
-    setState(() {
+    setStateAsSoonAsPossible(() {
       _keyboardSafeAreaData = geometry;
     });
   }
