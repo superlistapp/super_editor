@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_test_robots/flutter_test_robots.dart';
 import 'package:flutter_test_runners/flutter_test_runners.dart';
+import 'package:super_editor/src/infrastructure/platforms/platform.dart';
 import 'package:super_editor/super_editor.dart';
 import 'package:super_editor/super_editor_test.dart';
 
@@ -695,6 +696,140 @@ void main() {
             ),
           );
         });
+
+        testWidgetsOnDesktop('when the whole document is selected and starts with a non-deletable node',
+            (tester) async {
+          await tester //
+              .createDocument()
+              .withCustomContent(
+                MutableDocument(
+                  nodes: [
+                    HorizontalRuleNode(id: '1', metadata: {
+                      NodeMetadata.isDeletable: false,
+                    }),
+                    ParagraphNode(
+                      id: '2',
+                      text: AttributedText('This is some text'),
+                    ),
+                  ],
+                ),
+              )
+              .pump();
+
+          // Place the caret at the beginning of the paragraph.
+          await tester.placeCaretInParagraph("2", 0);
+
+          // Select all content.
+          if (CurrentPlatform.isApple) {
+            await tester.pressCmdA();
+          } else {
+            await tester.pressCtlA();
+          }
+
+          // Ensure everything is selected.
+          expect(
+            SuperEditorInspector.findDocumentSelection(),
+            const DocumentSelection(
+              base: DocumentPosition(
+                nodeId: '1',
+                nodePosition: UpstreamDownstreamNodePosition.upstream(),
+              ),
+              extent: DocumentPosition(
+                nodeId: '2',
+                nodePosition: TextNodePosition(offset: 17),
+              ),
+            ),
+          );
+
+          // Delete all content.
+          await tester.pressBackspace();
+
+          final document = SuperEditorInspector.findDocument()!;
+
+          // Ensure the horizontal rule was kept, the paragraph was deleted,
+          // and a new empty paragraph was added to the end of the document.
+          expect(document.nodeCount, equals(2));
+          expect(document.first, isA<HorizontalRuleNode>());
+          expect(document.last, isA<ParagraphNode>());
+          expect((document.last as TextNode).text.text, equals(''));
+
+          // Ensure the caret was placed at the beginning of the newly inserted paragraph.
+          expect(
+            SuperEditorInspector.findDocumentSelection(),
+            DocumentSelection.collapsed(
+              position: DocumentPosition(
+                nodeId: document.last.id,
+                nodePosition: const TextNodePosition(offset: 0),
+              ),
+            ),
+          );
+        });
+
+        testWidgetsOnDesktop('when the whole document is selected and ends with a non-deletable node', (tester) async {
+          await tester //
+              .createDocument()
+              .withCustomContent(
+                MutableDocument(
+                  nodes: [
+                    ParagraphNode(
+                      id: '1',
+                      text: AttributedText('This is some text'),
+                    ),
+                    HorizontalRuleNode(id: '2', metadata: {
+                      NodeMetadata.isDeletable: false,
+                    }),
+                  ],
+                ),
+              )
+              .pump();
+
+          await tester.placeCaretInParagraph("1", 0);
+
+          // Select all content.
+          if (CurrentPlatform.isApple) {
+            await tester.pressCmdA();
+          } else {
+            await tester.pressCtlA();
+          }
+
+          // Ensure everything is selected.
+          expect(
+            SuperEditorInspector.findDocumentSelection(),
+            const DocumentSelection(
+              base: DocumentPosition(
+                nodeId: '1',
+                nodePosition: TextNodePosition(offset: 0),
+              ),
+              extent: DocumentPosition(
+                nodeId: '2',
+                nodePosition: UpstreamDownstreamNodePosition.downstream(),
+              ),
+            ),
+          );
+
+          // Delete all content.
+          await tester.pressBackspace();
+
+          final document = SuperEditorInspector.findDocument()!;
+
+          // Ensure the horizontal rule was kept, the paragraph was deleted,
+          // and a new empty paragraph was added to the end of the document.
+          expect(document.nodeCount, equals(2));
+          expect(document.first, isA<HorizontalRuleNode>());
+          expect(document.last, isA<ParagraphNode>());
+          expect((document.last as TextNode).text.text, equals(''));
+
+          // Ensure the caret was placed at the beginning of the newly inserted paragraph.
+          expect(
+            SuperEditorInspector.findDocumentSelection(),
+            DocumentSelection.collapsed(
+              position: DocumentPosition(
+                nodeId: document.last.id,
+                nodePosition: const TextNodePosition(offset: 0),
+              ),
+            ),
+          );
+        });
       });
 
       group('with delete', () {
@@ -1162,6 +1297,140 @@ void main() {
           // Ensure the selection didn't change.
           expect(SuperEditorInspector.findDocumentSelection(), selection);
         });
+
+        testWidgetsOnDesktop('when the whole document is selected and starts with a non-deletable node',
+            (tester) async {
+          await tester //
+              .createDocument()
+              .withCustomContent(
+                MutableDocument(
+                  nodes: [
+                    HorizontalRuleNode(id: '1', metadata: {
+                      NodeMetadata.isDeletable: false,
+                    }),
+                    ParagraphNode(
+                      id: '2',
+                      text: AttributedText('This is some text'),
+                    ),
+                  ],
+                ),
+              )
+              .pump();
+
+          // Place the caret at the beginning of the paragraph.
+          await tester.placeCaretInParagraph("2", 0);
+
+          // Select all content.
+          if (CurrentPlatform.isApple) {
+            await tester.pressCmdA();
+          } else {
+            await tester.pressCtlA();
+          }
+
+          // Ensure everything is selected.
+          expect(
+            SuperEditorInspector.findDocumentSelection(),
+            const DocumentSelection(
+              base: DocumentPosition(
+                nodeId: '1',
+                nodePosition: UpstreamDownstreamNodePosition.upstream(),
+              ),
+              extent: DocumentPosition(
+                nodeId: '2',
+                nodePosition: TextNodePosition(offset: 17),
+              ),
+            ),
+          );
+
+          // Delete all content.
+          await tester.pressDelete();
+
+          final document = SuperEditorInspector.findDocument()!;
+
+          // Ensure the horizontal rule was kept, the paragraph was deleted,
+          // and a new empty paragraph was added to the end of the document.
+          expect(document.nodeCount, equals(2));
+          expect(document.first, isA<HorizontalRuleNode>());
+          expect(document.last, isA<ParagraphNode>());
+          expect((document.last as TextNode).text.text, equals(''));
+
+          // Ensure the caret was placed at the beginning of the newly inserted paragraph.
+          expect(
+            SuperEditorInspector.findDocumentSelection(),
+            DocumentSelection.collapsed(
+              position: DocumentPosition(
+                nodeId: document.last.id,
+                nodePosition: const TextNodePosition(offset: 0),
+              ),
+            ),
+          );
+        });
+
+        testWidgetsOnDesktop('when the whole document is selected and ends with a non-deletable node', (tester) async {
+          await tester //
+              .createDocument()
+              .withCustomContent(
+                MutableDocument(
+                  nodes: [
+                    ParagraphNode(
+                      id: '1',
+                      text: AttributedText('This is some text'),
+                    ),
+                    HorizontalRuleNode(id: '2', metadata: {
+                      NodeMetadata.isDeletable: false,
+                    }),
+                  ],
+                ),
+              )
+              .pump();
+
+          await tester.placeCaretInParagraph("1", 0);
+
+          // Select all content
+          if (CurrentPlatform.isApple) {
+            await tester.pressCmdA();
+          } else {
+            await tester.pressCtlA();
+          }
+
+          // Ensure everything is selected.
+          expect(
+            SuperEditorInspector.findDocumentSelection(),
+            const DocumentSelection(
+              base: DocumentPosition(
+                nodeId: '1',
+                nodePosition: TextNodePosition(offset: 0),
+              ),
+              extent: DocumentPosition(
+                nodeId: '2',
+                nodePosition: UpstreamDownstreamNodePosition.downstream(),
+              ),
+            ),
+          );
+
+          // Delete all content.
+          await tester.pressDelete();
+
+          final document = SuperEditorInspector.findDocument()!;
+
+          // Ensure the horizontal rule was kept, the paragraph was deleted,
+          // and a new empty paragraph was added to the end of the document.
+          expect(document.nodeCount, equals(2));
+          expect(document.first, isA<HorizontalRuleNode>());
+          expect(document.last, isA<ParagraphNode>());
+          expect((document.last as TextNode).text.text, equals(''));
+
+          // Ensure the caret was placed at the beginning of the newly inserted paragraph.
+          expect(
+            SuperEditorInspector.findDocumentSelection(),
+            DocumentSelection.collapsed(
+              position: DocumentPosition(
+                nodeId: document.last.id,
+                nodePosition: const TextNodePosition(offset: 0),
+              ),
+            ),
+          );
+        });
       });
 
       group('when typing', () {
@@ -1609,6 +1878,162 @@ void main() {
           final document = SuperEditorInspector.findDocument()!;
           expect(document.getNodeById('hr'), isNotNull);
           expect(document.getNodeById('hr'), isA<HorizontalRuleNode>());
+        });
+
+        testWidgetsOnMobile('when the whole document is selected and starts with a non-deletable node', (tester) async {
+          final testContext = await tester //
+              .createDocument()
+              .withCustomContent(
+                MutableDocument(
+                  nodes: [
+                    HorizontalRuleNode(id: '1', metadata: {
+                      NodeMetadata.isDeletable: false,
+                    }),
+                    ParagraphNode(
+                      id: '2',
+                      text: AttributedText('This is some text'),
+                    ),
+                  ],
+                ),
+              )
+              .pump();
+
+          // Place the caret at the beginning of the paragraph.
+          await tester.placeCaretInParagraph("2", 0);
+
+          // Select the whole content.
+          testContext.editor.execute([
+            const ChangeSelectionRequest(
+              DocumentSelection(
+                base: DocumentPosition(
+                  nodeId: '1',
+                  nodePosition: UpstreamDownstreamNodePosition.upstream(),
+                ),
+                extent: DocumentPosition(
+                  nodeId: '2',
+                  nodePosition: TextNodePosition(offset: 17),
+                ),
+              ),
+              SelectionChangeType.expandSelection,
+              SelectionReason.userInteraction,
+            )
+          ]);
+          await tester.pump();
+
+          // Simulate the user pressing backspace. The IME first generates a
+          // selection change and then a deletion. Each block node is represented by a "~"
+          // in the IME.
+          await tester.ime.sendDeltas([
+            const TextEditingDeltaNonTextUpdate(
+              oldText: '. ~\nThis is some text',
+              selection: TextSelection(baseOffset: 0, extentOffset: 21),
+              composing: TextRange.empty,
+            ),
+            const TextEditingDeltaDeletion(
+              oldText: '. ~\nThis is some text',
+              deletedRange: TextSelection(baseOffset: 0, extentOffset: 21),
+              selection: TextSelection.collapsed(offset: 0),
+              composing: TextRange.empty,
+            ),
+          ], getter: imeClientGetter);
+
+          final document = SuperEditorInspector.findDocument()!;
+
+          // Ensure the horizontal rule was kept, the paragraph was deleted,
+          // and a new empty paragraph was added to the end of the document.
+          expect(document.nodeCount, equals(2));
+          expect(document.first, isA<HorizontalRuleNode>());
+          expect(document.last, isA<ParagraphNode>());
+          expect((document.last as TextNode).text.text, equals(''));
+
+          // Ensure the caret was placed at the beginning of the newly inserted paragraph.
+          expect(
+            SuperEditorInspector.findDocumentSelection(),
+            DocumentSelection.collapsed(
+              position: DocumentPosition(
+                nodeId: document.last.id,
+                nodePosition: const TextNodePosition(offset: 0),
+              ),
+            ),
+          );
+        });
+
+        testWidgetsOnMobile('when the whole document is selected and ends with a non-deletable node', (tester) async {
+          final testContext = await tester //
+              .createDocument()
+              .withCustomContent(
+                MutableDocument(
+                  nodes: [
+                    ParagraphNode(
+                      id: '1',
+                      text: AttributedText('This is some text'),
+                    ),
+                    HorizontalRuleNode(id: '2', metadata: {
+                      NodeMetadata.isDeletable: false,
+                    }),
+                  ],
+                ),
+              )
+              .pump();
+
+          // Place the caret at the beginning of the paragraph.
+          await tester.placeCaretInParagraph("1", 0);
+
+          // Select the whole content.
+          testContext.editor.execute([
+            const ChangeSelectionRequest(
+              DocumentSelection(
+                base: DocumentPosition(
+                  nodeId: '1',
+                  nodePosition: TextNodePosition(offset: 0),
+                ),
+                extent: DocumentPosition(
+                  nodeId: '2',
+                  nodePosition: UpstreamDownstreamNodePosition.downstream(),
+                ),
+              ),
+              SelectionChangeType.expandSelection,
+              SelectionReason.userInteraction,
+            )
+          ]);
+          await tester.pump();
+
+          // Simulate the user pressing backspace. The IME first generates a
+          // selection change and then a deletion. Each block node is represented by a "~"
+          // in the IME.
+          await tester.ime.sendDeltas([
+            const TextEditingDeltaNonTextUpdate(
+              oldText: '. This is some text\n~',
+              selection: TextSelection(baseOffset: 0, extentOffset: 21),
+              composing: TextRange.empty,
+            ),
+            const TextEditingDeltaDeletion(
+              oldText: '. This is some text\n~',
+              deletedRange: TextSelection(baseOffset: 0, extentOffset: 21),
+              selection: TextSelection.collapsed(offset: 0),
+              composing: TextRange.empty,
+            ),
+          ], getter: imeClientGetter);
+
+          final document = SuperEditorInspector.findDocument()!;
+
+          // Ensure the horizontal rule was kept, the paragraph was deleted,
+          // and a new empty paragraph was added to the end of the document.
+          expect(document.nodeCount, equals(2));
+          expect(document.first, isA<HorizontalRuleNode>());
+          expect(document.last, isA<ParagraphNode>());
+          expect((document.last as TextNode).text.text, equals(''));
+
+          // Ensure the caret was placed at the beginning of the newly inserted paragraph.
+          expect(
+            SuperEditorInspector.findDocumentSelection(),
+            DocumentSelection.collapsed(
+              position: DocumentPosition(
+                nodeId: document.last.id,
+                nodePosition: const TextNodePosition(offset: 0),
+              ),
+            ),
+          );
         });
       });
     });

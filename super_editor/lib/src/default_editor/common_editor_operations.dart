@@ -1423,11 +1423,13 @@ class CommonEditorOperations {
 
     if (baseNodeIndex != extentNodeIndex) {
       if (topNodePosition == topNode.beginningPosition && bottomNodePosition == bottomNode.endPosition) {
-        // All nodes in the selection will be deleted. Assume that the start
-        // node will be retained and converted into a paragraph, if it's not
+        // All deletable nodes in the selection will be deleted. Assume that one of the
+        // nodes will be retained and converted into a paragraph, if it's not
         // already a paragraph.
         newSelectionPosition = DocumentPosition(
-          nodeId: topNode.id,
+          nodeId: (topNode is BlockNode && !topNode.isDeletable) //
+              ? bottomNode.id
+              : topNode.id,
           nodePosition: const TextNodePosition(offset: 0),
         );
       } else if (topNodePosition == topNode.beginningPosition) {
