@@ -353,6 +353,12 @@ class TestSuperEditorConfigurator {
     return this;
   }
 
+  /// Configures the [SuperEditor] to use the given [tapDelegateFactory].
+  TestSuperEditorConfigurator withTapDelegateFactory(SuperEditorContentTapDelegateFactory? tapDelegateFactory) {
+    _config.tapDelegateFactory = tapDelegateFactory;
+    return this;
+  }
+
   /// Applies the given [plugin] to the pumped [SuperEditor].
   TestSuperEditorConfigurator withPlugin(SuperEditorPlugin plugin) {
     _config.plugins.add(plugin);
@@ -588,6 +594,7 @@ class _TestSuperEditorState extends State<_TestSuperEditor> {
       focusNode: widget.testDocumentContext.focusNode,
       autofocus: widget.testConfiguration.autoFocus,
       tapRegionGroupId: widget.testConfiguration.tapRegionGroupId,
+      contentTapDelegateFactory: widget.testConfiguration.tapDelegateFactory ?? superEditorLaunchLinkTapHandlerFactory,
       editor: widget.testDocumentContext.editor,
       documentLayoutKey: widget.testDocumentContext.layoutKey,
       inputSource: widget.testConfiguration.inputSource,
@@ -712,6 +719,8 @@ class SuperEditorTestConfiguration {
   DocumentFloatingToolbarBuilder? iOSToolbarBuilder;
 
   DocumentSelection? selection;
+
+  SuperEditorContentTapDelegateFactory? tapDelegateFactory;
 
   final plugins = <SuperEditorPlugin>{};
 

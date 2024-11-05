@@ -12,17 +12,38 @@ abstract class ContentTapDelegate with ChangeNotifier {
     return null;
   }
 
-  TapHandlingInstruction onTap(DocumentPosition tapPosition) {
+  TapHandlingInstruction onTap(DocumentTapDetails tapPosition) {
     return TapHandlingInstruction.continueHandling;
   }
 
-  TapHandlingInstruction onDoubleTap(DocumentPosition tapPosition) {
+  TapHandlingInstruction onDoubleTap(DocumentTapDetails tapPosition) {
     return TapHandlingInstruction.continueHandling;
   }
 
-  TapHandlingInstruction onTripleTap(DocumentPosition tapPosition) {
+  TapHandlingInstruction onTripleTap(DocumentTapDetails tapPosition) {
     return TapHandlingInstruction.continueHandling;
   }
+}
+
+/// Information about a gesture that occured near a [position].
+class DocumentTapDetails {
+  DocumentTapDetails({
+    required this.position,
+    required this.isGestureAboveStartOfDocument,
+    required this.isGestureBelowEndOfDocument,
+  });
+
+  /// The position in the document where the gesture occurred.
+  ///
+  /// When there is no content at the gesture location, this position
+  /// holds the nearest position in the document.
+  final DocumentPosition position;
+
+  /// Whether the gesture occurred above the first node in the document.
+  final bool isGestureAboveStartOfDocument;
+
+  /// Whether the gesture occurred below the last node in the document.
+  final bool isGestureBelowEndOfDocument;
 }
 
 enum TapHandlingInstruction {

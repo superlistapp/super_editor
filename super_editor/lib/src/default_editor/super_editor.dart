@@ -20,6 +20,7 @@ import 'package:super_editor/src/default_editor/document_gestures_touch_ios.dart
 import 'package:super_editor/src/default_editor/document_scrollable.dart';
 import 'package:super_editor/src/default_editor/layout_single_column/_styler_composing_region.dart';
 import 'package:super_editor/src/default_editor/list_items.dart';
+import 'package:super_editor/src/default_editor/multi_node_editing.dart';
 import 'package:super_editor/src/default_editor/tasks.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/content_layers.dart';
@@ -1692,7 +1693,8 @@ class SuperEditorLaunchLinkTapHandler extends ContentTapDelegate {
   }
 
   @override
-  TapHandlingInstruction onTap(DocumentPosition tapPosition) {
+  TapHandlingInstruction onTap(DocumentTapDetails details) {
+    final tapPosition = details.position;
     if (!composer.isInInteractionMode.value) {
       // The editor isn't in "interaction mode". We don't want to allow
       // users to open links by tapping on them.
@@ -1731,5 +1733,58 @@ class SuperEditorLaunchLinkTapHandler extends ContentTapDelegate {
     }
 
     return null;
+  }
+}
+
+SuperEditorAddEmptyParagraphTapHandler superEditorAddEmptyParagraphTapHandlerFactory(SuperEditorContext editContext) =>
+    SuperEditorAddEmptyParagraphTapHandler(editor: editContext.editor);
+
+/// A [ContentTapDelegate] that adds an empty paragraph at the end of the document
+/// when the user taps below the last node in the document.
+///
+/// Does nothing if the last node is a [TextNode].
+class SuperEditorAddEmptyParagraphTapHandler extends ContentTapDelegate {
+  SuperEditorAddEmptyParagraphTapHandler({
+    required this.editor,
+  });
+
+  final Editor editor;
+
+  @override
+  TapHandlingInstruction onTap(DocumentTapDetails details) {
+    if (!details.isGestureBelowEndOfDocument) {
+      return TapHandlingInstruction.continueHandling;
+    }
+
+    final node = editor.document.getNodeById(details.position.nodeId)!;
+    if (node is TextNode) {
+      return TapHandlingInstruction.continueHandling;
+    }
+
+    // The user tapped below a non-text node. Add a new paragraph
+    // to the end of the document and place the caret there.
+    final newNodeId = Editor.createNodeId();
+    editor.execute([
+      InsertNodeAfterNodeRequest(
+        existingNodeId: node.id,
+        newNode: ParagraphNode(
+          id: newNodeId,
+          text: AttributedText(),
+        ),
+      ),
+      ChangeSelectionRequest(
+        DocumentSelection.collapsed(
+          position: DocumentPosition(
+            nodeId: newNodeId,
+            nodePosition: const TextNodePosition(offset: 0),
+          ),
+        ),
+        SelectionChangeType.insertContent,
+        SelectionReason.userInteraction,
+      ),
+      const ClearComposingRegionRequest(),
+    ]);
+
+    return TapHandlingInstruction.halt;
   }
 }
