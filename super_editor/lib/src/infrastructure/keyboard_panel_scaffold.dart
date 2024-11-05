@@ -702,6 +702,8 @@ class _KeyboardScaffoldSafeAreaState extends State<KeyboardScaffoldSafeArea>
     implements KeyboardScaffoldSafeAreaMutator {
   KeyboardSafeAreaGeometry? _keyboardSafeAreaData;
 
+  KeyboardScaffoldSafeAreaMutator? _ancestorSafeArea;
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
@@ -720,10 +722,10 @@ class _KeyboardScaffoldSafeAreaState extends State<KeyboardScaffoldSafeArea>
     // If there's no existing ancestor KeyboardScaffoldSafeArea, then defer to whatever
     // MediaQuery reports. We only do this for the very first frame because we don't yet
     // know what our values should be (because that's reported by descendants in the tree).
-    final ancestorSafeArea = KeyboardScaffoldSafeArea.maybeOf(context);
+    _ancestorSafeArea = KeyboardScaffoldSafeArea.maybeOf(context);
     _keyboardSafeAreaData ??= KeyboardSafeAreaGeometry(
-      bottomInsets: ancestorSafeArea?.geometry.bottomInsets ?? MediaQuery.viewInsetsOf(context).bottom,
-      bottomPadding: ancestorSafeArea?.geometry.bottomPadding ?? MediaQuery.paddingOf(context).bottom,
+      bottomInsets: _ancestorSafeArea?.geometry.bottomInsets ?? MediaQuery.viewInsetsOf(context).bottom,
+      bottomPadding: _ancestorSafeArea?.geometry.bottomPadding ?? MediaQuery.paddingOf(context).bottom,
     );
   }
 
@@ -739,7 +741,7 @@ class _KeyboardScaffoldSafeAreaState extends State<KeyboardScaffoldSafeArea>
     print("Changing safe area geometry - insets: ${geometry.bottomInsets}, padding: ${geometry.bottomPadding}");
 
     // Propagate this geometry to any ancestor keyboard safe areas.
-    KeyboardScaffoldSafeArea.maybeOf(context)?.geometry = geometry;
+    _ancestorSafeArea?.geometry = geometry;
 
     setStateAsSoonAsPossible(() {
       _keyboardSafeAreaData = geometry;
@@ -748,7 +750,7 @@ class _KeyboardScaffoldSafeAreaState extends State<KeyboardScaffoldSafeArea>
 
   @override
   Widget build(BuildContext context) {
-    if (KeyboardScaffoldSafeArea.maybeOf(context) != null) {
+    if (_ancestorSafeArea != null) {
       // An ancestor safe area was already applied to our subtree.
       return widget.child;
     }
