@@ -322,11 +322,15 @@ class ContentLayersElement extends RenderObjectElement {
     contentLayersLog.finer("ContentLayersElement - temporarily forgetting layers");
     for (final underlay in _underlays) {
       // Calling super.forgetChild directly to avoid adding it to _forgottenChildren.
+      // We're doing this to prevent the children from building, but not from
+      // being enumerated in visitChildren, which would happen with this.forgetChild.
       super.forgetChild(underlay);
     }
 
     for (final overlay in _overlays) {
       // Calling super.forgetChild directly to avoid adding it to _forgottenChildren.
+      // We're doing this to prevent the children from building, but not from
+      // being enumerated in visitChildren, which would happen with this.forgetChild.
       super.forgetChild(overlay);
     }
   }
@@ -341,6 +345,7 @@ class ContentLayersElement extends RenderObjectElement {
     assert(!debugChildrenHaveDuplicateKeys(widget, [newContent]));
 
     _content = updateChild(_content, newContent, _contentSlot);
+    // This is where the framework elements clean up the forgotten children.
     _forgottenChildren.clear();
   }
 
@@ -396,6 +401,7 @@ class ContentLayersElement extends RenderObjectElement {
 
   @override
   void visitChildren(ElementVisitor visitor) {
+    // It is the responsibility of `visitChildren` to skip over forgotten children.
     if (_content != null && !_forgottenChildren.contains(_content)) {
       visitor(_content!);
     }
