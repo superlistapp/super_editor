@@ -475,6 +475,16 @@ void main() {
         );
       });
     });
+
+    group('safe area >', () {
+      testWidgetsOnMobilePhone('makes room for keyboard panel', (tester) async {
+        // TODO:
+      });
+
+      // TODO: ensure that multiple safe areas don't add extra open space
+
+      // TODO: ensure that when the keyboard is up, then a page is switched, the safe area goes down
+    });
   });
 }
 
@@ -507,24 +517,45 @@ Future<void> _pumpTestApp(
         (superEditor) => MaterialApp(
           home: Scaffold(
             resizeToAvoidBottomInset: false,
-            body: Builder(builder: (context) {
-              return KeyboardPanelScaffold(
-                controller: keyboardPanelController,
-                isImeConnected: imeConnectionNotifier,
-                contentBuilder: (context, isKeyboardPanelVisible) => superEditor,
-                toolbarBuilder: (context, isKeyboardPanelVisible) => Container(
-                  key: _aboveKeyboardToolbarKey,
-                  height: 54,
-                  color: Colors.blue,
-                ),
-                keyboardPanelBuilder: (context) => const SizedBox.expand(
-                  child: ColoredBox(
-                    key: _keyboardPanelKey,
-                    color: Colors.red,
+            body: Stack(
+              children: [
+                // An area that simulates content that sits underneath
+                // a bottom mounted chat editor.
+                Positioned.fill(
+                  child: KeyboardScaffoldSafeArea(
+                    child: Container(
+                      color: Colors.blue,
+                    ),
                   ),
                 ),
-              );
-            }),
+
+                // An area that simulates a bottom mounted chat editor.
+                Positioned(
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  height: 200,
+                  child: Builder(builder: (context) {
+                    return KeyboardPanelScaffold(
+                      controller: keyboardPanelController,
+                      isImeConnected: imeConnectionNotifier,
+                      contentBuilder: (context, isKeyboardPanelVisible) => superEditor,
+                      toolbarBuilder: (context, isKeyboardPanelVisible) => Container(
+                        key: _aboveKeyboardToolbarKey,
+                        height: 54,
+                        color: Colors.blue,
+                      ),
+                      keyboardPanelBuilder: (context) => const SizedBox.expand(
+                        child: ColoredBox(
+                          key: _keyboardPanelKey,
+                          color: Colors.red,
+                        ),
+                      ),
+                    );
+                  }),
+                ),
+              ],
+            ),
           ),
         ),
       )

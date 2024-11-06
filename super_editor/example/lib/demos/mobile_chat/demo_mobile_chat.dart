@@ -60,20 +60,47 @@ class _MobileChatDemoState extends State<MobileChatDemo> {
   @override
   Widget build(BuildContext context) {
     return KeyboardScaffoldSafeArea(
-      child: Stack(
-        children: [
-          Positioned.fill(
-            child: GestureDetector(
-              onTap: () {
-                _screenFocusNode.requestFocus();
-              },
-              child: Focus(
-                focusNode: _screenFocusNode,
-                child: ColoredBox(
-                  color: Colors.white,
+      child: DefaultTabController(
+        length: 2,
+        child: Scaffold(
+          appBar: _buildAppBar(),
+          body: TabBarView(children: [
+            _buildChatPage(),
+            _buildAccountPage(),
+          ]),
+          resizeToAvoidBottomInset: false,
+        ),
+      ),
+    );
+  }
+
+  PreferredSizeWidget _buildAppBar() {
+    return AppBar(
+      bottom: const TabBar(
+        tabs: [
+          Tab(icon: Icon(Icons.chat)),
+          Tab(icon: Icon(Icons.account_circle)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildChatPage() {
+    return Stack(
+      children: [
+        Positioned.fill(
+          child: GestureDetector(
+            onTap: () {
+              _screenFocusNode.requestFocus();
+            },
+            child: Focus(
+              focusNode: _screenFocusNode,
+              child: ColoredBox(
+                color: Colors.white,
+                child: KeyboardScaffoldSafeArea(
                   child: ListView.builder(
                     // Add gap that's about as tall as the editor to push content above it.
-                    padding: const EdgeInsets.only(bottom: 90),
+                    // padding: const EdgeInsets.only(bottom: 90),
                     itemCount: 10,
                     itemBuilder: (context, index) {
                       return Container(
@@ -98,14 +125,14 @@ class _MobileChatDemoState extends State<MobileChatDemo> {
               ),
             ),
           ),
-          Positioned(
-            left: 0,
-            right: 0,
-            bottom: 0,
-            child: _buildCommentEditor(),
-          ),
-        ],
-      ),
+        ),
+        Positioned(
+          left: 0,
+          right: 0,
+          bottom: 0,
+          child: _buildCommentEditor(),
+        ),
+      ],
     );
   }
 
@@ -231,6 +258,15 @@ class _MobileChatDemoState extends State<MobileChatDemo> {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildAccountPage() {
+    return ColoredBox(
+      color: Colors.grey.shade100,
+      child: Center(
+        child: Icon(Icons.account_circle),
+      ),
     );
   }
 }
