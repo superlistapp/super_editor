@@ -22,26 +22,26 @@ class CalloutBlockSyntax extends md.BlockSyntax {
   // This method was adapted from the standard Blockquote parser, and
   // the standard code fence block parser.
   @override
-  List<String> parseChildLines(md.BlockParser parser) {
+  List<md.Line?> parseChildLines(md.BlockParser parser) {
     // Grab all of the lines that form the custom block, stripping off the
     // first line, e.g., "@@@ customBlock", and the last line, e.g., "@@@".
     var childLines = <String>[];
 
     while (!parser.isDone) {
-      final openingLine = pattern.firstMatch(parser.current);
+      final openingLine = pattern.firstMatch(parser.current.content);
       if (openingLine != null) {
         // This is the first line. Ignore it.
         parser.advance();
         continue;
       }
-      final closingLine = _endLinePattern.firstMatch(parser.current);
+      final closingLine = _endLinePattern.firstMatch(parser.current.content);
       if (closingLine != null) {
         // This is the closing line. Ignore it.
         parser.advance();
 
         // If we're followed by a blank line, skip it, so that we don't end
         // up with an extra paragraph for that blank line.
-        if (parser.current.trim().isEmpty) {
+        if (parser.current.content.trim().isEmpty) {
           parser.advance();
         }
 
@@ -49,11 +49,11 @@ class CalloutBlockSyntax extends md.BlockSyntax {
         break;
       }
 
-      childLines.add(parser.current);
+      childLines.add(parser.current.content);
       parser.advance();
     }
 
-    return childLines;
+    return childLines.map((l) => md.Line(l)).toList();
   }
 
   // This method was adapted from the standard Blockquote parser, and
@@ -95,6 +95,7 @@ _InlineMarkdownToDocument _parseInline(md.Element element) {
     element.textContent,
     md.Document(
       inlineSyntaxes: [
+        SingleStrikethroughSyntax(), // this needs to be before md.StrikethroughSyntax to be recognized
         md.StrikethroughSyntax(),
         UnderlineSyntax(),
       ],
