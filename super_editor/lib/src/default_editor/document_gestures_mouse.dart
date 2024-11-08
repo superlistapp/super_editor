@@ -261,22 +261,11 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor> with 
       return;
     }
 
-    final tappedComponent = _docLayout.getComponentByNodeId(docPosition.nodeId)!;
-
     if (widget.contentTapHandler != null) {
-      final componentBox = tappedComponent.context.findRenderObject() as RenderBox;
-      final localPosition = componentBox.globalToLocal(details.globalPosition);
-      final nodeIndex = widget.document.getNodeIndexById(docPosition.nodeId);
-
-      final isAboveStartOfDocument = (nodeIndex == 0) && (localPosition.dy < 0);
-      final isBelowEndOfDocument =
-          (nodeIndex == widget.document.nodeCount - 1) && (localPosition.dy > componentBox.size.height);
-
       final result = widget.contentTapHandler!.onTap(
         DocumentTapDetails(
           position: docPosition,
-          isGestureAboveStartOfDocument: isAboveStartOfDocument,
-          isGestureBelowEndOfDocument: isBelowEndOfDocument,
+          globalOffset: details.globalPosition,
         ),
       );
       if (result == TapHandlingInstruction.halt) {
@@ -286,6 +275,7 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor> with 
       }
     }
 
+    final tappedComponent = _docLayout.getComponentByNodeId(docPosition.nodeId)!;
     final expandSelection = _isShiftPressed && _currentSelection != null;
 
     if (!tappedComponent.isVisualSelectionSupported()) {
@@ -325,24 +315,11 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor> with 
     final docPosition = _docLayout.getDocumentPositionNearestToOffset(docOffset);
     editorGesturesLog.fine(" - tapped document position: $docPosition");
 
-    final tappedComponent = docPosition != null //
-        ? _docLayout.getComponentByNodeId(docPosition.nodeId)!
-        : null;
-
     if (docPosition != null && widget.contentTapHandler != null) {
-      final componentBox = tappedComponent!.context.findRenderObject() as RenderBox;
-      final localPosition = componentBox.globalToLocal(details.globalPosition);
-      final nodeIndex = widget.document.getNodeIndexById(docPosition.nodeId);
-
-      final isAboveStartOfDocument = (nodeIndex == 0) && (localPosition.dy < 0);
-      final isBelowEndOfDocument =
-          (nodeIndex == widget.document.nodeCount - 1) && (localPosition.dy > componentBox.size.height);
-
       final result = widget.contentTapHandler!.onDoubleTap(
         DocumentTapDetails(
           position: docPosition,
-          isGestureAboveStartOfDocument: isAboveStartOfDocument,
-          isGestureBelowEndOfDocument: isBelowEndOfDocument,
+          globalOffset: details.globalPosition,
         ),
       );
       if (result == TapHandlingInstruction.halt) {
@@ -352,7 +329,8 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor> with 
       }
     }
 
-    if (docPosition != null && tappedComponent != null) {
+    if (docPosition != null) {
+      final tappedComponent = _docLayout.getComponentByNodeId(docPosition.nodeId)!;
       if (!tappedComponent.isVisualSelectionSupported()) {
         return;
       }
@@ -443,24 +421,11 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor> with 
     final docPosition = _docLayout.getDocumentPositionNearestToOffset(docOffset);
     editorGesturesLog.fine(" - tapped document position: $docPosition");
 
-    final tappedComponent = docPosition != null //
-        ? _docLayout.getComponentByNodeId(docPosition.nodeId)!
-        : null;
-
     if (docPosition != null && widget.contentTapHandler != null) {
-      final componentBox = tappedComponent!.context.findRenderObject() as RenderBox;
-      final localPosition = componentBox.globalToLocal(details.globalPosition);
-      final nodeIndex = widget.document.getNodeIndexById(docPosition.nodeId);
-
-      final isAboveStartOfDocument = (nodeIndex == 0) && (localPosition.dy < 0);
-      final isBelowEndOfDocument =
-          (nodeIndex == widget.document.nodeCount - 1) && (localPosition.dy > componentBox.size.height);
-
       final result = widget.contentTapHandler!.onTripleTap(
         DocumentTapDetails(
           position: docPosition,
-          isGestureAboveStartOfDocument: isAboveStartOfDocument,
-          isGestureBelowEndOfDocument: isBelowEndOfDocument,
+          globalOffset: details.globalPosition,
         ),
       );
       if (result == TapHandlingInstruction.halt) {

@@ -1737,7 +1737,7 @@ class SuperEditorLaunchLinkTapHandler extends ContentTapDelegate {
 }
 
 SuperEditorAddEmptyParagraphTapHandler superEditorAddEmptyParagraphTapHandlerFactory(SuperEditorContext editContext) =>
-    SuperEditorAddEmptyParagraphTapHandler(editor: editContext.editor);
+    SuperEditorAddEmptyParagraphTapHandler(editContext: editContext);
 
 /// A [ContentTapDelegate] that adds an empty paragraph at the end of the document
 /// when the user taps below the last node in the document.
@@ -1745,19 +1745,25 @@ SuperEditorAddEmptyParagraphTapHandler superEditorAddEmptyParagraphTapHandlerFac
 /// Does nothing if the last node is a [TextNode].
 class SuperEditorAddEmptyParagraphTapHandler extends ContentTapDelegate {
   SuperEditorAddEmptyParagraphTapHandler({
-    required this.editor,
+    required this.editContext,
   });
 
-  final Editor editor;
+  final SuperEditorContext editContext;
 
   @override
   TapHandlingInstruction onTap(DocumentTapDetails details) {
-    if (!details.isGestureBelowEndOfDocument) {
+    final editor = editContext.editor;
+    final document = editContext.document;
+
+    final node = document.getNodeById(details.position.nodeId)!;
+    if (node is TextNode) {
       return TapHandlingInstruction.continueHandling;
     }
 
-    final node = editor.document.getNodeById(details.position.nodeId)!;
-    if (node is TextNode) {
+    if (!_isTapBelowLastNode(
+      nodeId: details.position.nodeId,
+      globalOffset: details.globalOffset,
+    )) {
       return TapHandlingInstruction.continueHandling;
     }
 
@@ -1786,5 +1792,20 @@ class SuperEditorAddEmptyParagraphTapHandler extends ContentTapDelegate {
     ]);
 
     return TapHandlingInstruction.halt;
+  }
+
+  bool _isTapBelowLastNode({
+    required String nodeId,
+    required Offset globalOffset,
+  }) {
+    final documentLayout = editContext.documentLayout;
+    final document = editContext.document;
+
+    final tappedComponent = documentLayout.getComponentByNodeId(nodeId)!;
+    final componentBox = tappedComponent.context.findRenderObject() as RenderBox;
+    final localPosition = componentBox.globalToLocal(globalOffset);
+    final nodeIndex = document.getNodeIndexById(nodeId);
+
+    return (nodeIndex == document.nodeCount - 1) && (localPosition.dy > componentBox.size.height);
   }
 }

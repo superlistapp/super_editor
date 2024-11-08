@@ -504,20 +504,10 @@ class _SuperReaderIosDocumentTouchInteractorState extends State<SuperReaderIosDo
     readerGesturesLog.fine(" - tapped document position: $docPosition");
 
     if (widget.contentTapHandler != null && docPosition != null) {
-      final tappedComponent = _docLayout.getComponentByNodeId(docPosition.nodeId)!;
-      final componentBox = tappedComponent.context.findRenderObject() as RenderBox;
-      final localPosition = componentBox.globalToLocal(details.globalPosition);
-      final nodeIndex = widget.document.getNodeIndexById(docPosition.nodeId);
-
-      final isAboveStartOfDocument = (nodeIndex == 0) && (localPosition.dy < 0);
-      final isBelowEndOfDocument =
-          (nodeIndex == widget.document.nodeCount - 1) && (localPosition.dy > componentBox.size.height);
-
       final result = widget.contentTapHandler!.onTap(
         DocumentTapDetails(
           position: docPosition,
-          isGestureAboveStartOfDocument: isAboveStartOfDocument,
-          isGestureBelowEndOfDocument: isBelowEndOfDocument,
+          globalOffset: details.globalPosition,
         ),
       );
       if (result == TapHandlingInstruction.halt) {
@@ -557,20 +547,10 @@ class _SuperReaderIosDocumentTouchInteractorState extends State<SuperReaderIosDo
     readerGesturesLog.fine(" - tapped document position: $docPosition");
 
     if (docPosition != null && widget.contentTapHandler != null) {
-      final tappedComponent = _docLayout.getComponentByNodeId(docPosition.nodeId)!;
-      final componentBox = tappedComponent.context.findRenderObject() as RenderBox;
-      final localPosition = componentBox.globalToLocal(details.globalPosition);
-      final nodeIndex = widget.document.getNodeIndexById(docPosition.nodeId);
-
-      final isAboveStartOfDocument = (nodeIndex == 0) && (localPosition.dy < 0);
-      final isBelowEndOfDocument =
-          (nodeIndex == widget.document.nodeCount - 1) && (localPosition.dy > componentBox.size.height);
-
       final result = widget.contentTapHandler!.onDoubleTap(
         DocumentTapDetails(
           position: docPosition,
-          isGestureAboveStartOfDocument: isAboveStartOfDocument,
-          isGestureBelowEndOfDocument: isBelowEndOfDocument,
+          globalOffset: details.globalPosition,
         ),
       );
       if (result == TapHandlingInstruction.halt) {
@@ -620,20 +600,10 @@ class _SuperReaderIosDocumentTouchInteractorState extends State<SuperReaderIosDo
     readerGesturesLog.fine(" - tapped document position: $docPosition");
 
     if (docPosition != null && widget.contentTapHandler != null) {
-      final tappedComponent = _docLayout.getComponentByNodeId(docPosition.nodeId)!;
-      final componentBox = tappedComponent.context.findRenderObject() as RenderBox;
-      final localPosition = componentBox.globalToLocal(details.globalPosition);
-      final nodeIndex = widget.document.getNodeIndexById(docPosition.nodeId);
-
-      final isAboveStartOfDocument = (nodeIndex == 0) && (localPosition.dy < 0);
-      final isBelowEndOfDocument =
-          (nodeIndex == widget.document.nodeCount - 1) && (localPosition.dy > componentBox.size.height);
-
       final result = widget.contentTapHandler!.onTripleTap(
         DocumentTapDetails(
           position: docPosition,
-          isGestureAboveStartOfDocument: isAboveStartOfDocument,
-          isGestureBelowEndOfDocument: isBelowEndOfDocument,
+          globalOffset: details.globalPosition,
         ),
       );
       if (result == TapHandlingInstruction.halt) {

@@ -12,15 +12,15 @@ abstract class ContentTapDelegate with ChangeNotifier {
     return null;
   }
 
-  TapHandlingInstruction onTap(DocumentTapDetails tapPosition) {
+  TapHandlingInstruction onTap(DocumentTapDetails details) {
     return TapHandlingInstruction.continueHandling;
   }
 
-  TapHandlingInstruction onDoubleTap(DocumentTapDetails tapPosition) {
+  TapHandlingInstruction onDoubleTap(DocumentTapDetails details) {
     return TapHandlingInstruction.continueHandling;
   }
 
-  TapHandlingInstruction onTripleTap(DocumentTapDetails tapPosition) {
+  TapHandlingInstruction onTripleTap(DocumentTapDetails details) {
     return TapHandlingInstruction.continueHandling;
   }
 }
@@ -29,8 +29,7 @@ abstract class ContentTapDelegate with ChangeNotifier {
 class DocumentTapDetails {
   DocumentTapDetails({
     required this.position,
-    required this.isGestureAboveStartOfDocument,
-    required this.isGestureBelowEndOfDocument,
+    required this.globalOffset,
   });
 
   /// The position in the document where the gesture occurred.
@@ -39,11 +38,7 @@ class DocumentTapDetails {
   /// holds the nearest position in the document.
   final DocumentPosition position;
 
-  /// Whether the gesture occurred above the first node in the document.
-  final bool isGestureAboveStartOfDocument;
-
-  /// Whether the gesture occurred below the last node in the document.
-  final bool isGestureBelowEndOfDocument;
+  final Offset globalOffset;
 }
 
 enum TapHandlingInstruction {
