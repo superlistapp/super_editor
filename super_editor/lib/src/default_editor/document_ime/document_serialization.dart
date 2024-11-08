@@ -1,5 +1,6 @@
 import 'dart:math';
 
+import 'package:collection/collection.dart';
 import 'package:flutter/services.dart';
 import 'package:super_editor/src/core/document.dart';
 import 'package:super_editor/src/core/document_selection.dart';
@@ -37,8 +38,8 @@ class DocumentImeSerializer {
   final Document _doc;
   DocumentSelection selection;
   DocumentRange? composingRegion;
-  final imeRangesToDocTextNodes = <TextRange, String>{};
-  final docTextNodesToImeRanges = <String, TextRange>{};
+  final imeRangesToDocTextNodes = <TextRange, _NodePath>{};
+  final docTextNodesToImeRanges = <_NodePath, TextRange>{};
   final selectedNodes = <DocumentNode>[];
   late String imeText;
   final PrependedCharacterPolicy _prependedCharacterPolicy;
@@ -46,6 +47,7 @@ class DocumentImeSerializer {
 
   void _serialize() {
     editorImeLog.fine("Creating an IME model from document, selection, and composing region");
+    print("Serializing document to send to the IME");
     final buffer = StringBuffer();
     int characterCount = 0;
 
@@ -65,6 +67,8 @@ class DocumentImeSerializer {
       _prependedPlaceholder = '';
     }
 
+    print("Selection: $selection");
+    print("");
     selectedNodes.clear();
     selectedNodes.addAll(_doc.getNodesInContentOrder(selection));
     for (int i = 0; i < selectedNodes.length; i += 1) {
@@ -78,14 +82,23 @@ class DocumentImeSerializer {
         characterCount += 1;
       }
 
-      final node = selectedNodes[i];
+      var node = selectedNodes[i];
+      final nodePath = _NodePath.forNode(node.id);
+      print("Serializing node for IME: $node");
+      if (node is CompositeDocumentNode) {
+        final serializedCharacterCount = _serializeCompositeNode(_NodePath.forNode(node.id), node, buffer);
+        characterCount += serializedCharacterCount;
+
+        continue;
+      }
+
       if (node is! TextNode) {
         buffer.write('~');
         characterCount += 1;
 
         final imeRange = TextRange(start: characterCount - 1, end: characterCount);
-        imeRangesToDocTextNodes[imeRange] = node.id;
-        docTextNodesToImeRanges[node.id] = imeRange;
+        imeRangesToDocTextNodes[imeRange] = nodePath;
+        docTextNodesToImeRanges[nodePath] = imeRange;
 
         continue;
       }
@@ -94,8 +107,8 @@ class DocumentImeSerializer {
       // so that we can easily convert between the two, when requested.
       final imeRange = TextRange(start: characterCount, end: characterCount + node.text.length);
       editorImeLog.finer("IME range $imeRange -> text node content '${node.text.text}'");
-      imeRangesToDocTextNodes[imeRange] = node.id;
-      docTextNodesToImeRanges[node.id] = imeRange;
+      imeRangesToDocTextNodes[imeRange] = nodePath;
+      docTextNodesToImeRanges[nodePath] = imeRange;
 
       // Concatenate this node's text with the previous nodes.
       buffer.write(node.text.text);
@@ -104,6 +117,49 @@ class DocumentImeSerializer {
 
     imeText = buffer.toString();
     editorImeLog.fine("IME serialization:\n'$imeText'");
+  }
+
+  int _serializeCompositeNode(_NodePath nodePath, CompositeDocumentNode node, StringBuffer buffer) {
+    int characterCount = 0;
+    for (final innerNode in node.nodes) {
+      final innerNodePath = nodePath.addSubPath(innerNode.id);
+      if (innerNode is CompositeDocumentNode) {
+        characterCount += _serializeCompositeNode(innerNodePath, innerNode, buffer);
+        continue;
+      }
+
+      characterCount += _serializeNonCompositeNode(innerNodePath, node, buffer, characterCount);
+
+      if (innerNode != node.nodes.last) {
+        buffer.write('\n');
+        characterCount += 1;
+      }
+    }
+
+    return characterCount;
+  }
+
+  int _serializeNonCompositeNode(_NodePath nodePath, DocumentNode node, StringBuffer buffer, int characterCount) {
+    if (node is! TextNode) {
+      buffer.write('~');
+
+      final imeRange = TextRange(start: characterCount - 1, end: characterCount);
+      imeRangesToDocTextNodes[imeRange] = nodePath;
+      docTextNodesToImeRanges[nodePath] = imeRange;
+
+      return 1;
+    }
+
+    // Cache mappings between the IME text range and the document position
+    // so that we can easily convert between the two, when requested.
+    final imeRange = TextRange(start: characterCount, end: characterCount + node.text.length);
+    editorImeLog.finer("IME range $imeRange -> text node content '${node.text.text}'");
+    imeRangesToDocTextNodes[imeRange] = nodePath;
+    docTextNodesToImeRanges[nodePath] = imeRange;
+
+    // Concatenate this node's text with the previous nodes.
+    buffer.write(node.text.text);
+    return node.text.length;
   }
 
   bool _shouldPrependPlaceholder() {
@@ -371,6 +427,14 @@ class DocumentImeSerializer {
       return TextPosition(offset: imeRange.start + (docPosition.nodePosition as TextNodePosition).offset);
     }
 
+    if (nodePosition is CompositeNodePosition) {
+      final innerDocumentPosition =
+          DocumentPosition(nodeId: nodePosition.childNodeId, nodePosition: nodePosition.childNodePosition);
+
+      // Recursive call to create the IME text position for the content within the composite node.
+      return _documentToImePosition(innerDocumentPosition);
+    }
+
     throw Exception("Super Editor doesn't know how to convert a $nodePosition into an IME-compatible selection");
   }
 
@@ -394,4 +458,52 @@ enum PrependedCharacterPolicy {
   automatic,
   include,
   exclude,
+}
+
+/// The path to a [DocumentNode] within a [Document].
+///
+/// In the average case, the [_NodePath] is effectively the same as a node's
+/// ID. However, some nodes are [CompositeDocumentNode]s, which have a hierarchy.
+/// For a composite node, the node path includes every node ID in the composite
+/// hierarchy.
+class _NodePath {
+  factory _NodePath.forDocumentPosition(DocumentPosition position) {
+    var nodePosition = position.nodePosition;
+    if (nodePosition is CompositeNodePosition) {
+      // This node position is a hierarchy of nodes. Encode all nodes
+      // along that path into the node path.
+      final nodeIds = [position.nodeId];
+
+      while (nodePosition is CompositeNodePosition) {
+        nodeIds.add(nodePosition.childNodeId);
+        nodePosition = nodePosition.childNodePosition;
+      }
+
+      return _NodePath(nodeIds);
+    }
+
+    // This position refers to a singular node. Build a node path that only
+    // contains this node's ID.
+    return _NodePath([position.nodeId]);
+  }
+
+  factory _NodePath.forNode(String nodeId) {
+    return _NodePath([nodeId]);
+  }
+
+  const _NodePath(this.nodeIds);
+
+  final List<String> nodeIds;
+
+  _NodePath addSubPath(String nodeId) => _NodePath([...nodeIds, nodeId]);
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is _NodePath &&
+          runtimeType == other.runtimeType &&
+          const DeepCollectionEquality().equals(nodeIds, other.nodeIds);
+
+  @override
+  int get hashCode => nodeIds.hashCode;
 }

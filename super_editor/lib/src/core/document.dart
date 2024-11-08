@@ -450,25 +450,31 @@ extension InspectNodeAffinity on DocumentNode {
 /// logical restriction on the depth of this hierarchy. However, the effect of a multi-level
 /// hierarchy depends on the document layout and components that are used within a
 /// given editor.
-class CompositeDocumentNode extends DocumentNode with ChangeNotifier, Iterable<DocumentNode> {
+class CompositeDocumentNode extends DocumentNode with ChangeNotifier {
   CompositeDocumentNode(this.id, this._nodes)
       : assert(_nodes.isNotEmpty, "CompositeDocumentNode's must contain at least 1 inner node.");
 
   @override
   final String id;
 
+  Iterable<DocumentNode> get nodes => List.from(_nodes);
   final List<DocumentNode> _nodes;
 
   int get nodeCount => _nodes.length;
 
   @override
-  Iterator<DocumentNode> get iterator => _nodes.iterator;
+  NodePosition get beginningPosition => CompositeNodePosition(
+        compositeNodeId: id,
+        childNodeId: _nodes.first.id,
+        childNodePosition: _nodes.first.beginningPosition,
+      );
 
   @override
-  NodePosition get beginningPosition => _nodes.first.beginningPosition;
-
-  @override
-  NodePosition get endPosition => _nodes.last.endPosition;
+  NodePosition get endPosition => CompositeNodePosition(
+        compositeNodeId: id,
+        childNodeId: _nodes.last.id,
+        childNodePosition: _nodes.last.endPosition,
+      );
 
   @override
   NodePosition selectUpstreamPosition(NodePosition position1, NodePosition position2) {
@@ -646,6 +652,9 @@ class CompositeDocumentNode extends DocumentNode with ChangeNotifier, Iterable<D
   DocumentNode copy() {
     return CompositeDocumentNode(id, List.from(_nodes));
   }
+
+  @override
+  String toString() => "[CompositeNode] - $_nodes";
 }
 
 /// A selection within a single [CompositeDocumentNode].
