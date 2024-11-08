@@ -738,8 +738,6 @@ class _KeyboardScaffoldSafeAreaState extends State<KeyboardScaffoldSafeArea>
       return;
     }
 
-    print("Changing safe area geometry - insets: ${geometry.bottomInsets}, padding: ${geometry.bottomPadding}");
-
     // Propagate this geometry to any ancestor keyboard safe areas.
     _ancestorSafeArea?.geometry = geometry;
 

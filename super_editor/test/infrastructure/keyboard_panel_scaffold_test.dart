@@ -478,12 +478,64 @@ void main() {
 
     group('safe area >', () {
       testWidgetsOnMobilePhone('makes room for keyboard panel', (tester) async {
-        // TODO:
+        final softwareKeyboardController = SoftwareKeyboardController();
+        final controller = KeyboardPanelController(softwareKeyboardController);
+
+        await _pumpTestApp(
+          tester,
+          controller: controller,
+          softwareKeyboardController: softwareKeyboardController,
+          simulatedKeyboardHeight: _expandedPhoneKeyboardHeight,
+        );
+
+        // Record the height of the content when no keyboard or panel is open.
+        final contentHeightWithNoKeyboard = tester.getSize(find.byKey(_chatPageKey)).height;
+
+        // Show a keyboard panel (not the keyboard).
+        controller.showKeyboardPanel();
+        await tester.pumpAndSettle();
+
+        // Record the height of the content now that a keyboard panel is open.
+        final contentHeightWithKeyboardPanelOpen = tester.getSize(find.byKey(_chatPageKey)).height;
+
+        // Ensure that the content is pushed up above the keyboard panel.
+        expect(contentHeightWithNoKeyboard - contentHeightWithKeyboardPanelOpen, _keyboardPanelHeight);
       });
 
-      // TODO: ensure that multiple safe areas don't add extra open space
+      testWidgetsOnMobilePhone('removes bottom insets when focus leaves editor', (tester) async {
+        final softwareKeyboardController = SoftwareKeyboardController();
+        final controller = KeyboardPanelController(softwareKeyboardController);
 
-      // TODO: ensure that when the keyboard is up, then a page is switched, the safe area goes down
+        await _pumpTestApp(
+          tester,
+          controller: controller,
+          softwareKeyboardController: softwareKeyboardController,
+          simulatedKeyboardHeight: _expandedPhoneKeyboardHeight,
+        );
+
+        // Record the height of the content when no keyboard or panel is open.
+        final contentHeightWithNoKeyboard = tester.getSize(find.byKey(_chatPageKey)).height;
+
+        // Show a keyboard panel (not the keyboard).
+        controller.showKeyboardPanel();
+        await tester.pumpAndSettle();
+
+        // Record the height of the content now that a keyboard panel is open.
+        final contentHeightWithKeyboardPanelOpen = tester.getSize(find.byKey(_chatPageKey)).height;
+
+        // Ensure that the content is pushed up above the keyboard panel.
+        expect(contentHeightWithNoKeyboard - contentHeightWithKeyboardPanelOpen, _keyboardPanelHeight);
+
+        // Switch to other tab.
+        await tester.tap(find.byKey(_accountTabKey));
+        await tester.pumpAndSettle();
+
+        // Ensure the chat page is gone.
+        expect(find.byKey(_chatPageKey), findsNothing);
+
+        // Ensure that the account tab's content is full height (isn't restricted by safe area).
+        expect(tester.getSize(find.byKey(_accountPageKey)).height, contentHeightWithNoKeyboard);
+      });
     });
   });
 }
@@ -515,52 +567,113 @@ Future<void> _pumpTestApp(
       )
       .withCustomWidgetTreeBuilder(
         (superEditor) => MaterialApp(
-          home: Scaffold(
-            resizeToAvoidBottomInset: false,
-            body: Stack(
-              children: [
-                // An area that simulates content that sits underneath
-                // a bottom mounted chat editor.
-                Positioned.fill(
-                  child: KeyboardScaffoldSafeArea(
-                    child: Container(
-                      color: Colors.blue,
+          home: DefaultTabController(
+            length: 2,
+            child: Scaffold(
+              appBar: AppBar(
+                bottom: const TabBar(
+                  tabs: [
+                    Tab(
+                      key: _chatTabKey,
+                      icon: Icon(Icons.chat),
                     ),
+                    Tab(
+                      key: _accountTabKey,
+                      icon: Icon(Icons.account_circle),
+                    ),
+                  ],
+                ),
+              ),
+              resizeToAvoidBottomInset: false,
+              body: KeyboardScaffoldSafeArea(
+                // ^ This safe area is needed to receive the bottom insets from the
+                //   bottom mounted editor, and then make it available to the subtree
+                //   with the content behind the chat.
+                //
+                //   Also, by including 2 of these safe areas in the same tree, we implicitly
+                //   verify that multiple safe areas in the same tree work together.
+                child: TabBarView(children: [
+                  // ^ We build a tab view so that we can test what happens when the editor
+                  //   has focus and a keyboard panel is up, and then the user navigates to
+                  //   another tab, which should remove the bottom safe area when it happens.
+                  _buildChatPage(
+                    keyboardPanelController,
+                    imeConnectionNotifier,
+                    superEditor,
                   ),
-                ),
-
-                // An area that simulates a bottom mounted chat editor.
-                Positioned(
-                  left: 0,
-                  right: 0,
-                  bottom: 0,
-                  height: 200,
-                  child: Builder(builder: (context) {
-                    return KeyboardPanelScaffold(
-                      controller: keyboardPanelController,
-                      isImeConnected: imeConnectionNotifier,
-                      contentBuilder: (context, isKeyboardPanelVisible) => superEditor,
-                      toolbarBuilder: (context, isKeyboardPanelVisible) => Container(
-                        key: _aboveKeyboardToolbarKey,
-                        height: 54,
-                        color: Colors.blue,
-                      ),
-                      keyboardPanelBuilder: (context) => const SizedBox.expand(
-                        child: ColoredBox(
-                          key: _keyboardPanelKey,
-                          color: Colors.red,
-                        ),
-                      ),
-                    );
-                  }),
-                ),
-              ],
+                  _buildAccountPage(),
+                ]),
+              ),
             ),
           ),
         ),
       )
       .pump();
 }
+
+Widget _buildChatPage(
+  KeyboardPanelController keyboardPanelController,
+  ValueNotifier<bool> imeConnectionNotifier,
+  Widget superEditor,
+) {
+  return Stack(
+    children: [
+      // An area that simulates content that sits underneath
+      // a bottom mounted chat editor.
+      Positioned.fill(
+        child: KeyboardScaffoldSafeArea(
+          child: Container(
+            key: _chatPageKey,
+            color: Colors.blue,
+          ),
+        ),
+      ),
+
+      // An area that simulates a bottom mounted chat editor.
+      Positioned(
+        left: 0,
+        right: 0,
+        bottom: 0,
+        height: 200,
+        child: Builder(builder: (context) {
+          return KeyboardPanelScaffold(
+            controller: keyboardPanelController,
+            isImeConnected: imeConnectionNotifier,
+            contentBuilder: (context, isKeyboardPanelVisible) => superEditor,
+            toolbarBuilder: (context, isKeyboardPanelVisible) => Container(
+              key: _aboveKeyboardToolbarKey,
+              height: 54,
+              color: Colors.blue,
+            ),
+            fallbackPanelHeight: _keyboardPanelHeight,
+            keyboardPanelBuilder: (context) => const SizedBox.expand(
+              child: ColoredBox(
+                key: _keyboardPanelKey,
+                color: Colors.red,
+              ),
+            ),
+          );
+        }),
+      ),
+    ],
+  );
+}
+
+Widget _buildAccountPage() {
+  return ColoredBox(
+    key: _accountPageKey,
+    color: Colors.grey.shade100,
+    child: const Center(
+      child: Icon(Icons.account_circle),
+    ),
+  );
+}
+
+const _chatTabKey = ValueKey("chat_tab_button");
+const _chatPageKey = ValueKey("chat_content");
+
+const _accountTabKey = ValueKey("account_tab_button");
+const _accountPageKey = ValueKey("account_content");
 
 void testWidgetsOnMobilePhone(
   String description,
@@ -639,7 +752,16 @@ void testWidgetsOnAndroidTablet(
   );
 }
 
+// Simulated height of a fully visible phone keyboard. We specify this because
+// there's no real window in a widget test, and therefore no real keyboard.
 const _expandedPhoneKeyboardHeight = 300.0;
+
+// Arbitrary height used to display keyboard panels in place of the keyboard. These
+// panels are controlled entirely by the KeyboardScaffold in the app, so the height can
+// be whatever is desired. Ideally, apps would make these the same height as the keyboard,
+// but we specify a value that's different from the simulated keyboard so that we can
+// verify heights without accidentally confusing the keyboard and panel heights.
+const _keyboardPanelHeight = 275.0;
 
 const _expandedIPadKeyboardHeight = 300.0;
 // iPad can show a "minimized" keyboard, which takes up a short area at
