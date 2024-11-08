@@ -1,6 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:super_editor/super_editor.dart';
 
+/// A UI with a chat message editor at the bottom, and a fake chat conversation
+/// behind it.
+///
+/// The following are some of the behaviors that should/need to exist in
+/// this demo:
+///
+///  * Chat message editor is mounted to bottom of screen and sits in front of
+///    chat content/messages.
+///  * When the user taps on the chat editor, it raises the keyboard, and shows
+///    a formatting toolbar above the keyboard.
+///  * The user can open/close panels that replace the keyboard.
+///  * While the keyboard/panel is up, the user can launch a modal, which closes
+///    the keyboard/panel, then upon return from the modal, the keyboard/panel re-opens.
+///  * The user can press a button on the toolbar to close the keyboard.
+///  * The user can tap on the chat conversation to close the keyboard.
+///  * While the keyboard/panel is up, the user can navigate to another tab, and the
+///    keyboard/panel automatically close, and the safe area goes away.
+///
 class MobileChatDemo extends StatefulWidget {
   const MobileChatDemo({super.key});
 
@@ -99,8 +117,9 @@ class _MobileChatDemoState extends State<MobileChatDemo> {
                 color: Colors.white,
                 child: KeyboardScaffoldSafeArea(
                   child: ListView.builder(
-                    // Add gap that's about as tall as the editor to push content above it.
-                    // padding: const EdgeInsets.only(bottom: 90),
+                    // TODO: we need a solution to ensure this chat list has bottom
+                    //       padding large enough to account for the (dynamic) height
+                    //       of the editor.
                     itemCount: 10,
                     itemBuilder: (context, index) {
                       return Container(
@@ -139,6 +158,7 @@ class _MobileChatDemoState extends State<MobileChatDemo> {
   Widget _buildCommentEditor() {
     return Opacity(
       opacity: 0.75,
+      // ^ opacity is for testing, so we can see the chat behind it.
       child: KeyboardPanelScaffold(
         controller: _keyboardPanelController,
         isImeConnected: _imeConnectionNotifier,
@@ -161,49 +181,52 @@ class _MobileChatDemoState extends State<MobileChatDemo> {
           }
         },
         contentBuilder: (context, isKeyboardVisible) {
-          return Container(
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.only(
-                topLeft: Radius.circular(24),
-                topRight: Radius.circular(24),
-              ),
-              border: Border(
-                top: BorderSide(width: 1, color: Colors.grey),
-                left: BorderSide(width: 1, color: Colors.grey),
-                right: BorderSide(width: 1, color: Colors.grey),
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.075),
-                  blurRadius: 8,
-                  spreadRadius: 4,
+          return ConstrainedBox(
+            constraints: BoxConstraints(maxHeight: 250),
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(24),
+                  topRight: Radius.circular(24),
                 ),
-              ],
-            ),
-            padding: const EdgeInsets.only(top: 16),
-            child: CustomScrollView(
-              shrinkWrap: true,
-              slivers: [
-                SliverPadding(
-                  padding: EdgeInsets.only(
-                    bottom: KeyboardScaffoldSafeArea.of(context).geometry.bottomPadding,
-                    // ^ Push the editor up above the OS bottom notch.
+                border: Border(
+                  top: BorderSide(width: 1, color: Colors.grey),
+                  left: BorderSide(width: 1, color: Colors.grey),
+                  right: BorderSide(width: 1, color: Colors.grey),
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.075),
+                    blurRadius: 8,
+                    spreadRadius: 4,
                   ),
-                  sliver: SuperEditor(
-                    editor: _editor,
-                    focusNode: _editorFocusNode,
-                    softwareKeyboardController: _softwareKeyboardController,
-                    shrinkWrap: true,
-                    stylesheet: _chatStylesheet,
-                    selectionPolicies: const SuperEditorSelectionPolicies(
-                      clearSelectionWhenEditorLosesFocus: true,
-                      clearSelectionWhenImeConnectionCloses: false,
+                ],
+              ),
+              padding: const EdgeInsets.only(top: 16),
+              child: CustomScrollView(
+                shrinkWrap: true,
+                slivers: [
+                  SliverPadding(
+                    padding: EdgeInsets.only(
+                      bottom: KeyboardScaffoldSafeArea.of(context).geometry.bottomPadding,
+                      // ^ Push the editor up above the OS bottom notch.
                     ),
-                    isImeConnected: _imeConnectionNotifier,
+                    sliver: SuperEditor(
+                      editor: _editor,
+                      focusNode: _editorFocusNode,
+                      softwareKeyboardController: _softwareKeyboardController,
+                      shrinkWrap: true,
+                      stylesheet: _chatStylesheet,
+                      selectionPolicies: const SuperEditorSelectionPolicies(
+                        clearSelectionWhenEditorLosesFocus: true,
+                        clearSelectionWhenImeConnectionCloses: false,
+                      ),
+                      isImeConnected: _imeConnectionNotifier,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           );
         },
@@ -219,41 +242,38 @@ class _MobileChatDemoState extends State<MobileChatDemo> {
     return Row(
       children: [
         Expanded(
-          child: Opacity(
-            opacity: 0.5,
-            child: Container(
-              width: double.infinity,
-              height: 54,
-              color: Colors.grey.shade100,
-              padding: const EdgeInsets.symmetric(vertical: 8),
-              child: Row(
-                children: [
-                  const SizedBox(width: 24),
-                  const Spacer(),
-                  _PanelButton(
-                    icon: Icons.text_fields,
-                    isActive: _visiblePanel == _Panel.panel1,
-                    onPressed: () => _togglePanel(_Panel.panel1),
-                  ),
-                  const SizedBox(width: 16),
-                  _PanelButton(
-                    icon: Icons.align_horizontal_left,
-                    isActive: _visiblePanel == _Panel.panel2,
-                    onPressed: () => _togglePanel(_Panel.panel2),
-                  ),
-                  const SizedBox(width: 16),
-                  _PanelButton(
-                    icon: Icons.account_circle,
-                    onPressed: () => _showBottomSheetWithOptions(context),
-                  ),
-                  const Spacer(),
-                  GestureDetector(
-                    onTap: _keyboardPanelController.closeKeyboardAndPanel,
-                    child: Icon(Icons.keyboard_hide),
-                  ),
-                  const SizedBox(width: 24),
-                ],
-              ),
+          child: Container(
+            width: double.infinity,
+            height: 54,
+            color: Colors.grey.shade100,
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            child: Row(
+              children: [
+                const SizedBox(width: 24),
+                const Spacer(),
+                _PanelButton(
+                  icon: Icons.text_fields,
+                  isActive: _visiblePanel == _Panel.panel1,
+                  onPressed: () => _togglePanel(_Panel.panel1),
+                ),
+                const SizedBox(width: 16),
+                _PanelButton(
+                  icon: Icons.align_horizontal_left,
+                  isActive: _visiblePanel == _Panel.panel2,
+                  onPressed: () => _togglePanel(_Panel.panel2),
+                ),
+                const SizedBox(width: 16),
+                _PanelButton(
+                  icon: Icons.account_circle,
+                  onPressed: () => _showBottomSheetWithOptions(context),
+                ),
+                const Spacer(),
+                GestureDetector(
+                  onTap: _keyboardPanelController.closeKeyboardAndPanel,
+                  child: Icon(Icons.keyboard_hide),
+                ),
+                const SizedBox(width: 24),
+              ],
             ),
           ),
         ),
