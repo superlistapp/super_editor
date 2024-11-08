@@ -365,7 +365,7 @@ void main() {
         expect(find.byKey(_keyboardPanelKey), findsOneWidget);
 
         final panelSize = tester.getSize(find.byKey(_keyboardPanelKey));
-        expect(panelSize.height, _keyboardPanelHeightForTabletWithMinimizedKeyboard);
+        expect(panelSize.height, _keyboardPanelHeight);
 
         expect(
           tester.getBottomLeft(find.byKey(_keyboardPanelKey)).dy,
@@ -375,7 +375,7 @@ void main() {
         // Ensure the toolbar is above the panel.
         expect(
           tester.getBottomLeft(find.byKey(_aboveKeyboardToolbarKey)).dy,
-          screenHeight - _keyboardPanelHeightForTabletWithMinimizedKeyboard,
+          screenHeight - _keyboardPanelHeight,
         );
 
         // Request to hide the keyboard panel.
@@ -448,7 +448,7 @@ void main() {
         expect(find.byKey(_keyboardPanelKey), findsOneWidget);
 
         final panelSize = tester.getSize(find.byKey(_keyboardPanelKey));
-        expect(panelSize.height, _keyboardPanelHeightForTabletWithMinimizedKeyboard);
+        expect(panelSize.height, _keyboardPanelHeight);
 
         expect(
           tester.getBottomLeft(find.byKey(_keyboardPanelKey)).dy,
@@ -458,7 +458,7 @@ void main() {
         // Ensure the toolbar is above the panel.
         expect(
           tester.getBottomLeft(find.byKey(_aboveKeyboardToolbarKey)).dy,
-          screenHeight - _keyboardPanelHeightForTabletWithMinimizedKeyboard,
+          screenHeight - _keyboardPanelHeight,
         );
 
         // Request to hide the keyboard panel.
@@ -776,8 +776,6 @@ const _expandedAndroidTabletKeyboardHeight = 300.0;
 // is a small toolbar that includes delete, emojis, audio recording, and
 // a button to open a menu.
 const _minimizedAndroidTabletKeyboardHeight = 62.0;
-
-const _keyboardPanelHeightForTabletWithMinimizedKeyboard = 250.0;
 
 const _aboveKeyboardToolbarKey = ValueKey('toolbar');
 const _keyboardPanelKey = ValueKey('keyboardPanel');
