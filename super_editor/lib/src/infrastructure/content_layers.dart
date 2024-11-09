@@ -345,7 +345,10 @@ class ContentLayersElement extends RenderObjectElement {
     assert(!debugChildrenHaveDuplicateKeys(widget, [newContent]));
 
     _content = updateChild(_content, newContent, _contentSlot);
-    // This is where the framework elements clean up the forgotten children.
+    // super.update() and updateChild() is where the framework reparents 
+    // forgotten children. Therefore, at this point, the framework is 
+    // done with the concept of forgotten children, so we clear our 
+    // local cache of them, too.
     _forgottenChildren.clear();
   }
 
