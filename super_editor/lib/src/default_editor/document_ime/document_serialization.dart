@@ -38,12 +38,33 @@ class DocumentImeSerializer {
   final Document _doc;
   DocumentSelection selection;
   DocumentRange? composingRegion;
-  final imeRangesToDocTextNodes = <TextRange, _NodePath>{};
-  final docTextNodesToImeRanges = <_NodePath, TextRange>{};
+  final imeRangesToDocTextNodes = <TextRange, NodePath>{};
+  final docTextNodesToImeRanges = <NodePath, TextRange>{};
   final selectedNodes = <DocumentNode>[];
   late String imeText;
   final PrependedCharacterPolicy _prependedCharacterPolicy;
   String _prependedPlaceholder = '';
+
+  // TextNode(1) - Hello world
+  // TextNode(2) - Paragraph 2
+  // ImageNode(3)
+  // TextNode(4) - YOLO
+  // CompositeNode(5)
+  //    TextNode(6) - Inner paragraph
+  //    ListItemNode(7) - Item 1
+  //    ListItemNode(8) - Item 2
+  //    ListItemNode(9) - Item 3
+  // TextNode(10) - Final paragraph
+
+  // CompositeNode(5)
+  //    TextNode(6) - Inner para|graph
+  //
+  // CompositeNodePosition
+  //  - node ID: "5"
+  //  - child node ID: "6"
+  //  - child node position: TextNodePosition(offset: 10)
+  //
+  // .Inner Paragraph
 
   void _serialize() {
     editorImeLog.fine("Creating an IME model from document, selection, and composing region");
@@ -83,10 +104,10 @@ class DocumentImeSerializer {
       }
 
       var node = selectedNodes[i];
-      final nodePath = _NodePath.forNode(node.id);
+      final nodePath = NodePath.forNode(node.id);
       print("Serializing node for IME: $node");
       if (node is CompositeDocumentNode) {
-        final serializedCharacterCount = _serializeCompositeNode(_NodePath.forNode(node.id), node, buffer);
+        final serializedCharacterCount = _serializeCompositeNode(NodePath.forNode(node.id), node, buffer);
         characterCount += serializedCharacterCount;
 
         continue;
@@ -119,7 +140,7 @@ class DocumentImeSerializer {
     editorImeLog.fine("IME serialization:\n'$imeText'");
   }
 
-  int _serializeCompositeNode(_NodePath nodePath, CompositeDocumentNode node, StringBuffer buffer) {
+  int _serializeCompositeNode(NodePath nodePath, CompositeDocumentNode node, StringBuffer buffer) {
     int characterCount = 0;
     for (final innerNode in node.nodes) {
       final innerNodePath = nodePath.addSubPath(innerNode.id);
@@ -139,7 +160,7 @@ class DocumentImeSerializer {
     return characterCount;
   }
 
-  int _serializeNonCompositeNode(_NodePath nodePath, DocumentNode node, StringBuffer buffer, int characterCount) {
+  int _serializeNonCompositeNode(NodePath nodePath, DocumentNode node, StringBuffer buffer, int characterCount) {
     if (node is! TextNode) {
       buffer.write('~');
 
@@ -321,28 +342,54 @@ class DocumentImeSerializer {
   DocumentPosition _imeToDocumentPosition(TextPosition imePosition, {required bool isUpstream}) {
     for (final range in imeRangesToDocTextNodes.keys) {
       if (range.start <= imePosition.offset && imePosition.offset <= range.end) {
-        final node = _doc.getNodeById(imeRangesToDocTextNodes[range]!)!;
+        final nodePath = imeRangesToDocTextNodes[range]!;
+        final node = _doc.getNodeById(nodePath.nodeIds.last)!;
 
+        late NodePosition contentNodePosition;
         if (node is TextNode) {
-          return DocumentPosition(
-            nodeId: imeRangesToDocTextNodes[range]!,
-            nodePosition: TextNodePosition(offset: imePosition.offset - range.start),
-          );
+          contentNodePosition = TextNodePosition(offset: imePosition.offset - range.start);
+          // return DocumentPosition(
+          //   nodeId: node.id,
+          //   nodePosition: TextNodePosition(offset: imePosition.offset - range.start),
+          // );
         } else {
           if (imePosition.offset <= range.start) {
             // Return a position at the start of the node.
-            return DocumentPosition(
-              nodeId: node.id,
-              nodePosition: node.beginningPosition,
-            );
+            contentNodePosition = node.beginningPosition;
+            // return DocumentPosition(
+            //   nodeId: node.id,
+            //   nodePosition: node.beginningPosition,
+            // );
           } else {
             // Return a position at the end of the node.
-            return DocumentPosition(
-              nodeId: node.id,
-              nodePosition: node.endPosition,
-            );
+            contentNodePosition = node.endPosition;
+            // return DocumentPosition(
+            //   nodeId: node.id,
+            //   nodePosition: node.endPosition,
+            // );
           }
         }
+
+        if (nodePath.nodeIds.length == 1) {
+          // This is a single node - not a composite node. Return it as-is.
+          return DocumentPosition(
+            nodeId: node.id,
+            nodePosition: contentNodePosition,
+          );
+        }
+
+        NodePosition compositeNodePosition = contentNodePosition;
+        for (int i = nodePath.nodeIds.length - 2; i >= 0; i -= 1) {
+          compositeNodePosition = CompositeNodePosition(
+            compositeNodeId: nodePath.nodeIds[i],
+            childNodeId: nodePath.nodeIds[i + 1],
+            childNodePosition: compositeNodePosition,
+          );
+        }
+        return DocumentPosition(
+          nodeId: nodePath.nodeIds.first,
+          nodePosition: compositeNodePosition,
+        );
       }
     }
 
@@ -359,11 +406,15 @@ class DocumentImeSerializer {
     editorImeLog.shout("IME Ranges to text nodes:");
     for (final entry in imeRangesToDocTextNodes.entries) {
       editorImeLog.shout(" - IME range: ${entry.key} -> Text node: ${entry.value}");
-      editorImeLog.shout("    ^ node content: '${(_doc.getNodeById(entry.value) as TextNode).text.text}'");
+      editorImeLog.shout("    ^ node content: '${_getTextNodeAtNodePath(entry.value).text.text}'");
     }
     editorImeLog.shout("-----------------------------------------------------------");
     throw Exception(
         "Couldn't map an IME position to a document position. \nTextEditingValue: '$imeText'\nIME position: $imePosition");
+  }
+
+  TextNode _getTextNodeAtNodePath(NodePath path) {
+    return _doc.getNodeById(path.nodeIds.last) as TextNode;
   }
 
   TextSelection documentToImeSelection(DocumentSelection docSelection) {
@@ -458,52 +509,4 @@ enum PrependedCharacterPolicy {
   automatic,
   include,
   exclude,
-}
-
-/// The path to a [DocumentNode] within a [Document].
-///
-/// In the average case, the [_NodePath] is effectively the same as a node's
-/// ID. However, some nodes are [CompositeDocumentNode]s, which have a hierarchy.
-/// For a composite node, the node path includes every node ID in the composite
-/// hierarchy.
-class _NodePath {
-  factory _NodePath.forDocumentPosition(DocumentPosition position) {
-    var nodePosition = position.nodePosition;
-    if (nodePosition is CompositeNodePosition) {
-      // This node position is a hierarchy of nodes. Encode all nodes
-      // along that path into the node path.
-      final nodeIds = [position.nodeId];
-
-      while (nodePosition is CompositeNodePosition) {
-        nodeIds.add(nodePosition.childNodeId);
-        nodePosition = nodePosition.childNodePosition;
-      }
-
-      return _NodePath(nodeIds);
-    }
-
-    // This position refers to a singular node. Build a node path that only
-    // contains this node's ID.
-    return _NodePath([position.nodeId]);
-  }
-
-  factory _NodePath.forNode(String nodeId) {
-    return _NodePath([nodeId]);
-  }
-
-  const _NodePath(this.nodeIds);
-
-  final List<String> nodeIds;
-
-  _NodePath addSubPath(String nodeId) => _NodePath([...nodeIds, nodeId]);
-
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is _NodePath &&
-          runtimeType == other.runtimeType &&
-          const DeepCollectionEquality().equals(nodeIds, other.nodeIds);
-
-  @override
-  int get hashCode => nodeIds.hashCode;
 }

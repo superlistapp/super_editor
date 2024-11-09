@@ -444,6 +444,54 @@ extension InspectNodeAffinity on DocumentNode {
   }
 }
 
+/// The path to a [DocumentNode] within a [Document].
+///
+/// In the average case, the [NodePath] is effectively the same as a node's
+/// ID. However, some nodes are [CompositeDocumentNode]s, which have a hierarchy.
+/// For a composite node, the node path includes every node ID in the composite
+/// hierarchy.
+class NodePath {
+  factory NodePath.forDocumentPosition(DocumentPosition position) {
+    var nodePosition = position.nodePosition;
+    if (nodePosition is CompositeNodePosition) {
+      // This node position is a hierarchy of nodes. Encode all nodes
+      // along that path into the node path.
+      final nodeIds = [position.nodeId];
+
+      while (nodePosition is CompositeNodePosition) {
+        nodeIds.add(nodePosition.childNodeId);
+        nodePosition = nodePosition.childNodePosition;
+      }
+
+      return NodePath(nodeIds);
+    }
+
+    // This position refers to a singular node. Build a node path that only
+    // contains this node's ID.
+    return NodePath([position.nodeId]);
+  }
+
+  factory NodePath.forNode(String nodeId) {
+    return NodePath([nodeId]);
+  }
+
+  const NodePath(this.nodeIds);
+
+  final List<String> nodeIds;
+
+  NodePath addSubPath(String nodeId) => NodePath([...nodeIds, nodeId]);
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is NodePath &&
+          runtimeType == other.runtimeType &&
+          const DeepCollectionEquality().equals(nodeIds, other.nodeIds);
+
+  @override
+  int get hashCode => nodeIds.hashCode;
+}
+
 /// A [DocumentNode] that contains other [DocumentNode]s in a hierarchy.
 ///
 /// [CompositeDocumentNode]s can contain more [CompositeDocumentNode]s. There's no
