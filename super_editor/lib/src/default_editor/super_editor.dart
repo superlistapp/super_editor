@@ -26,6 +26,7 @@ import 'package:super_editor/src/infrastructure/content_layers.dart';
 import 'package:super_editor/src/infrastructure/documents/document_scaffold.dart';
 import 'package:super_editor/src/infrastructure/documents/document_scroller.dart';
 import 'package:super_editor/src/infrastructure/documents/selection_leader_document_layer.dart';
+import 'package:super_editor/src/infrastructure/flutter/build_context.dart';
 import 'package:super_editor/src/infrastructure/links.dart';
 import 'package:super_editor/src/infrastructure/platforms/android/toolbar.dart';
 import 'package:super_editor/src/infrastructure/platforms/ios/toolbar.dart';
@@ -837,7 +838,10 @@ class SuperEditorState extends State<SuperEditor> {
     }
   }
 
-  Widget _buildGestureInteractor(BuildContext context) {
+  Widget _buildGestureInteractor(BuildContext context, {required Widget child}) {
+    // Ensure that gesture object fill entire viewport when not being
+    // in user specified scrollable.
+    final fillViewport = context.findAncestorScrollableWithVerticalScroll == null;
     switch (gestureMode) {
       case DocumentGestureMode.mouse:
         return DocumentMouseInteractor(
@@ -849,7 +853,9 @@ class SuperEditorState extends State<SuperEditor> {
           selectionNotifier: editContext.composer.selectionNotifier,
           contentTapHandler: _contentTapDelegate,
           autoScroller: _autoScrollController,
+          fillViewport: fillViewport,
           showDebugPaint: widget.debugPaint.gestures,
+          child: child,
         );
       case DocumentGestureMode.android:
         return AndroidDocumentTouchInteractor(
@@ -862,7 +868,9 @@ class SuperEditorState extends State<SuperEditor> {
           contentTapHandler: _contentTapDelegate,
           scrollController: _scrollController,
           dragHandleAutoScroller: _dragHandleAutoScroller,
+          fillViewport: fillViewport,
           showDebugPaint: widget.debugPaint.gestures,
+          child: child,
         );
       case DocumentGestureMode.iOS:
         return IosDocumentTouchInteractor(
@@ -875,7 +883,9 @@ class SuperEditorState extends State<SuperEditor> {
           contentTapHandler: _contentTapDelegate,
           scrollController: _scrollController,
           dragHandleAutoScroller: _dragHandleAutoScroller,
+          fillViewport: fillViewport,
           showDebugPaint: widget.debugPaint.gestures,
+          child: child,
         );
     }
   }
