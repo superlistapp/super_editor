@@ -402,7 +402,9 @@ ExecutionInstruction anyCharacterOrDestructiveKeyToDeleteSelection({
     return ExecutionInstruction.continueExecution;
   }
 
-  editContext.commonOps.deleteSelection();
+  editContext.commonOps.deleteSelection(
+    keyEvent.logicalKey == LogicalKeyboardKey.backspace ? TextAffinity.upstream : TextAffinity.downstream,
+  );
 
   if (isCharacterKey) {
     // We continue handler execution even though we deleted the selection.
@@ -671,6 +673,62 @@ ExecutionInstruction doNothingWithLeftRightArrowKeysAtMiddleOfTextOnWeb({
   return ExecutionInstruction.continueExecution;
 }
 
+ExecutionInstruction moveToStartOrEndOfLineWithArrowKeysOnWeb({
+  required SuperEditorContext editContext,
+  required KeyEvent keyEvent,
+}) {
+  if (!CurrentPlatform.isWeb) {
+    return ExecutionInstruction.continueExecution;
+  }
+
+  if (keyEvent is! KeyDownEvent && keyEvent is! KeyRepeatEvent) {
+    return ExecutionInstruction.continueExecution;
+  }
+
+  const arrowKeys = [
+    LogicalKeyboardKey.arrowLeft,
+    LogicalKeyboardKey.arrowRight,
+  ];
+  if (!arrowKeys.contains(keyEvent.logicalKey)) {
+    return ExecutionInstruction.continueExecution;
+  }
+
+  if ((CurrentPlatform.isApple && !HardwareKeyboard.instance.isMetaPressed) ||
+      (const [TargetPlatform.windows, TargetPlatform.linux].contains(defaultTargetPlatform) &&
+          !HardwareKeyboard.instance.isControlPressed)) {
+    // CMD or CTRL is not pressed.
+    return ExecutionInstruction.continueExecution;
+  }
+
+  // Pressing the arrow keys generates non-text deltas on web. However, when pressing CMD + RIGHT
+  // to move the selection to the end of the line, the selection change sometimes reports an offset which
+  // isn't at the end of the line. This seems to be an issue where our text layout is different
+  // from the browser's text layout. For example, the browser breaks the line at a different point
+  // than we do, so pressing CMD + RIGHT moves the selection to where the browser thinks the end of
+  // the line is.
+  //
+  // See https://github.com/superlistapp/super_editor/issues/2304 for more information.
+  //
+  // Move the selection mannually.
+
+  bool didMove;
+  if (keyEvent.logicalKey == LogicalKeyboardKey.arrowLeft) {
+    // Move the caret left/upstream.
+    didMove = editContext.commonOps.moveCaretUpstream(
+      expand: HardwareKeyboard.instance.isShiftPressed,
+      movementModifier: MovementModifier.line,
+    );
+  } else {
+    // Move the caret right/downstream.
+    didMove = editContext.commonOps.moveCaretDownstream(
+      expand: HardwareKeyboard.instance.isShiftPressed,
+      movementModifier: MovementModifier.line,
+    );
+  }
+
+  return didMove ? ExecutionInstruction.haltExecution : ExecutionInstruction.continueExecution;
+}
+
 ExecutionInstruction moveToLineStartOrEndWithCtrlAOrE({
   required SuperEditorContext editContext,
   required KeyEvent keyEvent,
@@ -777,7 +835,7 @@ ExecutionInstruction deleteToStartOfLineWithCmdBackspaceOnMac({
   );
 
   if (didMove) {
-    return editContext.commonOps.deleteSelection()
+    return editContext.commonOps.deleteSelection(TextAffinity.upstream)
         ? ExecutionInstruction.haltExecution
         : ExecutionInstruction.continueExecution;
   }
@@ -810,7 +868,7 @@ ExecutionInstruction deleteToEndOfLineWithCmdDeleteOnMac({
   );
 
   if (didMove) {
-    return editContext.commonOps.deleteSelection()
+    return editContext.commonOps.deleteSelection(TextAffinity.downstream)
         ? ExecutionInstruction.haltExecution
         : ExecutionInstruction.continueExecution;
   }
@@ -843,7 +901,7 @@ ExecutionInstruction deleteWordUpstreamWithAltBackspaceOnMac({
   );
 
   if (didMove) {
-    return editContext.commonOps.deleteSelection()
+    return editContext.commonOps.deleteSelection(TextAffinity.upstream)
         ? ExecutionInstruction.haltExecution
         : ExecutionInstruction.continueExecution;
   }
@@ -876,7 +934,7 @@ ExecutionInstruction deleteWordUpstreamWithControlBackspaceOnWindowsAndLinux({
   );
 
   if (didMove) {
-    return editContext.commonOps.deleteSelection()
+    return editContext.commonOps.deleteSelection(TextAffinity.upstream)
         ? ExecutionInstruction.haltExecution
         : ExecutionInstruction.continueExecution;
   }
@@ -909,7 +967,7 @@ ExecutionInstruction deleteWordDownstreamWithAltDeleteOnMac({
   );
 
   if (didMove) {
-    return editContext.commonOps.deleteSelection()
+    return editContext.commonOps.deleteSelection(TextAffinity.downstream)
         ? ExecutionInstruction.haltExecution
         : ExecutionInstruction.continueExecution;
   }
@@ -942,7 +1000,7 @@ ExecutionInstruction deleteWordDownstreamWithControlDeleteOnWindowsAndLinux({
   );
 
   if (didMove) {
-    return editContext.commonOps.deleteSelection()
+    return editContext.commonOps.deleteSelection(TextAffinity.downstream)
         ? ExecutionInstruction.haltExecution
         : ExecutionInstruction.continueExecution;
   }

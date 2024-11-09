@@ -26,6 +26,7 @@ import 'package:super_editor/src/infrastructure/content_layers.dart';
 import 'package:super_editor/src/infrastructure/documents/document_scaffold.dart';
 import 'package:super_editor/src/infrastructure/documents/document_scroller.dart';
 import 'package:super_editor/src/infrastructure/documents/selection_leader_document_layer.dart';
+import 'package:super_editor/src/infrastructure/flutter/build_context.dart';
 import 'package:super_editor/src/infrastructure/links.dart';
 import 'package:super_editor/src/infrastructure/platforms/android/toolbar.dart';
 import 'package:super_editor/src/infrastructure/platforms/ios/toolbar.dart';
@@ -38,6 +39,7 @@ import 'package:super_editor/src/infrastructure/render_sliver_ext.dart';
 import 'package:super_text_layout/super_text_layout.dart';
 
 import '../infrastructure/document_gestures_interaction_overrides.dart';
+import '../infrastructure/platforms/ios/ios_system_context_menu.dart';
 import '../infrastructure/platforms/mobile_documents.dart';
 import 'attributions.dart';
 import 'blockquote.dart';
@@ -141,9 +143,13 @@ class SuperEditor extends StatefulWidget {
     this.shrinkWrap = false,
   })  : stylesheet = stylesheet ?? defaultStylesheet,
         selectionStyles = selectionStyle ?? defaultSelectionStyle,
-        componentBuilders = componentBuilders != null
-            ? [...componentBuilders, const UnknownComponentBuilder()]
-            : [...defaultComponentBuilders, TaskComponentBuilder(editor), const UnknownComponentBuilder()],
+        componentBuilders = [
+          for (final plugin in plugins) ...plugin.componentBuilders,
+          if (componentBuilders != null)
+            ...componentBuilders
+          else ...[...defaultComponentBuilders, TaskComponentBuilder(editor)],
+          const UnknownComponentBuilder(),
+        ],
         super(key: key);
 
   /// [FocusNode] for the entire `SuperEditor`.
@@ -533,6 +539,7 @@ class SuperEditorState extends State<SuperEditor> {
     _scroller = DocumentScroller()..addScrollChangeListener(_scrollChangeSignal.notifyListeners);
 
     editContext = SuperEditorContext(
+      editorFocusNode: _focusNode,
       editor: widget.editor,
       document: widget.editor.document,
       composer: _composer,
@@ -677,6 +684,10 @@ class SuperEditorState extends State<SuperEditor> {
               componentBuilders: widget.componentBuilders,
               shrinkWrap: widget.shrinkWrap,
               underlays: [
+                // Add all underlays from plugins.
+                for (final plugin in widget.plugins) //
+                  for (final underlayBuilder in plugin.documentUnderlayBuilders) //
+                    (context) => underlayBuilder.build(context, editContext),
                 // Add all underlays that the app wants.
                 for (final underlayBuilder in widget.documentUnderlayBuilders) //
                   (context) => underlayBuilder.build(context, editContext),
@@ -691,6 +702,10 @@ class SuperEditorState extends State<SuperEditor> {
                     showDebugLeaderBounds: false,
                   ).build(context, editContext);
                 },
+                // Add all overlays from plugins.
+                for (final plugin in widget.plugins) //
+                  for (final overlayBuilder in plugin.documentOverlayBuilders) //
+                    (context) => overlayBuilder.build(context, editContext),
                 // Add all overlays that the app wants.
                 for (final overlayBuilder in widget.documentOverlayBuilders) //
                   (context) => overlayBuilder.build(context, editContext),
@@ -831,7 +846,10 @@ class SuperEditorState extends State<SuperEditor> {
     }
   }
 
-  Widget _buildGestureInteractor(BuildContext context) {
+  Widget _buildGestureInteractor(BuildContext context, {required Widget child}) {
+    // Ensure that gesture object fill entire viewport when not being
+    // in user specified scrollable.
+    final fillViewport = context.findAncestorScrollableWithVerticalScroll == null;
     switch (gestureMode) {
       case DocumentGestureMode.mouse:
         return DocumentMouseInteractor(
@@ -843,7 +861,9 @@ class SuperEditorState extends State<SuperEditor> {
           selectionNotifier: editContext.composer.selectionNotifier,
           contentTapHandler: _contentTapDelegate,
           autoScroller: _autoScrollController,
+          fillViewport: fillViewport,
           showDebugPaint: widget.debugPaint.gestures,
+          child: child,
         );
       case DocumentGestureMode.android:
         return AndroidDocumentTouchInteractor(
@@ -856,7 +876,9 @@ class SuperEditorState extends State<SuperEditor> {
           contentTapHandler: _contentTapDelegate,
           scrollController: _scrollController,
           dragHandleAutoScroller: _dragHandleAutoScroller,
+          fillViewport: fillViewport,
           showDebugPaint: widget.debugPaint.gestures,
+          child: child,
         );
       case DocumentGestureMode.iOS:
         return IosDocumentTouchInteractor(
@@ -869,10 +891,48 @@ class SuperEditorState extends State<SuperEditor> {
           contentTapHandler: _contentTapDelegate,
           scrollController: _scrollController,
           dragHandleAutoScroller: _dragHandleAutoScroller,
+          fillViewport: fillViewport,
           showDebugPaint: widget.debugPaint.gestures,
+          child: child,
         );
     }
   }
+}
+
+/// A [DocumentFloatingToolbarBuilder] that displays the iOS system popover toolbar, if the version of
+/// iOS is recent enough, otherwise builds [defaultIosEditorToolbarBuilder].
+Widget iOSSystemPopoverEditorToolbarWithFallbackBuilder(
+  BuildContext context,
+  Key floatingToolbarKey,
+  LeaderLink focalPoint,
+  CommonEditorOperations editorOps,
+  SuperEditorIosControlsController editorControlsController,
+) {
+  if (CurrentPlatform.isWeb) {
+    // On web, we defer to the browser's internal overlay controls for mobile.
+    return const SizedBox();
+  }
+
+  if (focalPoint.offset == null || focalPoint.leaderSize == null) {
+    // It's unclear when/why this might happen. But there seem to be some
+    // cases, such as placing a caret in an empty document and tapping again
+    // to show the toolbar.
+    return const SizedBox();
+  }
+
+  if (IOSSystemContextMenu.isSupported(context)) {
+    return IOSSystemContextMenu(
+      anchor: focalPoint.offset! & focalPoint.leaderSize!,
+    );
+  }
+
+  return defaultIosEditorToolbarBuilder(
+    context,
+    floatingToolbarKey,
+    focalPoint,
+    editorOps,
+    editorControlsController,
+  );
 }
 
 /// Builds a standard editor-style iOS floating toolbar.
@@ -1053,10 +1113,12 @@ class _SelectionLeadersDocumentLayerBuilder implements SuperEditorLayerBuilder {
 /// [componentBuilders].
 ///
 /// An [Editor] is a logical pipeline of requests, commands, and reactions. It has no direct
-/// connection to a user interface. A [SuperEditor] widget is a complete editor user interface.
-/// When a plugin is given to a [SuperEditor] widget, the [SuperEditor] widget [attach]s the
-/// plugin to its [Editor], and then the [SuperEditor] widget pulls out UI related behaviors
-/// from the plugin for things like keyboard handlers and component builders.
+/// connection to a user interface.
+///
+/// A [SuperEditor] widget is a complete editor user interface. When a plugin is given to a
+/// [SuperEditor] widget, the [SuperEditor] widget [attach]s the plugin to its [Editor], and
+/// then the [SuperEditor] widget pulls out UI related behaviors from the plugin for things
+/// like keyboard handlers and component builders.
 ///
 /// [Editor] extensions are applied differently than the [SuperEditor] UI extensions, because
 /// an [Editor] is mutable, meaning it can be altered. But a [SuperEditor] widget, like all other
@@ -1078,6 +1140,12 @@ abstract class SuperEditorPlugin {
 
   /// Additional [ComponentBuilder]s that will be added to a given [SuperEditor] widget.
   List<ComponentBuilder> get componentBuilders => [];
+
+  /// Additional underlay [SuperEditorLayerBuilder]s that will be added to a given [SuperEditor].
+  List<SuperEditorLayerBuilder> get documentUnderlayBuilders => [];
+
+  /// Additional overlay [SuperEditorLayerBuilder]s that will be added to a given [SuperEditor].
+  List<SuperEditorLayerBuilder> get documentOverlayBuilders => [];
 }
 
 /// A collection of policies that dictate how a [SuperEditor]'s selection will change
@@ -1330,6 +1398,7 @@ final defaultImeKeyboardActions = <DocumentKeyboardAction>[
   scrollOnPageUpKeyPress,
   scrollOnPageDownKeyPress,
   moveUpAndDownWithArrowKeys,
+  moveToStartOrEndOfLineWithArrowKeysOnWeb,
   doNothingWithLeftRightArrowKeysAtMiddleOfTextOnWeb,
   moveLeftAndRightWithArrowKeys,
   moveToLineStartWithHome,

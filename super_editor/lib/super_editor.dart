@@ -51,6 +51,7 @@ export 'src/default_editor/text_tokenizing/action_tags.dart';
 export 'src/default_editor/text_tokenizing/pattern_tags.dart';
 export 'src/default_editor/text_tokenizing/tags.dart';
 export 'src/default_editor/text_tokenizing/stable_tags.dart';
+export 'src/default_editor/spelling_and_grammar/spelling_and_grammar_styler.dart';
 export 'src/default_editor/unknown_component.dart';
 
 // Document operations used by SuperEditor and/or SuperReader,
@@ -75,6 +76,7 @@ export 'src/infrastructure/flutter/text_selection.dart';
 export 'src/infrastructure/platforms/android/android_document_controls.dart';
 export 'src/infrastructure/platforms/android/toolbar.dart';
 export 'src/infrastructure/platforms/ios/ios_document_controls.dart';
+export 'src/infrastructure/platforms/ios/ios_system_context_menu.dart';
 export 'src/infrastructure/platforms/ios/floating_cursor.dart';
 export 'src/infrastructure/platforms/ios/toolbar.dart';
 export 'src/infrastructure/platforms/ios/magnifier.dart';

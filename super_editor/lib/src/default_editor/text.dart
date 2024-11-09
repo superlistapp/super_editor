@@ -71,6 +71,19 @@ class TextNode extends DocumentNode with ChangeNotifier {
   TextNodePosition get endPosition => TextNodePosition(offset: text.length);
 
   @override
+  bool containsPosition(Object position) {
+    if (position is! TextNodePosition) {
+      return false;
+    }
+
+    if (position.offset < 0 || position.offset > text.length) {
+      return false;
+    }
+
+    return true;
+  }
+
+  @override
   NodePosition selectUpstreamPosition(NodePosition position1, NodePosition position2) {
     if (position1 is! TextNodePosition) {
       throw Exception('Expected a TextNodePosition for position1 but received a ${position1.runtimeType}');
@@ -513,6 +526,9 @@ mixin TextComponentViewModel on SingleColumnLayoutComponentViewModel {
   List<TextRange> spellingErrors = [];
   UnderlineStyle spellingErrorUnderlineStyle = const SquiggleUnderlineStyle();
 
+  List<TextRange> grammarErrors = [];
+  UnderlineStyle grammarErrorUnderlineStyle = const SquiggleUnderlineStyle(color: Colors.blue);
+
   List<Underlines> createUnderlines() {
     return [
       if (composingRegion != null && showComposingRegionUnderline)
@@ -524,6 +540,11 @@ mixin TextComponentViewModel on SingleColumnLayoutComponentViewModel {
         Underlines(
           style: spellingErrorUnderlineStyle,
           underlines: spellingErrors,
+        ),
+      if (grammarErrors.isNotEmpty) //
+        Underlines(
+          style: grammarErrorUnderlineStyle,
+          underlines: grammarErrors,
         ),
     ];
   }
@@ -545,6 +566,7 @@ mixin TextComponentViewModel on SingleColumnLayoutComponentViewModel {
     showComposingRegionUnderline = styles[Styles.showComposingRegionUnderline] ?? showComposingRegionUnderline;
 
     spellingErrorUnderlineStyle = styles[Styles.spellingErrorUnderlineStyle] ?? spellingErrorUnderlineStyle;
+    grammarErrorUnderlineStyle = styles[Styles.grammarErrorUnderlineStyle] ?? grammarErrorUnderlineStyle;
   }
 }
 

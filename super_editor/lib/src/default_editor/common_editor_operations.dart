@@ -10,6 +10,7 @@ import 'package:super_editor/src/core/document_composer.dart';
 import 'package:super_editor/src/core/document_layout.dart';
 import 'package:super_editor/src/core/document_selection.dart';
 import 'package:super_editor/src/core/editor.dart';
+import 'package:super_editor/src/default_editor/box_component.dart';
 import 'package:super_editor/src/default_editor/default_document_editor_reactions.dart';
 import 'package:super_editor/src/default_editor/list_items.dart';
 import 'package:super_editor/src/default_editor/paragraph.dart';
@@ -310,6 +311,12 @@ class CommonEditorOperations {
         extentComponent.movePositionLeft(currentExtent.nodePosition, movementModifier);
 
     if (newExtentNodePosition == null) {
+      if (movementModifier == MovementModifier.line) {
+        // The user is trying to move to the beginning of the current line,
+        // and we're already there. Do nothing.
+        return false;
+      }
+
       // Move to next node
       final nextNode = _getUpstreamSelectableNodeBefore(node);
 
@@ -410,6 +417,12 @@ class CommonEditorOperations {
         extentComponent.movePositionRight(currentExtent.nodePosition, movementModifier);
 
     if (newExtentNodePosition == null) {
+      if (movementModifier == MovementModifier.line) {
+        // The user is trying to move to the end of the current line,
+        // and we're already there. Do nothing.
+        return false;
+      }
+
       // Move to next node
       final nextNode = _getDownstreamSelectableNodeAfter(node);
 
@@ -864,16 +877,22 @@ class CommonEditorOperations {
 
     if (!composer.selection!.isCollapsed) {
       // A span of content is selected. Delete the selection.
-      _deleteExpandedSelection();
+      _deleteExpandedSelection(TextAffinity.downstream);
       return true;
     }
 
     if (composer.selection!.extent.nodePosition is UpstreamDownstreamNodePosition) {
       final nodePosition = composer.selection!.extent.nodePosition as UpstreamDownstreamNodePosition;
       if (nodePosition.affinity == TextAffinity.upstream) {
-        // The caret is sitting on the upstream edge of block-level content. Delete the
-        // whole block by replacing it with an empty paragraph.
+        // The caret is sitting on the upstream edge of block-level content.
         final nodeId = composer.selection!.extent.nodeId;
+
+        if (!document.getNodeById(nodeId)!.isDeletable) {
+          // The node is not deletable. Fizzle.
+          return false;
+        }
+
+        //Delete the whole block by replacing it with an empty paragraph.
         replaceBlockNodeWithEmptyParagraphAndCollapsedSelection(nodeId);
 
         return true;
@@ -900,7 +919,12 @@ class CommonEditorOperations {
         } else if (nodeAfter != null) {
           final componentAfter = documentLayoutResolver().getComponentByNodeId(nodeAfter.id)!;
 
-          if (componentAfter.isVisualSelectionSupported()) {
+          if (nodeAfter is BlockNode && !nodeAfter.isDeletable) {
+            // The user is trying to delete at the end of a node, and the downstream node
+            // is not deletable. Skip the non-deletable node and try to merge the selected
+            // node with the next non-deletable node.
+            return _mergeTextNodeWithDownstreamTextNode();
+          } else if (componentAfter.isVisualSelectionSupported()) {
             // The caret is at the end of a TextNode, but the next node
             // is not a TextNode. Move the document selection to the
             // next node.
@@ -959,7 +983,11 @@ class CommonEditorOperations {
       return false;
     }
 
-    final nodeAfter = document.getNodeAfter(node);
+    DocumentNode? nodeAfter = document.getNodeAfter(node);
+    while (nodeAfter is BlockNode && !nodeAfter.isDeletable) {
+      nodeAfter = document.getNodeAfter(nodeAfter);
+    }
+
     if (nodeAfter == null) {
       return false;
     }
@@ -1043,7 +1071,7 @@ class CommonEditorOperations {
 
     if (!composer.selection!.isCollapsed) {
       // A span of content is selected. Delete the selection.
-      _deleteExpandedSelection();
+      _deleteExpandedSelection(TextAffinity.upstream);
       return true;
     }
 
@@ -1057,9 +1085,15 @@ class CommonEditorOperations {
     if (composer.selection!.extent.nodePosition is UpstreamDownstreamNodePosition) {
       final nodePosition = composer.selection!.extent.nodePosition as UpstreamDownstreamNodePosition;
       if (nodePosition.affinity == TextAffinity.downstream) {
-        // The caret is sitting on the downstream edge of block-level content. Delete the
-        // whole block by replacing it with an empty paragraph.
+        // The caret is sitting on the downstream edge of block-level content.
         final nodeId = composer.selection!.extent.nodeId;
+
+        if (!document.getNodeById(nodeId)!.isDeletable) {
+          // The node is not deletable. Fizzle.
+          return false;
+        }
+
+        // Delete the whole block by replacing it with an empty paragraph.
         replaceBlockNodeWithEmptyParagraphAndCollapsedSelection(nodeId);
 
         return true;
@@ -1083,13 +1117,13 @@ class CommonEditorOperations {
           return true;
         }
 
-        if (!componentBefore.isVisualSelectionSupported()) {
+        if (!componentBefore.isVisualSelectionSupported() && nodeBefore.isDeletable) {
           // The node/component above is not selectable. Delete it.
           deleteNonSelectedNode(nodeBefore);
           return true;
         }
 
-        return moveSelectionToEndOfPrecedingNode();
+        return _moveSelectionToEndOfFirstSelectableUpstreamNode();
       }
     }
 
@@ -1106,6 +1140,8 @@ class CommonEditorOperations {
         if (nodeBefore is TextNode) {
           // The caret is at the beginning of one TextNode and is preceded by
           // another TextNode. Merge the two TextNodes.
+          return mergeTextNodeWithUpstreamTextNode();
+        } else if (nodeBefore is BlockNode && !nodeBefore.isDeletable) {
           return mergeTextNodeWithUpstreamTextNode();
         } else if (!componentBefore.isVisualSelectionSupported()) {
           // The node/component above is not selectable. Delete it.
@@ -1167,13 +1203,67 @@ class CommonEditorOperations {
     return true;
   }
 
+  /// Finds the first visually selectable node above the selection extent
+  /// and changes the selection to its end.
+  ///
+  /// Does nothing if no selectable node is found.
+  bool _moveSelectionToEndOfFirstSelectableUpstreamNode() {
+    if (composer.selection == null) {
+      return false;
+    }
+
+    final node = document.getNodeById(composer.selection!.extent.nodeId);
+    if (node == null) {
+      return false;
+    }
+
+    DocumentNode? nodeBefore = document.getNodeBefore(node);
+    while (nodeBefore != null) {
+      final component = documentLayoutResolver().getComponentByNodeId(nodeBefore.id);
+      if (component == null) {
+        // Assume we are in a transitive state where the node was created, but
+        // the component is not yet available.
+        return false;
+      }
+      if (component.isVisualSelectionSupported()) {
+        editor.execute([
+          ChangeSelectionRequest(
+            DocumentSelection.collapsed(
+              position: DocumentPosition(
+                nodeId: nodeBefore.id,
+                nodePosition: nodeBefore.endPosition,
+              ),
+            ),
+            SelectionChangeType.collapseSelection,
+            SelectionReason.userInteraction,
+          ),
+        ]);
+
+        return true;
+      }
+
+      nodeBefore = document.getNodeBefore(nodeBefore);
+    }
+
+    // We didn't find any selectable nodes before the current node.
+    return false;
+  }
+
+  /// Merges the selected [TextNode] with the upstream [TextNode].
+  ///
+  /// If there are non-deletable [BlockNode]s between the two [TextNode]s,
+  /// the [BlockNode]s are ignored.
   bool mergeTextNodeWithUpstreamTextNode() {
     final node = document.getNodeById(composer.selection!.extent.nodeId);
     if (node == null) {
       return false;
     }
 
-    final nodeAbove = document.getNodeBefore(node);
+    DocumentNode? nodeAbove = document.getNodeBefore(node);
+    while (nodeAbove != null && nodeAbove is BlockNode && !nodeAbove.isDeletable) {
+      nodeAbove = document.getNodeBefore(nodeAbove);
+    }
+
     if (nodeAbove == null) {
       return false;
     }
@@ -1201,7 +1291,7 @@ class CommonEditorOperations {
       ),
       // Since two paragraphs were combined, the composing region might point
       // to a deleted paragraph. Clear it.
-      ClearComposingRegionRequest(),
+      const ClearComposingRegionRequest(),
     ]);
 
     return true;
@@ -1259,9 +1349,14 @@ class CommonEditorOperations {
 
   /// Deletes all selected content.
   ///
+  /// The [affinity] defines the direction to where the user is trying to
+  /// delete. For example, if the users presses the backspace key, the
+  /// [affinity] should be [TextAffinity.upstream]. If the user presses the
+  /// delete key, the [affinity] should be [TextAffinity.downstream].
+  ///
   /// Returns [true] if content was deleted, or [false] if no content was
   /// selected.
-  bool deleteSelection() {
+  bool deleteSelection(TextAffinity affinity) {
     if (composer.selection == null) {
       return false;
     }
@@ -1272,24 +1367,14 @@ class CommonEditorOperations {
 
     // The document selection includes a span of content. It may or may not
     // cross nodes. Either way, delete the selected content.
-    _deleteExpandedSelection();
+    _deleteExpandedSelection(affinity);
     return true;
   }
 
-  void _deleteExpandedSelection() {
-    final newSelectionPosition = getDocumentPositionAfterExpandedDeletion(
-      document: document,
-      selection: composer.selection!,
-    );
-
+  void _deleteExpandedSelection(TextAffinity affinity) {
     // Delete the selected content.
     editor.execute([
-      DeleteContentRequest(documentRange: composer.selection!),
-      ChangeSelectionRequest(
-        DocumentSelection.collapsed(position: newSelectionPosition),
-        SelectionChangeType.deleteContent,
-        SelectionReason.userInteraction,
-      ),
+      DeleteSelectionRequest(affinity),
     ]);
   }
 
@@ -1541,7 +1626,7 @@ class CommonEditorOperations {
       // Without this, the new text doesn't preserve the attributions of the replaced text.
       final composerAttributions = {...composer.preferences.currentAttributions};
 
-      _deleteExpandedSelection();
+      _deleteExpandedSelection(TextAffinity.downstream);
 
       // Restore the previous attributions.
       composer.preferences
@@ -1598,7 +1683,7 @@ class CommonEditorOperations {
     }
 
     if (!composer.selection!.isCollapsed) {
-      _deleteExpandedSelection();
+      _deleteExpandedSelection(TextAffinity.downstream);
     }
 
     final extentNodePosition = composer.selection!.extent.nodePosition;
@@ -1684,7 +1769,7 @@ class CommonEditorOperations {
       // The selection is not collapsed. Delete the selected content first,
       // then continue the process.
       editorOpsLog.finer("Deleting selection before inserting block-level newline");
-      _deleteExpandedSelection();
+      _deleteExpandedSelection(TextAffinity.downstream);
     }
 
     final newNodeId = Editor.createNodeId();
@@ -2122,7 +2207,7 @@ class CommonEditorOperations {
     //       need to be carried out in response to user input.
     _saveToClipboard(textToCut);
 
-    deleteSelection();
+    deleteSelection(TextAffinity.downstream);
   }
 
   Future<void> _saveToClipboard(String text) {

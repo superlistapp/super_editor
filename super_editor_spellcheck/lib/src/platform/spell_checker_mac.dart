@@ -1,6 +1,6 @@
 import 'dart:ui';
 
-import 'package:super_editor_spellcheck/src/messages.g.dart';
+import 'package:super_editor_spellcheck/src/platform/messages.g.dart';
 
 /// Plugin to check spelling errors in text using the native macOS spell checker.
 class SuperEditorSpellCheckerMacPlugin {

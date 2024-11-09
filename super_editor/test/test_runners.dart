@@ -57,6 +57,17 @@ void testWidgetsOnWebMobile(
 }
 
 @isTestGroup
+void testWidgetsOnMacDesktopAndWeb(
+  String description,
+  WidgetTesterCallback test, {
+  bool skip = false,
+  TestVariant<Object?> variant = const DefaultTestVariant(),
+}) {
+  testWidgetsOnMac("$description (on MAC)", test, skip: skip, variant: variant);
+  testWidgetsOnMacWeb("$description (on MAC Web)", test, skip: skip, variant: variant);
+}
+
+@isTestGroup
 void testWidgetsOnMacWeb(
   String description,
   WidgetTesterCallback test, {

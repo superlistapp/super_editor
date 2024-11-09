@@ -681,7 +681,7 @@ void deleteWordBackward(SuperEditorContext context) {
   );
 
   if (didMove) {
-    context.commonOps.deleteSelection();
+    context.commonOps.deleteSelection(TextAffinity.upstream);
   }
 }
 
@@ -694,7 +694,7 @@ void deleteWordForward(SuperEditorContext context) {
   );
 
   if (didMove) {
-    context.commonOps.deleteSelection();
+    context.commonOps.deleteSelection(TextAffinity.downstream);
   }
 }
 
@@ -707,7 +707,7 @@ void deleteToBeginningOfLine(SuperEditorContext context) {
   );
 
   if (didMove) {
-    context.commonOps.deleteSelection();
+    context.commonOps.deleteSelection(TextAffinity.upstream);
   }
 }
 
@@ -720,7 +720,7 @@ void deleteToEndOfLine(SuperEditorContext context) {
   );
 
   if (didMove) {
-    context.commonOps.deleteSelection();
+    context.commonOps.deleteSelection(TextAffinity.downstream);
   }
 }
 
