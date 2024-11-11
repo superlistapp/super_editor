@@ -315,6 +315,52 @@ class SuperEditorInspector {
     return textLayout.getPositionAtEndOfLine(const TextPosition(offset: 0)).offset;
   }
 
+  /// Finds all [DocumentNode]s that are inside a group where the root is the
+  /// node with the given [rootNodeId].
+  ///
+  /// All nodes, including the root, the child nodes and nodes inside child groups, are included.
+  ///
+  /// Returns an empty list if the root node does not start a group.
+  ///
+  /// {@macro supereditor_finder}
+  static List<String> findAllNodesInGroup(String rootNodeId, [Finder? superEditorFinder]) {
+    final documentLayout = findDocumentLayout(superEditorFinder) as SingleColumnDocumentLayoutState;
+    final rootGroup = documentLayout.groups.firstWhereOrNull((group) => group.rootNodeId == rootNodeId);
+    if (rootGroup == null) {
+      return [];
+    }
+
+    return rootGroup.allNodeIds;
+  }
+
+  /// Finds the [DocumentNode] that is the header of the group where the
+  /// node with the given [nodeId] is.
+  ///
+  /// Returns `null` if the node is not in a group.
+  ///
+  /// {@macro supereditor_finder}
+  static String? findGroupHeaderNode(String nodeId, [Finder? superEditorFinder]) {
+    final documentLayout = findDocumentLayout(superEditorFinder) as SingleColumnDocumentLayoutState;
+    return documentLayout.groups.firstWhereOrNull((group) => group.contains(nodeId))?.rootNodeId;
+  }
+
+  static bool isGroupExpanded(String rootNodeId, [Finder? superEditorFinder]) {
+    final component = findWidgetForComponent(rootNodeId);
+
+    final groupFinder = find.ancestor(
+      of: find.byWidget(component),
+      matching: find.byType(ToggleableGroup),
+    );
+
+    final groupElement = groupFinder.evaluate().singleOrNull as StatefulElement?;
+    if (groupElement == null) {
+      return false;
+    }
+
+    final groupState = groupElement.state as ToggleableGroupState;
+    return groupState.isExpanded;
+  }
+
   /// Finds the [DocumentLayout] that backs a [SuperEditor] in the widget tree.
   ///
   /// {@macro supereditor_finder}

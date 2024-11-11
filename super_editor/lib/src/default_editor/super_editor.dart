@@ -28,6 +28,7 @@ import 'package:super_editor/src/infrastructure/documents/document_scroller.dart
 import 'package:super_editor/src/infrastructure/documents/selection_leader_document_layer.dart';
 import 'package:super_editor/src/infrastructure/flutter/build_context.dart';
 import 'package:super_editor/src/infrastructure/links.dart';
+import 'package:super_editor/src/infrastructure/node_grouping.dart';
 import 'package:super_editor/src/infrastructure/platforms/android/toolbar.dart';
 import 'package:super_editor/src/infrastructure/platforms/ios/toolbar.dart';
 import 'package:super_editor/src/infrastructure/platforms/mac/mac_ime.dart';
@@ -117,6 +118,7 @@ class SuperEditor extends StatefulWidget {
     Stylesheet? stylesheet,
     this.customStylePhases = const [],
     List<ComponentBuilder>? componentBuilders,
+    this.groupBuilders = const [],
     SelectionStyles? selectionStyle,
     this.selectionPolicies = const SuperEditorSelectionPolicies(),
     this.inputSource,
@@ -298,6 +300,9 @@ class SuperEditor extends StatefulWidget {
   /// each visual component displayed in the document layout, e.g.,
   /// paragraph component, image component, horizontal rule component, etc.
   final List<ComponentBuilder> componentBuilders;
+
+  /// {@macro group_builders}
+  final List<GroupBuilder> groupBuilders;
 
   /// All actions that this editor takes in response to key
   /// events, e.g., text entry, newlines, character deletion,
@@ -675,6 +680,7 @@ class SuperEditorState extends State<SuperEditor> {
               scroller: _scroller,
               presenter: presenter,
               componentBuilders: widget.componentBuilders,
+              groupBuilders: widget.groupBuilders,
               shrinkWrap: widget.shrinkWrap,
               underlays: [
                 // Add all underlays from plugins.

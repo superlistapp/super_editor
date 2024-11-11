@@ -107,6 +107,11 @@ abstract class DocumentLayout {
 
   /// Returns the [DocumentPosition] at the end of the last selectable component.
   DocumentPosition? findLastSelectablePosition();
+
+  /// Returns whether the component with the given [nodeId] is visible.
+  ///
+  /// For example, this method returns `false` if the node is collapsed.
+  bool isComponentVisible(String nodeId);
 }
 
 /// Contract for all widgets that operate as document components
