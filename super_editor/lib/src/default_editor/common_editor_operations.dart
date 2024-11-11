@@ -1382,7 +1382,7 @@ class CommonEditorOperations {
   /// Returns the [DocumentPosition] where the caret should sit after deleting
   /// the given [selection] from the given [document].
   ///
-  /// Returns `null` if there are no deletable nodes the [selection].
+  /// Returns `null` if there are no deletable nodes within the [selection].
   ///
   /// This method doesn't delete any content. Instead, it determines what would
   /// be deleted if a delete operation was run for the given [selection]. Based

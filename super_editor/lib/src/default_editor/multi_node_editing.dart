@@ -789,22 +789,20 @@ class DeleteContentCommand extends EditCommand {
       );
     }
 
-    final wereAllNodesInRangeDeleted =
-        document.getNodeById(startNode.id) == null && document.getNodeById(endNode.id) == null;
-    final wereAllDeletableNodesDeleted = nodes.every(
+    final wereAllDeletableNodesInRangeDeleted = nodes.every(
       (node) => document.getNodeById(node.id) == null || !node.isDeletable,
     );
-    final hasNonDeletableNodes = nodes.any((node) => !node.isDeletable);
+    final hasNonDeletableNodesInRange = nodes.any((node) => !node.isDeletable);
 
     // If all selected nodes were deleted, e.g., the user selected from
     // the beginning of the first node to the end of the last node, then
     // we need insert an empty paragraph node so that there's a place
     // to position the caret.
-    if (wereAllNodesInRangeDeleted || wereAllDeletableNodesDeleted) {
+    if (wereAllDeletableNodesInRangeDeleted) {
       // If there are any non-deletable nodes in the range, insert the new node
       // after the last non-deletable node. Otherwise, insert the new node at
       // the position where the first selected node was.
-      final insertIndex = hasNonDeletableNodes //
+      final insertIndex = hasNonDeletableNodesInRange //
           ? document.getNodeIndexById(nodes.lastWhere((node) => !node.isDeletable).id) + 1
           : startNodeIndex;
 
