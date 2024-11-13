@@ -728,13 +728,12 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
     editorGesturesLog.info("Tap down on document");
     final docOffset = _getDocumentOffsetFromGlobalOffset(details.globalPosition);
     editorGesturesLog.fine(" - document offset: $docOffset");
-    final docPosition = _docLayout.getDocumentPositionNearestToOffset(docOffset);
-    editorGesturesLog.fine(" - tapped document position: $docPosition");
 
-    if (widget.contentTapHandler != null && docPosition != null) {
+    if (widget.contentTapHandler != null) {
       final result = widget.contentTapHandler!.onTap(
         DocumentTapDetails(
-          position: docPosition,
+          documentLayout: _docLayout,
+          layoutOffset: docOffset,
           globalOffset: details.globalPosition,
         ),
       );
@@ -744,6 +743,9 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
         return;
       }
     }
+
+    final docPosition = _docLayout.getDocumentPositionNearestToOffset(docOffset);
+    editorGesturesLog.fine(" - tapped document position: $docPosition");
 
     bool didTapOnExistingSelection = false;
     if (docPosition != null) {
@@ -791,13 +793,12 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
     editorGesturesLog.info("Double tap down on document");
     final docOffset = _getDocumentOffsetFromGlobalOffset(details.globalPosition);
     editorGesturesLog.fine(" - document offset: $docOffset");
-    final docPosition = _docLayout.getDocumentPositionNearestToOffset(docOffset);
-    editorGesturesLog.fine(" - tapped document position: $docPosition");
 
-    if (docPosition != null && widget.contentTapHandler != null) {
+    if (widget.contentTapHandler != null) {
       final result = widget.contentTapHandler!.onDoubleTap(
         DocumentTapDetails(
-          position: docPosition,
+          documentLayout: _docLayout,
+          layoutOffset: docOffset,
           globalOffset: details.globalPosition,
         ),
       );
@@ -807,6 +808,9 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
         return;
       }
     }
+
+    final docPosition = _docLayout.getDocumentPositionNearestToOffset(docOffset);
+    editorGesturesLog.fine(" - tapped document position: $docPosition");
 
     if (docPosition != null) {
       final tappedComponent = _docLayout.getComponentByNodeId(docPosition.nodeId)!;
@@ -870,13 +874,12 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
     editorGesturesLog.info("Triple tap down on document");
     final docOffset = _getDocumentOffsetFromGlobalOffset(details.globalPosition);
     editorGesturesLog.fine(" - document offset: $docOffset");
-    final docPosition = _docLayout.getDocumentPositionNearestToOffset(docOffset);
-    editorGesturesLog.fine(" - tapped document position: $docPosition");
 
-    if (docPosition != null && widget.contentTapHandler != null) {
+    if (widget.contentTapHandler != null) {
       final result = widget.contentTapHandler!.onTripleTap(
         DocumentTapDetails(
-          position: docPosition,
+          documentLayout: _docLayout,
+          layoutOffset: docOffset,
           globalOffset: details.globalPosition,
         ),
       );
@@ -887,6 +890,8 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
       }
     }
 
+    final docPosition = _docLayout.getDocumentPositionNearestToOffset(docOffset);
+    editorGesturesLog.fine(" - tapped document position: $docPosition");
     if (docPosition != null) {
       // The user tapped a non-selectable component, so we can't select a paragraph.
       // The editor will remain focused and selection will remain in the nearest

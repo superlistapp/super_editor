@@ -1694,7 +1694,11 @@ class SuperEditorLaunchLinkTapHandler extends ContentTapDelegate {
 
   @override
   TapHandlingInstruction onTap(DocumentTapDetails details) {
-    final tapPosition = details.position;
+    final tapPosition = details.documentLayout.getDocumentPositionNearestToOffset(details.layoutOffset);
+    if (tapPosition == null) {
+      return TapHandlingInstruction.continueHandling;
+    }
+
     if (!composer.isInInteractionMode.value) {
       // The editor isn't in "interaction mode". We don't want to allow
       // users to open links by tapping on them.
@@ -1752,16 +1756,21 @@ class SuperEditorAddEmptyParagraphTapHandler extends ContentTapDelegate {
 
   @override
   TapHandlingInstruction onTap(DocumentTapDetails details) {
+    final tapPosition = details.documentLayout.getDocumentPositionNearestToOffset(details.layoutOffset);
+    if (tapPosition == null) {
+      return TapHandlingInstruction.continueHandling;
+    }
+
     final editor = editContext.editor;
     final document = editContext.document;
 
-    final node = document.getNodeById(details.position.nodeId)!;
+    final node = document.getNodeById(tapPosition.nodeId)!;
     if (node is TextNode) {
       return TapHandlingInstruction.continueHandling;
     }
 
     if (!_isTapBelowLastNode(
-      nodeId: details.position.nodeId,
+      nodeId: tapPosition.nodeId,
       globalOffset: details.globalOffset,
     )) {
       return TapHandlingInstruction.continueHandling;

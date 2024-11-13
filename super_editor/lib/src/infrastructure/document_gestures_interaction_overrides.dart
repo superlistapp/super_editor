@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:super_editor/src/core/document.dart';
+import 'package:super_editor/src/core/document_layout.dart';
 
 /// Delegate for mouse status and clicking on special types of content,
 /// e.g., tapping on a link open the URL.
@@ -25,19 +26,26 @@ abstract class ContentTapDelegate with ChangeNotifier {
   }
 }
 
-/// Information about a gesture that occured near a [position].
+/// Information about a gesture that occured within a [DocumentLayout].
 class DocumentTapDetails {
   DocumentTapDetails({
-    required this.position,
+    required this.documentLayout,
+    required this.layoutOffset,
     required this.globalOffset,
   });
 
-  /// The position in the document where the gesture occurred.
+  /// The document layout.
   ///
-  /// When there is no content at the gesture location, this position
-  /// holds the nearest position in the document.
-  final DocumentPosition position;
+  /// It can be used to pull information about the logical position
+  /// where the tap occurred. For example, to find the [DocumentPosition]
+  /// that is nearest to the tap, to find if the tap ocurred above
+  /// the first node or below the last node, etc.
+  final DocumentLayout documentLayout;
 
+  /// The position of the gesture in [DocumentLayout]'s coordinate space.
+  final Offset layoutOffset;
+
+  /// The position of the gesture in global coordinates.
   final Offset globalOffset;
 }
 

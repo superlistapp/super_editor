@@ -218,21 +218,14 @@ class _ReadOnlyDocumentMouseInteractorState extends State<ReadOnlyDocumentMouseI
     readerGesturesLog.info("Tap up on document");
     final docOffset = _getDocOffsetFromGlobalOffset(details.globalPosition);
     readerGesturesLog.fine(" - document offset: $docOffset");
-    final docPosition = _docLayout.getDocumentPositionNearestToOffset(docOffset);
-    readerGesturesLog.fine(" - tapped document position: $docPosition");
 
     _focusNode.requestFocus();
-
-    if (docPosition == null) {
-      readerGesturesLog.fine("No document content at ${details.globalPosition}.");
-      widget.readerContext.selection.value = null;
-      return;
-    }
 
     if (widget.contentTapHandler != null) {
       final result = widget.contentTapHandler!.onTap(
         DocumentTapDetails(
-          position: docPosition,
+          documentLayout: _docLayout,
+          layoutOffset: docOffset,
           globalOffset: details.globalPosition,
         ),
       );
@@ -241,6 +234,14 @@ class _ReadOnlyDocumentMouseInteractorState extends State<ReadOnlyDocumentMouseI
         // to the tap.
         return;
       }
+    }
+
+    final docPosition = _docLayout.getDocumentPositionNearestToOffset(docOffset);
+    readerGesturesLog.fine(" - tapped document position: $docPosition");
+    if (docPosition == null) {
+      readerGesturesLog.fine("No document content at ${details.globalPosition}.");
+      widget.readerContext.selection.value = null;
+      return;
     }
 
     final expandSelection = _isShiftPressed && widget.readerContext.selection.value != null;
@@ -275,20 +276,12 @@ class _ReadOnlyDocumentMouseInteractorState extends State<ReadOnlyDocumentMouseI
     readerGesturesLog.info("Double tap down on document");
     final docOffset = _getDocOffsetFromGlobalOffset(details.globalPosition);
     readerGesturesLog.fine(" - document offset: $docOffset");
-    final docPosition = _docLayout.getDocumentPositionNearestToOffset(docOffset);
-    readerGesturesLog.fine(" - tapped document position: $docPosition");
 
-    final tappedComponent = docPosition != null ? _docLayout.getComponentByNodeId(docPosition.nodeId)! : null;
-    if (tappedComponent != null && !tappedComponent.isVisualSelectionSupported()) {
-      // The user double tapped on a component that should never display itself
-      // as selected. Therefore, we ignore this double-tap.
-      return;
-    }
-
-    if (docPosition != null && widget.contentTapHandler != null) {
+    if (widget.contentTapHandler != null) {
       final result = widget.contentTapHandler!.onDoubleTap(
         DocumentTapDetails(
-          position: docPosition,
+          documentLayout: _docLayout,
+          layoutOffset: docOffset,
           globalOffset: details.globalPosition,
         ),
       );
@@ -297,6 +290,16 @@ class _ReadOnlyDocumentMouseInteractorState extends State<ReadOnlyDocumentMouseI
         // to the tap.
         return;
       }
+    }
+
+    final docPosition = _docLayout.getDocumentPositionNearestToOffset(docOffset);
+    readerGesturesLog.fine(" - tapped document position: $docPosition");
+
+    final tappedComponent = docPosition != null ? _docLayout.getComponentByNodeId(docPosition.nodeId)! : null;
+    if (tappedComponent != null && !tappedComponent.isVisualSelectionSupported()) {
+      // The user double tapped on a component that should never display itself
+      // as selected. Therefore, we ignore this double-tap.
+      return;
     }
 
     _selectionType = SelectionType.word;
@@ -332,13 +335,12 @@ class _ReadOnlyDocumentMouseInteractorState extends State<ReadOnlyDocumentMouseI
     readerGesturesLog.info("Triple down down on document");
     final docOffset = _getDocOffsetFromGlobalOffset(details.globalPosition);
     readerGesturesLog.fine(" - document offset: $docOffset");
-    final docPosition = _docLayout.getDocumentPositionNearestToOffset(docOffset);
-    readerGesturesLog.fine(" - tapped document position: $docPosition");
 
-    if (docPosition != null && widget.contentTapHandler != null) {
+    if (widget.contentTapHandler != null) {
       final result = widget.contentTapHandler!.onTripleTap(
         DocumentTapDetails(
-          position: docPosition,
+          documentLayout: _docLayout,
+          layoutOffset: docOffset,
           globalOffset: details.globalPosition,
         ),
       );
@@ -349,6 +351,8 @@ class _ReadOnlyDocumentMouseInteractorState extends State<ReadOnlyDocumentMouseI
       }
     }
 
+    final docPosition = _docLayout.getDocumentPositionNearestToOffset(docOffset);
+    readerGesturesLog.fine(" - tapped document position: $docPosition");
     if (docPosition != null) {
       final tappedComponent = _docLayout.getComponentByNodeId(docPosition.nodeId)!;
       if (!tappedComponent.isVisualSelectionSupported()) {
