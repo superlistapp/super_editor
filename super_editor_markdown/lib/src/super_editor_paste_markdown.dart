@@ -40,7 +40,7 @@ Future<void> pasteMarkdown({
   required Document document,
   required DocumentComposer composer,
 }) async {
-  DocumentPosition pastePosition = composer.selection!.extent;
+  DocumentPosition? pastePosition = composer.selection!.extent;
 
   // Delete all currently selected content.
   if (!composer.selection!.isCollapsed) {
@@ -48,6 +48,10 @@ Future<void> pasteMarkdown({
       document: document,
       selection: composer.selection!,
     );
+
+    if (pastePosition == null) {
+      return;
+    }
 
     // Delete the selected content.
     editor.execute([
