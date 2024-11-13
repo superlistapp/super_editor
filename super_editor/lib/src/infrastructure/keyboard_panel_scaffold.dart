@@ -378,8 +378,8 @@ class _KeyboardPanelScaffoldState extends State<KeyboardPanelScaffold>
     _panelExitAnimation.reverse(from: 1.0);
   }
 
-  // Updates our local cache of the current bottom window insets, which we assume reflects
-  // the current software keyboard height.
+  /// Updates our local cache of the current bottom window insets, which we assume reflects
+  /// the current software keyboard height.
   void _updateKeyboardHeightForCurrentViewInsets() {
     final newInsets = MediaQuery.viewInsetsOf(context);
     final newBottomInset = newInsets.bottom;
@@ -454,6 +454,10 @@ class _KeyboardPanelScaffoldState extends State<KeyboardPanelScaffold>
   double get _keyboardPanelHeight {
     return _wantsToShowKeyboardPanel //
         ? _keyboardHeight.value < 100 //
+            // ^ 100px is an arbitrary dividing point. Above that, we believe that
+            //   we have recorded the real keyboard height. Below that, we may have
+            //   only recorded the bottom notch or a partial keyboard height. In that
+            //   case, use the fallback height that's hard-coded.
             ? widget.fallbackPanelHeight
             : _keyboardHeight.value
         : 0.0;
@@ -469,6 +473,10 @@ class _KeyboardPanelScaffoldState extends State<KeyboardPanelScaffold>
 
     final double fakeKeyboardHeight = _wantsToShowKeyboardPanel //
         ? _keyboardHeight.value < 100 //
+            // ^ 100px is an arbitrary dividing point. Above that, we believe that
+            //   we have recorded the real keyboard height. Below that, we may have
+            //   only recorded the bottom notch or a partial keyboard height. In that
+            //   case, use the fallback height that's hard-coded.
             ? widget.fallbackPanelHeight
             : 0.0
         : 0.0;
@@ -516,13 +524,9 @@ class _KeyboardPanelScaffoldState extends State<KeyboardPanelScaffold>
           },
         );
       },
-      child: Padding(
-        // padding: EdgeInsets.only(bottom: fakeKeyboardHeight),
-        padding: EdgeInsets.zero,
-        child: widget.contentBuilder(
-          context,
-          _wantsToShowKeyboardPanel,
-        ),
+      child: widget.contentBuilder(
+        context,
+        _wantsToShowKeyboardPanel,
       ),
     );
   }

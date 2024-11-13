@@ -503,6 +503,9 @@ class TestSuperEditorConfigurator {
               : null,
           body: superEditor,
           resizeToAvoidBottomInset: false,
+          // ^ Don't automatically resize content to avoid keyboard. We want to be
+          //   able to test our keyboard scaffold, which needs full screen height.
+          //   If a test ever needs this to be `true` then we should make this configurable.
         ),
       ),
       debugShowCheckedModeBanner: false,

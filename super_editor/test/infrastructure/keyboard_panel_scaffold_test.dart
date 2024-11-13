@@ -394,7 +394,7 @@ void main() {
     });
 
     group('Android tablets >', () {
-      testWidgetsOnIPad('shows panel when keyboard is docked', (tester) async {
+      testWidgetsOnAndroidTablet('shows panel when keyboard is docked', (tester) async {
         final softwareKeyboardController = SoftwareKeyboardController();
         final controller = KeyboardPanelController(softwareKeyboardController);
 
