@@ -5,8 +5,7 @@ import 'package:super_editor/src/default_editor/layout_single_column/_layout.dar
 import 'package:super_editor/src/default_editor/layout_single_column/_presenter.dart';
 import 'package:super_editor/src/infrastructure/content_layers.dart';
 import 'package:super_editor/src/infrastructure/documents/document_scroller.dart';
-import 'package:super_editor/src/infrastructure/flutter/build_context.dart';
-import 'package:super_editor/src/infrastructure/sliver_hybrid_stack.dart';
+import 'package:super_editor/src/infrastructure/node_grouping.dart';
 
 /// A scaffold that combines pieces to create a scrolling single-column document, with
 /// gestures placed beneath the document.
@@ -26,6 +25,7 @@ class DocumentScaffold<ContextType> extends StatefulWidget {
     required this.scroller,
     required this.presenter,
     required this.componentBuilders,
+    this.groupBuilders = const [],
     required this.shrinkWrap,
     this.underlays = const [],
     this.overlays = const [],
@@ -70,6 +70,9 @@ class DocumentScaffold<ContextType> extends StatefulWidget {
   /// each visual component displayed in the document layout, e.g.,
   /// paragraph component, image component, horizontal rule component, etc.
   final List<ComponentBuilder> componentBuilders;
+
+  /// {@macro group_builders}
+  final List<GroupBuilder> groupBuilders;
 
   /// Layers that are displayed below the document layout, aligned
   /// with the location and size of the document layout.
@@ -139,6 +142,7 @@ class _DocumentScaffoldState extends State<DocumentScaffold> {
         key: widget.documentLayoutKey,
         presenter: widget.presenter,
         componentBuilders: widget.componentBuilders,
+        groupBuilders: widget.groupBuilders,
         onBuildScheduled: onBuildScheduled,
         showDebugPaint: widget.debugPaint.layout,
       ),

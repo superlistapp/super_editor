@@ -276,6 +276,46 @@ extension SuperEditorRobot on WidgetTester {
   }
 
   /// Simulates a user drag that begins at the [from] [DocumentPosition]
+  /// and ends at the [to] [DocumentPosition].
+  ///
+  /// Provide a [pointerDeviceKind] to override the device kind used in the gesture.
+  /// If [pointerDeviceKind] is `null`, it defaults to [PointerDeviceKind.touch]
+  /// on mobile, and [PointerDeviceKind.mouse] on other platforms.
+  Future<void> dragSelectDocumentFromPositionToPosition({
+    required DocumentPosition from,
+    Alignment startAlignmentWithinPosition = Alignment.center,
+    required DocumentPosition to,
+    Alignment endAlignmentWithinPosition = Alignment.center,
+    PointerDeviceKind? pointerDeviceKind,
+    Finder? superEditorFinder,
+  }) async {
+    final deviceKind = pointerDeviceKind ??
+        (defaultTargetPlatform == TargetPlatform.iOS || defaultTargetPlatform == TargetPlatform.android
+            ? PointerDeviceKind.touch
+            : PointerDeviceKind.mouse);
+
+    final gesture = await startDocumentDragFromPosition(
+      from: from,
+      startAlignmentWithinPosition: startAlignmentWithinPosition,
+      superEditorFinder: superEditorFinder,
+      deviceKind: deviceKind,
+    );
+
+    // Compute the global offset for the end position.
+    final documentLayout = _findDocumentLayout(superEditorFinder);
+    Rect dragEndRect = documentLayout.getRectForPosition(to)!;
+    final globalDocTopLeft = documentLayout.getGlobalOffsetFromDocumentOffset(Offset.zero);
+    dragEndRect = dragEndRect.translate(globalDocTopLeft.dx, globalDocTopLeft.dy);
+    final dragEndOffset = endAlignmentWithinPosition.withinRect(dragEndRect);
+
+    // Move to the desired position.
+    await gesture.moveTo(dragEndOffset);
+
+    // Release the drag and settle.
+    await endDocumentDragGesture(gesture);
+  }
+
+  /// Simulates a user drag that begins at the [from] [DocumentPosition]
   /// and returns the simulated gesture for further control.
   ///
   /// Make sure to remove the pointer when you're done with the [TestGesture].

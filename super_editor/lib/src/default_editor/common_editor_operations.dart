@@ -826,9 +826,11 @@ class CommonEditorOperations {
       selectableNode = document.getNodeBefore(prevNode);
 
       if (selectableNode != null) {
-        final nextComponent = documentLayoutResolver().getComponentByNodeId(selectableNode.id);
+        final documentLayout = documentLayoutResolver();
+        final nextComponent = documentLayout.getComponentByNodeId(selectableNode.id);
         if (nextComponent != null) {
-          foundSelectableNode = nextComponent.isVisualSelectionSupported();
+          foundSelectableNode =
+              documentLayout.isComponentVisible(selectableNode.id) && nextComponent.isVisualSelectionSupported();
         }
         prevNode = selectableNode;
       }
@@ -847,9 +849,11 @@ class CommonEditorOperations {
       selectableNode = document.getNodeAfter(prevNode);
 
       if (selectableNode != null) {
-        final nextComponent = documentLayoutResolver().getComponentByNodeId(selectableNode.id);
+        final documentLayout = documentLayoutResolver();
+        final nextComponent = documentLayout.getComponentByNodeId(selectableNode.id);
         if (nextComponent != null) {
-          foundSelectableNode = nextComponent.isVisualSelectionSupported();
+          foundSelectableNode =
+              documentLayout.isComponentVisible(selectableNode.id) && nextComponent.isVisualSelectionSupported();
         }
         prevNode = selectableNode;
       }

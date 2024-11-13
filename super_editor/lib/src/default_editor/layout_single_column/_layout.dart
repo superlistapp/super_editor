@@ -1,11 +1,15 @@
+import 'dart:collection';
 import 'dart:math';
 
+import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
+import 'package:follow_the_leader/follow_the_leader.dart';
 import 'package:super_editor/src/core/document.dart';
 import 'package:super_editor/src/core/document_layout.dart';
 import 'package:super_editor/src/core/document_selection.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
+import 'package:super_editor/src/infrastructure/node_grouping.dart';
 
 import '_presenter.dart';
 
@@ -29,6 +33,7 @@ class SingleColumnDocumentLayout extends StatefulWidget {
     Key? key,
     required this.presenter,
     required this.componentBuilders,
+    this.groupBuilders = const [],
     this.onBuildScheduled,
     this.showDebugPaint = false,
   }) : super(key: key);
@@ -45,6 +50,15 @@ class SingleColumnDocumentLayout extends StatefulWidget {
   /// that piece of content.
   final List<ComponentBuilder> componentBuilders;
 
+  /// {@template group_builders}
+  /// Builders that know how to group nodes together.
+  ///
+  /// Typically, components are organized vertically from top to bottom. A group
+  /// builder can be used to create a subtree with grouped components and add
+  /// features like group collapsing.
+  /// {@endtemplate}
+  final List<GroupBuilder> groupBuilders;
+
   /// Callback that's invoked whenever this widget schedules a build with
   /// `setState()`.
   ///
@@ -59,10 +73,11 @@ class SingleColumnDocumentLayout extends StatefulWidget {
   final bool showDebugPaint;
 
   @override
-  State createState() => _SingleColumnDocumentLayoutState();
+  State createState() => SingleColumnDocumentLayoutState();
 }
 
-class _SingleColumnDocumentLayoutState extends State<SingleColumnDocumentLayout> implements DocumentLayout {
+@visibleForTesting
+class SingleColumnDocumentLayoutState extends State<SingleColumnDocumentLayout> implements DocumentLayout {
   final Map<String, GlobalKey> _nodeIdsToComponentKeys = {};
   final Map<GlobalKey, String> _componentKeysToNodeIds = {};
 
@@ -76,6 +91,21 @@ class _SingleColumnDocumentLayoutState extends State<SingleColumnDocumentLayout>
   // The key for the renderBox that contains the actual document layout.
   final GlobalKey _boxKey = GlobalKey();
   BuildContext get boxContext => _boxKey.currentContext!;
+
+  /// The list of groups within this layout.
+  @visibleForTesting
+  List<GroupItem> get groups => UnmodifiableListView(_groups);
+  final List<GroupItem> _groups = [];
+
+  /// Maps a node ID to the group that contains it.
+  ///
+  /// Includes the root node ID for each group and its child
+  /// node ID's.
+  final Map<String, GroupItem> _nodeIdToGroup = {};
+
+  /// Holds the node ID of the root node of each group that
+  /// is currently collapsed.
+  final Set<String> _collapsedGroups = {};
 
   @override
   void initState() {
@@ -126,6 +156,43 @@ class _SingleColumnDocumentLayoutState extends State<SingleColumnDocumentLayout>
         // Re-flow the whole layout.
       });
     }
+
+    if (changedComponents.isNotEmpty && widget.groupBuilders.isNotEmpty) {
+      // A node change might affect the grouping of nodes. For example,
+      // a paragraph node converted to a header should create a new group.
+      // Or, a header node converted to a paragraph should remove the group.
+      for (final nodeId in changedComponents) {
+        final nodeIndex = widget.presenter.viewModel.componentViewModels.indexWhere(
+          (viewModel) => viewModel.nodeId == nodeId,
+        );
+        if (nodeIndex < 0) {
+          continue;
+        }
+
+        final canNodeStartGroup = widget.groupBuilders.any(
+          (builder) => builder.canStartGroup(
+            nodeIndex: nodeIndex,
+            viewModels: widget.presenter.viewModel.componentViewModels,
+          ),
+        );
+
+        final group = _nodeIdToGroup[nodeId];
+        final isAlreadyStartingGroup = group != null && group.rootNodeId == nodeId;
+        if (isAlreadyStartingGroup != canNodeStartGroup) {
+          // The component is either:
+          // - A header of a group, but it can't start a group anymore.
+          // - A regular component, but it can start a group now.
+          setState(() {
+            // Re-flow the layout to re-create the groups.
+          });
+        }
+      }
+    }
+  }
+
+  @override
+  bool isComponentVisible(String nodeId) {
+    return _isNodeVisible(nodeId);
   }
 
   @override
@@ -393,6 +460,14 @@ class _SingleColumnDocumentLayoutState extends State<SingleColumnDocumentLayout>
         continue;
       }
 
+      final nodeId = _componentKeysToNodeIds[componentKey]!;
+      if (!_isNodeVisible(nodeId)) {
+        // Collapsed components should be avoided at base or extent.
+        // They should only be selected when the surrounding components are selected.
+        editorLayoutLog.fine(' - node is not visible. Moving on.');
+        continue;
+      }
+
       final component = componentKey.currentState as DocumentComponent;
 
       // Unselectable components should be avoided at base or extent.
@@ -554,11 +629,19 @@ class _SingleColumnDocumentLayoutState extends State<SingleColumnDocumentLayout>
   GlobalKey? _findComponentClosestToOffset(Offset documentOffset) {
     GlobalKey? nearestComponentKey;
     double nearestDistance = double.infinity;
-    for (final componentKey in _nodeIdsToComponentKeys.values) {
+    for (final pair in _nodeIdsToComponentKeys.entries) {
+      final nodeId = pair.key;
+      final componentKey = pair.value;
+
       if (componentKey.currentState is! DocumentComponent) {
         continue;
       }
       if (componentKey.currentContext == null || componentKey.currentContext!.findRenderObject() == null) {
+        continue;
+      }
+
+      if (!_isNodeVisible(nodeId)) {
+        // Ignore any nodes that aren't currently visible.
         continue;
       }
 
@@ -707,6 +790,31 @@ class _SingleColumnDocumentLayoutState extends State<SingleColumnDocumentLayout>
     widget.onBuildScheduled?.call();
   }
 
+  /// Whether the node with the given [nodeId] is visible in the layout, i.e, it's not
+  /// inside a collapsed group.
+  bool _isNodeVisible(String nodeId) {
+    final group = _nodeIdToGroup[nodeId];
+    if (group == null) {
+      // The node is not part of a group. It's always visible.
+      return true;
+    }
+
+    // The root of the group is visible even when the group is collapsed.
+    final isVisibleInsideGroup = group.rootNodeId == nodeId || !_isGroupCollapsed(group);
+    return isVisibleInsideGroup && _isParentGroupVisible(group);
+  }
+
+  bool _isGroupCollapsed(GroupItem group) => _collapsedGroups.contains(group.rootNodeId);
+
+  bool _isParentGroupVisible(GroupItem group) {
+    final parentGroup = group.parent;
+    if (parentGroup == null) {
+      return true;
+    }
+
+    return !_isGroupCollapsed(parentGroup) && _isParentGroupVisible(parentGroup);
+  }
+
   @override
   Widget build(BuildContext context) {
     editorLayoutLog.fine("Building document layout");
@@ -735,33 +843,70 @@ class _SingleColumnDocumentLayoutState extends State<SingleColumnDocumentLayout>
     _topToBottomComponentKeys.clear();
 
     final viewModel = widget.presenter.viewModel;
+    final componentViewModels = viewModel.componentViewModels;
     editorLayoutLog.fine("Rendering layout view model: ${viewModel.hashCode}");
-    for (final componentViewModel in viewModel.componentViewModels) {
-      final componentKey = _obtainComponentKeyForDocumentNode(
-        newComponentKeyMap: newComponentKeys,
-        nodeId: componentViewModel.nodeId,
-      );
-      newNodeIds[componentKey] = componentViewModel.nodeId;
-      editorLayoutLog.finer('Node -> Key: ${componentViewModel.nodeId} -> $componentKey');
 
-      _topToBottomComponentKeys.add(componentKey);
+    final previouslyCollapsedGroups = _collapsedGroups.toSet();
 
-      docComponents.add(
-        // Rebuilds whenever this particular component view model changes
-        // within the overall layout view model.
-        _PresenterComponentBuilder(
-          presenter: widget.presenter,
-          watchNode: componentViewModel.nodeId,
-          builder: (context, newComponentViewModel) {
-            // Converts the component view model into a widget.
-            return _Component(
-              componentBuilders: widget.componentBuilders,
-              componentKey: componentKey,
-              componentViewModel: newComponentViewModel,
-            );
-          },
-        ),
+    _collapsedGroups.clear();
+    _groups.clear();
+    _nodeIdToGroup.clear();
+
+    // Build all doc components and create the groups, if any.
+    int currentNodeIndex = 0;
+    while (currentNodeIndex < componentViewModels.length) {
+      final componentViewModel = componentViewModels[currentNodeIndex];
+
+      _generateAndMapComponentKeyForDocumentNode(
+        componentViewModel: componentViewModel,
+        componentKeysToNodeIds: newNodeIds,
+        nodeIdsToComponentKeys: newComponentKeys,
       );
+
+      // Check if any group builders can start a group at this node.
+      bool didNodeStartedGroup = false;
+      for (final groupBuilder in widget.groupBuilders) {
+        final shouldStartGroup = groupBuilder.canStartGroup(
+          nodeIndex: currentNodeIndex,
+          viewModels: componentViewModels,
+        );
+
+        if (shouldStartGroup) {
+          // The current node is the start of a new group. For example,
+          // a header that groups all nodes below it until a new header of
+          // same level, or smaller, is found. Consume all nodes that can
+          // be grouped together.
+          final (widget, lastNodeIndexInGroup, groupInfo) = _makeGroup(
+            startingNodeIndex: currentNodeIndex,
+            groupBuilder: groupBuilder,
+            nodeIdsToComponentKeys: newComponentKeys,
+            componentKeysToNodeIds: newNodeIds,
+            allViewModels: componentViewModels,
+            previouslyCollapsedGroups: previouslyCollapsedGroups,
+            leaderLink: LeaderLink(),
+          );
+
+          didNodeStartedGroup = true;
+          docComponents.add(widget);
+
+          // Advance to the next node after the group.
+          currentNodeIndex = lastNodeIndexInGroup + 1;
+
+          // The group has been added. Ignore other group builders for this node.
+          break;
+        }
+      }
+
+      if (!didNodeStartedGroup) {
+        // The current node is not part of a group. Add it as a regular component.
+        docComponents.add(
+          _buildComponent(
+            componentKey: newComponentKeys[componentViewModel.nodeId]!,
+            componentViewModel: componentViewModel,
+          ),
+        );
+        currentNodeIndex += 1;
+      }
     }
 
     _nodeIdsToComponentKeys
@@ -778,6 +923,198 @@ class _SingleColumnDocumentLayoutState extends State<SingleColumnDocumentLayout>
     });
 
     return docComponents;
+  }
+
+  Widget _buildComponent({
+    required GlobalKey componentKey,
+    required SingleColumnLayoutComponentViewModel componentViewModel,
+    LeaderLink? leaderLink,
+  }) {
+    // Rebuilds whenever this particular component view model changes
+    // within the overall layout view model.
+    return _PresenterComponentBuilder(
+      presenter: widget.presenter,
+      watchNode: componentViewModel.nodeId,
+      builder: (context, newComponentViewModel) {
+        // Converts the component view model into a widget.
+        return _Component(
+          componentBuilders: widget.componentBuilders,
+          componentKey: componentKey,
+          componentViewModel: newComponentViewModel,
+          leaderLink: leaderLink,
+        );
+      },
+    );
+  }
+
+  /// Creates a group of components starting from the given [startingNodeIndex].
+  ///
+  /// A group contains a group header (the component at [startingNodeIndex]) and
+  /// any number of child components.
+  ///
+  /// Adds each item in [allViewModels] that can be grouped according to the given [groupBuilder].
+  ///
+  /// The [leaderLink] is attached to the group header, so we can display other widgets near it.
+  ///
+  /// The [parent] must not be `null` if this group is inside another group.
+  (Widget component, int lastNodeIndexInGroup, GroupItem group) _makeGroup({
+    required int startingNodeIndex,
+    required GroupBuilder groupBuilder,
+    required List<SingleColumnLayoutComponentViewModel> allViewModels,
+    required LeaderLink leaderLink,
+    required Map<String, GlobalKey> nodeIdsToComponentKeys,
+    required Map<GlobalKey, String> componentKeysToNodeIds,
+    required Set<String> previouslyCollapsedGroups,
+    GroupItem? parent,
+  }) {
+    // All viewmodels that are grouped together.
+    final groupedViewModels = <SingleColumnLayoutComponentViewModel>[];
+
+    // All components that are grouped together.
+    final groupedComponents = <Widget>[];
+
+    final groupHeader = allViewModels[startingNodeIndex];
+    final groupInfo = GroupItem(
+      rootNodeId: groupHeader.nodeId,
+      parent: parent,
+    );
+    if (parent != null) {
+      parent.add(groupInfo);
+    }
+
+    // Restores the collapsed state of the group.
+    if (previouslyCollapsedGroups.contains(groupInfo.rootNodeId)) {
+      _collapsedGroups.add(groupInfo.rootNodeId);
+    }
+
+    groupedViewModels.add(groupHeader);
+    groupedComponents.add(
+      _buildComponent(
+        componentKey: nodeIdsToComponentKeys[groupHeader.nodeId]!,
+        componentViewModel: groupHeader,
+        leaderLink: leaderLink,
+      ),
+    );
+
+    // Add all allowed child components to the group.
+    int currentNodeIndex = startingNodeIndex + 1;
+    while (currentNodeIndex < allViewModels.length) {
+      final childViewModel = allViewModels[currentNodeIndex];
+
+      final canAddToGroup = groupBuilder.canAddToGroup(
+        nodeIndex: currentNodeIndex,
+        allViewModels: allViewModels,
+        groupedComponents: UnmodifiableListView(groupedViewModels),
+      );
+      if (!canAddToGroup) {
+        // The current node cannot be added to the group. The group ends
+        // before this node.
+        break;
+      }
+
+      groupedViewModels.add(childViewModel);
+
+      _generateAndMapComponentKeyForDocumentNode(
+        componentViewModel: childViewModel,
+        componentKeysToNodeIds: componentKeysToNodeIds,
+        nodeIdsToComponentKeys: nodeIdsToComponentKeys,
+      );
+
+      bool didChildNodeStartedGroup = false;
+      for (final childGroupBuilder in widget.groupBuilders) {
+        final shouldChildStartGroup = childGroupBuilder.canStartGroup(
+          nodeIndex: currentNodeIndex,
+          viewModels: allViewModels,
+        );
+        if (shouldChildStartGroup) {
+          // The current child node can start another group. For example,
+          // it's a level two header inside a level one header. Let the child
+          // create its own group, and add the resulting widget as a child
+          // to this group.
+          final (widget, lastNodeIndexInChildGroup, childGroup) = _makeGroup(
+            startingNodeIndex: currentNodeIndex,
+            groupBuilder: childGroupBuilder,
+            nodeIdsToComponentKeys: nodeIdsToComponentKeys,
+            componentKeysToNodeIds: componentKeysToNodeIds,
+            allViewModels: allViewModels,
+            previouslyCollapsedGroups: previouslyCollapsedGroups,
+            leaderLink: LeaderLink(),
+            parent: groupInfo,
+          );
+
+          groupInfo.add(childGroup);
+          didChildNodeStartedGroup = true;
+
+          // Add a subtree containing the child group to the current group.
+          groupedComponents.add(widget);
+
+          // Move to the next node after the child group.
+          currentNodeIndex = lastNodeIndexInChildGroup + 1;
+
+          // The child group has been added. Ignore other group builders for this node.
+          break;
+        }
+      }
+      if (!didChildNodeStartedGroup) {
+        // The current child node is not the start of a group. Add it as a regular component.
+        groupedComponents.add(
+          _buildComponent(
+            componentKey: nodeIdsToComponentKeys[childViewModel.nodeId]!,
+            componentViewModel: childViewModel,
+          ),
+        );
+
+        groupInfo.add(GroupItem(
+          rootNodeId: childViewModel.nodeId,
+        ));
+
+        // Move to the next node.
+        currentNodeIndex += 1;
+      }
+    }
+
+    _groups.add(groupInfo);
+
+    // Map each node ID to the group which it belongs.
+    _nodeIdToGroup[groupInfo.rootNodeId] = groupInfo;
+    for (final child in groupInfo.children) {
+      _nodeIdToGroup[child.rootNodeId] = groupInfo;
+    }
+
+    return (
+      groupBuilder.build(
+        context,
+        headerContentLink: leaderLink,
+        groupInfo: groupInfo,
+        onCollapsedChanged: (bool collapsed) {
+          if (collapsed) {
+            _collapsedGroups.add(groupInfo.rootNodeId);
+          } else {
+            _collapsedGroups.remove(groupInfo.rootNodeId);
+          }
+        },
+        children: groupedComponents,
+      ),
+      currentNodeIndex - 1,
+      groupInfo
+    );
+  }
+
+  /// Generate a new [GlobalKey] for the given [componentViewModel], if needed, and
+  /// creates mappings from the component key to the node ID and vice versa.
+  void _generateAndMapComponentKeyForDocumentNode({
+    required SingleColumnLayoutComponentViewModel componentViewModel,
+    required Map<GlobalKey, String> componentKeysToNodeIds,
+    required Map<String, GlobalKey> nodeIdsToComponentKeys,
+  }) {
+    final componentKey = _obtainComponentKeyForDocumentNode(
+      newComponentKeyMap: nodeIdsToComponentKeys,
+      nodeId: componentViewModel.nodeId,
+    );
+    componentKeysToNodeIds[componentKey] = componentViewModel.nodeId;
+    editorLayoutLog.finer('Node -> Key: ${componentViewModel.nodeId} -> $componentKey');
+
+    _topToBottomComponentKeys.add(componentKey);
   }
 
   /// Obtains a `GlobalKey` that should be attached to the component
@@ -944,6 +1281,8 @@ class _Component extends StatelessWidget {
     required this.componentBuilders,
     required this.componentViewModel,
     required this.componentKey,
+    this.leaderLink,
+
     // TODO(srawlins): `unused_element`, when reporting a parameter, is being
     // renamed to `unused_element_parameter`. For now, ignore each; when the SDK
     // constraint is >= 3.6.0, just ignore `unused_element_parameter`.
@@ -965,6 +1304,12 @@ class _Component extends StatelessWidget {
   /// The visual configuration for the component that needs to be built.
   final SingleColumnLayoutComponentViewModel componentViewModel;
 
+  /// An optional [LeaderLink] to be attached to this component content.
+  ///
+  /// When non-null, a [Leader] widget is placed between the component's
+  /// padding and its content.
+  final LeaderLink? leaderLink;
+
   /// Whether to add debug paint to the component.
   final bool showDebugPaint;
 
@@ -977,6 +1322,12 @@ class _Component extends StatelessWidget {
     for (final componentBuilder in componentBuilders) {
       var component = componentBuilder.createComponent(componentContext, componentViewModel);
       if (component != null) {
+        if (leaderLink != null) {
+          component = Leader(
+            link: leaderLink!,
+            child: component,
+          );
+        }
         // TODO: we might need a SizeChangedNotifier here for the case where two components
         //       change size exactly inversely
         component = ConstrainedBox(
@@ -1003,5 +1354,79 @@ class _Component extends StatelessWidget {
       ),
       child: component,
     );
+  }
+}
+
+/// Information about a [DocumentNode] that is grouped together with other nodes.
+///
+/// A [GroupItem] can be a leaf node, i.e., a regular node that doesn't start
+/// a new group, for example, a regular paragraph, or it can be a group that contains
+/// other nodes. For example, a level one header might have a level two header below it,
+/// the level two header itself starts another group, but is part of the level one header's
+/// group.
+class GroupItem {
+  GroupItem({
+    required this.rootNodeId,
+    this.parent,
+  });
+
+  /// The ID of the node that is the root of this group.
+  ///
+  /// This node appears immediately before its children in the document.
+  ///
+  /// If this is a leaf node, this is the ID of the node.
+  final String rootNodeId;
+
+  /// The items that are grouped together with the node representer by [rootNodeId]
+  /// in the document.
+  ///
+  /// If any [children] is itself another group, only the root node of that group
+  /// appears in this list.
+  ///
+  /// If a [GroupItem] is a leaf node, this list will be empty.
+  List<GroupItem> get children => UnmodifiableListView(_children);
+  final List<GroupItem> _children = [];
+
+  /// The parent group of this group, if this is a sub-group.
+  ///
+  /// For example, a level two header might have a level one header as its parent.
+  ///
+  /// If this is a top-level group, this is `null`.
+  final GroupItem? parent;
+
+  /// Whether this group is a leaf node, i.e., it doesn't contain any child nodes.
+  bool get isLeaf => _children.isEmpty;
+
+  /// Add [child] as a child of this group.
+  void add(GroupItem child) {
+    _children.add(child);
+  }
+
+  /// The node IDs of all nodes that are a direct or indirect child of this group.
+  ///
+  /// For example, if this group contains a child group, the node IDs of each child
+  /// within the child group appear in this list.
+  List<String> get allNodeIds {
+    final allNodeIds = <String>[rootNodeId];
+    for (final child in _children) {
+      allNodeIds.addAll(child.allNodeIds);
+    }
+    return allNodeIds;
+  }
+
+  /// Whether the node with the given [nodeId] is a child of this group
+  /// or a child of one of its child groups.
+  bool contains(String nodeId) {
+    if (rootNodeId == nodeId) {
+      return true;
+    }
+
+    for (final child in _children) {
+      if (child.contains(nodeId)) {
+        return true;
+      }
+    }
+
+    return false;
   }
 }

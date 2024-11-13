@@ -92,6 +92,7 @@ export 'src/infrastructure/text_input.dart';
 export 'src/infrastructure/popovers.dart';
 export 'src/infrastructure/selectable_list.dart';
 export 'src/infrastructure/actions.dart';
+export 'src/infrastructure/node_grouping.dart';
 
 // Super Reader
 export 'src/super_reader/read_only_document_android_touch_interactor.dart';

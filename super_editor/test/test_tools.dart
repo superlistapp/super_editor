@@ -1,3 +1,4 @@
+import 'package:collection/collection.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:super_editor/src/core/document_selection.dart';
 import 'package:super_editor/src/infrastructure/links.dart';
@@ -128,5 +129,46 @@ class EquivalentSelectionMatcher extends Matcher {
     }
 
     return null;
+  }
+}
+
+/// A [Matcher] that compares two lists for deep equality.
+Matcher collectionEqualsTo(List<Object> expectedList) => CollectionEqualityMatcher(expectedList);
+
+/// A [Matcher] that compares two lists for deep equality.
+class CollectionEqualityMatcher extends Matcher {
+  const CollectionEqualityMatcher(this.expected);
+
+  final List<Object> expected;
+
+  @override
+  Description describe(Description description) {
+    return description.add("given the list contains the same elements in the same order as the expected list");
+  }
+
+  @override
+  bool matches(covariant Object target, Map<dynamic, dynamic> matchState) {
+    return const DeepCollectionEquality().equals(target, expected);
+  }
+
+  @override
+  Description describeMismatch(
+    covariant Object target,
+    Description mismatchDescription,
+    Map matchState,
+    bool verbose,
+  ) {
+    if (target is! List) {
+      mismatchDescription.add('The target is not a list');
+      return mismatchDescription;
+    }
+
+    final expectedList = '[${expected.join(', ')}]';
+    final targetList = '[${target.join(', ')}]';
+
+    mismatchDescription
+        .add('The lists don\'t have the same elements in the same order\nExpected: $expectedList\nActual: $targetList');
+
+    return mismatchDescription;
   }
 }
