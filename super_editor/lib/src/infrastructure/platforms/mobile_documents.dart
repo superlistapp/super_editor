@@ -23,8 +23,8 @@ class DocumentKeys {
 /// The [handleKey] is used to find the handle in the widget tree for various purposes,
 /// e.g., within tests to verify the presence or absence of the handle.
 ///
-/// The [gestureCallbacks] hold event handles that should be attached to the gesture recognizer
-/// attached to the handle. For example, set [gestureCallbacks.onTap] to the handle's `onTap` event.
+/// The [gestureDelegate] hold event handles that should be attached to the gesture recognizer
+/// attached to the handle. For example, set [gestureDelegate.onTap] to the handle's `onTap` event.
 ///
 /// Use [shouldShow] to fade in/out the handle entrance/exit, for example, using an [AnimatedOpacity]
 /// to switch between `0.0` and `1.0`. If an animation isn't desired, return a [SizedBox] when [shouldShow]
@@ -37,7 +37,7 @@ class DocumentKeys {
 /// ```dart
 /// Widget buildCollapsedHandle(BuildContext context, {
 ///   required LeaderLink focalPoint,
-///   required DocumentHandleGestureCallbacks gestureCallbacks,
+///   required DocumentHandleGestureDelegate gestureDelegate,
 ///   required Key handleKey,
 ///   required bool shouldShow,
 /// }) {
@@ -53,7 +53,7 @@ typedef DocumentCollapsedHandleBuilder = Widget Function(
   BuildContext, {
   required Key handleKey,
   required LeaderLink focalPoint,
-  required DocumentHandleGestureCallbacks gestureCallbacks,
+  required DocumentHandleGestureDelegate gestureDelegate,
   required bool shouldShow,
 });
 
@@ -64,8 +64,8 @@ typedef DocumentCollapsedHandleBuilder = Widget Function(
 /// The [upstreamHandleKey] and [downstreamHandleKey] are used to find the handles in the widget tree for
 /// various purposes, e.g., within tests to verify the presence or absence of the handles.
 ///
-/// The [downstreamGestureCallbacks] and [upstreamGestureCallbacks] hold event handles that should be attached
-/// to the gesture recognizers attached to the handles. For example, set [downstreamGestureCallbacks.onTap] to
+/// The [downstreamGestureDelegate] and [upstreamGestureDelegate] hold event handles that should be attached
+/// to the gesture recognizers attached to the handles. For example, set [downstreamGestureDelegate.onTap] to
 /// the downstream handle recognizer's `onTap` event.
 ///
 /// Use [shouldShow] to fade in/out the handles entrance/exit, for example, using an [AnimatedOpacity]
@@ -79,10 +79,10 @@ typedef DocumentCollapsedHandleBuilder = Widget Function(
 /// ```dart
 /// Widget buildCollapsedHandle(BuildContext context, {
 ///   required LeaderLink downstreamFocalPoint,
-///   required DocumentHandleGestureCallbacks downstreamGestureCallbacks,
+///   required DocumentHandleGestureDelegate downstreamGestureDelegate,
 ///   required Key downstreamHandleKey,
 ///   required LeaderLink upstreamFocalPoint,
-///   required DocumentHandleGestureCallbacks upstreamGestureCallbacks,
+///   required DocumentHandleGestureDelegate upstreamGestureDelegate,
 ///   required Key upstreamHandleKey,
 ///   required bool shouldShow,
 ///  }) {
@@ -104,22 +104,22 @@ typedef DocumentExpandedHandlesBuilder = Widget Function(
   BuildContext, {
   required Key upstreamHandleKey,
   required LeaderLink upstreamFocalPoint,
-  required DocumentHandleGestureCallbacks upstreamGestureCallbacks,
+  required DocumentHandleGestureDelegate upstreamGestureDelegate,
   required Key downstreamHandleKey,
   required LeaderLink downstreamFocalPoint,
-  required DocumentHandleGestureCallbacks downstreamGestureCallbacks,
+  required DocumentHandleGestureDelegate downstreamGestureDelegate,
   required bool shouldShow,
 });
 
-/// Callbacks for handling gestures on a document handle.
+/// Delegate for handling gestures on a document handle.
 ///
 /// These callbacks are intended to make it easier for developers to customize
 /// the drag handles, without having to re-implement the gesture logic.
 ///
-/// For example, wrap the handle in a `GestureDetector` and pass these callbacks
-/// to the corresponding gesture events.
-class DocumentHandleGestureCallbacks {
-  DocumentHandleGestureCallbacks({
+/// To use it, for example, wrap the handle in a `GestureDetector` and pass
+/// these callbacks to the corresponding gesture events.
+class DocumentHandleGestureDelegate {
+  DocumentHandleGestureDelegate({
     this.onTapDown,
     this.onTap,
     this.onPanStart,

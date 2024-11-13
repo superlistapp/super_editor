@@ -318,7 +318,7 @@ void main() {
           BuildContext context, {
           required Key handleKey,
           required LeaderLink focalPoint,
-          required DocumentHandleGestureCallbacks gestureCallbacks,
+          required DocumentHandleGestureDelegate gestureDelegate,
           required bool shouldShow,
         }) {
           return SizedBox(
@@ -353,10 +353,10 @@ void main() {
           BuildContext context, {
           required Key upstreamHandleKey,
           required LeaderLink upstreamFocalPoint,
-          required DocumentHandleGestureCallbacks upstreamGestureCallbacks,
+          required DocumentHandleGestureDelegate upstreamGestureDelegate,
           required Key downstreamHandleKey,
           required LeaderLink downstreamFocalPoint,
-          required DocumentHandleGestureCallbacks downstreamGestureCallbacks,
+          required DocumentHandleGestureDelegate downstreamGestureDelegate,
           required bool shouldShow,
         }) {
           return Stack(
