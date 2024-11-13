@@ -753,7 +753,10 @@ class DeleteContentCommand extends EditCommand {
     if (endNode == null) {
       throw Exception('Could not locate end node for DeleteSelectionCommand: ${normalizedRange.end}');
     }
-    final endNodeIndex = document.getNodeIndexById(endNode.id);
+
+    // We expect that this command will only be called when the delete range
+    // contains at least one deletable node.
+    final firstDeletableNodeId = nodes.firstWhere((node) => node.isDeletable).id;
 
     executor.logChanges(
       _deleteNodesBetweenFirstAndLast(
@@ -786,19 +789,40 @@ class DeleteContentCommand extends EditCommand {
       );
     }
 
+    final wereAllDeletableNodesInRangeDeleted = nodes.every(
+      (node) => document.getNodeById(node.id) == null || !node.isDeletable,
+    );
+    final hasNonDeletableNodesInRange = nodes.any((node) => !node.isDeletable);
+
     // If all selected nodes were deleted, e.g., the user selected from
     // the beginning of the first node to the end of the last node, then
     // we need insert an empty paragraph node so that there's a place
     // to position the caret.
-    if (document.getNodeById(startNode.id) == null && document.getNodeById(endNode.id) == null) {
-      final insertIndex = min(startNodeIndex, endNodeIndex);
+    if (wereAllDeletableNodesInRangeDeleted) {
+      // If there are any non-deletable nodes in the range, insert the new node
+      // after the last non-deletable node. Otherwise, insert the new node at
+      // the position where the first selected node was.
+      final insertIndex = hasNonDeletableNodesInRange //
+          ? document.getNodeIndexById(nodes.lastWhere((node) => !node.isDeletable).id) + 1
+          : startNodeIndex;
+
+      // If one of the edge nodes is deletable, we can use it as the ID for the
+      // new empty paragraph. Otherwise, use the ID of the first deletable node in the range.
+      // We expect that this method is never called when there are no deletable nodes
+      // in the range.
+      final emptyParagraphId = startNode.isDeletable
+          ? startNode.id
+          : endNode.isDeletable
+              ? endNode.id
+              : firstDeletableNodeId;
+
       document.insertNodeAt(
         insertIndex,
-        ParagraphNode(id: startNode.id, text: AttributedText()),
+        ParagraphNode(id: emptyParagraphId, text: AttributedText()),
       );
       executor.logChanges([
         DocumentEdit(
-          NodeChangeEvent(startNode.id),
+          NodeChangeEvent(emptyParagraphId),
         )
       ]);
     }
@@ -1144,12 +1168,12 @@ class DeleteSelectionCommand extends EditCommand {
       }
     }
 
-    final newSelectionPosition = CommonEditorOperations.getDocumentPositionAfterExpandedDeletion(
-      document: document,
-      selection: selection,
-    );
-
     final nodes = document.getNodesInside(selection.start, selection.end);
+    if (nodes.every((node) => !node.isDeletable)) {
+      // All selected nodes are non-deletable. Do nothing.
+      return;
+    }
+
     if (nodes.length == 2) {
       final normalizedSelection = selection.normalize(document);
       final nodeAbove = document.getNode(normalizedSelection.start)!;
@@ -1197,19 +1221,26 @@ class DeleteSelectionCommand extends EditCommand {
       }
     }
 
-    executor
-      ..executeCommand(
-        DeleteContentCommand(
-          documentRange: selection,
-        ),
-      )
-      ..executeCommand(
+    final newSelectionPosition = CommonEditorOperations.getDocumentPositionAfterExpandedDeletion(
+      document: document,
+      selection: selection,
+    );
+
+    executor.executeCommand(
+      DeleteContentCommand(
+        documentRange: selection,
+      ),
+    );
+
+    if (newSelectionPosition != null) {
+      executor.executeCommand(
         ChangeSelectionCommand(
           DocumentSelection.collapsed(position: newSelectionPosition),
           SelectionChangeType.deleteContent,
           SelectionReason.userInteraction,
         ),
       );
+    }
   }
 }
 

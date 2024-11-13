@@ -2,6 +2,7 @@ import 'dart:math';
 import 'dart:ui';
 
 import 'package:attributed_text/attributed_text.dart';
+import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:linkify/linkify.dart';
@@ -1381,13 +1382,15 @@ class CommonEditorOperations {
   /// Returns the [DocumentPosition] where the caret should sit after deleting
   /// the given [selection] from the given [document].
   ///
+  /// Returns `null` if there are no deletable nodes within the [selection].
+  ///
   /// This method doesn't delete any content. Instead, it determines what would
   /// be deleted if a delete operation was run for the given [selection]. Based
   /// on the shared understanding of content deletion rules, the resulting caret
   /// position is returned.
   // TODO: Move this method to an appropriate place. It was made public and static
   //       because document_keyboard_actions.dart also uses this behavior.
-  static DocumentPosition getDocumentPositionAfterExpandedDeletion({
+  static DocumentPosition? getDocumentPositionAfterExpandedDeletion({
     required Document document,
     required DocumentSelection selection,
   }) {
@@ -1419,15 +1422,32 @@ class CommonEditorOperations {
     final bottomNodePosition =
         baseNodeIndex < extentNodeIndex ? extentPosition.nodePosition : basePosition.nodePosition;
 
+    final normalizedRange = selection.normalize(document);
+    final nodes = document.getNodesInside(normalizedRange.start, normalizedRange.end);
+    final firstDeletableNodeId = nodes.firstWhereOrNull((node) => node.isDeletable)?.id;
+
     DocumentPosition newSelectionPosition;
 
     if (baseNodeIndex != extentNodeIndex) {
       if (topNodePosition == topNode.beginningPosition && bottomNodePosition == bottomNode.endPosition) {
-        // All nodes in the selection will be deleted. Assume that the start
-        // node will be retained and converted into a paragraph, if it's not
+        // All deletable nodes in the selection will be deleted. Assume that one of the
+        // nodes will be retained and converted into a paragraph, if it's not
         // already a paragraph.
+
+        final emptyParagraphId = topNode.isDeletable
+            ? topNode.id
+            : bottomNode.isDeletable
+                ? bottomNode.id
+                : firstDeletableNodeId;
+
+        if (emptyParagraphId == null) {
+          // There are no deletable nodes in the selection. Fizzle.
+          // We don't expect this method to be called if there are no deletable nodes.
+          return null;
+        }
+
         newSelectionPosition = DocumentPosition(
-          nodeId: topNode.id,
+          nodeId: emptyParagraphId,
           nodePosition: const TextNodePosition(offset: 0),
         );
       } else if (topNodePosition == topNode.beginningPosition) {
@@ -2277,7 +2297,7 @@ class CommonEditorOperations {
   /// moves the caret, it's possible that the clipboard content will be pasted
   /// at the wrong spot.
   void paste() {
-    DocumentPosition pastePosition = composer.selection!.extent;
+    DocumentPosition? pastePosition = composer.selection!.extent;
 
     // Start a transaction so that we can capture both the initial deletion behavior,
     // and the clipboard content insertion, all as one transaction.
@@ -2289,6 +2309,11 @@ class CommonEditorOperations {
         document: document,
         selection: composer.selection!,
       );
+
+      if (pastePosition == null) {
+        // There are no deletable nodes in the selection. Do nothing.
+        return;
+      }
 
       // Delete the selected content.
       editor.execute([
