@@ -1,3 +1,11 @@
+## [0.1.15] - Nov, 2024
+ * [FIX] - Fix layout error when text in `SuperText` is empty.
+
+## [0.1.14] - Sept, 2024
+ * [FIX] - Flutter was reporting 1px height different between empty text and non-empty text.
+   We introduced a temporary hack fix to keep the reported height consistent until Flutter
+   ships its own fix.
+
 ## [0.1.13] - Sept, 2024
  * [FIX] - Caret size is as expected when placed at end of paragraph with preceding space. 
    This bug was caused by Flutter and we introduced a temporary hack to solve it until 
