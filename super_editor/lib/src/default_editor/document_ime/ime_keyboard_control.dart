@@ -74,6 +74,11 @@ class _SoftwareKeyboardOpenerState extends State<SoftwareKeyboardOpener> impleme
   }
 
   @override
+  void hide() {
+    SystemChannels.textInput.invokeListMethod("TextInput.hide");
+  }
+
+  @override
   void close() {
     editorImeLog.info("[SoftwareKeyboard] - closing IME connection.");
     widget.imeConnection.value?.close();
@@ -125,6 +130,11 @@ class SoftwareKeyboardController {
     _delegate?.open();
   }
 
+  void hide() {
+    assert(hasDelegate);
+    _delegate?.hide();
+  }
+
   /// Closes the software keyboard.
   void close() {
     assert(hasDelegate);
@@ -141,6 +151,9 @@ abstract class SoftwareKeyboardControllerDelegate {
   /// Opens the software keyboard.
   void open();
 
-  /// Closes the software keyboard.
+  /// Hides the software keyboard without closing the IME connection.
+  void hide();
+
+  /// Closes the software keyboard, and the IME connection.
   void close();
 }
