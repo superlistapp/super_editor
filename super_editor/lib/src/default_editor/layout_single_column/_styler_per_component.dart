@@ -66,13 +66,6 @@ class SingleColumnLayoutComponentStyles {
   final double? width;
   final EdgeInsetsGeometry? padding;
 
-  void applyTo(DocumentNode node) {
-    node.putMetadataValue(_metadataKey, {
-      _widthKey: width,
-      _paddingKey: padding,
-    });
-  }
-
   Map<String, dynamic> toMetadata() => {
         _metadataKey: {
           _widthKey: width,

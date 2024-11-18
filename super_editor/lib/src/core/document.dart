@@ -55,13 +55,27 @@ abstract class Document implements Iterable<DocumentNode> {
   /// given [node] in this [Document], or null if the given [node]
   /// is the first node, or the given [node] does not exist in this
   /// [Document].
+  @Deprecated("Use getNodeBeforeById() instead")
   DocumentNode? getNodeBefore(DocumentNode node);
+
+  /// Returns the [DocumentNode] that appears immediately before the
+  /// node with the given [nodeId] in this [Document], or `null` if
+  /// the matching node is the first node in the document, or no such
+  /// node exists.
+  DocumentNode? getNodeBeforeById(String nodeId);
 
   /// Returns the [DocumentNode] that appears immediately after the
   /// given [node] in this [Document], or null if the given [node]
   /// is the last node, or the given [node] does not exist in this
   /// [Document].
+  @Deprecated("Use getNodeAfterById() instead")
   DocumentNode? getNodeAfter(DocumentNode node);
+
+  /// Returns the [DocumentNode] that appears immediately after the
+  /// node with the given [nodeId] in this [Document], or `null` if
+  /// the matching node is the last node in the document, or no such
+  /// node exists.
+  DocumentNode? getNodeAfterById(String nodeId);
 
   /// Returns the [DocumentNode] at the given [position], or [null] if
   /// no such node exists in this [Document].
@@ -308,13 +322,42 @@ class DocumentPosition {
 }
 
 /// A single content node within a [Document].
-abstract class DocumentNode implements ChangeNotifier {
+@immutable
+abstract class DocumentNode {
   DocumentNode({
     Map<String, dynamic>? metadata,
   }) : _metadata = metadata ?? {};
 
+  /// Adds [addedMetadata] to this nodes [metadata].
+  ///
+  /// This protected method is intended to be used only during constructor
+  /// initialization by subclasses, so that subclasses can inject needed metadata
+  /// during construction time. This special method is provided because [DocumentNode]s
+  /// are otherwise immutable.
+  ///
+  /// For example, a `ParagraphNode` might need to ensure that its block type
+  /// metadata is set to `paragraphAttribution`:
+  ///
+  ///     ParagraphNode({
+  ///       required super.id,
+  ///       required super.text,
+  ///       this.indent = 0,
+  ///       super.metadata,
+  ///     }) {
+  ///       if (getMetadataValue("blockType") == null) {
+  ///         initAddToMetadata({"blockType": paragraphAttribution});
+  ///       }
+  ///     }
+  ///
+  @protected
+  void initAddToMetadata(Map<String, dynamic> addedMetadata) {
+    _metadata.addAll(addedMetadata);
+  }
+
   /// ID that is unique within a [Document].
   String get id;
+
+  bool get isDeletable => _metadata[NodeMetadata.isDeletable] != false;
 
   /// Returns the [NodePosition] that corresponds to the beginning
   /// of content in this node.
@@ -380,23 +423,9 @@ abstract class DocumentNode implements ChangeNotifier {
   }
 
   /// Returns all metadata attached to this [DocumentNode].
-  Map<String, dynamic> get metadata => _metadata;
+  Map<String, dynamic> get metadata => Map.from(_metadata);
 
   final Map<String, dynamic> _metadata;
-
-  /// Sets all metadata for this [DocumentNode], removing all
-  /// existing values.
-  set metadata(Map<String, dynamic>? newMetadata) {
-    if (const DeepCollectionEquality().equals(_metadata, newMetadata)) {
-      return;
-    }
-
-    _metadata.clear();
-    if (newMetadata != null) {
-      _metadata.addAll(newMetadata);
-    }
-    notifyListeners();
-  }
 
   /// Returns `true` if this node has a non-null metadata value for
   /// the given metadata [key], and returns `false`, otherwise.
@@ -405,23 +434,19 @@ abstract class DocumentNode implements ChangeNotifier {
   /// Returns this node's metadata value for the given [key].
   dynamic getMetadataValue(String key) => _metadata[key];
 
-  /// Sets this node's metadata value for the given [key] to the given
-  /// [value], and notifies node listeners that a change has occurred.
-  void putMetadataValue(String key, dynamic value) {
-    if (_metadata[key] == value) {
-      return;
-    }
+  /// Returns a copy of this [DocumentNode] with [newProperties] added to
+  /// the node's metadata.
+  ///
+  /// If [newProperties] contains keys that already exist in this node's
+  /// metadata, the existing properties are overwritten by [newProperties].
+  DocumentNode copyWithAddedMetadata(Map<String, dynamic> newProperties);
 
-    _metadata[key] = value;
-    notifyListeners();
-  }
+  /// Returns a copy of this [DocumentNode], replacing its existing
+  /// metadata with [newMetadata].
+  DocumentNode copyAndReplaceMetadata(Map<String, dynamic> newMetadata);
 
   /// Returns a copy of this node's metadata.
   Map<String, dynamic> copyMetadata() => Map.from(_metadata);
-
-  DocumentNode copy();
-
-  bool get isDeletable => _metadata[NodeMetadata.isDeletable] != false;
 
   @override
   bool operator ==(Object other) =>
