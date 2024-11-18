@@ -20,20 +20,11 @@ class DocumentKeys {
 /// Builds a full-screen collapsed drag handle display, with the handle positioned near the [focalPoint],
 /// and with the handle attached to the given [handleKey].
 ///
-/// The [handleKey] is used to find the handle in the widget tree for various purposes,
-/// e.g., within tests to verify the presence or absence of the handle.
-///
-/// The [gestureDelegate] defines handlers for gesture events that occur on a given handle. Implementers
-/// should set each of the [gestureDelegate]'s properties to the corresponding properties on the handle's
-/// gesture detector. For example, [gestureDelegate.onTap] must be set to the handle's `onTap` event.
-///
-/// When the handle is not desired, instead of not calling this builder at all, it's called with
-/// [shouldShow] set to `false`. This allows implementers to fade in/out the handle entrance/exit. If an
-/// animation isn't desired, simply return a [SizedBox] when [shouldShow] is `false`.
-///
-/// The [handleKey] must be attached to the handle, not the top-level widget returned
-/// from this builder, because the [handleKey] might be used to verify the size and location
-/// of the handle. For example:
+/// Implementers of this builder have the following responsibilities:
+/// * Attach the [handleKey] to the widget that renders the handle.
+/// * Wrap the handle widget with a `Follower` and attach the `focalPoint` to the `Follower`.
+/// * Wrap the handle widget with a `GestureDetector` and attach the provided [gestureDelegate] callbacks to the `GestureDetector`.
+/// * When [shouldShow] is `false`, hide the handle and ensure that no gestures are handled.
 ///
 /// ```dart
 /// Widget buildCollapsedHandle(BuildContext context, {
@@ -42,10 +33,21 @@ class DocumentKeys {
 ///   required Key handleKey,
 ///   required bool shouldShow,
 /// }) {
-///   return Follower(
+///   if (!shouldShow) {
+///     return const SizedBox();
+///   }
+///   return Follower.withOffset(
+///     offset: Offset.zero,
 ///     link: focalPoint,
-///     child: CollapsedHandle(
-///       key: handleKey,
+///     child: GestureDetector(
+///       onTap: gestureDelegate.onTap,
+///       onPanStart: gestureDelegate.onPanStart,
+///       onPanUpdate: gestureDelegate.onPanUpdate,
+///       onPanEnd: gestureDelegate.onPanEnd,
+///       onPanCancel: gestureDelegate.onPanCancel,
+///       child: CollapsedHandle(
+///         key: handleKey,
+///       ),
 ///     ),
 ///   );
 /// }
@@ -65,15 +67,15 @@ typedef DocumentCollapsedHandleBuilder = Widget Function(
 /// The [upstreamHandleKey] and [downstreamHandleKey] are used to find the handles in the widget tree for
 /// various purposes, e.g., within tests to verify the presence or absence of the handles.
 ///
-/// The [downstreamGestureDelegate] and [upstreamGestureDelegate] define handlers for gesture events
-/// that occur on a given handle. Implementers should set each of the [downstreamGestureDelegate]'s properties to
-/// the corresponding properties on the downstream handle's gesture detector and each of the [upstreamGestureDelegate]'s
-/// properties to the corresponding properties on the upstream handle's gesture detector. For example,
-/// [downstreamGestureDelegate.onTap] must be set to the downstream handle's `onTap` event.
-///
-/// When the handle is not desired, instead of not calling this builder at all, it's called with
-/// [shouldShow] set to `false`. This allows implementers to fade in/out the handle entrance/exit. If an
-/// animation isn't desired, simply return a [SizedBox] when [shouldShow] is `false`.
+/// Implementers of this builder have the following responsibilities:
+/// * Attach the [upstreamHandleKey] to the widget that renders the upstream handle and [downstreamHandleKey]
+///   to the downstream handle.
+/// * Wrap each handle widget with a `Follower`, attaching the [downstreamFocalPoint] to the downstream handle `Follower`
+///   and [upstreamFocalPoint] to the upstream handle `Follower`.
+/// * Wrap each handle widget with a `GestureDetector`, attaching the provided [upstreamGestureDelegate] callbacks to
+///   the upstream handle `GestureDetector` and the [downstreamGestureDelegate] callbacks to the downstream
+///   handle `GestureDetector`.
+/// * When [shouldShow] is `false`, hide the handle and ensure that no gestures are handled.
 ///
 /// The handle keys must be attached to the handles, not the top-level widget returned
 /// from this builder, because the handle keys might be used to verify the size and location
@@ -89,15 +91,34 @@ typedef DocumentCollapsedHandleBuilder = Widget Function(
 ///   required Key upstreamHandleKey,
 ///   required bool shouldShow,
 ///  }) {
+///   if (!shouldShow) {
+///     return const SizedBox();
+///   }
 ///   return Stack(
 ///     children: [
-///       Follower(
-///        link: upstreamFocalPoint,
-///        child: UpstreamHandle(key: upstreamHandleKey),
+///       Follower.withOffset(
+///         offset: Offset.zero,
+///         link: upstreamFocalPoint,
+///         child: GestureDetector(
+///           onTapDown: upstreamGestureDelegate.onTapDown,
+///           onPanStart: upstreamGestureDelegate.onPanStart,
+///           onPanUpdate: upstreamGestureDelegate.onPanUpdate,
+///           onPanEnd: upstreamGestureDelegate.onPanEnd,
+///           onPanCancel: upstreamGestureDelegate.onPanCancel,
+///           child: UpstreamHandle(key: upstreamHandleKey),
+///         ),
 ///       ),
-///       Follower(
-///        link: downstreamFocalPoint,
-///        child: DownstreamHandle(key: downstreamHandleKey),
+///       Follower.withOffset(
+///         offset: Offset.zero,
+///         link: downstreamFocalPoint,
+///         child: GestureDetector(
+///           onTapDown: downstreamGestureDelegate.onTapDown,
+///           onPanStart: downstreamGestureDelegate.onPanStart,
+///           onPanUpdate: downstreamGestureDelegate.onPanUpdate,
+///           onPanEnd: downstreamGestureDelegate.onPanEnd,
+///           onPanCancel: downstreamGestureDelegate.onPanCancel,
+///           child: DownstreamHandle(key: downstreamHandleKey),
+///         ),
 ///       ),
 ///     ],
 ///   );
