@@ -908,6 +908,7 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
         ..hideToolbar()
         ..doNotBlinkCaret();
     } else if (!widget.selection.value!.isCollapsed) {
+      // The selection is expanded.
       _controlsController!
         ..hideCollapsedHandle()
         ..showExpandedHandles()
@@ -925,15 +926,29 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
         ..hideMagnifier()
         ..blinkCaret();
 
-      if (didTapOnExistingSelection) {
+      if (didTapOnExistingSelection && _isKeyboardOpen) {
         // Toggle the toolbar display when the user taps on the collapsed caret,
         // or on top of an existing selection.
+        //
+        // But we only do this when the keyboard is already open. This is because
+        // we don't want to show the toolbar when the user taps simply to open
+        // the keyboard. That would feel unintentional, like a bug.
         _controlsController!.toggleToolbar();
       } else {
         // The user tapped somewhere else in the document. Hide the toolbar.
         _controlsController!.hideToolbar();
       }
     }
+  }
+
+  /// Returns `true` if we *think* the software keyboard is currently open, or
+  /// `false` otherwise.
+  ///
+  /// We say "think" because Flutter doesn't report this info to us. Instead, we
+  /// inspect the bottom insets on the window, and we assume any insets greater than
+  /// zero means a keyboard is visible.
+  bool get _isKeyboardOpen {
+    return MediaQuery.viewInsetsOf(context).bottom > 0;
   }
 
   void _onPanStart(DragStartDetails details) {

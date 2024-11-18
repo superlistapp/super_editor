@@ -616,9 +616,13 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
           selection.extent.nodeId == adjustedSelectionPosition.nodeId &&
           selection.extent.nodePosition.isEquivalentTo(adjustedSelectionPosition.nodePosition);
 
-      if (didTapOnExistingSelection) {
+      if (didTapOnExistingSelection && _isKeyboardOpen) {
         // Toggle the toolbar display when the user taps on the collapsed caret,
         // or on top of an existing selection.
+        //
+        // But we only do this when the keyboard is already open. This is because
+        // we don't want to show the toolbar when the user taps simply to open
+        // the keyboard. That would feel unintentional, like a bug.
         _controlsController!.toggleToolbar();
       } else {
         // The user tapped somewhere else in the document. Hide the toolbar.
@@ -659,6 +663,16 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
     }
 
     widget.focusNode.requestFocus();
+  }
+
+  /// Returns `true` if we *think* the software keyboard is currently open, or
+  /// `false` otherwise.
+  ///
+  /// We say "think" because Flutter doesn't report this info to us. Instead, we
+  /// inspect the bottom insets on the window, and we assume any insets greater than
+  /// zero means a keyboard is visible.
+  bool get _isKeyboardOpen {
+    return MediaQuery.viewInsetsOf(context).bottom > 0;
   }
 
   DocumentPosition _moveTapPositionToWordBoundary(DocumentPosition docPosition) {
