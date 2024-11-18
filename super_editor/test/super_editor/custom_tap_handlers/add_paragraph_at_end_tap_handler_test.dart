@@ -27,8 +27,7 @@ void main() {
               ],
             ))
             .withEditorSize(const Size(500, 1000))
-            .withTapDelegateFactory(superEditorAddEmptyParagraphTapHandlerFactory)
-            .pump();
+            .withTapDelegateFactories([superEditorAddEmptyParagraphTapHandlerFactory]).pump();
 
         // Tap below the end of the document and wait for the double tap
         // timeout to expire.
@@ -71,7 +70,7 @@ void main() {
               ],
             ))
             .withEditorSize(const Size(500, 1000))
-            .withTapDelegateFactory(superEditorAddEmptyParagraphTapHandlerFactory)
+            .withTapDelegateFactories([superEditorAddEmptyParagraphTapHandlerFactory]) //
             .pump();
 
         // Tap below the end of the document and wait for the double tap

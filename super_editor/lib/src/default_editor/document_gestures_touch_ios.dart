@@ -247,7 +247,7 @@ class IosDocumentTouchInteractor extends StatefulWidget {
     required this.scrollController,
     required this.dragHandleAutoScroller,
     required this.fillViewport,
-    this.contentTapHandler,
+    this.contentTapHandlers,
     this.dragAutoScrollBoundary = const AxisOffset.symmetric(54),
     this.showDebugPaint = false,
     required this.child,
@@ -263,9 +263,12 @@ class IosDocumentTouchInteractor extends StatefulWidget {
   /// A callback that should open the software keyboard when invoked.
   final VoidCallback openSoftwareKeyboard;
 
-  /// Optional handler that responds to taps on content, e.g., opening
+  /// Optional list of handlers that respond to taps on content, e.g., opening
   /// a link when the user taps on text with a link attribution.
-  final ContentTapDelegate? contentTapHandler;
+  ///
+  /// If a handler returns [TapHandlingInstruction.halt], no subsequent handlers
+  /// nor the default tap behavior will be executed.
+  final List<ContentTapDelegate>? contentTapHandlers;
 
   final ScrollController scrollController;
 
@@ -578,18 +581,20 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
     final docOffset = _interactorOffsetToDocumentOffset(details.localPosition);
     editorGesturesLog.fine(" - document offset: $docOffset");
 
-    if (widget.contentTapHandler != null) {
-      final result = widget.contentTapHandler!.onTap(
-        DocumentTapDetails(
-          documentLayout: _docLayout,
-          layoutOffset: docOffset,
-          globalOffset: details.globalPosition,
-        ),
-      );
-      if (result == TapHandlingInstruction.halt) {
-        // The custom tap handler doesn't want us to react at all
-        // to the tap.
-        return;
+    if (widget.contentTapHandlers != null) {
+      for (final handler in widget.contentTapHandlers!) {
+        final result = handler.onTap(
+          DocumentTapDetails(
+            documentLayout: _docLayout,
+            layoutOffset: docOffset,
+            globalOffset: details.globalPosition,
+          ),
+        );
+        if (result == TapHandlingInstruction.halt) {
+          // The custom tap handler doesn't want us to react at all
+          // to the tap.
+          return;
+        }
       }
     }
 
@@ -698,18 +703,20 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
     final docOffset = _interactorOffsetToDocumentOffset(details.localPosition);
     editorGesturesLog.fine(" - document offset: $docOffset");
 
-    if (widget.contentTapHandler != null) {
-      final result = widget.contentTapHandler!.onDoubleTap(
-        DocumentTapDetails(
-          documentLayout: _docLayout,
-          layoutOffset: docOffset,
-          globalOffset: details.globalPosition,
-        ),
-      );
-      if (result == TapHandlingInstruction.halt) {
-        // The custom tap handler doesn't want us to react at all
-        // to the tap.
-        return;
+    if (widget.contentTapHandlers != null) {
+      for (final handler in widget.contentTapHandlers!) {
+        final result = handler.onDoubleTap(
+          DocumentTapDetails(
+            documentLayout: _docLayout,
+            layoutOffset: docOffset,
+            globalOffset: details.globalPosition,
+          ),
+        );
+        if (result == TapHandlingInstruction.halt) {
+          // The custom tap handler doesn't want us to react at all
+          // to the tap.
+          return;
+        }
       }
     }
 
@@ -783,18 +790,20 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
     final docOffset = _interactorOffsetToDocumentOffset(details.localPosition);
     editorGesturesLog.fine(" - document offset: $docOffset");
 
-    if (widget.contentTapHandler != null) {
-      final result = widget.contentTapHandler!.onTripleTap(
-        DocumentTapDetails(
-          documentLayout: _docLayout,
-          layoutOffset: docOffset,
-          globalOffset: details.globalPosition,
-        ),
-      );
-      if (result == TapHandlingInstruction.halt) {
-        // The custom tap handler doesn't want us to react at all
-        // to the tap.
-        return;
+    if (widget.contentTapHandlers != null) {
+      for (final handler in widget.contentTapHandlers!) {
+        final result = handler.onTripleTap(
+          DocumentTapDetails(
+            documentLayout: _docLayout,
+            layoutOffset: docOffset,
+            globalOffset: details.globalPosition,
+          ),
+        );
+        if (result == TapHandlingInstruction.halt) {
+          // The custom tap handler doesn't want us to react at all
+          // to the tap.
+          return;
+        }
       }
     }
 

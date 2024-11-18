@@ -353,9 +353,10 @@ class TestSuperEditorConfigurator {
     return this;
   }
 
-  /// Configures the [SuperEditor] to use the given [tapDelegateFactory].
-  TestSuperEditorConfigurator withTapDelegateFactory(SuperEditorContentTapDelegateFactory? tapDelegateFactory) {
-    _config.tapDelegateFactory = tapDelegateFactory;
+  /// Configures the [SuperEditor] to use only the given [tapDelegateFactories].
+  TestSuperEditorConfigurator withTapDelegateFactories(
+      List<SuperEditorContentTapDelegateFactory>? tapDelegateFactories) {
+    _config.tapDelegateFactories = tapDelegateFactories;
     return this;
   }
 
@@ -594,7 +595,8 @@ class _TestSuperEditorState extends State<_TestSuperEditor> {
       focusNode: widget.testDocumentContext.focusNode,
       autofocus: widget.testConfiguration.autoFocus,
       tapRegionGroupId: widget.testConfiguration.tapRegionGroupId,
-      contentTapDelegateFactory: widget.testConfiguration.tapDelegateFactory ?? superEditorLaunchLinkTapHandlerFactory,
+      contentTapDelegateFactories:
+          widget.testConfiguration.tapDelegateFactories ?? [superEditorLaunchLinkTapHandlerFactory],
       editor: widget.testDocumentContext.editor,
       documentLayoutKey: widget.testDocumentContext.layoutKey,
       inputSource: widget.testConfiguration.inputSource,
@@ -720,7 +722,7 @@ class SuperEditorTestConfiguration {
 
   DocumentSelection? selection;
 
-  SuperEditorContentTapDelegateFactory? tapDelegateFactory;
+  List<SuperEditorContentTapDelegateFactory>? tapDelegateFactories;
 
   final plugins = <SuperEditorPlugin>{};
 
