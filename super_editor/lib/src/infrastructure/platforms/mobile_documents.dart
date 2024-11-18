@@ -23,12 +23,13 @@ class DocumentKeys {
 /// The [handleKey] is used to find the handle in the widget tree for various purposes,
 /// e.g., within tests to verify the presence or absence of the handle.
 ///
-/// The [gestureDelegate] hold event handles that should be attached to the gesture recognizer
-/// attached to the handle. For example, set [gestureDelegate.onTap] to the handle's `onTap` event.
+/// The [gestureDelegate] defines handlers for gesture events that occur on a given handle. Implementers
+/// should set each of the [gestureDelegate]'s properties to the corresponding properties on the handle's
+/// gesture detector. For example, [gestureDelegate.onTap] must be set to the handle's `onTap` event.
 ///
-/// Use [shouldShow] to fade in/out the handle entrance/exit, for example, using an [AnimatedOpacity]
-/// to switch between `0.0` and `1.0`. If an animation isn't desired, return a [SizedBox] when [shouldShow]
-/// is `false`.
+/// When the handle is not desired, instead of not calling this builder at all, it's called with
+/// [shouldShow] set to `false`. This allows implementers to fade in/out the handle entrance/exit. If an
+/// animation isn't desired, simply return a [SizedBox] when [shouldShow] is `false`.
 ///
 /// The [handleKey] must be attached to the handle, not the top-level widget returned
 /// from this builder, because the [handleKey] might be used to verify the size and location
@@ -64,20 +65,22 @@ typedef DocumentCollapsedHandleBuilder = Widget Function(
 /// The [upstreamHandleKey] and [downstreamHandleKey] are used to find the handles in the widget tree for
 /// various purposes, e.g., within tests to verify the presence or absence of the handles.
 ///
-/// The [downstreamGestureDelegate] and [upstreamGestureDelegate] hold event handles that should be attached
-/// to the gesture recognizers attached to the handles. For example, set [downstreamGestureDelegate.onTap] to
-/// the downstream handle recognizer's `onTap` event.
+/// The [downstreamGestureDelegate] and [upstreamGestureDelegate] define handlers for gesture events
+/// that occur on a given handle. Implementers should set each of the [downstreamGestureDelegate]'s properties to
+/// the corresponding properties on the downstream handle's gesture detector and each of the [upstreamGestureDelegate]'s
+/// properties to the corresponding properties on the upstream handle's gesture detector. For example,
+/// [downstreamGestureDelegate.onTap] must be set to the downstream handle's `onTap` event.
 ///
-/// Use [shouldShow] to fade in/out the handles entrance/exit, for example, using an [AnimatedOpacity]
-/// to switch between `0.0` and `1.0`. If an animation isn't desired, return a [SizedBox] when [shouldShow]
-/// is `false`.
+/// When the handle is not desired, instead of not calling this builder at all, it's called with
+/// [shouldShow] set to `false`. This allows implementers to fade in/out the handle entrance/exit. If an
+/// animation isn't desired, simply return a [SizedBox] when [shouldShow] is `false`.
 ///
 /// The handle keys must be attached to the handles, not the top-level widget returned
 /// from this builder, because the handle keys might be used to verify the size and location
 /// of the handles. For example:
 ///
 /// ```dart
-/// Widget buildCollapsedHandle(BuildContext context, {
+/// Widget buildExpandedHandles(BuildContext context, {
 ///   required LeaderLink downstreamFocalPoint,
 ///   required DocumentHandleGestureDelegate downstreamGestureDelegate,
 ///   required Key downstreamHandleKey,
@@ -114,10 +117,31 @@ typedef DocumentExpandedHandlesBuilder = Widget Function(
 /// Delegate for handling gestures on a document handle.
 ///
 /// These callbacks are intended to make it easier for developers to customize
-/// the drag handles, without having to re-implement the gesture logic.
+/// the drag handles, without having to re-implement the gesture logic. For
+/// example, implementers can wrap the handle in a `GestureDetector`:
 ///
-/// To use it, for example, wrap the handle in a `GestureDetector` and pass
-/// these callbacks to the corresponding gesture events.
+/// ```dart
+/// Widget buildCollapsedHandle(BuildContext context, {
+///   required LeaderLink focalPoint,
+///   required DocumentHandleGestureDelegate gestureDelegate,
+///   required Key handleKey,
+///   required bool shouldShow,
+/// }) {
+///   return Follower(
+///     link: focalPoint,
+///     child: GestureDetector(
+///       onTap: gestureDelegate.onTap,
+///       onPanStart: gestureDelegate.onPanStart,
+///       onPanUpdate: gestureDelegate.onPanUpdate,
+///       onPanEnd: gestureDelegate.onPanEnd,
+///       onPanCancel: gestureDelegate.onPanCancel,
+///       child: CollapsedHandle(
+///         key: handleKey,
+///       ),
+///     ),
+///   );
+/// }
+/// ```
 class DocumentHandleGestureDelegate {
   DocumentHandleGestureDelegate({
     this.onTapDown,
