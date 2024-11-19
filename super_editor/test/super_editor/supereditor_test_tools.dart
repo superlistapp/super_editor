@@ -102,7 +102,7 @@ class TestSuperEditorConfigurator {
   TestSuperEditorConfigurator._fromExistingConfiguration(this._widgetTester, this._config);
 
   TestSuperEditorConfigurator._(this._widgetTester, MutableDocument document)
-      : _config = SuperEditorTestConfiguration(document);
+      : _config = SuperEditorTestConfiguration(_widgetTester, document);
 
   final WidgetTester _widgetTester;
   final SuperEditorTestConfiguration _config;
@@ -208,6 +208,20 @@ class TestSuperEditorConfigurator {
     return this;
   }
 
+  /// When `true`, adds [MediaQuery] view insets to simulate the appearance of a software keyboard
+  /// whenever the IME connection is active - when `false`, does nothing.
+  TestSuperEditorConfigurator simulateSoftwareKeyboardInsets(
+    bool doSimulation, {
+    double simulatedKeyboardHeight = 300,
+    bool animateKeyboard = false,
+  }) {
+    _config
+      ..simulateSoftwareKeyboardInsets = doSimulation
+      ..simulatedKeyboardHeight = simulatedKeyboardHeight
+      ..animateSimulatedSoftwareKeyboard = animateKeyboard;
+    return this;
+  }
+
   /// Configures the [SuperEditor] with the given IME [policies], which dictate the interactions
   /// between focus, selection, and the platform IME, including software keyborads on mobile.
   TestSuperEditorConfigurator withImePolicies(SuperEditorImePolicies policies) {
@@ -225,6 +239,13 @@ class TestSuperEditorConfigurator {
   /// determined by the given [imeOverrides].
   TestSuperEditorConfigurator withImeOverrides(DeltaTextInputClientDecorator imeOverrides) {
     _config.imeOverrides = imeOverrides;
+    return this;
+  }
+
+  /// Configures the [SuperEditor] with the given [isImeConnected] notifier, which allows test
+  /// code to listen for changes to the IME connection from within [SuperEditor].
+  TestSuperEditorConfigurator withImeConnectionNotifier(ValueNotifier<bool>? isImeConnected) {
+    _config.isImeConnected = isImeConnected ?? ValueNotifier<bool>(false);
     return this;
   }
 
@@ -306,6 +327,18 @@ class TestSuperEditorConfigurator {
   /// Configures the [SuperEditor] to use the given [builder] as its android toolbar builder.
   TestSuperEditorConfigurator withAndroidToolbarBuilder(DocumentFloatingToolbarBuilder? builder) {
     _config.androidToolbarBuilder = builder;
+    return this;
+  }
+
+  /// Configures the [SuperEditor] to use the given [builder] as its android collapsed handle builder.
+  TestSuperEditorConfigurator withAndroidCollapsedHandleBuilder(DocumentCollapsedHandleBuilder? builder) {
+    _config.androidCollapsedHandleBuilder = builder;
+    return this;
+  }
+
+  /// Configures the [SuperEditor] to use the given [builder] as its android expanded handles builder.
+  TestSuperEditorConfigurator withAndroidExpandedHandlesBuilder(DocumentExpandedHandlesBuilder? builder) {
+    _config.androidExpandedHandlesBuilder = builder;
     return this;
   }
 
@@ -454,7 +487,9 @@ class TestSuperEditorConfigurator {
   /// Builds a complete screen experience, which includes the given [superEditor].
   Widget _buildWidgetTree(Widget superEditor) {
     if (_config.widgetTreeBuilder != null) {
-      return _config.widgetTreeBuilder!(superEditor);
+      return _buildSimulatedSoftwareKeyboard(
+        child: _config.widgetTreeBuilder!(superEditor),
+      );
     }
     return MaterialApp(
       theme: _config.appTheme,
@@ -465,21 +500,39 @@ class TestSuperEditorConfigurator {
       // Use our own version of the shortcuts, so we can set `debugIsWebOverride` to `true` to force
       // Flutter to pick the web shortcuts.
       shortcuts: defaultFlutterShortcuts,
-      home: Scaffold(
-        appBar: _config.appBarHeight != null
-            ? PreferredSize(
-                preferredSize: ui.Size(double.infinity, _config.appBarHeight!),
-                child: SafeArea(
-                  child: SizedBox(
-                    height: _config.appBarHeight!,
-                    child: const ColoredBox(color: Colors.yellow),
+      home: _buildSimulatedSoftwareKeyboard(
+        child: Scaffold(
+          appBar: _config.appBarHeight != null
+              ? PreferredSize(
+                  preferredSize: ui.Size(double.infinity, _config.appBarHeight!),
+                  child: SafeArea(
+                    child: SizedBox(
+                      height: _config.appBarHeight!,
+                      child: const ColoredBox(color: Colors.yellow),
+                    ),
                   ),
-                ),
-              )
-            : null,
-        body: superEditor,
+                )
+              : null,
+          body: superEditor,
+          resizeToAvoidBottomInset: false,
+          // ^ Don't automatically resize content to avoid keyboard. We want to be
+          //   able to test our keyboard scaffold, which needs full screen height.
+          //   If a test ever needs this to be `true` then we should make this configurable.
+        ),
       ),
       debugShowCheckedModeBanner: false,
+    );
+  }
+
+  Widget _buildSimulatedSoftwareKeyboard({
+    required Widget child,
+  }) {
+    return SoftwareKeyboardHeightSimulator(
+      tester: _config.tester,
+      isEnabled: _config.simulateSoftwareKeyboardInsets,
+      keyboardHeight: _config.simulatedKeyboardHeight,
+      animateKeyboard: _config.animateSimulatedSoftwareKeyboard,
+      child: child,
     );
   }
 
@@ -550,6 +603,8 @@ class _TestSuperEditorState extends State<_TestSuperEditor> {
 
     _androidControlsController = SuperEditorAndroidControlsController(
       toolbarBuilder: widget.testConfiguration.androidToolbarBuilder,
+      collapsedHandleBuilder: widget.testConfiguration.androidCollapsedHandleBuilder,
+      expandedHandlesBuilder: widget.testConfiguration.androidExpandedHandlesBuilder,
     );
   }
 
@@ -597,6 +652,7 @@ class _TestSuperEditorState extends State<_TestSuperEditor> {
       imePolicies: widget.testConfiguration.imePolicies ?? const SuperEditorImePolicies(),
       imeConfiguration: widget.testConfiguration.imeConfiguration,
       imeOverrides: widget.testConfiguration.imeOverrides,
+      isImeConnected: widget.testConfiguration.isImeConnected,
       keyboardActions: [
         ...widget.testConfiguration.prependedKeyboardActions,
         ...(widget.testConfiguration.inputSource == TextInputSource.ime
@@ -665,7 +721,9 @@ class _TestSuperEditorState extends State<_TestSuperEditor> {
 }
 
 class SuperEditorTestConfiguration {
-  SuperEditorTestConfiguration(this.document);
+  SuperEditorTestConfiguration(this.tester, this.document);
+
+  final WidgetTester tester;
 
   ThemeData? appTheme;
   Key? key;
@@ -701,14 +759,22 @@ class SuperEditorTestConfiguration {
   Color? androidCaretColor;
 
   SoftwareKeyboardController? softwareKeyboardController;
+  bool simulateSoftwareKeyboardInsets = false;
+  double simulatedKeyboardHeight = 300;
+  bool animateSimulatedSoftwareKeyboard = false;
   SuperEditorImePolicies? imePolicies;
   SuperEditorImeConfiguration? imeConfiguration;
   DeltaTextInputClientDecorator? imeOverrides;
+  ValueNotifier<bool> isImeConnected = ValueNotifier<bool>(false);
   Map<String, SuperEditorSelectorHandler>? selectorHandlers;
   final prependedKeyboardActions = <DocumentKeyboardAction>[];
   final appendedKeyboardActions = <DocumentKeyboardAction>[];
   final addedComponents = <ComponentBuilder>[];
+
   DocumentFloatingToolbarBuilder? androidToolbarBuilder;
+  DocumentCollapsedHandleBuilder? androidCollapsedHandleBuilder;
+  DocumentExpandedHandlesBuilder? androidExpandedHandlesBuilder;
+
   DocumentFloatingToolbarBuilder? iOSToolbarBuilder;
 
   DocumentSelection? selection;

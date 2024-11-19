@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_test_runners/flutter_test_runners.dart';
 import 'package:super_editor/src/infrastructure/platforms/platform.dart';
 import 'package:super_editor/super_editor.dart';
 
@@ -31,6 +32,170 @@ class InputAndGestureTuple {
   @override
   String toString() {
     return '${inputSource.name} Input Source & ${gestureMode.name} Gesture Mode';
+  }
+}
+
+/// A widget that simulates the software keyboard appearance and disappearance.
+///
+/// This works by listening to platform messages that show/hide the software keyboard
+/// and animating the `MediaQuery` bottom insets to reflect the height of the keyboard.
+///
+/// Place this widget above the `Scaffold` in the widget tree.
+class SoftwareKeyboardHeightSimulator extends StatefulWidget {
+  const SoftwareKeyboardHeightSimulator({
+    required this.tester,
+    this.isEnabled = true,
+    this.enableForAllPlatforms = false,
+    this.keyboardHeight = 300,
+    this.animateKeyboard = false,
+    required this.child,
+  });
+
+  /// Flutter's [WidgetTester], which is used to intercept platform messages
+  /// about opening/closing the keyboard.
+  final WidgetTester tester;
+
+  /// Whether or not to enable the simulated software keyboard insets.
+  ///
+  /// This property is provided so that clients don't need to conditionally add/remove
+  /// this widget from the tree. Instead this flag can be flipped, as needed.
+  final bool isEnabled;
+
+  /// Whether to simulate software keyboard insets for all platforms (`true`), or whether to
+  /// only simulate software keyboard insets for mobile platforms, e.g., Android, iOS (`false`).
+  final bool enableForAllPlatforms;
+
+  /// The vertical space, in logical pixels, to occupy at the bottom of the screen to simulate the appearance
+  /// of a keyboard.
+  final double keyboardHeight;
+
+  /// Whether to simulate keyboard open/closing animations.
+  ///
+  /// These animations change the keyboard insets over time, similar to how a real
+  /// software keyboard slides up/down. However, this also means that clients need to
+  /// `pumpAndSettle()` to ensure the animation is complete. If you want to avoid `pumpAndSettle()`
+  /// and you don't care about the animation, then pass `false` to disable the animations.
+  final bool animateKeyboard;
+
+  final Widget child;
+
+  @override
+  State<SoftwareKeyboardHeightSimulator> createState() => _SoftwareKeyboardHeightSimulatorState();
+}
+
+class _SoftwareKeyboardHeightSimulatorState extends State<SoftwareKeyboardHeightSimulator>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _animationController;
+
+  @override
+  void initState() {
+    super.initState();
+    _animationController = AnimationController(
+      duration: const Duration(milliseconds: 600),
+      vsync: this,
+    );
+
+    if (widget.isEnabled) {
+      _setupPlatformMethodInterception();
+    }
+  }
+
+  @override
+  void didUpdateWidget(covariant SoftwareKeyboardHeightSimulator oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.tester != oldWidget.tester && widget.isEnabled) {
+      _setupPlatformMethodInterception();
+    }
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
+  }
+
+  void _showKeyboard() {
+    if (_animationController.isForwardOrCompleted) {
+      // The keyboard is either fully visible or animating its entrance.
+      return;
+    }
+
+    if (!widget.animateKeyboard) {
+      _animationController.value = 1.0;
+      return;
+    }
+
+    _animationController.forward();
+  }
+
+  void _hideKeyboard() {
+    if (const [AnimationStatus.dismissed, AnimationStatus.reverse].contains(_animationController.status)) {
+      // The keyboard is either hidden or animating its exit.
+      return;
+    }
+
+    if (!widget.animateKeyboard) {
+      _animationController.value = 0.0;
+      return;
+    }
+
+    _animationController.reverse();
+  }
+
+  void _setupPlatformMethodInterception() {
+    widget.tester.interceptChannel(SystemChannels.textInput.name) //
+      ..interceptMethod(
+        'TextInput.show',
+        (methodCall) {
+          _showKeyboard();
+          return null;
+        },
+      )
+      ..interceptMethod(
+        'TextInput.setClient',
+        (methodCall) {
+          _showKeyboard();
+          return null;
+        },
+      )
+      ..interceptMethod(
+        'TextInput.clearClient',
+        (methodCall) {
+          _hideKeyboard();
+          return null;
+        },
+      )
+      ..interceptMethod(
+        'TextInput.hide',
+        (methodCall) {
+          _hideKeyboard();
+          return null;
+        },
+      );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _animationController,
+      builder: (context, _) {
+        final realMediaQuery = MediaQuery.of(context);
+        final isRelevantPlatform = widget.enableForAllPlatforms ||
+            (defaultTargetPlatform == TargetPlatform.android || defaultTargetPlatform == TargetPlatform.iOS);
+        final shouldSimulate = widget.isEnabled && isRelevantPlatform;
+
+        return MediaQuery(
+          data: realMediaQuery.copyWith(
+            viewInsets: realMediaQuery.viewInsets.copyWith(
+              bottom: shouldSimulate
+                  ? widget.keyboardHeight * _animationController.value
+                  : realMediaQuery.viewInsets.bottom,
+            ),
+          ),
+          child: widget.child,
+        );
+      },
+    );
   }
 }
 
