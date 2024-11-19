@@ -330,6 +330,18 @@ class TestSuperEditorConfigurator {
     return this;
   }
 
+  /// Configures the [SuperEditor] to use the given [builder] as its android collapsed handle builder.
+  TestSuperEditorConfigurator withAndroidCollapsedHandleBuilder(DocumentCollapsedHandleBuilder? builder) {
+    _config.androidCollapsedHandleBuilder = builder;
+    return this;
+  }
+
+  /// Configures the [SuperEditor] to use the given [builder] as its android expanded handles builder.
+  TestSuperEditorConfigurator withAndroidExpandedHandlesBuilder(DocumentExpandedHandlesBuilder? builder) {
+    _config.androidExpandedHandlesBuilder = builder;
+    return this;
+  }
+
   /// Configures the [SuperEditor] to use the given [builder] as its iOS toolbar builder.
   TestSuperEditorConfigurator withiOSToolbarBuilder(DocumentFloatingToolbarBuilder? builder) {
     _config.iOSToolbarBuilder = builder;
@@ -591,6 +603,8 @@ class _TestSuperEditorState extends State<_TestSuperEditor> {
 
     _androidControlsController = SuperEditorAndroidControlsController(
       toolbarBuilder: widget.testConfiguration.androidToolbarBuilder,
+      collapsedHandleBuilder: widget.testConfiguration.androidCollapsedHandleBuilder,
+      expandedHandlesBuilder: widget.testConfiguration.androidExpandedHandlesBuilder,
     );
   }
 
@@ -756,7 +770,11 @@ class SuperEditorTestConfiguration {
   final prependedKeyboardActions = <DocumentKeyboardAction>[];
   final appendedKeyboardActions = <DocumentKeyboardAction>[];
   final addedComponents = <ComponentBuilder>[];
+
   DocumentFloatingToolbarBuilder? androidToolbarBuilder;
+  DocumentCollapsedHandleBuilder? androidCollapsedHandleBuilder;
+  DocumentExpandedHandlesBuilder? androidExpandedHandlesBuilder;
+
   DocumentFloatingToolbarBuilder? iOSToolbarBuilder;
 
   DocumentSelection? selection;

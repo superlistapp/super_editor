@@ -20,24 +20,45 @@ class DocumentKeys {
 /// Builds a full-screen collapsed drag handle display, with the handle positioned near the [focalPoint],
 /// and with the handle attached to the given [handleKey].
 ///
-/// The [handleKey] is used to find the handle in the widget tree for various purposes,
-/// e.g., within tests to verify the presence or absence of the handle.
-///
-/// The [handleKey] must be attached to the handle, not the top-level widget returned
-/// from this builder, because the [handleKey] might be used to verify the size and location
-/// of the handle. For example:
+/// Implementers of this builder have the following responsibilities:
+/// * Attach the [handleKey] to the widget that renders the handle.
+/// * Wrap the handle widget with a `Follower` and attach the `focalPoint` to the `Follower`.
+/// * Wrap the handle widget with a `GestureDetector` and attach the provided [gestureDelegate] callbacks to the `GestureDetector`.
+/// * When [shouldShow] is `false`, hide the handle and ensure that no gestures are handled.
 ///
 /// ```dart
-/// Widget buildCollapsedHandle(context, handleKey, focalPoint) {
-///   return Follower(
+/// Widget buildCollapsedHandle(BuildContext context, {
+///   required LeaderLink focalPoint,
+///   required DocumentHandleGestureDelegate gestureDelegate,
+///   required Key handleKey,
+///   required bool shouldShow,
+/// }) {
+///   if (!shouldShow) {
+///     return const SizedBox();
+///   }
+///   return Follower.withOffset(
+///     offset: Offset.zero,
 ///     link: focalPoint,
-///     child: CollapsedHandle(
-///       key: handleKey,
+///     child: GestureDetector(
+///       onTap: gestureDelegate.onTap,
+///       onPanStart: gestureDelegate.onPanStart,
+///       onPanUpdate: gestureDelegate.onPanUpdate,
+///       onPanEnd: gestureDelegate.onPanEnd,
+///       onPanCancel: gestureDelegate.onPanCancel,
+///       child: CollapsedHandle(
+///         key: handleKey,
+///       ),
 ///     ),
 ///   );
 /// }
 /// ```
-typedef DocumentCollapsedHandleBuilder = Widget Function(BuildContext, Key handleKey, LeaderLink focalPoint);
+typedef DocumentCollapsedHandleBuilder = Widget Function(
+  BuildContext, {
+  required Key handleKey,
+  required LeaderLink focalPoint,
+  required DocumentHandleGestureDelegate gestureDelegate,
+  required bool shouldShow,
+});
 
 /// Builds a full-screen display of a set of expanded drag handles, with the handles positioned near the
 /// [upstreamFocalPoint] and [downstreamFocalPoint], respectively, and with the handles attached to the
@@ -46,33 +67,119 @@ typedef DocumentCollapsedHandleBuilder = Widget Function(BuildContext, Key handl
 /// The [upstreamHandleKey] and [downstreamHandleKey] are used to find the handles in the widget tree for
 /// various purposes, e.g., within tests to verify the presence or absence of the handles.
 ///
+/// Implementers of this builder have the following responsibilities:
+/// * Attach the [upstreamHandleKey] to the widget that renders the upstream handle and [downstreamHandleKey]
+///   to the downstream handle.
+/// * Wrap each handle widget with a `Follower`, attaching the [downstreamFocalPoint] to the downstream handle `Follower`
+///   and [upstreamFocalPoint] to the upstream handle `Follower`.
+/// * Wrap each handle widget with a `GestureDetector`, attaching the provided [upstreamGestureDelegate] callbacks to
+///   the upstream handle `GestureDetector` and the [downstreamGestureDelegate] callbacks to the downstream
+///   handle `GestureDetector`.
+/// * When [shouldShow] is `false`, hide the handle and ensure that no gestures are handled.
+///
 /// The handle keys must be attached to the handles, not the top-level widget returned
 /// from this builder, because the handle keys might be used to verify the size and location
 /// of the handles. For example:
 ///
 /// ```dart
-/// Widget buildCollapsedHandle(context, upstreamHandleKey, upstreamFocalPoint, downstreamHandleKey, downstreamFocalPoint) {
+/// Widget buildExpandedHandles(BuildContext context, {
+///   required LeaderLink downstreamFocalPoint,
+///   required DocumentHandleGestureDelegate downstreamGestureDelegate,
+///   required Key downstreamHandleKey,
+///   required LeaderLink upstreamFocalPoint,
+///   required DocumentHandleGestureDelegate upstreamGestureDelegate,
+///   required Key upstreamHandleKey,
+///   required bool shouldShow,
+///  }) {
+///   if (!shouldShow) {
+///     return const SizedBox();
+///   }
 ///   return Stack(
 ///     children: [
-///       Follower(
-///        link: upstreamFocalPoint,
-///        child: UpstreamHandle(key: upstreamHandleKey),
+///       Follower.withOffset(
+///         offset: Offset.zero,
+///         link: upstreamFocalPoint,
+///         child: GestureDetector(
+///           onTapDown: upstreamGestureDelegate.onTapDown,
+///           onPanStart: upstreamGestureDelegate.onPanStart,
+///           onPanUpdate: upstreamGestureDelegate.onPanUpdate,
+///           onPanEnd: upstreamGestureDelegate.onPanEnd,
+///           onPanCancel: upstreamGestureDelegate.onPanCancel,
+///           child: UpstreamHandle(key: upstreamHandleKey),
+///         ),
 ///       ),
-///       Follower(
-///        link: downstreamFocalPoint,
-///        child: DownstreamHandle(key: downstreamHandleKey),
+///       Follower.withOffset(
+///         offset: Offset.zero,
+///         link: downstreamFocalPoint,
+///         child: GestureDetector(
+///           onTapDown: downstreamGestureDelegate.onTapDown,
+///           onPanStart: downstreamGestureDelegate.onPanStart,
+///           onPanUpdate: downstreamGestureDelegate.onPanUpdate,
+///           onPanEnd: downstreamGestureDelegate.onPanEnd,
+///           onPanCancel: downstreamGestureDelegate.onPanCancel,
+///           child: DownstreamHandle(key: downstreamHandleKey),
+///         ),
 ///       ),
 ///     ],
 ///   );
 /// }
 /// ```
 typedef DocumentExpandedHandlesBuilder = Widget Function(
-  BuildContext,
-  Key upstreamHandleKey,
-  LeaderLink upstreamFocalPoint,
-  Key downstreamHandleKey,
-  LeaderLink downstreamFocalPoint,
-);
+  BuildContext, {
+  required Key upstreamHandleKey,
+  required LeaderLink upstreamFocalPoint,
+  required DocumentHandleGestureDelegate upstreamGestureDelegate,
+  required Key downstreamHandleKey,
+  required LeaderLink downstreamFocalPoint,
+  required DocumentHandleGestureDelegate downstreamGestureDelegate,
+  required bool shouldShow,
+});
+
+/// Delegate for handling gestures on a document handle.
+///
+/// These callbacks are intended to make it easier for developers to customize
+/// the drag handles, without having to re-implement the gesture logic. For
+/// example, implementers can wrap the handle in a `GestureDetector`:
+///
+/// ```dart
+/// Widget buildCollapsedHandle(BuildContext context, {
+///   required LeaderLink focalPoint,
+///   required DocumentHandleGestureDelegate gestureDelegate,
+///   required Key handleKey,
+///   required bool shouldShow,
+/// }) {
+///   return Follower(
+///     link: focalPoint,
+///     child: GestureDetector(
+///       onTap: gestureDelegate.onTap,
+///       onPanStart: gestureDelegate.onPanStart,
+///       onPanUpdate: gestureDelegate.onPanUpdate,
+///       onPanEnd: gestureDelegate.onPanEnd,
+///       onPanCancel: gestureDelegate.onPanCancel,
+///       child: CollapsedHandle(
+///         key: handleKey,
+///       ),
+///     ),
+///   );
+/// }
+/// ```
+class DocumentHandleGestureDelegate {
+  DocumentHandleGestureDelegate({
+    this.onTapDown,
+    this.onTap,
+    this.onPanStart,
+    this.onPanUpdate,
+    this.onPanEnd,
+    this.onPanCancel,
+  });
+
+  final GestureTapDownCallback? onTapDown;
+  final GestureTapCallback? onTap;
+  final GestureDragStartCallback? onPanStart;
+  final GestureDragUpdateCallback? onPanUpdate;
+  final GestureDragEndCallback? onPanEnd;
+  final GestureDragCancelCallback? onPanCancel;
+}
 
 /// Builds a full-screen floating toolbar display, with the toolbar positioned near the
 /// [focalPoint], and with the toolbar attached to the given [mobileToolbarKey].
@@ -422,8 +529,8 @@ class DragHandleAutoScroller {
       // at the top edge of the scrollable, so we can't scroll further up.
       if (currentScrollOffset > 0.0) {
         // Jump to the position where the offset sits at the leading boundary.
-        scrollPosition.jumpTo((
-          currentScrollOffset + (offsetInViewport.dy - _dragAutoScrollBoundary.leading).clamp(min, max)),
+        scrollPosition.jumpTo(
+          (currentScrollOffset + (offsetInViewport.dy - _dragAutoScrollBoundary.leading).clamp(min, max)),
         );
       }
     } else if (offsetInViewport.dy > _getViewportBox().size.height - _dragAutoScrollBoundary.trailing) {

@@ -1336,11 +1336,39 @@ class SuperEditorAndroidControlsOverlayManagerState extends State<SuperEditorAnd
   final _dragHandleSelectionGlobalFocalPoint = ValueNotifier<Offset?>(null);
   final _magnifierFocalPoint = ValueNotifier<Offset?>(null);
 
+  late final DocumentHandleGestureDelegate _collapsedHandleGestureDelegate;
+  late final DocumentHandleGestureDelegate _upstreamHandleGesturesDelegate;
+  late final DocumentHandleGestureDelegate _downstreamHandleGesturesDelegate;
+
   @override
   void initState() {
     super.initState();
     _overlayController.show();
     widget.selection.addListener(_onSelectionChange);
+    _collapsedHandleGestureDelegate = DocumentHandleGestureDelegate(
+      onTap: _toggleToolbarOnCollapsedHandleTap,
+      onPanStart: (details) => _onHandlePanStart(details, HandleType.collapsed),
+      onPanUpdate: _onHandlePanUpdate,
+      onPanEnd: (details) => _onHandlePanEnd(details, HandleType.collapsed),
+    );
+    _upstreamHandleGesturesDelegate = DocumentHandleGestureDelegate(
+      onTap: () {
+        // Register tap down to win gesture arena ASAP.
+      },
+      onPanStart: (details) => _onHandlePanStart(details, HandleType.upstream),
+      onPanUpdate: _onHandlePanUpdate,
+      onPanEnd: (details) => _onHandlePanEnd(details, HandleType.upstream),
+      onPanCancel: () => _onHandlePanCancel(HandleType.upstream),
+    );
+    _downstreamHandleGesturesDelegate = DocumentHandleGestureDelegate(
+      onTap: () {
+        // Register tap down to win gesture arena ASAP.
+      },
+      onPanStart: (details) => _onHandlePanStart(details, HandleType.downstream),
+      onPanUpdate: _onHandlePanUpdate,
+      onPanEnd: (details) => _onHandlePanEnd(details, HandleType.downstream),
+      onPanCancel: () => _onHandlePanCancel(HandleType.downstream),
+    );
   }
 
   @override
@@ -1675,6 +1703,16 @@ class SuperEditorAndroidControlsOverlayManagerState extends State<SuperEditorAnd
           return const SizedBox();
         }
 
+        if (_controlsController!.collapsedHandleBuilder != null) {
+          return _controlsController!.collapsedHandleBuilder!(
+            context,
+            handleKey: DocumentKeys.androidCaretHandle,
+            focalPoint: _controlsController!.collapsedHandleFocalPoint,
+            shouldShow: shouldShow,
+            gestureDelegate: _collapsedHandleGestureDelegate,
+          );
+        }
+
         // Note: If we pass this widget as the `child` property, it causes repeated starts and stops
         // of the pan gesture. By building it here, pan events work as expected.
         return Follower.withOffset(
@@ -1699,11 +1737,11 @@ class SuperEditorAndroidControlsOverlayManagerState extends State<SuperEditorAnd
                 onTapDown: (_) {
                   // Register tap down to win gesture arena ASAP.
                 },
-                onTap: _toggleToolbarOnCollapsedHandleTap,
-                onPanStart: (details) => _onHandlePanStart(details, HandleType.collapsed),
-                onPanUpdate: _onHandlePanUpdate,
-                onPanEnd: (details) => _onHandlePanEnd(details, HandleType.collapsed),
-                onPanCancel: () => _onHandlePanCancel(HandleType.collapsed),
+                onTap: _collapsedHandleGestureDelegate.onTap,
+                onPanStart: _collapsedHandleGestureDelegate.onPanStart,
+                onPanUpdate: _collapsedHandleGestureDelegate.onPanUpdate,
+                onPanEnd: _collapsedHandleGestureDelegate.onPanEnd,
+                onPanCancel: _collapsedHandleGestureDelegate.onPanCancel,
                 dragStartBehavior: DragStartBehavior.down,
                 child: AndroidSelectionHandle(
                   key: DocumentKeys.androidCaretHandle,
@@ -1719,6 +1757,26 @@ class SuperEditorAndroidControlsOverlayManagerState extends State<SuperEditorAnd
   }
 
   List<Widget> _buildExpandedHandles() {
+    if (_controlsController!.expandedHandlesBuilder != null) {
+      return [
+        ValueListenableBuilder(
+          valueListenable: _controlsController!.shouldShowExpandedHandles,
+          builder: (context, shouldShow, child) {
+            return _controlsController!.expandedHandlesBuilder!(
+              context,
+              upstreamHandleKey: DocumentKeys.upstreamHandle,
+              upstreamFocalPoint: _controlsController!.upstreamHandleFocalPoint,
+              upstreamGestureDelegate: _upstreamHandleGesturesDelegate,
+              downstreamHandleKey: DocumentKeys.downstreamHandle,
+              downstreamFocalPoint: _controlsController!.downstreamHandleFocalPoint,
+              downstreamGestureDelegate: _downstreamHandleGesturesDelegate,
+              shouldShow: shouldShow,
+            );
+          },
+        )
+      ];
+    }
+
     return [
       ValueListenableBuilder(
         valueListenable: _controlsController!.shouldShowExpandedHandles,
@@ -1735,13 +1793,11 @@ class SuperEditorAndroidControlsOverlayManagerState extends State<SuperEditorAnd
             offset:
                 -AndroidSelectionHandle.defaultTouchRegionExpansion.topRight * MediaQuery.devicePixelRatioOf(context),
             child: GestureDetector(
-              onTapDown: (_) {
-                // Register tap down to win gesture arena ASAP.
-              },
-              onPanStart: (details) => _onHandlePanStart(details, HandleType.upstream),
-              onPanUpdate: _onHandlePanUpdate,
-              onPanEnd: (details) => _onHandlePanEnd(details, HandleType.upstream),
-              onPanCancel: () => _onHandlePanCancel(HandleType.upstream),
+              onTapDown: _upstreamHandleGesturesDelegate.onTapDown,
+              onPanStart: _upstreamHandleGesturesDelegate.onPanStart,
+              onPanUpdate: _upstreamHandleGesturesDelegate.onPanUpdate,
+              onPanEnd: _upstreamHandleGesturesDelegate.onPanEnd,
+              onPanCancel: _upstreamHandleGesturesDelegate.onPanCancel,
               dragStartBehavior: DragStartBehavior.down,
               child: AndroidSelectionHandle(
                 key: DocumentKeys.upstreamHandle,
@@ -1767,13 +1823,11 @@ class SuperEditorAndroidControlsOverlayManagerState extends State<SuperEditorAnd
             offset:
                 -AndroidSelectionHandle.defaultTouchRegionExpansion.topLeft * MediaQuery.devicePixelRatioOf(context),
             child: GestureDetector(
-              onTapDown: (_) {
-                // Register tap down to win gesture arena ASAP.
-              },
-              onPanStart: (details) => _onHandlePanStart(details, HandleType.downstream),
-              onPanUpdate: _onHandlePanUpdate,
-              onPanEnd: (details) => _onHandlePanEnd(details, HandleType.downstream),
-              onPanCancel: () => _onHandlePanCancel(HandleType.downstream),
+              onTapDown: _downstreamHandleGesturesDelegate.onTapDown,
+              onPanStart: _downstreamHandleGesturesDelegate.onPanStart,
+              onPanUpdate: _downstreamHandleGesturesDelegate.onPanUpdate,
+              onPanEnd: _downstreamHandleGesturesDelegate.onPanEnd,
+              onPanCancel: _downstreamHandleGesturesDelegate.onPanCancel,
               dragStartBehavior: DragStartBehavior.down,
               child: AndroidSelectionHandle(
                 key: DocumentKeys.downstreamHandle,
