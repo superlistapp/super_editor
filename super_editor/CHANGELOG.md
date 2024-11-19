@@ -1,3 +1,18 @@
+## [0.3.0-dev.10] - Nov 18, 2024
+ * FEATURE: Created `KeyboardPanelScaffold` and `KeyboardScaffoldSafeArea` to aid with
+   implementing mobile phone messaging and chat experiences.
+ * FEATURE: Added ability to show the iOS native context popover toolbar when
+   editing a document. See `iOSSystemPopoverEditorToolbarWithFallbackBuilder`
+   and `IOSSystemContextMenu`.
+ * FEATURE: Plugins can now provide their own `ComponentBuilder`s.
+ * FEATURE: Can configure block nodes as "non-deletable".
+ * FIX: CMD + RIGHT caret movement on Web.
+ * FIX: Don't restore editor selection on refocus if document changed in way that
+   invalidates the previous selection.
+ * FIX: `shrinkWrap` as `true` no longer breaks `SuperEditor`.
+ * ADJUSTMENT: Remove custom gesture handlers in `SuperEditor` and `SuperReader`
+   and utilize Flutter's built-in behaviors.
+
 ## [0.3.0-dev.9] - Sept 26, 2024
  * FEATURE: Indent for blockquotes.
 
