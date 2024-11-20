@@ -525,17 +525,24 @@ class _ReadOnlyAndroidDocumentTouchInteractorState extends State<ReadOnlyAndroid
     readerGesturesLog.info("Tap down on document");
     final docOffset = _interactorOffsetToDocOffset(details.localPosition);
     readerGesturesLog.fine(" - document offset: $docOffset");
-    final docPosition = _docLayout.getDocumentPositionNearestToOffset(docOffset);
-    readerGesturesLog.fine(" - tapped document position: $docPosition");
 
-    if (widget.contentTapHandler != null && docPosition != null) {
-      final result = widget.contentTapHandler!.onTap(docPosition);
+    if (widget.contentTapHandler != null) {
+      final result = widget.contentTapHandler!.onTap(
+        DocumentTapDetails(
+          documentLayout: _docLayout,
+          layoutOffset: docOffset,
+          globalOffset: details.globalPosition,
+        ),
+      );
       if (result == TapHandlingInstruction.halt) {
         // The custom tap handler doesn't want us to react at all
         // to the tap.
         return;
       }
     }
+
+    final docPosition = _docLayout.getDocumentPositionNearestToOffset(docOffset);
+    readerGesturesLog.fine(" - tapped document position: $docPosition");
 
     if (docPosition == null) {
       widget.selection.value = null;
@@ -565,11 +572,15 @@ class _ReadOnlyAndroidDocumentTouchInteractorState extends State<ReadOnlyAndroid
     readerGesturesLog.info("Double tap down on document");
     final docOffset = _interactorOffsetToDocOffset(details.localPosition);
     readerGesturesLog.fine(" - document offset: $docOffset");
-    final docPosition = _docLayout.getDocumentPositionNearestToOffset(docOffset);
-    readerGesturesLog.fine(" - tapped document position: $docPosition");
 
-    if (docPosition != null && widget.contentTapHandler != null) {
-      final result = widget.contentTapHandler!.onDoubleTap(docPosition);
+    if (widget.contentTapHandler != null) {
+      final result = widget.contentTapHandler!.onDoubleTap(
+        DocumentTapDetails(
+          documentLayout: _docLayout,
+          layoutOffset: docOffset,
+          globalOffset: details.globalPosition,
+        ),
+      );
       if (result == TapHandlingInstruction.halt) {
         // The custom tap handler doesn't want us to react at all
         // to the tap.
@@ -579,6 +590,8 @@ class _ReadOnlyAndroidDocumentTouchInteractorState extends State<ReadOnlyAndroid
 
     widget.selection.value = null;
 
+    final docPosition = _docLayout.getDocumentPositionNearestToOffset(docOffset);
+    readerGesturesLog.fine(" - tapped document position: $docPosition");
     if (docPosition != null) {
       // The user tapped a non-selectable component, so we can't select a word.
       // The editor will remain focused and selection will remain in the nearest
@@ -613,11 +626,15 @@ class _ReadOnlyAndroidDocumentTouchInteractorState extends State<ReadOnlyAndroid
     readerGesturesLog.info("Triple down down on document");
     final docOffset = _interactorOffsetToDocOffset(details.localPosition);
     readerGesturesLog.fine(" - document offset: $docOffset");
-    final docPosition = _docLayout.getDocumentPositionNearestToOffset(docOffset);
-    readerGesturesLog.fine(" - tapped document position: $docPosition");
 
-    if (docPosition != null && widget.contentTapHandler != null) {
-      final result = widget.contentTapHandler!.onTripleTap(docPosition);
+    if (widget.contentTapHandler != null) {
+      final result = widget.contentTapHandler!.onTripleTap(
+        DocumentTapDetails(
+          documentLayout: _docLayout,
+          layoutOffset: docOffset,
+          globalOffset: details.globalPosition,
+        ),
+      );
       if (result == TapHandlingInstruction.halt) {
         // The custom tap handler doesn't want us to react at all
         // to the tap.
@@ -626,7 +643,8 @@ class _ReadOnlyAndroidDocumentTouchInteractorState extends State<ReadOnlyAndroid
     }
 
     widget.selection.value = null;
-
+    final docPosition = _docLayout.getDocumentPositionNearestToOffset(docOffset);
+    readerGesturesLog.fine(" - tapped document position: $docPosition");
     if (docPosition != null) {
       // The user tapped a non-selectable component, so we can't select a paragraph.
       // The editor will remain focused and selection will remain in the nearest
