@@ -20,14 +20,13 @@ import 'package:super_editor/src/default_editor/document_gestures_touch_ios.dart
 import 'package:super_editor/src/default_editor/document_scrollable.dart';
 import 'package:super_editor/src/default_editor/layout_single_column/_styler_composing_region.dart';
 import 'package:super_editor/src/default_editor/list_items.dart';
+import 'package:super_editor/src/default_editor/tap_handlers/tap_handlers.dart';
 import 'package:super_editor/src/default_editor/tasks.dart';
-import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/content_layers.dart';
 import 'package:super_editor/src/infrastructure/documents/document_scaffold.dart';
 import 'package:super_editor/src/infrastructure/documents/document_scroller.dart';
 import 'package:super_editor/src/infrastructure/documents/selection_leader_document_layer.dart';
 import 'package:super_editor/src/infrastructure/flutter/build_context.dart';
-import 'package:super_editor/src/infrastructure/links.dart';
 import 'package:super_editor/src/infrastructure/platforms/android/toolbar.dart';
 import 'package:super_editor/src/infrastructure/platforms/ios/toolbar.dart';
 import 'package:super_editor/src/infrastructure/platforms/mac/mac_ime.dart';
@@ -128,7 +127,7 @@ class SuperEditor extends StatefulWidget {
     this.keyboardActions,
     this.selectorHandlers,
     this.gestureMode,
-    this.contentTapDelegateFactory = superEditorLaunchLinkTapHandlerFactory,
+    this.contentTapDelegateFactories = const [superEditorLaunchLinkTapHandlerFactory],
     this.selectionLayerLinks,
     this.documentUnderlayBuilders = const [],
     this.documentOverlayBuilders = defaultSuperEditorDocumentOverlayBuilders,
@@ -278,12 +277,15 @@ class SuperEditor extends StatefulWidget {
   /// The `SuperEditor` gesture mode, e.g., mouse or touch.
   final DocumentGestureMode? gestureMode;
 
-  /// Factory that creates a [ContentTapDelegate], which is given an
+  /// List of factories that creates a [ContentTapDelegate], which is given an
   /// opportunity to respond to taps on content before the editor, itself.
   ///
   /// A [ContentTapDelegate] might be used, for example, to launch a URL
   /// when a user taps on a link.
-  final SuperEditorContentTapDelegateFactory? contentTapDelegateFactory;
+  ///
+  /// If a handler returns [TapHandlingInstruction.halt], no subsequent handlers
+  /// nor the default tap behavior will be executed.
+  final List<SuperEditorContentTapDelegateFactory>? contentTapDelegateFactories;
 
   /// Leader links that connect leader widgets near the user's selection
   /// to carets, handles, and other things that want to follow the selection.
@@ -396,7 +398,7 @@ class SuperEditorState extends State<SuperEditor> {
   @visibleForTesting
   late SuperEditorContext editContext;
 
-  ContentTapDelegate? _contentTapDelegate;
+  List<ContentTapDelegate>? _contentTapHandlers;
 
   final _dragHandleAutoScroller = ValueNotifier<DragHandleAutoScroller?>(null);
 
@@ -516,7 +518,11 @@ class SuperEditorState extends State<SuperEditor> {
 
   @override
   void dispose() {
-    _contentTapDelegate?.dispose();
+    if (_contentTapHandlers != null) {
+      for (final handler in _contentTapHandlers!) {
+        handler.dispose();
+      }
+    }
 
     _iosControlsController.dispose();
     _androidControlsController.dispose();
@@ -558,9 +564,13 @@ class SuperEditorState extends State<SuperEditor> {
     }
 
     // The ContentTapDelegate depends upon the EditContext. Recreate the
-    // delegate, now that we've created a new EditContext.
-    _contentTapDelegate?.dispose();
-    _contentTapDelegate = widget.contentTapDelegateFactory?.call(editContext);
+    // handlers, now that we've created a new EditContext.
+    if (_contentTapHandlers != null) {
+      for (final handler in _contentTapHandlers!) {
+        handler.dispose();
+      }
+    }
+    _contentTapHandlers = widget.contentTapDelegateFactories?.map((factory) => factory.call(editContext)).toList();
   }
 
   void _createLayoutPresenter() {
@@ -859,7 +869,7 @@ class SuperEditorState extends State<SuperEditor> {
           getDocumentLayout: () => editContext.documentLayout,
           selectionChanges: editContext.composer.selectionChanges,
           selectionNotifier: editContext.composer.selectionNotifier,
-          contentTapHandler: _contentTapDelegate,
+          contentTapHandlers: _contentTapHandlers,
           autoScroller: _autoScrollController,
           fillViewport: fillViewport,
           showDebugPaint: widget.debugPaint.gestures,
@@ -873,7 +883,7 @@ class SuperEditorState extends State<SuperEditor> {
           getDocumentLayout: () => editContext.documentLayout,
           selection: editContext.composer.selectionNotifier,
           openSoftwareKeyboard: _openSoftareKeyboard,
-          contentTapHandler: _contentTapDelegate,
+          contentTapHandlers: _contentTapHandlers,
           scrollController: _scrollController,
           dragHandleAutoScroller: _dragHandleAutoScroller,
           fillViewport: fillViewport,
@@ -888,7 +898,7 @@ class SuperEditorState extends State<SuperEditor> {
           getDocumentLayout: () => editContext.documentLayout,
           selection: editContext.composer.selectionNotifier,
           openSoftwareKeyboard: _openSoftareKeyboard,
-          contentTapHandler: _contentTapDelegate,
+          contentTapHandlers: _contentTapHandlers,
           scrollController: _scrollController,
           dragHandleAutoScroller: _dragHandleAutoScroller,
           fillViewport: fillViewport,
@@ -1660,81 +1670,3 @@ TextStyle defaultStyleBuilder(Set<Attribution> attributions) {
 const defaultSelectionStyle = SelectionStyles(
   selectionColor: Color(0xFFACCEF7),
 );
-
-typedef SuperEditorContentTapDelegateFactory = ContentTapDelegate Function(SuperEditorContext editContext);
-
-SuperEditorLaunchLinkTapHandler superEditorLaunchLinkTapHandlerFactory(SuperEditorContext editContext) =>
-    SuperEditorLaunchLinkTapHandler(editContext.document, editContext.composer);
-
-/// A [ContentTapDelegate] that opens links when the user taps text with
-/// a [LinkAttribution].
-///
-/// This delegate only opens links when [composer.isInInteractionMode] is
-/// `true`.
-class SuperEditorLaunchLinkTapHandler extends ContentTapDelegate {
-  SuperEditorLaunchLinkTapHandler(this.document, this.composer) {
-    composer.isInInteractionMode.addListener(notifyListeners);
-  }
-
-  @override
-  void dispose() {
-    composer.isInInteractionMode.removeListener(notifyListeners);
-    super.dispose();
-  }
-
-  final Document document;
-  final DocumentComposer composer;
-
-  @override
-  MouseCursor? mouseCursorForContentHover(DocumentPosition hoverPosition) {
-    if (!composer.isInInteractionMode.value) {
-      // The editor isn't in "interaction mode". We don't want a special cursor
-      return null;
-    }
-
-    final link = _getLinkAtPosition(hoverPosition);
-    return link != null ? SystemMouseCursors.click : null;
-  }
-
-  @override
-  TapHandlingInstruction onTap(DocumentPosition tapPosition) {
-    if (!composer.isInInteractionMode.value) {
-      // The editor isn't in "interaction mode". We don't want to allow
-      // users to open links by tapping on them.
-      return TapHandlingInstruction.continueHandling;
-    }
-
-    final link = _getLinkAtPosition(tapPosition);
-    if (link != null) {
-      // The user tapped on a link. Launch it.
-      UrlLauncher.instance.launchUrl(link);
-      return TapHandlingInstruction.halt;
-    } else {
-      // The user didn't tap on a link.
-      return TapHandlingInstruction.continueHandling;
-    }
-  }
-
-  Uri? _getLinkAtPosition(DocumentPosition position) {
-    final nodePosition = position.nodePosition;
-    if (nodePosition is! TextNodePosition) {
-      return null;
-    }
-
-    final textNode = document.getNodeById(position.nodeId);
-    if (textNode is! TextNode) {
-      editorGesturesLog
-          .shout("Received a report of a tap on a TextNodePosition, but the node with that ID is a: $textNode");
-      return null;
-    }
-
-    final tappedAttributions = textNode.text.getAllAttributionsAt(nodePosition.offset);
-    for (final tappedAttribution in tappedAttributions) {
-      if (tappedAttribution is LinkAttribution) {
-        return tappedAttribution.uri;
-      }
-    }
-
-    return null;
-  }
-}
