@@ -626,7 +626,7 @@ void main() {
           // Press SHIFT + OPTION + RIGHT ARROW to remove the first word from the selection.
           await tester.pressShiftAltRightArrow();
 
-          // Ensure that the last word was removed from the selection.
+          // Ensure that the first word was removed from the selection.
           expect(
             SuperEditorInspector.findDocumentSelection(),
             selectionEquivalentTo(
