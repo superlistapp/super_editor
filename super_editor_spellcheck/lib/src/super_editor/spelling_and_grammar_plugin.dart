@@ -97,8 +97,13 @@ class SpellingAndGrammarPlugin extends SuperEditorPlugin {
   late final List<SuperEditorLayerBuilder> documentOverlayBuilders;
 
   @override
-  ContentTapDelegate? get contentTapDelegate => _contentTapDelegate;
+  List<ContentTapDelegate> get contentTapHandlers => _contentTapDelegate != null //
+      ? [_contentTapDelegate!]
+      : const [];
   late final _SpellCheckerContentTapDelegate? _contentTapDelegate;
+
+  @override
+  List<SingleColumnLayoutStylePhase> get appendedStylePhases => [_styler];
 
   @override
   void attach(Editor editor) {
@@ -483,8 +488,13 @@ class _SuperEditorIosSpellCheckerTapHandler extends _SpellCheckerContentTapDeleg
   final SpellingAndGrammarStyler styler;
 
   @override
-  TapHandlingInstruction onTap(DocumentPosition tapPosition) {
+  TapHandlingInstruction onTap(DocumentTapDetails details) {
     if (editor == null) {
+      return TapHandlingInstruction.continueHandling;
+    }
+
+    final tapPosition = details.documentLayout.getDocumentPositionNearestToOffset(details.layoutOffset);
+    if (tapPosition == null) {
       return TapHandlingInstruction.continueHandling;
     }
 
@@ -526,7 +536,12 @@ class _SuperEditorIosSpellCheckerTapHandler extends _SpellCheckerContentTapDeleg
   }
 
   @override
-  TapHandlingInstruction onDoubleTap(DocumentPosition tapPosition) {
+  TapHandlingInstruction onDoubleTap(DocumentTapDetails details) {
+    final tapPosition = details.documentLayout.getDocumentPositionNearestToOffset(details.layoutOffset);
+    if (tapPosition == null) {
+      return TapHandlingInstruction.continueHandling;
+    }
+
     _hideSpellCheckerPopover();
     return TapHandlingInstruction.continueHandling;
   }
@@ -555,8 +570,13 @@ class _SuperEditorAndroidSpellCheckerTapHandler extends _SpellCheckerContentTapD
   final SpellingAndGrammarStyler styler;
 
   @override
-  TapHandlingInstruction onTap(DocumentPosition tapPosition) {
+  TapHandlingInstruction onTap(DocumentTapDetails details) {
     if (editor == null) {
+      return TapHandlingInstruction.continueHandling;
+    }
+
+    final tapPosition = details.documentLayout.getDocumentPositionNearestToOffset(details.layoutOffset);
+    if (tapPosition == null) {
       return TapHandlingInstruction.continueHandling;
     }
 
@@ -604,7 +624,7 @@ class _SuperEditorAndroidSpellCheckerTapHandler extends _SpellCheckerContentTapD
   }
 
   @override
-  TapHandlingInstruction onDoubleTap(DocumentPosition tapPosition) {
+  TapHandlingInstruction onDoubleTap(DocumentTapDetails details) {
     _hideSpellCheckerPopover();
     return TapHandlingInstruction.continueHandling;
   }
@@ -626,8 +646,13 @@ class _SuperEditorDesktopSpellCheckerTapHandler extends _SpellCheckerContentTapD
   final SpellCheckerPopoverController popoverController;
 
   @override
-  TapHandlingInstruction onTap(DocumentPosition tapPosition) {
+  TapHandlingInstruction onTap(DocumentTapDetails details) {
     if (editor == null) {
+      return TapHandlingInstruction.continueHandling;
+    }
+
+    final tapPosition = details.documentLayout.getDocumentPositionNearestToOffset(details.layoutOffset);
+    if (tapPosition == null) {
       return TapHandlingInstruction.continueHandling;
     }
 
@@ -651,7 +676,7 @@ class _SuperEditorDesktopSpellCheckerTapHandler extends _SpellCheckerContentTapD
   }
 
   @override
-  TapHandlingInstruction onDoubleTap(DocumentPosition tapPosition) {
+  TapHandlingInstruction onDoubleTap(DocumentTapDetails details) {
     _hideSpellCheckerPopover();
     return TapHandlingInstruction.continueHandling;
   }
