@@ -126,9 +126,6 @@ class _SuperEditorSpellcheckScreenState extends State<_SuperEditorSpellcheckScre
           child: SuperEditor(
             autofocus: true,
             editor: _editor,
-            appendedStylePhases: [
-              _spellingAndGrammarPlugin.styler,
-            ],
             stylesheet: defaultStylesheet.copyWith(
               addRulesAfter: [
                 if (Theme.of(context).brightness == Brightness.dark) ..._darkModeStyles,

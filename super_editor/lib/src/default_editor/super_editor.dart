@@ -115,7 +115,6 @@ class SuperEditor extends StatefulWidget {
     this.documentLayoutKey,
     Stylesheet? stylesheet,
     this.customStylePhases = const [],
-    this.appendedStylePhases = const [],
     List<ComponentBuilder>? componentBuilders,
     SelectionStyles? selectionStyle,
     this.selectionPolicies = const SuperEditorSelectionPolicies(),
@@ -236,17 +235,6 @@ class SuperEditor extends StatefulWidget {
   /// table styleable. To accomplish this, you add a custom style phase that
   /// knows how to interpret and apply table styles for your visual table component.
   final List<SingleColumnLayoutStylePhase> customStylePhases;
-
-  /// Custom style phases that are added to the very end of the style phases.
-  ///
-  /// Typically, apps should use [customStylePhases]. However, the selection
-  /// styles are always applied after [customStylePhases]. If you need to
-  /// change the selection color, add the style phase that changes the selection
-  /// color here.
-  ///
-  /// For example, a spellchecker might want to override the selection color
-  /// for misspelled words.
-  final List<SingleColumnLayoutStylePhase> appendedStylePhases;
 
   /// The `SuperEditor` input source, e.g., keyboard or Input Method Engine.
   final TextInputSource? inputSource;
@@ -632,7 +620,8 @@ class SuperEditorState extends State<SuperEditor> {
         // just before the phases that the apps want to be at the end
         // to minimize view model recalculations.
         _docLayoutSelectionStyler,
-        ...widget.appendedStylePhases,
+        for (final plugin in widget.plugins) //
+          ...plugin.appendedStylePhases,
       ],
     );
 
@@ -893,9 +882,8 @@ class SuperEditorState extends State<SuperEditor> {
           selectionNotifier: editContext.composer.selectionNotifier,
           contentTapHandlers: [
             ..._contentTapHandlers ?? [],
-            for (final plugin in widget.plugins)
-              if (plugin.contentTapDelegate != null) //
-                plugin.contentTapDelegate!,
+            for (final plugin in widget.plugins) //
+              ...plugin.contentTapHandlers,
           ],
           autoScroller: _autoScrollController,
           fillViewport: fillViewport,
@@ -913,9 +901,8 @@ class SuperEditorState extends State<SuperEditor> {
           openSoftwareKeyboard: _openSoftareKeyboard,
           contentTapHandlers: [
             ..._contentTapHandlers ?? [],
-            for (final plugin in widget.plugins)
-              if (plugin.contentTapDelegate != null) //
-                plugin.contentTapDelegate!,
+            for (final plugin in widget.plugins) //
+              ...plugin.contentTapHandlers,
           ],
           scrollController: _scrollController,
           dragHandleAutoScroller: _dragHandleAutoScroller,
@@ -935,9 +922,8 @@ class SuperEditorState extends State<SuperEditor> {
           isImeConnected: _isImeConnected,
           contentTapHandlers: [
             ..._contentTapHandlers ?? [],
-            for (final plugin in widget.plugins)
-              if (plugin.contentTapDelegate != null) //
-                plugin.contentTapDelegate!,
+            for (final plugin in widget.plugins) //
+              ...plugin.contentTapHandlers,
           ],
           scrollController: _scrollController,
           dragHandleAutoScroller: _dragHandleAutoScroller,
@@ -1192,7 +1178,10 @@ abstract class SuperEditorPlugin {
 
   /// Optional handler that responds to taps on content, e.g., opening
   /// a link when the user taps on text with a link attribution.
-  ContentTapDelegate? get contentTapDelegate => null;
+  List<ContentTapDelegate> get contentTapHandlers => const [];
+
+  /// Custom style phases that are added to the very end of the [SuperEditor] style phases.
+  List<SingleColumnLayoutStylePhase> get appendedStylePhases => const [];
 }
 
 /// A collection of policies that dictate how a [SuperEditor]'s selection will change
