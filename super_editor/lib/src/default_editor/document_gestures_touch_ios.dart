@@ -615,9 +615,16 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
       }
     }
 
+    final selection = widget.selection.value;
+    if (selection != null &&
+        !selection.isCollapsed &&
+        (_isOverBaseHandle(details.localPosition) || _isOverExtentHandle(details.localPosition))) {
+      _controlsController!.toggleToolbar();
+      return;
+    }
+
     final docPosition = _docLayout.getDocumentPositionNearestToOffset(docOffset);
     editorGesturesLog.fine(" - tapped document position: $docPosition");
-    final selection = widget.selection.value;
     if (docPosition != null &&
         selection != null &&
         !selection.isCollapsed &&
@@ -739,6 +746,13 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
           return;
         }
       }
+    }
+
+    final selection = widget.selection.value;
+    if (selection != null &&
+        !selection.isCollapsed &&
+        (_isOverBaseHandle(details.localPosition) || _isOverExtentHandle(details.localPosition))) {
+      return;
     }
 
     final docPosition = _docLayout.getDocumentPositionNearestToOffset(docOffset);
