@@ -524,7 +524,8 @@ void main() {
           );
         });
 
-        testWidgetsOnMacDesktopAndWeb('SHIFT + OPTION + LEFT ARROW: removes upstream word from selection',
+        testWidgetsOnMacDesktopAndWeb(
+            'SHIFT + OPTION + LEFT ARROW: deselects word at end of line after selecting the whole line from start to end',
             (tester) async {
           await tester //
               .createDocument()
@@ -584,7 +585,8 @@ void main() {
           );
         });
 
-        testWidgetsOnMacDesktopAndWeb('SHIFT + OPTION + RIGHT ARROW: removes downstream word from selection',
+        testWidgetsOnMacDesktopAndWeb(
+            'SHIFT + OPTION + RIGHT ARROW: deselects word at start of line after selecting the whole line from end to start',
             (tester) async {
           await tester //
               .createDocument()
