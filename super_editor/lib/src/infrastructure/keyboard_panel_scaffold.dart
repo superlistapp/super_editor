@@ -743,7 +743,7 @@ class _KeyboardScaffoldSafeAreaState extends State<KeyboardScaffoldSafeArea>
         bottomPadding: _ancestorSafeArea?.geometry.bottomPadding ?? MediaQuery.paddingOf(context).bottom,
       );
 
-      // We track whether our safe is from MediaQuery (instead of an another KeyboardSafeAreaGeometry).
+      // We track whether our safe area is from MediaQuery (instead of an another KeyboardSafeAreaGeometry).
       // We do this in case the MediaQuery value changes when we don't have any descendant
       // KeyboardPanelScaffold.
       //
