@@ -25,10 +25,39 @@ void main() {
 
   runApp(
     MaterialApp(
-      home: Scaffold(
-        resizeToAvoidBottomInset: false,
-        body: MobileChatDemo(),
-      ),
+      routes: {
+        "/": (context) => Scaffold(
+              appBar: AppBar(
+                actions: [
+                  IconButton(
+                    onPressed: () {
+                      Navigator.of(context).pushNamed("/second");
+                    },
+                    icon: Icon(Icons.settings),
+                  ),
+                ],
+              ),
+              resizeToAvoidBottomInset: false,
+              body: MobileChatDemo(),
+            ),
+        // We include a 2nd screen with navigation so that we can verify
+        // what happens to the keyboard safe area when navigating from an
+        // open editor to another screen with a safe area, but no keyboard
+        // scaffold. See issue #2419
+        "/second": (context) => Scaffold(
+              appBar: AppBar(),
+              resizeToAvoidBottomInset: false,
+              body: KeyboardScaffoldSafeArea(
+                child: ListView.builder(
+                  itemBuilder: (context, index) {
+                    return ListTile(
+                      title: Text("Item $index"),
+                    );
+                  },
+                ),
+              ),
+            ),
+      },
       debugShowCheckedModeBanner: false,
     ),
   );
