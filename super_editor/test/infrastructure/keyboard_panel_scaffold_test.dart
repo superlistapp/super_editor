@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_test_runners/flutter_test_runners.dart';
+import 'package:golden_toolkit/golden_toolkit.dart';
 import 'package:super_editor/src/test/super_editor_test/supereditor_robot.dart';
 import 'package:super_editor/super_editor.dart';
 
@@ -10,7 +11,7 @@ void main() {
   group('Keyboard panel scaffold >', () {
     group('phones >', () {
       testWidgetsOnMobilePhone('does not show toolbar upon initialization when IME is disconnected', (tester) async {
-        await _pumpTestApp(tester);
+        await _pumpTestAppWithTabs(tester);
 
         // Ensure the toolbar isn't visible.
         expect(find.byKey(_aboveKeyboardToolbarKey), findsNothing);
@@ -20,7 +21,7 @@ void main() {
         final softwareKeyboardController = SoftwareKeyboardController();
         final controller = KeyboardPanelController(softwareKeyboardController);
 
-        await _pumpTestApp(
+        await _pumpTestAppWithTabs(
           tester,
           controller: controller,
           softwareKeyboardController: softwareKeyboardController,
@@ -41,7 +42,7 @@ void main() {
         final softwareKeyboardController = SoftwareKeyboardController();
         final controller = KeyboardPanelController(softwareKeyboardController);
 
-        await _pumpTestApp(
+        await _pumpTestAppWithTabs(
           tester,
           controller: controller,
           softwareKeyboardController: softwareKeyboardController,
@@ -67,7 +68,7 @@ void main() {
           final softwareKeyboardController = SoftwareKeyboardController();
           final controller = KeyboardPanelController(softwareKeyboardController);
 
-          await _pumpTestApp(
+          await _pumpTestAppWithTabs(
             tester,
             controller: controller,
             softwareKeyboardController: softwareKeyboardController,
@@ -100,7 +101,7 @@ void main() {
       );
 
       testWidgetsOnMobilePhone('does not show keyboard panel upon keyboard appearance', (tester) async {
-        await _pumpTestApp(tester);
+        await _pumpTestAppWithTabs(tester);
 
         // Place the caret at the beginning of the document to show the software keyboard.
         await tester.placeCaretInParagraph('1', 0);
@@ -113,7 +114,7 @@ void main() {
         final softwareKeyboardController = SoftwareKeyboardController();
         final controller = KeyboardPanelController(softwareKeyboardController);
 
-        await _pumpTestApp(
+        await _pumpTestAppWithTabs(
           tester,
           controller: controller,
           softwareKeyboardController: softwareKeyboardController,
@@ -134,7 +135,7 @@ void main() {
         final softwareKeyboardController = SoftwareKeyboardController();
         final controller = KeyboardPanelController(softwareKeyboardController);
 
-        await _pumpTestApp(
+        await _pumpTestAppWithTabs(
           tester,
           controller: controller,
           softwareKeyboardController: softwareKeyboardController,
@@ -168,7 +169,7 @@ void main() {
         final softwareKeyboardController = SoftwareKeyboardController();
         final controller = KeyboardPanelController(softwareKeyboardController);
 
-        await _pumpTestApp(
+        await _pumpTestAppWithTabs(
           tester,
           controller: controller,
           softwareKeyboardController: softwareKeyboardController,
@@ -206,7 +207,7 @@ void main() {
         final softwareKeyboardController = SoftwareKeyboardController();
         final controller = KeyboardPanelController(softwareKeyboardController);
 
-        await _pumpTestApp(
+        await _pumpTestAppWithTabs(
           tester,
           controller: controller,
           softwareKeyboardController: softwareKeyboardController,
@@ -243,7 +244,7 @@ void main() {
         final softwareKeyboardController = SoftwareKeyboardController();
         final controller = KeyboardPanelController(softwareKeyboardController);
 
-        await _pumpTestApp(
+        await _pumpTestAppWithTabs(
           tester,
           controller: controller,
           softwareKeyboardController: softwareKeyboardController,
@@ -275,7 +276,7 @@ void main() {
         final softwareKeyboardController = SoftwareKeyboardController();
         final controller = KeyboardPanelController(softwareKeyboardController);
 
-        await _pumpTestApp(
+        await _pumpTestAppWithTabs(
           tester,
           controller: controller,
           softwareKeyboardController: softwareKeyboardController,
@@ -315,7 +316,7 @@ void main() {
         final softwareKeyboardController = SoftwareKeyboardController();
         final controller = KeyboardPanelController(softwareKeyboardController);
 
-        await _pumpTestApp(
+        await _pumpTestAppWithTabs(
           tester,
           controller: controller,
           softwareKeyboardController: softwareKeyboardController,
@@ -340,7 +341,7 @@ void main() {
         final softwareKeyboardController = SoftwareKeyboardController();
         final controller = KeyboardPanelController(softwareKeyboardController);
 
-        await _pumpTestApp(
+        await _pumpTestAppWithTabs(
           tester,
           controller: controller,
           softwareKeyboardController: softwareKeyboardController,
@@ -398,7 +399,7 @@ void main() {
         final softwareKeyboardController = SoftwareKeyboardController();
         final controller = KeyboardPanelController(softwareKeyboardController);
 
-        await _pumpTestApp(
+        await _pumpTestAppWithTabs(
           tester,
           controller: controller,
           softwareKeyboardController: softwareKeyboardController,
@@ -423,7 +424,7 @@ void main() {
         final softwareKeyboardController = SoftwareKeyboardController();
         final controller = KeyboardPanelController(softwareKeyboardController);
 
-        await _pumpTestApp(
+        await _pumpTestAppWithTabs(
           tester,
           controller: controller,
           softwareKeyboardController: softwareKeyboardController,
@@ -481,7 +482,7 @@ void main() {
         final softwareKeyboardController = SoftwareKeyboardController();
         final controller = KeyboardPanelController(softwareKeyboardController);
 
-        await _pumpTestApp(
+        await _pumpTestAppWithTabs(
           tester,
           controller: controller,
           softwareKeyboardController: softwareKeyboardController,
@@ -506,7 +507,7 @@ void main() {
         final softwareKeyboardController = SoftwareKeyboardController();
         final controller = KeyboardPanelController(softwareKeyboardController);
 
-        await _pumpTestApp(
+        await _pumpTestAppWithTabs(
           tester,
           controller: controller,
           softwareKeyboardController: softwareKeyboardController,
@@ -536,16 +537,65 @@ void main() {
         // Ensure that the account tab's content is full height (isn't restricted by safe area).
         expect(tester.getSize(find.byKey(_accountPageKey)).height, contentHeightWithNoKeyboard);
       });
+
+      testWidgetsOnMobilePhone('does not retain bottom insets when closing keyboard during navigation', (tester) async {
+        final navigatorKey = GlobalKey<NavigatorState>();
+        final softwareKeyboardController = SoftwareKeyboardController();
+        final controller = KeyboardPanelController(softwareKeyboardController);
+
+        await _pumpTestAppWithNavigationScreens(
+          tester,
+          navigatorKey: navigatorKey,
+          controller: controller,
+          softwareKeyboardController: softwareKeyboardController,
+          simulatedKeyboardHeight: _expandedPhoneKeyboardHeight,
+        );
+
+        // Record the height of the content when no keyboard is open.
+        final contentHeightWithNoKeyboard = tester.getSize(find.byKey(_chatPageKey)).height;
+
+        // Show the keyboard. Don't show the toolbar because it's irrelevant for this test.
+        controller.toolbarVisibility = KeyboardToolbarVisibility.hidden;
+        controller.showSoftwareKeyboard();
+        await tester.pumpAndSettle();
+
+        // Record the height of the content now that the keyboard is open.
+        final contentHeightWithKeyboardPanelOpen = tester.getSize(find.byKey(_chatPageKey)).height;
+
+        // Ensure that the content is pushed up above the keyboard.
+        expect(contentHeightWithNoKeyboard - contentHeightWithKeyboardPanelOpen, _expandedPhoneKeyboardHeight);
+
+        // Navigate to screen 2, while simultaneously closing the keyboard (which is what
+        // happens when navigating to a new screen without an IME connection).
+        navigatorKey.currentState!.pushNamed("/second");
+
+        // CRITICAL: The reason navigation is a problem is because the first pump of a new
+        // screen happens before the keyboard starts to close (in a real app). Therefore, we
+        // pump one frame here to create the new screen and THEN we close the keyboard.
+        await tester.pump();
+
+        // Close the keyboard now that the new screen is starting to navigate in.
+        softwareKeyboardController.close();
+
+        // Pump and settle to let the navigation animation play.
+        await tester.pumpAndSettle();
+
+        // Ensure that the second page body takes up all available space.
+        expect(tester.getSize(find.byKey(_screen2BodyKey)).height, contentHeightWithNoKeyboard);
+      });
     });
   });
 }
 
-/// Pumps a tree that displays a panel at the software keyboard position.
+/// Pumps a tree that displays a two tab UI, one tab has an editor that shows
+/// a keyboard panel, and the other tab has no editor at all, which can be
+/// used to verify what happens when navigating from an open editor to another
+/// tab.
 ///
 /// Simulates the software keyboard appearance and disappearance by animating
 /// the `MediaQuery` view insets when the app communicates with the IME to show/hide
 /// the software keyboard.
-Future<void> _pumpTestApp(
+Future<void> _pumpTestAppWithTabs(
   WidgetTester tester, {
   KeyboardPanelController? controller,
   SoftwareKeyboardController? softwareKeyboardController,
@@ -674,6 +724,108 @@ const _chatPageKey = ValueKey("chat_content");
 
 const _accountTabKey = ValueKey("account_tab_button");
 const _accountPageKey = ValueKey("account_content");
+
+const _screen2BodyKey = ValueKey("screen_2_body");
+
+/// Pumps a tree that can display two screens - the first screen has an editor
+/// with a keyboard panel scaffold, the second screen has a keyboard safe area
+/// but no editor or keyboard panel scaffold.
+///
+/// Simulates the software keyboard appearance and disappearance by animating
+/// the `MediaQuery` view insets when the app communicates with the IME to show/hide
+/// the software keyboard.
+Future<void> _pumpTestAppWithNavigationScreens(
+  WidgetTester tester, {
+  required GlobalKey<NavigatorState> navigatorKey,
+  KeyboardPanelController? controller,
+  SoftwareKeyboardController? softwareKeyboardController,
+  ValueNotifier<bool>? isImeConnected,
+  double simulatedKeyboardHeight = _expandedPhoneKeyboardHeight,
+}) async {
+  final keyboardController = softwareKeyboardController ?? SoftwareKeyboardController();
+  final keyboardPanelController = controller ?? KeyboardPanelController(keyboardController);
+  final imeConnectionNotifier = isImeConnected ?? ValueNotifier<bool>(false);
+
+  await tester //
+      .createDocument()
+      .withLongDoc()
+      .withSoftwareKeyboardController(keyboardController)
+      .withImeConnectionNotifier(imeConnectionNotifier)
+      .simulateSoftwareKeyboardInsets(
+        true,
+        simulatedKeyboardHeight: simulatedKeyboardHeight,
+      )
+      .withCustomWidgetTreeBuilder(
+        (superEditor) => MaterialApp(
+          navigatorKey: navigatorKey,
+          routes: {
+            '/': (context) {
+              return _Screen1(
+                keyboardPanelController: keyboardPanelController,
+                imeConnectionNotifier: imeConnectionNotifier,
+                superEditor: superEditor,
+              );
+            },
+            '/second': (context) {
+              return const _Screen2();
+            },
+          },
+        ),
+      )
+      .pump();
+}
+
+class _Screen1 extends StatelessWidget {
+  const _Screen1({
+    required this.keyboardPanelController,
+    required this.imeConnectionNotifier,
+    required this.superEditor,
+  });
+
+  final KeyboardPanelController keyboardPanelController;
+  final ValueNotifier<bool> imeConnectionNotifier;
+  final Widget superEditor;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      resizeToAvoidBottomInset: false,
+      body: KeyboardScaffoldSafeArea(
+        // ^ This safe area is needed to receive the bottom insets from the
+        //   bottom mounted editor, and then make it available to the subtree
+        //   with the content behind the chat.
+        child: _buildChatPage(
+          keyboardPanelController,
+          imeConnectionNotifier,
+          superEditor,
+        ),
+      ),
+    );
+  }
+}
+
+class _Screen2 extends StatelessWidget {
+  const _Screen2();
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      resizeToAvoidBottomInset: false,
+      body: KeyboardScaffoldSafeArea(
+        child: Builder(builder: (context) {
+          return ListView.builder(
+            key: _screen2BodyKey,
+            itemBuilder: (context, index) {
+              return ListTile(
+                title: Text("Item $index"),
+              );
+            },
+          );
+        }),
+      ),
+    );
+  }
+}
 
 void testWidgetsOnMobilePhone(
   String description,
