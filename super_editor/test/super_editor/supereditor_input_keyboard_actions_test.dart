@@ -523,6 +523,128 @@ void main() {
             ),
           );
         });
+
+        testWidgetsOnMacDesktopAndWeb(
+            'SHIFT + OPTION + LEFT ARROW: deselects word at end of line after selecting the whole line from start to end',
+            (tester) async {
+          await tester //
+              .createDocument()
+              .withCustomContent(
+                MutableDocument(
+                  nodes: [
+                    ParagraphNode(
+                      id: '1',
+                      text: AttributedText('This is a paragraph'),
+                    ),
+                  ],
+                ),
+              )
+              .pump();
+
+          // Place caret at the beginning of the paragraph.
+          await tester.placeCaretInParagraph('1', 0);
+
+          // Press CMD + SHIFT + RIGHT ARROW to expand the selection to the end of the line.
+          await tester.pressShiftCmdRightArrow();
+
+          // Ensure that the whole line is selected.
+          expect(
+            SuperEditorInspector.findDocumentSelection(),
+            selectionEquivalentTo(
+              const DocumentSelection(
+                base: DocumentPosition(
+                  nodeId: "1",
+                  nodePosition: TextNodePosition(offset: 0),
+                ),
+                extent: DocumentPosition(
+                  nodeId: "1",
+                  nodePosition: TextNodePosition(offset: 19),
+                ),
+              ),
+            ),
+          );
+
+          // Press SHIFT + OPTION + LEFT ARROW to remove the last word from the selection.
+          await tester.pressShiftAltLeftArrow();
+
+          // Ensure that the last word was removed from the selection.
+          expect(
+            SuperEditorInspector.findDocumentSelection(),
+            selectionEquivalentTo(
+              const DocumentSelection(
+                base: DocumentPosition(
+                  nodeId: "1",
+                  nodePosition: TextNodePosition(offset: 0),
+                ),
+                extent: DocumentPosition(
+                  nodeId: "1",
+                  nodePosition: TextNodePosition(offset: 10),
+                ),
+              ),
+            ),
+          );
+        });
+
+        testWidgetsOnMacDesktopAndWeb(
+            'SHIFT + OPTION + RIGHT ARROW: deselects word at start of line after selecting the whole line from end to start',
+            (tester) async {
+          await tester //
+              .createDocument()
+              .withCustomContent(
+                MutableDocument(
+                  nodes: [
+                    ParagraphNode(
+                      id: '1',
+                      text: AttributedText('This is a paragraph'),
+                    ),
+                  ],
+                ),
+              )
+              .pump();
+
+          // Place caret at the end of the paragraph.
+          await tester.placeCaretInParagraph('1', 19);
+
+          // Press CMD + SHIFT + LEFT ARROW to expand the selection to the beginning of the line.
+          await tester.pressShiftCmdLeftArrow();
+
+          // Ensure that the whole line is selected.
+          expect(
+            SuperEditorInspector.findDocumentSelection(),
+            selectionEquivalentTo(
+              const DocumentSelection(
+                base: DocumentPosition(
+                  nodeId: "1",
+                  nodePosition: TextNodePosition(offset: 19),
+                ),
+                extent: DocumentPosition(
+                  nodeId: "1",
+                  nodePosition: TextNodePosition(offset: 0),
+                ),
+              ),
+            ),
+          );
+
+          // Press SHIFT + OPTION + RIGHT ARROW to remove the first word from the selection.
+          await tester.pressShiftAltRightArrow();
+
+          // Ensure that the first word was removed from the selection.
+          expect(
+            SuperEditorInspector.findDocumentSelection(),
+            selectionEquivalentTo(
+              const DocumentSelection(
+                base: DocumentPosition(
+                  nodeId: "1",
+                  nodePosition: TextNodePosition(offset: 19),
+                ),
+                extent: DocumentPosition(
+                  nodeId: "1",
+                  nodePosition: TextNodePosition(offset: 4),
+                ),
+              ),
+            ),
+          );
+        });
       });
 
       group("Windows and Linux >", () {
