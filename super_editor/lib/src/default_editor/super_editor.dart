@@ -917,22 +917,28 @@ Widget iOSSystemPopoverEditorToolbarWithFallbackBuilder(
   LeaderLink focalPoint,
   CommonEditorOperations editorOps,
   SuperEditorIosControlsController editorControlsController,
+  DocumentRange documentRange,
+  DocumentLayout documentLayout,
 ) {
   if (CurrentPlatform.isWeb) {
     // On web, we defer to the browser's internal overlay controls for mobile.
     return const SizedBox();
   }
 
-  if (focalPoint.offset == null || focalPoint.leaderSize == null) {
-    // It's unclear when/why this might happen. But there seem to be some
-    // cases, such as placing a caret in an empty document and tapping again
-    // to show the toolbar.
-    return const SizedBox();
-  }
-
   if (IOSSystemContextMenu.isSupported(context)) {
+    final selectionBounds = documentLayout.getRectForSelection(documentRange.start, documentRange.end);
+    if (selectionBounds == null) {
+      // The selection bounds can be null if we can't find the component for the nodes in the
+      // selected range. We don't expect that to happen when trying to show the toolbar.
+      return const SizedBox();
+    }
+
+    // The selection bounds are in the layout coordinate space, so we need to convert them to
+    // global coordinate space.
+    final selectionTopLeft = documentLayout.getGlobalOffsetFromDocumentOffset(selectionBounds.topLeft);
+
     return IOSSystemContextMenu(
-      anchor: focalPoint.offset! & focalPoint.leaderSize!,
+      anchor: selectionTopLeft & selectionBounds.size,
     );
   }
 

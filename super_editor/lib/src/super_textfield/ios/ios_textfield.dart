@@ -704,8 +704,17 @@ typedef IOSPopoverToolbarBuilder = Widget Function(BuildContext, IOSEditingOverl
 /// iOS is recent enough, otherwise builds [defaultIosPopoverToolbarBuilder].
 Widget iOSSystemPopoverTextFieldToolbarWithFallback(BuildContext context, IOSEditingOverlayController controller) {
   if (IOSSystemContextMenu.isSupported(context)) {
+    final topAnchor = controller.overlayController.toolbarBottomAnchor;
+    final bottomAnchor = controller.overlayController.toolbarTopAnchor;
+
+    if (topAnchor == null || bottomAnchor == null) {
+      // We don't expect the toolbar builder to be called without having the anchors
+      // defined. But, since these properties are nullable, we account for that.
+      return const SizedBox();
+    }
+
     return IOSSystemContextMenu(
-      anchor: controller.toolbarFocalPoint.offset! & controller.toolbarFocalPoint.leaderSize!,
+      anchor: Rect.fromLTRB(topAnchor.dx, topAnchor.dy, bottomAnchor.dx, bottomAnchor.dy),
     );
   }
 
