@@ -1,3 +1,11 @@
+## [0.3.0-dev.11] - Nov 26, 2024
+ * FEATURE: Add an (optional) tap handler that automatically inserts empty paragraph
+   when user taps at the end of the document.
+ * FIX: `KeyboardScaffoldSafeArea` now initializes its insets in a way that works with
+   certain navigation use-cases that previously thought the keyboard was up when it's down.
+ * FIX: Honor the Android handle builders in the Android controls controller.
+ * ADJUSTMENT: Upgraded versions for a number of dependencies.
+
 ## [0.3.0-dev.10] - Nov 18, 2024
  * FEATURE: Created `KeyboardPanelScaffold` and `KeyboardScaffoldSafeArea` to aid with
    implementing mobile phone messaging and chat experiences.
