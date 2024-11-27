@@ -707,6 +707,7 @@ class _KeyboardScaffoldSafeAreaState extends State<KeyboardScaffoldSafeArea>
   KeyboardSafeAreaGeometry? _keyboardSafeAreaData;
 
   KeyboardScaffoldSafeAreaMutator? _ancestorSafeArea;
+  bool _isSafeAreaFromMediaQuery = false;
 
   @override
   void didChangeDependencies() {
@@ -723,14 +724,46 @@ class _KeyboardScaffoldSafeAreaState extends State<KeyboardScaffoldSafeArea>
     // of the editor, not a direct ancestor or descendant. So we need to be able to coordinate
     // the safe area across independent trees by sharing an ancestor.
     //
-    // If there's no existing ancestor KeyboardScaffoldSafeArea, then defer to whatever
+    // Example:
+    //   KeyboardScaffoldSafeArea
+    //    |- Stack
+    //       |- KeyboardScaffoldSafeArea
+    //          |- Content
+    //       |- SuperEditor
+    //
+    // Second, if there's no existing ancestor KeyboardScaffoldSafeArea, then defer to whatever
     // MediaQuery reports. We only do this for the very first frame because we don't yet
     // know what our values should be (because that's reported by descendants in the tree).
     _ancestorSafeArea = KeyboardScaffoldSafeArea.maybeOf(context);
-    _keyboardSafeAreaData ??= KeyboardSafeAreaGeometry(
-      bottomInsets: _ancestorSafeArea?.geometry.bottomInsets ?? MediaQuery.viewInsetsOf(context).bottom,
-      bottomPadding: _ancestorSafeArea?.geometry.bottomPadding ?? MediaQuery.paddingOf(context).bottom,
-    );
+
+    if (_keyboardSafeAreaData == null) {
+      // This is the first call to didChangeDependencies. Initialize our safe area.
+      _keyboardSafeAreaData = KeyboardSafeAreaGeometry(
+        bottomInsets: _ancestorSafeArea?.geometry.bottomInsets ?? MediaQuery.viewInsetsOf(context).bottom,
+        bottomPadding: _ancestorSafeArea?.geometry.bottomPadding ?? MediaQuery.paddingOf(context).bottom,
+      );
+
+      // We track whether our safe area is from MediaQuery (instead of an another KeyboardSafeAreaGeometry).
+      // We do this in case the MediaQuery value changes when we don't have any descendant
+      // KeyboardPanelScaffold.
+      //
+      // For example, you're on Screen 1 with the keyboard up. You navigate to Screen 2, which closes the keyboard. When
+      // Screen 2 first pumps, it sees that the keyboard is up, so it configures a keyboard safe area. But the keyboard
+      // immediately closes. Screen 2 is then stuck with a keyboard safe area that never goes away.
+      //
+      // By tracking when our safe area comes from MediaQuery, we can continue to honor changing
+      // MediaQuery values until a descendant explicitly sets our `geometry`.
+      _isSafeAreaFromMediaQuery = _ancestorSafeArea == null;
+    }
+
+    if (_isSafeAreaFromMediaQuery) {
+      // Our current safe area came from MediaQuery, not a descendant. Therefore,
+      // we want to continue blindly honoring the MediaQuery.
+      _keyboardSafeAreaData = KeyboardSafeAreaGeometry(
+        bottomInsets: MediaQuery.viewInsetsOf(context).bottom,
+        bottomPadding: MediaQuery.paddingOf(context).bottom,
+      );
+    }
   }
 
   @override
@@ -738,6 +771,7 @@ class _KeyboardScaffoldSafeAreaState extends State<KeyboardScaffoldSafeArea>
 
   @override
   set geometry(KeyboardSafeAreaGeometry geometry) {
+    _isSafeAreaFromMediaQuery = false;
     if (geometry == _keyboardSafeAreaData) {
       return;
     }
