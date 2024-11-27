@@ -704,6 +704,8 @@ typedef IOSPopoverToolbarBuilder = Widget Function(BuildContext, IOSEditingOverl
 /// iOS is recent enough, otherwise builds [defaultIosPopoverToolbarBuilder].
 Widget iOSSystemPopoverTextFieldToolbarWithFallback(BuildContext context, IOSEditingOverlayController controller) {
   if (IOSSystemContextMenu.isSupported(context)) {
+    // The size reported by the controller's toolbarFocalPoint is one frame behind. Query the information
+    // overlayController instead.
     final topAnchor = controller.overlayController.toolbarBottomAnchor;
     final bottomAnchor = controller.overlayController.toolbarTopAnchor;
 

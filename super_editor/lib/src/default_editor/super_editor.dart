@@ -926,6 +926,8 @@ Widget iOSSystemPopoverEditorToolbarWithFallbackBuilder(
   }
 
   if (IOSSystemContextMenu.isSupported(context)) {
+    // The size reported by the focalPoint is one frame behind. Query the selection bounds
+    // from the DocumentLayout instead.
     final selectionBounds = documentLayout.getRectForSelection(documentRange.start, documentRange.end);
     if (selectionBounds == null) {
       // The selection bounds can be null if we can't find the component for the nodes in the
