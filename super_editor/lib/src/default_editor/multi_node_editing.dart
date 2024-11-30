@@ -923,28 +923,38 @@ class DeleteContentCommand extends EditCommand {
     required DocumentNode startNode,
     required DocumentNode endNode,
   }) {
-    // Delete all nodes between the first node and the last node.
-    final startIndex = document.getNodeIndexById(startNode.id);
-    final endIndex = document.getNodeIndexById(endNode.id);
+    if (startNode.id == endNode.id) {
+      // The start and end nodes are the same. Nothing to delete.
+      return [];
+    }
 
-    _log.log('_deleteNodesBetweenFirstAndLast', ' - start node index: $startIndex');
-    _log.log('_deleteNodesBetweenFirstAndLast', ' - end node index: $endIndex');
+    // Delete all nodes between the first node and the last node.
+    if (document.getAffinityBetweenNodes(startNode, endNode) != TextAffinity.downstream) {
+      throw Exception(
+        "Tried to delete the nodes between a start and end node, but the start node doesn't appear before the end node. Start: ${startNode.id}, End: ${endNode.id}.",
+      );
+    }
+
+    _log.log('_deleteNodesBetweenFirstAndLast', ' - start node: ${startNode.id}');
+    _log.log('_deleteNodesBetweenFirstAndLast', ' - end node: ${endNode.id}');
     _log.log('_deleteNodesBetweenFirstAndLast', ' - initially ${document.nodeCount} nodes');
 
     // Remove nodes from last to first so that indices don't get
     // screwed up during removal.
     final changes = <EditEvent>[];
-    for (int i = endIndex - 1; i > startIndex; --i) {
-      _log.log('_deleteNodesBetweenFirstAndLast', ' - deleting node $i: ${document.getNodeAt(i)?.id}');
-      final removedNode = document.getNodeAt(i)!;
-      if (!removedNode.isDeletable) {
-        // This node is not deletable. Ignore it.
-        continue;
+    var nodeToDelete = document.getNodeAfter(startNode);
+    while (nodeToDelete != null && nodeToDelete != endNode) {
+      _log.log('_deleteNodesBetweenFirstAndLast', ' - deleting node: ${nodeToDelete.id}');
+      if (nodeToDelete.isDeletable) {
+        // This node is deletable, so delete it.
+        changes.add(DocumentEdit(
+          NodeRemovedEvent(nodeToDelete.id, nodeToDelete),
+        ));
+        document.deleteNode(nodeToDelete);
       }
-      changes.add(DocumentEdit(
-        NodeRemovedEvent(removedNode.id, removedNode),
-      ));
-      document.deleteNodeAt(i);
+
+      // Move to the next node.
+      nodeToDelete = document.getNodeAfter(nodeToDelete);
     }
     return changes;
   }

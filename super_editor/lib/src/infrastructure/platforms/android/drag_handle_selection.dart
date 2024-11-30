@@ -127,14 +127,21 @@ class AndroidTextFieldDragHandleSelectionStrategy {
     }
 
     final nearestPositionTextOffset = (nearestPosition.nodePosition as TextNodePosition).offset;
-    final nearestPositionNodeIndex = _document.getNodeIndexById(nearestPosition.nodeId);
-
     final previousNearestPositionTextOffset = (_lastFocalPosition!.nodePosition as TextNodePosition).offset;
-    final previousNearestPositionNodeIndex = _document.getNodeIndexById(_lastFocalPosition!.nodeId);
 
-    final didFocalPointMoveToDownstreamNode = nearestPositionNodeIndex > previousNearestPositionNodeIndex;
-    final didFocalPointMoveToUpstreamNode = nearestPositionNodeIndex < previousNearestPositionNodeIndex;
-    final didFocalPointStayInSameNode = nearestPositionNodeIndex == previousNearestPositionNodeIndex;
+    final didFocalPointMoveToDownstreamNode = _document.getAffinityBetween(
+          base: _lastFocalPosition!,
+          extent: nearestPosition,
+        ) ==
+        TextAffinity.downstream;
+
+    final didFocalPointMoveToUpstreamNode = _document.getAffinityBetween(
+          base: _lastFocalPosition!,
+          extent: nearestPosition,
+        ) ==
+        TextAffinity.upstream;
+
+    final didFocalPointStayInSameNode = _lastFocalPosition!.nodeId == nearestPosition.nodeId;
 
     final didFocalPointMoveDownstream = didFocalPointMoveToDownstreamNode ||
         (didFocalPointStayInSameNode && nearestPositionTextOffset > previousNearestPositionTextOffset) ||

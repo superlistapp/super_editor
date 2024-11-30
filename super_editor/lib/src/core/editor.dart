@@ -1291,7 +1291,7 @@ class MutableDocument with Iterable<DocumentNode> implements Document, Editable 
     }
 
     for (int i = 0; i < _nodes.length; ++i) {
-      if (!_nodes[i].hasEquivalentContent(other.getNodeAt(i)!)) {
+      if (!_nodes[i].hasEquivalentContent(other.getNodeById(_nodes[i].id)!)) {
         return false;
       }
     }
