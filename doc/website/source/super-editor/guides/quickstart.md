@@ -43,6 +43,7 @@ class _MyEditorPageState extends State<MyEditorPage> {
     _document = MutableDocument.empty();
     _composer = MutableDocumentComposer();
     _editor = createDefaultDocumentEditor(
+      // TODO: Make these optional with reasonable defaults.
       document: _document,
       composer: _composer,
     );
@@ -55,27 +56,27 @@ class _MyEditorPageState extends State<MyEditorPage> {
     super.dispose();
   }
 
-  // More to come...
+  @override
+  Widget build(BuildContext context) {
+    return SuperEditor(
+      editor: _editor,
+    );
+  }
 }
 ```
 
-Here are a few points to note:
+Multiple objects work together to edit documents. A `Document` provides a consistent structure for content within a document. A `DocumentComposer` holds the user's current selection, along with any styles that should be applied to newly typed text. An `Editor` alters the `Document`.
 
-- The logical editor holds an underlying document and a composer to manage the user's selection.
-- The document, `MutableDocument`, contains a list of nodes for content like text, images, and so on, which users can edit. In this case, you're starting with an empty list.
-- `createDefaultDocumentEditor` is a convenience method from `super_editor` to give you some of those sane defaults mentioned earlier.
-    
-With the logical pieces ready, you can now display a visual editor. Add a `build()` method that returns a `SuperEditor` widget with its logical editor:
-    
-```dart
-@override
-Widget build(BuildContext context) {
-  return SuperEditor(
-    editor: _editor,
-  );
-}
-```
+The `Editor` fulfills a number of responsibilities, each of which is configurable. Rather than force every user to fully configure an `Editor`, `super_editor` provides a global factory called `createDefaultDocumentEditor`, which configures an `Editor` with sane defaults. To adjust those defaults, consider copying the implementation of `createDefaultDocumentEditor` and then altering the implementation to meet your needs.
+
+The `SuperEditor` widget creates a user interface for visualizing the `Document`, changing the selection in the `DocumentComposer`, and submitting change requests to the `Editor`. The `SuperEditor` widget is the part that most people think of when they think of "document editing". The `SuperEditor` widget includes many configurable properties, all of which focus on user interactions, e.g., selection and focus policies, gesture interceptors, scroll control, mobile selection handles, and more.
 
 That's all it takes to get started with your very own editor. Run your app, tap in the editor, and start typing!
 
-Check out the other guides for more help.
+Continue your Super Editor journey with more beginner guides:
+
+- [Document](TODO)
+- [DocumentComposer](TODO)
+- [Editor](TODO)
+- [SuperEditor](TODO)
+- TODO: other useful next step guides.
