@@ -25,5 +25,3 @@ navigation:
       url: /super-reader-guides
     - title: Super Text Field
       url: /super-text-field-guides
-
-super_editor_version: "^0.3.0"
