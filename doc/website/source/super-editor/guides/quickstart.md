@@ -4,7 +4,7 @@ contentRenderers: ["jinja", "markdown"]
 ---
 
 # Super Editor Quickstart
-Super Editor comes with sane defaults to help you get quickly started with an editor experience. These defaults include support for images, list items, blockquotes, and horizontal rules, as well as selection gestures and various keyboard shortcuts.
+Super Editor comes with sane defaults to help you get started quickly with an editor experience. These defaults include support for images, list items, blockquotes, and horizontal rules, as well as selection gestures and various keyboard shortcuts.
 
 Drop in the default editor and start editing.
 
@@ -13,7 +13,7 @@ To use `super_editor`, add a dependency in your `pubspec.yaml`.
 
 ```yaml
 dependencies:
-  super_editor: ^0.3.0
+  super_editor: {{ super_editor_version }}
 ```
 
 ## Display an editor
