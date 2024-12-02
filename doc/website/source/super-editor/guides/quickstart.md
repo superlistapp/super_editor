@@ -9,9 +9,9 @@ Super Editor comes with sane defaults to help you get quickly started with an ed
 
 Drop in the default editor and start editing.
 
-## Add <code>super_editor</code> to your project
+## Add `super_editor` to your project
 
-To use <code>super_editor</code>, add a dependency in your <code>pubspec.yaml</code>.
+To use `super_editor`, add a dependency in your `pubspec.yaml`.
 
 ```yaml
 dependencies:
@@ -65,10 +65,10 @@ class _MyEditorPageState extends State<MyEditorPage> {
 Here are a few points to note:
 
 - The logical editor holds an underlying document and a composer to manage the user's selection.
-- The document, <code>MutableDocument</code>, contains a list of nodes for content like text, images, and so on, which users can edit. In this case, you're starting with an empty list.
-- <code>createDefaultDocumentEditor</code> is a convenience method from <code>super_editor</code> to give you some of those sane defaults mentioned earlier.
+- The document, `MutableDocument`, contains a list of nodes for content like text, images, and so on, which users can edit. In this case, you're starting with an empty list.
+- `createDefaultDocumentEditor` is a convenience method from `super_editor` to give you some of those sane defaults mentioned earlier.
     
-With the logical pieces ready, you can now display a visual editor. Add a <code>build()</code> method that returns a <code>SuperEditor</code> widget with its logical editor:
+With the logical pieces ready, you can now display a visual editor. Add a `build()` method that returns a `SuperEditor` widget with its logical editor:
     
 ```dart
 @override
