@@ -945,6 +945,7 @@ class DeleteContentCommand extends EditCommand {
     var nodeToDelete = document.getNodeAfter(startNode);
     while (nodeToDelete != null && nodeToDelete != endNode) {
       _log.log('_deleteNodesBetweenFirstAndLast', ' - deleting node: ${nodeToDelete.id}');
+      final nextNode = document.getNodeAfter(nodeToDelete);
       if (nodeToDelete.isDeletable) {
         // This node is deletable, so delete it.
         changes.add(DocumentEdit(
@@ -954,7 +955,7 @@ class DeleteContentCommand extends EditCommand {
       }
 
       // Move to the next node.
-      nodeToDelete = document.getNodeAfter(nodeToDelete);
+      nodeToDelete = nextNode;
     }
     return changes;
   }
