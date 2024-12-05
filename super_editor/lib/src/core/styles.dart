@@ -207,7 +207,7 @@ class _FirstBlockMatcher implements _BlockMatcher {
 
   @override
   bool matches(Document document, DocumentNode node) {
-    return document.getNodeIndexById(node.id) == 0;
+    return document.getNodeById(node.id) == document.firstOrNull;
   }
 }
 
@@ -216,7 +216,7 @@ class _LastBlockMatcher implements _BlockMatcher {
 
   @override
   bool matches(Document document, DocumentNode node) {
-    return document.getNodeIndexById(node.id) == document.nodeCount - 1;
+    return document.getNodeById(node.id) == document.lastOrNull;
   }
 }
 
