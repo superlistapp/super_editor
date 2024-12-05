@@ -1278,7 +1278,7 @@ class MutableDocument with Iterable<DocumentNode> implements Document, Editable 
     }
   }
 
-  /// Returns [true] if the content of the [other] [Document] is equivalent
+  /// Returns `true` if the content of the [other] [Document] is equivalent
   /// to the content of this [Document].
   ///
   /// Content equivalency compares types of content nodes, and the content
@@ -1289,11 +1289,21 @@ class MutableDocument with Iterable<DocumentNode> implements Document, Editable 
     if (_nodes.length != other.nodeCount) {
       return false;
     }
+    if (isEmpty) {
+      // Both documents are empty, and therefore are equivalent.
+      return true;
+    }
 
-    for (int i = 0; i < _nodes.length; ++i) {
-      if (!_nodes[i].hasEquivalentContent(other.getNodeAt(i)!)) {
+    DocumentNode? thisDocNode = first;
+    DocumentNode? otherDocNode = other.first;
+
+    while (thisDocNode != null && otherDocNode != null) {
+      if (!thisDocNode.hasEquivalentContent(otherDocNode)) {
         return false;
       }
+
+      thisDocNode = getNodeAfter(thisDocNode);
+      otherDocNode = other.getNodeAfter(otherDocNode);
     }
 
     return true;
