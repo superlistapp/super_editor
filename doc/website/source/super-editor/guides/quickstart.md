@@ -19,7 +19,7 @@ dependencies:
 ## Display an editor
 Super Editor is both the visual editor that users see and interact with, as well as the logical editor that handles those interactions behind the scenes. 
 
-Start by initializing the logical editor and its required components:
+Start by initializing the logical editor:
 
 ```dart
 import 'package:flutter/widgets.dart';
@@ -33,27 +33,15 @@ class MyEditorPage extends StatefulWidget {
 }
 
 class _MyEditorPageState extends State<MyEditorPage> {
-  late MutableDocument _document;
-  late MutableDocumentComposer _composer;
   late Editor _editor;
 
   @override
   void initState() {
     super.initState();
-    _document = MutableDocument.empty();
-    _composer = MutableDocumentComposer();
     _editor = createDefaultDocumentEditor(
-      // TODO: Make these optional with reasonable defaults.
-      document: _document,
-      composer: _composer,
+      document: MutableDocument.empty(),
+      composer: MutableDocumentComposer(),
     );
-  }
-
-  @override
-  void dispose() {
-    _composer.dispose();
-    _document.dispose();
-    super.dispose();
   }
 
   @override
