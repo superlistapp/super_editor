@@ -150,21 +150,8 @@ class DocumentSelection extends DocumentRange {
       return this;
     }
 
-    final baseNode = document.getNodeById(base.nodeId)!;
-    final extentNode = document.getNodeById(extent.nodeId)!;
-
-    if (baseNode == extentNode) {
-      // The selection is expanded, but it sits within a single node.
-      final upstreamNodePosition = extentNode.selectUpstreamPosition(
-        base.nodePosition,
-        extent.nodePosition,
-      );
-      return DocumentSelection.collapsed(
-        position: extent.copyWith(nodePosition: upstreamNodePosition),
-      );
-    }
-
-    return document.getNodeIndexById(baseNode.id) < document.getNodeIndexById(extentNode.id)
+    final selectionAffinity = document.getAffinityForSelection(this);
+    return selectionAffinity == TextAffinity.downstream //
         ? DocumentSelection.collapsed(position: base)
         : DocumentSelection.collapsed(position: extent);
   }
@@ -189,23 +176,10 @@ class DocumentSelection extends DocumentRange {
       return this;
     }
 
-    final baseNode = document.getNodeById(base.nodeId)!;
-    final extentNode = document.getNodeById(extent.nodeId)!;
-
-    if (baseNode == extentNode) {
-      // The selection is expanded, but it sits within a single node.
-      final downstreamNodePosition = extentNode.selectDownstreamPosition(
-        base.nodePosition,
-        extent.nodePosition,
-      );
-      return DocumentSelection.collapsed(
-        position: extent.copyWith(nodePosition: downstreamNodePosition),
-      );
-    }
-
-    return document.getNodeIndexById(baseNode.id) > document.getNodeIndexById(extentNode.id)
-        ? DocumentSelection.collapsed(position: base)
-        : DocumentSelection.collapsed(position: extent);
+    final selectionAffinity = document.getAffinityForSelection(this);
+    return selectionAffinity == TextAffinity.downstream //
+        ? DocumentSelection.collapsed(position: extent)
+        : DocumentSelection.collapsed(position: base);
   }
 
   @override
@@ -326,6 +300,21 @@ extension InspectDocumentAffinity on Document {
     return getAffinityBetween(base: range.start, extent: range.end);
   }
 
+  TextAffinity getAffinityBetweenNodes(DocumentNode base, DocumentNode extent) {
+    return getAffinityForSelection(
+      DocumentSelection(
+        base: DocumentPosition(
+          nodeId: base.id,
+          nodePosition: base.beginningPosition,
+        ),
+        extent: DocumentPosition(
+          nodeId: extent.id,
+          nodePosition: extent.beginningPosition,
+        ),
+      ),
+    );
+  }
+
   /// Returns the affinity direction implied by the given [base] and [extent].
   // TODO: Replace TextAffinity with a DocumentAffinity to avoid confusion.
   TextAffinity getAffinityBetween({
@@ -336,19 +325,17 @@ extension InspectDocumentAffinity on Document {
     if (baseNode == null) {
       throw Exception('No such position in document: $base');
     }
-    final baseIndex = getNodeIndexById(baseNode.id);
 
     final extentNode = getNode(extent);
     if (extentNode == null) {
       throw Exception('No such position in document: $extent');
     }
-    final extentIndex = getNodeIndexById(extentNode.id);
 
     late TextAffinity affinity;
-    if (extentIndex > baseIndex) {
-      affinity = TextAffinity.downstream;
-    } else if (extentIndex < baseIndex) {
-      affinity = TextAffinity.upstream;
+    if (base.nodeId != extent.nodeId) {
+      affinity = getNodeIndexById(base.nodeId) < getNodeIndexById(extent.nodeId)
+          ? TextAffinity.downstream
+          : TextAffinity.upstream;
     } else {
       // The selection is within the same node. Ask the node which position
       // comes first.
@@ -384,20 +371,16 @@ extension InspectDocumentSelection on Document {
   /// Given [docPosition1] and [docPosition2], returns the `DocumentPosition` that
   /// appears first in the document.
   DocumentPosition selectUpstreamPosition(DocumentPosition docPosition1, DocumentPosition docPosition2) {
-    final docPosition1Node = getNodeById(docPosition1.nodeId)!;
-    final docPosition1NodeIndex = getNodeIndexById(docPosition1Node.id);
-    final docPosition2Node = getNodeById(docPosition2.nodeId)!;
-    final docPosition2NodeIndex = getNodeIndexById(docPosition2Node.id);
-
-    if (docPosition1NodeIndex < docPosition2NodeIndex) {
-      return docPosition1;
-    } else if (docPosition2NodeIndex < docPosition1NodeIndex) {
-      return docPosition2;
+    if (docPosition1.nodeId != docPosition2.nodeId) {
+      final affinity = getAffinityBetween(base: docPosition1, extent: docPosition2);
+      return affinity == TextAffinity.downstream //
+          ? docPosition1
+          : docPosition2;
     }
 
     // Both document positions are in the same node. Figure out which
     // node position comes first.
-    final theNode = docPosition1Node;
+    final theNode = getNodeById(docPosition1.nodeId)!;
     return theNode.selectUpstreamPosition(docPosition1.nodePosition, docPosition2.nodePosition) ==
             docPosition1.nodePosition
         ? docPosition1
@@ -418,62 +401,18 @@ extension InspectDocumentSelection on Document {
       return false;
     }
 
-    final baseNode = getNodeById(selection.base.nodeId)!;
-    final baseNodeIndex = getNodeIndexById(baseNode.id);
-    final extentNode = getNodeById(selection.extent.nodeId)!;
-    final extentNodeIndex = getNodeIndexById(extentNode.id);
+    final selectionAffinity = getAffinityForSelection(selection);
+    final upstreamPosition = selectionAffinity == TextAffinity.downstream ? selection.base : selection.extent;
+    final downstreamPosition = selectionAffinity == TextAffinity.downstream ? selection.extent : selection.base;
 
-    final upstreamNode = baseNodeIndex < extentNodeIndex ? baseNode : extentNode;
-    final upstreamNodeIndex = baseNodeIndex < extentNodeIndex ? baseNodeIndex : extentNodeIndex;
-    final downstreamNode = baseNodeIndex < extentNodeIndex ? extentNode : baseNode;
-    final downstreamNodeIndex = baseNodeIndex < extentNodeIndex ? extentNodeIndex : baseNodeIndex;
-
-    final positionNodeIndex = getNodeIndexById(position.nodeId);
-
-    if (upstreamNodeIndex < positionNodeIndex && positionNodeIndex < downstreamNodeIndex) {
-      // The given position is sandwiched between two other nodes that form
-      // the bounds of the selection. Therefore, the position is definitely within
-      // the selection.
-      return true;
-    }
-
-    if (positionNodeIndex == upstreamNodeIndex) {
-      final upstreamPosition = selectUpstreamPosition(selection.base, selection.extent);
-      final downstreamPosition = upstreamPosition == selection.base ? selection.extent : selection.base;
-
-      // This is the furthest a position could sit in the upstream node
-      // and still contain the given position. Keep in mind that the
-      // upstream position, downstream position, and given position may
-      // all reside in the same node (in fact, they probably do).
-      final downstreamCap =
-          upstreamNodeIndex == downstreamNodeIndex ? downstreamPosition.nodePosition : upstreamNode.endPosition;
-
-      // If and only if the given position comes after the upstream position,
-      // and before the downstream cap, then the position is within the selection.
-      return upstreamNode.selectDownstreamPosition(upstreamPosition.nodePosition, position.nodePosition) ==
-          upstreamNode.selectUpstreamPosition(position.nodePosition, downstreamCap);
-    }
-
-    if (positionNodeIndex == downstreamNodeIndex) {
-      final upstreamPosition = selectUpstreamPosition(selection.base, selection.extent);
-      final downstreamPosition = upstreamPosition == selection.base ? selection.extent : selection.base;
-
-      // This is the furthest upstream that a position could sit in the
-      // downstream node and still contain the given position. Keep in
-      // mind that the upstream position, downstream position, and given
-      // position may all reside in the same node (in fact, they probably do).
-      final upstreamCap =
-          downstreamNodeIndex == upstreamNodeIndex ? upstreamPosition.nodePosition : downstreamNode.beginningPosition;
-
-      // If and only if the given position comes before the downstream position,
-      // and after the upstream cap, then the position is within the selection.
-      return downstreamNode.selectDownstreamPosition(upstreamCap, position.nodePosition) ==
-          downstreamNode.selectUpstreamPosition(position.nodePosition, downstreamPosition.nodePosition);
-    }
-
-    // If we got here, then the position is either before the upstream
-    // selection boundary, or after the downstream selection boundary.
-    // Either way, the position is not in the selection.
-    return false;
+    // The selection contains the position if the ordering is as follows:
+    //
+    //   selection start <= position <= selection end
+    //
+    // Another way of stating this relationship is that there's a downstream
+    // affinity from selection start to the position, and from the position to
+    // the selection end.
+    return getAffinityBetween(base: upstreamPosition, extent: position) == TextAffinity.downstream &&
+        getAffinityBetween(base: position, extent: downstreamPosition) == TextAffinity.downstream;
   }
 }

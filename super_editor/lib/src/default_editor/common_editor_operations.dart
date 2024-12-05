@@ -1404,23 +1404,25 @@ class CommonEditorOperations {
     if (baseNode == null) {
       throw Exception('Failed to _getDocumentPositionAfterDeletion because the base node no longer exists.');
     }
-    final baseNodeIndex = document.getNodeIndexById(baseNode.id);
 
     final extentPosition = selection.extent;
     final extentNode = document.getNode(extentPosition);
     if (extentNode == null) {
       throw Exception('Failed to _getDocumentPositionAfterDeletion because the extent node no longer exists.');
     }
-    final extentNodeIndex = document.getNodeIndexById(extentNode.id);
 
-    final topNodeIndex = min(baseNodeIndex, extentNodeIndex);
-    final topNode = document.getNodeAt(topNodeIndex)!;
-    final topNodePosition = baseNodeIndex < extentNodeIndex ? basePosition.nodePosition : extentPosition.nodePosition;
+    final selectionAffinity = document.getAffinityForSelection(selection);
+    final topPosition = selectionAffinity == TextAffinity.downstream //
+        ? selection.base
+        : selection.extent;
+    final topNodePosition = topPosition.nodePosition;
+    final topNode = document.getNodeById(topPosition.nodeId)!;
 
-    final bottomNodeIndex = max(baseNodeIndex, extentNodeIndex);
-    final bottomNode = document.getNodeAt(bottomNodeIndex)!;
-    final bottomNodePosition =
-        baseNodeIndex < extentNodeIndex ? extentPosition.nodePosition : basePosition.nodePosition;
+    final bottomPosition = selectionAffinity == TextAffinity.downstream //
+        ? selection.extent
+        : selection.base;
+    final bottomNodePosition = bottomPosition.nodePosition;
+    final bottomNode = document.getNodeById(bottomPosition.nodeId)!;
 
     final normalizedRange = selection.normalize(document);
     final nodes = document.getNodesInside(normalizedRange.start, normalizedRange.end);
@@ -1428,7 +1430,7 @@ class CommonEditorOperations {
 
     DocumentPosition newSelectionPosition;
 
-    if (baseNodeIndex != extentNodeIndex) {
+    if (topPosition.nodeId != bottomPosition.nodeId) {
       if (topNodePosition == topNode.beginningPosition && bottomNodePosition == bottomNode.endPosition) {
         // All deletable nodes in the selection will be deleted. Assume that one of the
         // nodes will be retained and converted into a paragraph, if it's not
@@ -1469,7 +1471,7 @@ class CommonEditorOperations {
         // those nodes will remain.
 
         // The caret should end up at the base position
-        newSelectionPosition = baseNodeIndex <= extentNodeIndex ? selection.base : selection.extent;
+        newSelectionPosition = selectionAffinity == TextAffinity.downstream ? selection.base : selection.extent;
       }
     } else {
       // Selection is within a single node.

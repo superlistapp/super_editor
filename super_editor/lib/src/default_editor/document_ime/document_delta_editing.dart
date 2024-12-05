@@ -388,9 +388,6 @@ class TextDeltasDocumentEditor {
     editorImeLog.fine("Doc selection to delete: $docSelectionToDelete");
 
     if (docSelectionToDelete == null) {
-      final selectedNodeIndex = document.getNodeIndexById(
-        selection.value!.extent.nodeId,
-      );
       // The user is trying to delete upstream at the start of a node.
       // This action requires intervention because the IME doesn't know
       // that there's more content before this node. Instruct the editor
@@ -398,7 +395,7 @@ class TextDeltasDocumentEditor {
       // "backspace" behavior at the start of this node.
       editor.execute([
         DeleteUpstreamAtBeginningOfNodeRequest(
-          document.getNodeAt(selectedNodeIndex)!,
+          document.getNodeById(selection.value!.extent.nodeId)!,
         ),
       ]);
       return;

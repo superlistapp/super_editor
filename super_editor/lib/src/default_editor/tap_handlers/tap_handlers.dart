@@ -169,8 +169,8 @@ class SuperEditorAddEmptyParagraphTapHandler extends ContentTapDelegate {
     final tappedComponent = documentLayout.getComponentByNodeId(nodeId)!;
     final componentBox = tappedComponent.context.findRenderObject() as RenderBox;
     final localPosition = componentBox.globalToLocal(globalOffset);
-    final nodeIndex = document.getNodeIndexById(nodeId);
+    final node = document.getNodeById(nodeId);
 
-    return (nodeIndex == document.nodeCount - 1) && (localPosition.dy > componentBox.size.height);
+    return (node == document.lastOrNull) && (localPosition.dy > componentBox.size.height);
   }
 }
