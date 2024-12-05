@@ -17,13 +17,27 @@ dependencies:
 De-serialize a Markdown `String` with the supplied top-level function.
 
 ```dart
+const markdown = '''
+# Header
+This is a _Super_ Editor!
+''';
+
 final document = deserializeMarkdownToDocument(markdown);
 ```
 
-The de-serialized document is a `MutableDocument`. Check other guides to find out how to use it.
+The de-serialized document is a `MutableDocument`. Add it to your `Editor` similarly to how you did it in the Quickstart guide:
+
+```dart
+_editor = createDefaultDocumentEditor(
+  document: document,
+  composer: MutableDocumentComposer(),
+);
+```
+
+Run that, and you'll see the document rendered on the screen.
 
 ## Serialize Markdown
-Serialize a `Document` to a Markdown `String`.
+You can also go the other direction. Here's how you would serialize a `Document` to a Markdown `String`:
 
 ```dart
 final markdown = serializeDocumentToMarkdown(document);
