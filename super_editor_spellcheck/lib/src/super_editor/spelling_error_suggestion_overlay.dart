@@ -1,6 +1,10 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:follow_the_leader/follow_the_leader.dart';
+import 'package:overlord/follow_the_leader.dart';
+import 'package:overlord/overlord.dart';
 import 'package:super_editor/super_editor.dart';
+import 'package:super_editor_spellcheck/src/super_editor/spell_checker_popover_controller.dart';
 import 'package:super_editor_spellcheck/src/super_editor/spelling_and_grammar_plugin.dart';
 import 'package:super_editor_spellcheck/src/super_editor/spelling_error_suggestions.dart';
 
@@ -8,7 +12,8 @@ class SpellingErrorSuggestionOverlayBuilder implements SuperEditorLayerBuilder {
   const SpellingErrorSuggestionOverlayBuilder(
     this.suggestions,
     this.selectedWordLink, {
-    this.toolbarBuilder = desktopSpellingSuggestionToolbarBuilder,
+    this.toolbarBuilder = defaultSpellingSuggestionToolbarBuilder,
+    required this.popoverController,
   });
 
   final SpellingErrorSuggestions suggestions;
@@ -18,6 +23,8 @@ class SpellingErrorSuggestionOverlayBuilder implements SuperEditorLayerBuilder {
   /// the currently selected mis-spelled word.
   final SpellingErrorSuggestionToolbarBuilder toolbarBuilder;
 
+  final SpellCheckerPopoverController popoverController;
+
   @override
   ContentLayerWidget build(BuildContext context, SuperEditorContext editContext) {
     return SpellingErrorSuggestionOverlay(
@@ -25,6 +32,7 @@ class SpellingErrorSuggestionOverlayBuilder implements SuperEditorLayerBuilder {
       editor: editContext.editor,
       suggestions: suggestions,
       selectedWordLink: selectedWordLink,
+      popoverController: popoverController,
       toolbarBuilder: toolbarBuilder,
     );
   }
@@ -37,7 +45,8 @@ class SpellingErrorSuggestionOverlay extends DocumentLayoutLayerStatefulWidget {
     required this.editor,
     required this.suggestions,
     required this.selectedWordLink,
-    this.toolbarBuilder = desktopSpellingSuggestionToolbarBuilder,
+    this.popoverController,
+    this.toolbarBuilder = defaultSpellingSuggestionToolbarBuilder,
     this.showDebugLeaderBounds = false,
   });
 
@@ -54,6 +63,8 @@ class SpellingErrorSuggestionOverlay extends DocumentLayoutLayerStatefulWidget {
   /// selected word isn't misspelled, then this link is left unattached.
   final LeaderLink selectedWordLink;
 
+  final SpellCheckerPopoverController? popoverController;
+
   /// Builder that creates the spelling suggestion toolbar, which appears near
   /// the currently selected mis-spelled word.
   final SpellingErrorSuggestionToolbarBuilder toolbarBuilder;
@@ -67,19 +78,27 @@ class SpellingErrorSuggestionOverlay extends DocumentLayoutLayerStatefulWidget {
 }
 
 class _SpellingErrorSuggestionOverlayState
-    extends DocumentLayoutLayerState<SpellingErrorSuggestionOverlay, SpellingErrorSuggestionLayout> {
+    extends DocumentLayoutLayerState<SpellingErrorSuggestionOverlay, SpellingErrorSuggestionLayout>
+    implements SpellCheckerPopoverDelegate {
   final _suggestionToolbarOverlayController = OverlayPortalController();
 
   DocumentRange? _ignoredSpellingErrorRange;
 
   final _suggestionListenable = ValueNotifier<SpellingErrorSuggestion?>(null);
 
+  final _boundsKey = GlobalKey();
+
+  SpellingErrorSuggestion? _currentSpellingSuggestions;
+
   @override
   void initState() {
     super.initState();
 
+    widget.editor.context.document.addListener(_onDocumentChange);
     widget.editor.context.composer.selectionNotifier.addListener(_onSelectionChange);
     widget.editor.context.spellingErrorSuggestions.addListener(_onSpellingSuggestionsChange);
+
+    widget.popoverController?.attach(this);
 
     _suggestionToolbarOverlayController.show();
   }
@@ -87,6 +106,11 @@ class _SpellingErrorSuggestionOverlayState
   @override
   void didUpdateWidget(SpellingErrorSuggestionOverlay oldWidget) {
     super.didUpdateWidget(oldWidget);
+
+    if (widget.editor.context.document != oldWidget.editor.context.document) {
+      oldWidget.editor.context.document.removeListener(_onDocumentChange);
+      widget.editor.context.document.addListener(_onDocumentChange);
+    }
 
     if (widget.editor.context.composer.selectionNotifier != oldWidget.editor.context.composer.selectionNotifier) {
       oldWidget.editor.context.composer.selectionNotifier.removeListener(_onSelectionChange);
@@ -97,6 +121,11 @@ class _SpellingErrorSuggestionOverlayState
       oldWidget.editor.context.spellingErrorSuggestions.removeListener(_onSpellingSuggestionsChange);
       widget.editor.context.spellingErrorSuggestions.addListener(_onSpellingSuggestionsChange);
     }
+
+    if (widget.popoverController != oldWidget.popoverController) {
+      oldWidget.popoverController?.detach();
+      widget.popoverController?.attach(this);
+    }
   }
 
   @override
@@ -105,10 +134,44 @@ class _SpellingErrorSuggestionOverlayState
       _suggestionToolbarOverlayController.hide();
     }
 
+    widget.editor.document.removeListener(_onDocumentChange);
     widget.editor.context.composer.selectionNotifier.removeListener(_onSelectionChange);
     widget.editor.context.spellingErrorSuggestions.removeListener(_onSpellingSuggestionsChange);
 
+    widget.popoverController?.detach();
+
     super.dispose();
+  }
+
+  @override
+  void showSuggestions(SpellingErrorSuggestion suggestions) {
+    setState(() {
+      _currentSpellingSuggestions = suggestions;
+    });
+  }
+
+  @override
+  void hideSuggestionsPopover() {
+    setState(() {
+      _currentSpellingSuggestions = null;
+    });
+  }
+
+  @override
+  SpellingErrorSuggestion? findSuggestionsForWordAt(DocumentRange wordRange) {
+    final spellingSuggestion = _findSpellingSuggestionAtRange(widget.suggestions, wordRange);
+    if (spellingSuggestion == null) {
+      // No selected mis-spelled word. Fizzle.
+      return null;
+    }
+
+    final misspelledWordRange = spellingSuggestion.toDocumentRange;
+    if (misspelledWordRange == _ignoredSpellingErrorRange) {
+      // The user already cancelled the suggestions for this word.
+      return null;
+    }
+
+    return spellingSuggestion;
   }
 
   void _onSelectionChange() {
@@ -154,6 +217,12 @@ class _SpellingErrorSuggestionOverlayState
     });
   }
 
+  void _onDocumentChange(DocumentChangeLog changeLog) {
+    // After the document changes, the currently visible suggestions
+    // might not be valid anymore. Hide the popover.
+    hideSuggestionsPopover();
+  }
+
   void _onSpellingSuggestionsChange() {
     setState(() {
       // Re-compute layout data.
@@ -182,21 +251,11 @@ class _SpellingErrorSuggestionOverlayState
       }
     });
 
-    final documentSelection = widget.editor.context.composer.selectionNotifier.value;
-    if (documentSelection == null) {
-      // No selection upon which to base spell check suggestions.
-      return null;
-    }
-    if (documentSelection.base.nodeId != documentSelection.extent.nodeId) {
-      // Spelling error suggestions don't display when the user selects across nodes.
-      return null;
-    }
-    if (documentSelection.extent.nodePosition is! TextNodePosition) {
-      // The user isn't selecting text. Fizzle.
+    if (widget.editor.context.composer.selection == null) {
       return null;
     }
 
-    final spellingSuggestion = _findSpellingSuggestionAtSelection(widget.suggestions, documentSelection);
+    final spellingSuggestion = _currentSpellingSuggestions;
     if (spellingSuggestion == null) {
       // No selected mis-spelled word. Fizzle.
       return null;
@@ -243,24 +302,24 @@ class _SpellingErrorSuggestionOverlayState
     );
   }
 
-  SpellingErrorSuggestion? _findSpellingSuggestionAtSelection(
+  SpellingErrorSuggestion? _findSpellingSuggestionAtRange(
     SpellingErrorSuggestions allSuggestions,
-    DocumentSelection selection,
+    DocumentRange selection,
   ) {
-    if (selection.base.nodeId != selection.extent.nodeId) {
+    if (selection.start.nodeId != selection.end.nodeId) {
       // It doesn't make sense to correct spelling across paragraphs. Fizzle.
       return null;
     }
 
-    final textNode = widget.editor.context.document.getNodeById(selection.extent.nodeId) as TextNode;
+    final textNode = widget.editor.context.document.getNodeById(selection.end.nodeId) as TextNode;
 
-    final selectionBaseOffset = (selection.base.nodePosition as TextNodePosition).offset;
+    final selectionBaseOffset = (selection.start.nodePosition as TextNodePosition).offset;
     final spellingSuggestionsAtBase = allSuggestions.getSuggestionsAtTextOffset(textNode.id, selectionBaseOffset);
     if (spellingSuggestionsAtBase == null) {
       return null;
     }
 
-    final selectionExtentOffset = (selection.extent.nodePosition as TextNodePosition).offset;
+    final selectionExtentOffset = (selection.end.nodePosition as TextNodePosition).offset;
     final spellingSuggestionsAtExtent = allSuggestions.getSuggestionsAtTextOffset(textNode.id, selectionExtentOffset);
     if (spellingSuggestionsAtExtent == null) {
       return null;
@@ -276,7 +335,7 @@ class _SpellingErrorSuggestionOverlayState
 
     // The user's selection sits somewhere within a word. Check if it's mis-spelled.
     final suggestions = widget.suggestions.getSuggestionsForWord(
-      selection.extent.nodeId,
+      selection.end.nodeId,
       TextRange(start: spellingErrorRange.start, end: spellingErrorRange.end),
     );
 
@@ -305,21 +364,14 @@ class _SpellingErrorSuggestionOverlayState
     //  1. Ensure the Follower is above all other content
     //  2. Ensure the Follower has access to the same theme as the editor
     return OverlayPortal(
+      key: _boundsKey,
       controller: _suggestionToolbarOverlayController,
       overlayChildBuilder: (overlayContext) {
         if (layoutData.suggestions.isEmpty) {
           return const SizedBox();
         }
 
-        return Follower.withOffset(
-          link: widget.selectedWordLink,
-          leaderAnchor: Alignment.bottomLeft,
-          followerAnchor: Alignment.topLeft,
-          offset: const Offset(0, 16),
-          boundary: ScreenFollowerBoundary(
-            screenSize: MediaQuery.sizeOf(context),
-            devicePixelRatio: MediaQuery.devicePixelRatioOf(context),
-          ),
+        return _buildFollower(
           child: widget.toolbarBuilder(
             context,
             editorFocusNode: widget.editorFocusNode,
@@ -327,6 +379,8 @@ class _SpellingErrorSuggestionOverlayState
             selectedWordRange: layoutData.selectedWordRange!,
             suggestions: layoutData.suggestions,
             onCancelPressed: _onCancelPressed,
+            closeToolbar: hideSuggestionsPopover,
+            selectedWordBounds: layoutData.selectedWordBounds!,
           ),
         );
       },
@@ -350,6 +404,33 @@ class _SpellingErrorSuggestionOverlayState
       ),
     );
   }
+
+  Widget _buildFollower({required Widget child}) {
+    switch (defaultTargetPlatform) {
+      case TargetPlatform.iOS:
+        return Follower.withAligner(
+          link: widget.selectedWordLink,
+          aligner: CupertinoPopoverToolbarAligner(_boundsKey),
+          boundary: ScreenFollowerBoundary(
+            screenSize: MediaQuery.sizeOf(context),
+            devicePixelRatio: MediaQuery.devicePixelRatioOf(context),
+          ),
+          child: child,
+        );
+      default:
+        return Follower.withOffset(
+          link: widget.selectedWordLink,
+          leaderAnchor: Alignment.bottomLeft,
+          followerAnchor: Alignment.topLeft,
+          offset: const Offset(0, 16),
+          boundary: ScreenFollowerBoundary(
+            screenSize: MediaQuery.sizeOf(context),
+            devicePixelRatio: MediaQuery.devicePixelRatioOf(context),
+          ),
+          child: child,
+        );
+    }
+  }
 }
 
 class SpellingErrorSuggestionLayout {
@@ -371,7 +452,52 @@ typedef SpellingErrorSuggestionToolbarBuilder = Widget Function(
   required DocumentRange selectedWordRange,
   required List<String> suggestions,
   required VoidCallback onCancelPressed,
+  required VoidCallback closeToolbar,
+  required Rect selectedWordBounds,
 });
+
+/// Creates a spelling suggestion toolbar depending on the
+/// current platform.
+Widget defaultSpellingSuggestionToolbarBuilder(
+  BuildContext context, {
+  required FocusNode editorFocusNode,
+  required Editor editor,
+  required DocumentRange selectedWordRange,
+  required List<String> suggestions,
+  required VoidCallback onCancelPressed,
+  required VoidCallback closeToolbar,
+  required Rect selectedWordBounds,
+}) {
+  switch (defaultTargetPlatform) {
+    case TargetPlatform.iOS:
+      return IosSpellingSuggestionToolbar(
+        editorFocusNode: editorFocusNode,
+        editor: editor,
+        selectedWordRange: selectedWordRange,
+        suggestions: suggestions,
+        selectedWordBounds: selectedWordBounds,
+        closeToolbar: closeToolbar,
+      );
+    case TargetPlatform.android:
+      return AndroidSpellingSuggestionToolbar(
+        editorFocusNode: editorFocusNode,
+        editor: editor,
+        selectedWordRange: selectedWordRange,
+        suggestions: suggestions,
+        selectedWordBounds: selectedWordBounds,
+        closeToolbar: closeToolbar,
+      );
+    default:
+      return DesktopSpellingSuggestionToolbar(
+        editorFocusNode: editorFocusNode,
+        editor: editor,
+        selectedWordRange: selectedWordRange,
+        suggestions: suggestions,
+        onCancelPressed: onCancelPressed,
+        closeToolbar: closeToolbar,
+      );
+  }
+}
 
 Widget desktopSpellingSuggestionToolbarBuilder(
   BuildContext context, {
@@ -380,6 +506,7 @@ Widget desktopSpellingSuggestionToolbarBuilder(
   required DocumentRange selectedWordRange,
   required List<String> suggestions,
   required VoidCallback onCancelPressed,
+  required VoidCallback closeToolbar,
 }) {
   return DesktopSpellingSuggestionToolbar(
     editorFocusNode: editorFocusNode,
@@ -387,6 +514,7 @@ Widget desktopSpellingSuggestionToolbarBuilder(
     selectedWordRange: selectedWordRange,
     suggestions: suggestions,
     onCancelPressed: onCancelPressed,
+    closeToolbar: closeToolbar,
   );
 }
 
@@ -405,6 +533,7 @@ class DesktopSpellingSuggestionToolbar extends StatefulWidget {
     required this.selectedWordRange,
     required this.suggestions,
     required this.onCancelPressed,
+    required this.closeToolbar,
   });
 
   final FocusNode editorFocusNode;
@@ -413,14 +542,41 @@ class DesktopSpellingSuggestionToolbar extends StatefulWidget {
   final DocumentRange? selectedWordRange;
   final List<String> suggestions;
   final VoidCallback onCancelPressed;
+  final VoidCallback closeToolbar;
 
   @override
   State<DesktopSpellingSuggestionToolbar> createState() => _DesktopSpellingSuggestionToolbarState();
 }
 
 class _DesktopSpellingSuggestionToolbarState extends State<DesktopSpellingSuggestionToolbar> {
+  @override
+  void initState() {
+    widget.editor.document.addListener(_onDocumentChange);
+    super.initState();
+  }
+
+  @override
+  void didUpdateWidget(covariant DesktopSpellingSuggestionToolbar oldWidget) {
+    if (widget.editor.document != oldWidget.editor.document) {
+      oldWidget.editor.document.removeListener(_onDocumentChange);
+      widget.editor.document.addListener(_onDocumentChange);
+    }
+    super.didUpdateWidget(oldWidget);
+  }
+
+  @override
+  void dispose() {
+    widget.editor.document.removeListener(_onDocumentChange);
+    super.dispose();
+  }
+
   void _applySpellingFix(String replacement) {
     widget.editor.fixMisspelledWord(widget.selectedWordRange!, replacement);
+    widget.closeToolbar();
+  }
+
+  void _onDocumentChange(DocumentChangeLog changeLog) {
+    widget.closeToolbar();
   }
 
   @override
@@ -513,3 +669,273 @@ class _DesktopSpellingSuggestionToolbarState extends State<DesktopSpellingSugges
     }
   }
 }
+
+/// A spelling suggestion toolbar, designed for the Android platform,
+/// which displays a vertical list alternative spellings for a given mis-spelled
+/// word and an option to remove the miss-pelled word.
+///
+/// When the user taps on a suggested spelling, the mis-spelled word
+/// is replaced by selected word.
+class AndroidSpellingSuggestionToolbar extends StatefulWidget {
+  const AndroidSpellingSuggestionToolbar({
+    super.key,
+    required this.editorFocusNode,
+    this.tapRegionId,
+    required this.editor,
+    required this.selectedWordRange,
+    required this.suggestions,
+    required this.selectedWordBounds,
+    required this.closeToolbar,
+  });
+
+  final FocusNode editorFocusNode;
+  final Object? tapRegionId;
+  final Editor editor;
+  final DocumentRange selectedWordRange;
+  final List<String> suggestions;
+  final Rect selectedWordBounds;
+  final VoidCallback closeToolbar;
+
+  @override
+  State<AndroidSpellingSuggestionToolbar> createState() => _AndroidSpellingSuggestionToolbarState();
+}
+
+class _AndroidSpellingSuggestionToolbarState extends State<AndroidSpellingSuggestionToolbar> {
+  @override
+  void initState() {
+    super.initState();
+    widget.editor.document.addListener(_onDocumentChange);
+  }
+
+  @override
+  void didUpdateWidget(AndroidSpellingSuggestionToolbar oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.editor.document != oldWidget.editor.document) {
+      oldWidget.editor.document.removeListener(_onDocumentChange);
+      widget.editor.document.addListener(_onDocumentChange);
+    }
+  }
+
+  @override
+  void dispose() {
+    widget.editor.document.removeListener(_onDocumentChange);
+    super.dispose();
+  }
+
+  void _onDocumentChange(DocumentChangeLog changeLog) {
+    SuperEditorAndroidControlsScope.rootOf(context).allowSelectionHandles();
+    widget.closeToolbar();
+  }
+
+  void _applySpellingFix(String replacement) {
+    widget.editor.fixMisspelledWord(widget.selectedWordRange, replacement);
+  }
+
+  void _removeWord() {
+    widget.editor.removeMisspelledWord(widget.selectedWordRange);
+  }
+
+  Color _getTextColor(Brightness brightness) {
+    switch (brightness) {
+      case Brightness.light:
+        return Colors.black;
+      case Brightness.dark:
+        return Colors.white;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final brightness = Theme.of(context).brightness;
+
+    return Material(
+      elevation: 8,
+      borderRadius: BorderRadius.circular(4),
+      color: Colors.white,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          for (final suggestion in widget.suggestions) ...[
+            _buildButton(
+              title: suggestion,
+              onPressed: () => _applySpellingFix(suggestion),
+              brightness: brightness,
+            ),
+          ],
+          _buildButton(
+            title: 'Delete',
+            onPressed: _removeWord,
+            brightness: brightness,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildButton({
+    required String title,
+    required VoidCallback onPressed,
+    required Brightness brightness,
+  }) {
+    return TextButton(
+      onPressed: onPressed,
+      style: TextButton.styleFrom(
+        minimumSize: const Size(kMinInteractiveDimension, kMinInteractiveDimension),
+        padding: EdgeInsets.zero,
+        foregroundColor: _getTextColor(brightness),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12.0),
+        child: Text(
+          title,
+          style: const TextStyle(fontSize: 14),
+        ),
+      ),
+    );
+  }
+}
+
+/// A spelling suggestion toolbar, designed for the iOS platform,
+/// which displays a horizontal list alternative spellings for a given
+/// mis-spelled word.
+///
+/// When the user taps on a suggested spelling, the mis-spelled word
+/// is replaced by selected word.
+class IosSpellingSuggestionToolbar extends StatefulWidget {
+  const IosSpellingSuggestionToolbar({
+    super.key,
+    required this.editorFocusNode,
+    this.tapRegionId,
+    required this.editor,
+    required this.selectedWordRange,
+    required this.suggestions,
+    required this.selectedWordBounds,
+    required this.closeToolbar,
+  });
+
+  final FocusNode editorFocusNode;
+  final Object? tapRegionId;
+  final Editor editor;
+  final DocumentRange selectedWordRange;
+  final List<String> suggestions;
+  final Rect selectedWordBounds;
+  final VoidCallback closeToolbar;
+
+  @override
+  State<IosSpellingSuggestionToolbar> createState() => _IosSpellingSuggestionToolbarState();
+}
+
+class _IosSpellingSuggestionToolbarState extends State<IosSpellingSuggestionToolbar> {
+  @override
+  void initState() {
+    super.initState();
+    widget.editor.document.addListener(_onDocumentChange);
+  }
+
+  @override
+  void didUpdateWidget(covariant IosSpellingSuggestionToolbar oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.editor.document != oldWidget.editor.document) {
+      oldWidget.editor.document.removeListener(_onDocumentChange);
+      widget.editor.document.addListener(_onDocumentChange);
+    }
+  }
+
+  @override
+  void dispose() {
+    widget.editor.document.removeListener(_onDocumentChange);
+    super.dispose();
+  }
+
+  void _onDocumentChange(DocumentChangeLog changeLog) {
+    SuperEditorIosControlsScope.rootOf(context).allowSelectionHandles();
+    widget.closeToolbar();
+  }
+
+  void _applySpellingFix(String replacement) {
+    widget.editor.fixMisspelledWord(widget.selectedWordRange, replacement);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final brightness = Theme.of(context).brightness;
+
+    return Focus(
+      parentNode: widget.editorFocusNode,
+      child: TapRegion(
+        groupId: widget.tapRegionId,
+        child: CupertinoPopoverToolbar(
+          focalPoint: StationaryMenuFocalPoint(widget.selectedWordBounds.center),
+          backgroundColor: _getBackgroundColor(brightness),
+          activeButtonTextColor: brightness == Brightness.dark //
+              ? iOSToolbarDarkArrowActiveColor
+              : iOSToolbarLightArrowActiveColor,
+          inactiveButtonTextColor: brightness == Brightness.dark //
+              ? iOSToolbarDarkArrowInactiveColor
+              : iOSToolbarLightArrowInactiveColor,
+          elevation: 8.0,
+          children: [
+            for (final suggestion in widget.suggestions) ...[
+              _buildButton(
+                title: suggestion,
+                onPressed: () => _applySpellingFix(suggestion),
+                brightness: brightness,
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Color _getBackgroundColor(Brightness brightness) {
+    switch (brightness) {
+      case Brightness.light:
+        return Colors.white;
+      case Brightness.dark:
+        return Colors.grey.shade900;
+    }
+  }
+
+  Color _getTextColor(Brightness brightness) {
+    switch (brightness) {
+      case Brightness.light:
+        return Colors.black;
+      case Brightness.dark:
+        return Colors.white;
+    }
+  }
+
+  Widget _buildButton({
+    required String title,
+    required VoidCallback onPressed,
+    required Brightness brightness,
+  }) {
+    return TextButton(
+      onPressed: onPressed,
+      style: TextButton.styleFrom(
+        minimumSize: const Size(kMinInteractiveDimension, 0),
+        padding: EdgeInsets.zero,
+        splashFactory: NoSplash.splashFactory,
+        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        foregroundColor: _getTextColor(brightness),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12.0),
+        child: Text(
+          title,
+          style: const TextStyle(fontSize: 12),
+        ),
+      ),
+    );
+  }
+}
+
+const iOSToolbarDarkBackgroundColor = Color(0xFF333333);
+const iOSToolbarLightBackgroundColor = Colors.white;
+
+const iOSToolbarLightArrowActiveColor = Color(0xFF000000);
+const iOSToolbarDarkArrowActiveColor = Color(0xFFFFFFFF);
+
+const iOSToolbarLightArrowInactiveColor = Color(0xFF999999);
+const iOSToolbarDarkArrowInactiveColor = Color(0xFF757575);

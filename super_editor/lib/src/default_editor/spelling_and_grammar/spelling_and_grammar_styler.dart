@@ -11,6 +11,7 @@ class SpellingAndGrammarStyler extends SingleColumnLayoutStylePhase {
   SpellingAndGrammarStyler({
     UnderlineStyle? spellingErrorUnderlineStyle,
     UnderlineStyle? grammarErrorUnderlineStyle,
+    this.selectionHighlightColor = Colors.transparent,
   })  : _spellingErrorUnderlineStyle = spellingErrorUnderlineStyle,
         _grammarErrorUnderlineStyle = grammarErrorUnderlineStyle;
 
@@ -33,6 +34,15 @@ class SpellingAndGrammarStyler extends SingleColumnLayoutStylePhase {
     _grammarErrorUnderlineStyle = style;
     markDirty();
   }
+
+  /// Whether or not we should to override the default selection color with [selectionHighlightColor].
+  ///
+  /// On mobile platforms, when the suggestions popover is opened, the selected text uses a different
+  /// highlight color.
+  bool _overrideSelectionColor = false;
+
+  /// The color to use for the selection highlight [overrideSelectionColor] is called.
+  final Color selectionHighlightColor;
 
   final _errorsByNode = <String, Set<TextError>>{};
   final _dirtyNodes = <String>{};
@@ -59,13 +69,25 @@ class SpellingAndGrammarStyler extends SingleColumnLayoutStylePhase {
     markDirty();
   }
 
+  /// Temporarily use the [selectionHighlightColor] to override the default selection color.
+  void overrideSelectionColor() {
+    _overrideSelectionColor = true;
+    markDirty();
+  }
+
+  /// Restore the default selection color.
+  void useDefaultSelectionColor() {
+    _overrideSelectionColor = false;
+    markDirty();
+  }
+
   @override
   SingleColumnLayoutViewModel style(Document document, SingleColumnLayoutViewModel viewModel) {
     final updatedViewModel = SingleColumnLayoutViewModel(
       padding: viewModel.padding,
       componentViewModels: [
         for (final previousViewModel in viewModel.componentViewModels) //
-          _applyErrors(previousViewModel),
+          _applyErrors(previousViewModel.copy()),
       ],
     );
 
@@ -95,6 +117,10 @@ class SpellingAndGrammarStyler extends SingleColumnLayoutStylePhase {
       ..addAll([
         for (final spellingError in spellingErrors) spellingError.range,
       ]);
+
+    if (_overrideSelectionColor) {
+      viewModel.selectionColor = selectionHighlightColor;
+    }
 
     final grammarErrors = _errorsByNode[viewModel.nodeId]!.where((error) => error.type == TextErrorType.grammar);
     if (_grammarErrorUnderlineStyle != null) {
