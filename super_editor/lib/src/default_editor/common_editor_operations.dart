@@ -1396,6 +1396,13 @@ class CommonEditorOperations {
   }) {
     // Figure out where the caret should appear after the
     // deletion.
+
+    if (selection.isCollapsed) {
+      // There is no expanded deletion when the selection is collapsed. Therefore,
+      // no selection change is expected.
+      return null;
+    }
+
     // TODO: This calculation depends upon the first
     //       selected node still existing after the deletion. This
     //       is a fragile expectation and should be revisited.
