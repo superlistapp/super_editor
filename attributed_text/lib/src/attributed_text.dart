@@ -25,7 +25,7 @@ class AttributedText {
     String? text,
     AttributedSpans? spans,
     Map<int, Object>? placeholders,
-  ])  : text = text ?? "",
+  ])  : _text = text ?? "",
         spans = spans ?? AttributedSpans(),
         placeholders = placeholders ?? <int, Object>{} {
     assert(() {
@@ -38,7 +38,7 @@ class AttributedText {
     if (this.placeholders.isEmpty) {
       // There aren't any placeholders, so text with placeholders is the same as
       // text without placeholders.
-      _textWithPlaceholders = this.text;
+      _textWithPlaceholders = _text;
     } else {
       // Create a 2nd plain text representation that includes stand-in characters
       // for placeholders.
@@ -46,7 +46,7 @@ class AttributedText {
       int start = 0;
       int insertedPlaceholders = 0;
       for (final entry in this.placeholders.entries) {
-        final textSegment = this.text.substring(start - insertedPlaceholders, entry.key - insertedPlaceholders);
+        final textSegment = _text.substring(start - insertedPlaceholders, entry.key - insertedPlaceholders);
         buffer.write(textSegment);
         start += textSegment.length;
 
@@ -55,8 +55,8 @@ class AttributedText {
 
         insertedPlaceholders += 1;
       }
-      if (start - insertedPlaceholders < this.text.length) {
-        buffer.write(this.text.substring(start - insertedPlaceholders, this.text.length));
+      if (start - insertedPlaceholders < _text.length) {
+        buffer.write(_text.substring(start - insertedPlaceholders, _text.length));
       }
 
       _textWithPlaceholders = buffer.toString();
@@ -72,7 +72,7 @@ class AttributedText {
 
     // Ensure that none of the placeholders sit beyond the end of the text and other
     // placeholders.
-    int maxAllowableIndex = text.length;
+    int maxAllowableIndex = _text.length;
     for (final entry in placeholders.entries) {
       if (entry.key > maxAllowableIndex) {
         throw AssertionError("Invalid placeholder index. The index is too large. ${entry.key} -> ${entry.value}.");
@@ -88,10 +88,24 @@ class AttributedText {
 
   /// The text that this [AttributedText] attributes.
   @Deprecated("Use toPlainText() instead, so you can choose whether to include placeholder characters")
-  final String text;
+  String get text => _text;
+  final String _text;
 
   late final String _textWithPlaceholders;
 
+  /// Returns a plain-text version of this `AttributedText`.
+  ///
+  /// Plain text has no attributions or placeholder objects.
+  ///
+  /// If [includePlaceholders] is `true`, special characters will be inserted
+  /// at every text offset where there is currently a placeholder object. By
+  /// default, the special character is [placeholderCharacter]. To use a different
+  /// character, provide a [replacementCharacter].
+  ///
+  /// if [includePlaceholders] is `false`, placeholders will be replaced
+  /// with nothing. In that case, the returned `String` will be shorter than
+  /// [length] with a difference equal to the number of placeholders in
+  /// this [AttributedText].
   String toPlainText({
     bool includePlaceholders = true,
     String replacementCharacter = placeholderCharacter,
@@ -106,7 +120,7 @@ class AttributedText {
       return _textWithPlaceholders;
     }
 
-    return text;
+    return _text;
   }
 
   /// Placeholders that represent non-text content, e.g., inline images, that
@@ -116,22 +130,22 @@ class AttributedText {
   final Map<int, Object> placeholders;
 
   /// Returns the `length` of this [AttributedText], which includes the length
-  /// of the [text] `String`, and the number of [placeholders].
-  int get length => text.length + placeholders.length;
+  /// of the plain text `String`, and the number of [placeholders].
+  int get length => _text.length + placeholders.length;
 
   /// Returns `true` if the [length] of this [AttributedText] is zero.
   ///
-  /// The length grows both for [text] and [placeholders]. Both must be empty for
-  /// [isEmpty] to be `true`.
-  bool get isEmpty => text.isEmpty && placeholders.isEmpty;
+  /// `isEmpty` is `true` if and only if both the plain text and the
+  /// placeholders are empty.
+  bool get isEmpty => _text.isEmpty && placeholders.isEmpty;
 
   /// Returns `true` if the [length] of this [AttributedText] is greater than zero.
   ///
-  /// The length grows both for [text] and [placeholders]. If either of them is
-  /// non-empty, then `isNotEmpty` is `true`.
-  bool get isNotEmpty => text.isNotEmpty || placeholders.isNotEmpty;
+  /// `isNotEmpty` is `true` if the plain text is non-empty, or if the
+  /// placeholders are non-empty, or both.
+  bool get isNotEmpty => _text.isNotEmpty || placeholders.isNotEmpty;
 
-  /// The attributes applied across [text] and [placeholders].
+  /// The attributes applied across the plain text and [placeholders].
   final AttributedSpans spans;
 
   final _listeners = <VoidCallback>{};
@@ -222,14 +236,14 @@ class AttributedText {
   /// Returns all spans in this [AttributedText] for the given [attributions].
   Set<AttributionSpan> getAttributionSpans(Set<Attribution> attributions) => getAttributionSpansInRange(
         attributionFilter: (a) => attributions.contains(a),
-        range: SpanRange(0, text.length),
+        range: SpanRange(0, _text.length),
       );
 
   /// Returns all spans in this [AttributedText], for attributions that are
   /// selected by the given [filter].
   Set<AttributionSpan> getAttributionSpansByFilter(AttributionFilter filter) => getAttributionSpansInRange(
         attributionFilter: filter,
-        range: SpanRange(0, text.length),
+        range: SpanRange(0, _text.length),
       );
 
   /// Returns spans for each attribution that (at least partially) appear
@@ -324,7 +338,7 @@ class AttributedText {
   /// [AttributedSpans] with the given [newSpans].
   AttributedText replaceAttributions(AttributedSpans newSpans) {
     return AttributedText(
-      text,
+      _text,
       newSpans,
       Map.from(placeholders),
     );
@@ -362,7 +376,6 @@ class AttributedText {
   /// Copies all text, attributions, and placeholders from [startOffset] to
   /// [endOffset], exclusive, and returns them as a new [AttributedText].
   AttributedText copyText(int startOffset, [int? endOffset]) {
-    // print("copyText() - start: $startOffset, end: $endOffset");
     _log.fine('start: $startOffset, end: $endOffset');
 
     final placeholdersBeforeStartOffset = placeholders.entries.where((entry) => entry.key < startOffset);
@@ -373,25 +386,17 @@ class AttributedText {
     );
     final textEndCopyOffset =
         (endOffset ?? length) - placeholdersBeforeStartOffset.length - placeholdersAfterStartBeforeEndOffset.length;
-    // print(" - placeholders before start: ${placeholdersBeforeStartOffset.length}");
-    // for (final placeholder in placeholdersBeforeStartOffset) {
-    //   print("    - ${placeholder.key} -> ${placeholder.value}");
-    // }
-    // print(" - placeholders after start and before the end: ${placeholdersAfterStartBeforeEndOffset.length}");
-    // print(
-    //     " - placeholders before end: ${placeholdersBeforeStartOffset.length + placeholdersAfterStartBeforeEndOffset.length}");
-    // print(" - copying text from: $textStartCopyOffset, to: $textEndCopyOffset");
 
     // Note: -1 because copyText() uses an exclusive `start` and `end` but
     // _copyAttributionRegion() uses an inclusive `start` and `end`.
-    final startCopyOffset = startOffset < text.length ? startOffset : text.length - 1;
+    final startCopyOffset = startOffset < _text.length ? startOffset : _text.length - 1;
     int endCopyOffset;
     if (endOffset == startOffset) {
       endCopyOffset = startCopyOffset;
     } else if (endOffset != null) {
       endCopyOffset = endOffset - 1;
     } else {
-      endCopyOffset = text.length - 1;
+      endCopyOffset = _text.length - 1;
     }
     _log.fine('offsets, start: $startCopyOffset, end: $endCopyOffset');
 
@@ -404,19 +409,19 @@ class AttributedText {
     }
 
     return AttributedText(
-      text.substring(textStartCopyOffset, textEndCopyOffset),
+      _text.substring(textStartCopyOffset, textEndCopyOffset),
       spans.copyAttributionRegion(startCopyOffset, endCopyOffset),
       copiedPlaceholders,
     );
   }
 
-  /// Returns a plain-text substring of [text], from [range.start] to [range.end] (exclusive).
+  /// Returns a plain-text substring, from [range.start] to [range.end] (exclusive).
   ///
   /// {@macro attributed_text_substring_range}
   String substringInRange(SpanRange range) => substring(range.start, range.end);
 
-  /// Returns a plain-text substring of [text], from [start] to [end] (exclusive), or the end of
-  /// [text] if [end] isn't provided.
+  /// Returns a plain-text substring, from [start] to [end] (exclusive), or the end of
+  /// this [AttributedText] if [end] isn't provided.
   ///
   /// {@template attributed_text_substring_range}
   /// [AttributedText] can contain placeholders, each of which take up one character of length.
@@ -434,7 +439,7 @@ class AttributedText {
     final textEndCopyOffset =
         (end ?? length) - placeholdersBeforeStartOffset.length - placeholdersAfterStartBeforeEndOffset.length;
 
-    return text.substring(textStartCopyOffset, textEndCopyOffset);
+    return _text.substring(textStartCopyOffset, textEndCopyOffset);
   }
 
   /// Returns a copy of this [AttributedText] with the [other] text
@@ -446,7 +451,7 @@ class AttributedText {
     if (other.isEmpty) {
       _log.fine('`other` has no text. Returning a direct copy of ourselves.');
       return AttributedText(
-        text,
+        _text,
         spans.copy(),
         Map.from(placeholders),
       );
@@ -455,15 +460,15 @@ class AttributedText {
     if (isEmpty) {
       _log.fine('our `text` is empty. Returning a direct copy of the `other` text.');
       return AttributedText(
-        other.text,
+        other._text,
         other.spans.copy(),
         Map.from(other.placeholders),
       );
     }
 
     return AttributedText(
-      text + other.text,
-      spans.copy()..addAt(other: other.spans, index: text.length),
+      _text + other._text,
+      spans.copy()..addAt(other: other.spans, index: _text.length),
       {
         ...placeholders,
         ...other.placeholders.map((offset, placeholder) => MapEntry(offset + length, placeholder)),
@@ -525,7 +530,7 @@ class AttributedText {
   }
 
   AttributedText insertPlaceholder(int index, Object placeholder) {
-    return AttributedText(text, spans.copy(), {
+    return AttributedText(_text, spans.copy(), {
       // Insert existing placeholders that come before the new placeholder.
       ...Map.fromEntries(placeholders.entries.where((entry) => entry.key < index)),
       // Insert the new placeholder.
@@ -668,13 +673,13 @@ class AttributedText {
   ///
   /// Attribution groups are useful when computing all style variations for [AttributedText].
   Iterable<MultiAttributionSpan> computeAttributionSpans() {
-    return spans.collapseSpans(contentLength: text.length);
+    return spans.collapseSpans(contentLength: _text.length);
   }
 
   /// Returns a copy of this [AttributedText].
   AttributedText copy() {
     return AttributedText(
-      text,
+      _text,
       spans.copy(),
       Map.from(placeholders),
     );
@@ -685,17 +690,17 @@ class AttributedText {
     return identical(this, other) ||
         other is AttributedText &&
             runtimeType == other.runtimeType &&
-            text == other.text &&
+            _text == other._text &&
             spans == other.spans &&
             (const DeepCollectionEquality()).equals(placeholders, other.placeholders);
   }
 
   @override
-  int get hashCode => text.hashCode ^ spans.hashCode ^ placeholders.hashCode;
+  int get hashCode => _text.hashCode ^ spans.hashCode ^ placeholders.hashCode;
 
   @override
   String toString() {
-    return '[AttributedText] - "$text"\n$spans\n$placeholders';
+    return '[AttributedText] - "$_text"\n$spans\n$placeholders';
   }
 }
 
