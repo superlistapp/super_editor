@@ -289,51 +289,6 @@ class RenderParagraphProseTextLayout implements ProseTextLayout {
       return Offset.zero;
     }
 
-    // final span = _richText.getSpanForPosition(position);
-    // if (span == null || span is WidgetSpan) {
-    //   return _getOffsetForCaretAtWidgetSpan(position);
-    // }
-
-    return _renderParagraph.getOffsetForCaret(position, Rect.zero);
-  }
-
-  Offset _getOffsetForCaretAtWidgetSpan(TextPosition position) {
-    final offsetWithBadY = _renderParagraph.getOffsetForCaret(position, Rect.zero);
-
-    // Our best chance to get the right caret offset is to query for
-    // a non-widget character. Try to find a character nearby.
-    //
-    // First, search upstream.
-    int searchOffset = position.offset - 1;
-    while (searchOffset > 0) {
-      if (_richText.getSpanForPosition(TextPosition(offset: searchOffset)) is TextSpan) {
-        // There's a character here. Use its y-value.
-        return Offset(
-          offsetWithBadY.dx,
-          _renderParagraph.getOffsetForCaret(TextPosition(offset: searchOffset), Rect.zero).dy,
-        );
-      }
-
-      searchOffset -= 1;
-    }
-
-    // We didn't find any characters upstream. Search downstream.
-    searchOffset = position.offset + 1;
-    while (searchOffset < _richText.toPlainText(includePlaceholders: true).length) {
-      if (_richText.getSpanForPosition(TextPosition(offset: searchOffset)) is TextSpan) {
-        // There's a character here. Use its y-value.
-        return Offset(
-          offsetWithBadY.dx,
-          _renderParagraph.getOffsetForCaret(TextPosition(offset: searchOffset), Rect.zero).dy,
-        );
-      }
-
-      searchOffset += 1;
-    }
-
-    // This paragraph is comprised entirely of inline widgets. We don't know
-    // how to select an offset because we don't have access to knowledge about
-    // which line this position is on.
     return _renderParagraph.getOffsetForCaret(position, Rect.zero);
   }
 
