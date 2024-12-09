@@ -29,6 +29,23 @@ class AttributedText {
   /// unknown characters, and looks like: �
   static const placeholderCharacter = '\uFFFC';
 
+  /// Constructs an [AttributedText] whose content is comprised by a combination
+  /// of [text] and [placeholders], covered by the given attributed [spans].
+  ///
+  /// [placeholders] is a map from character indices to desired placeholder objects.
+  /// The character indices in [placeholders] refer to the final indices when the
+  /// placeholders have been combined with the [text].
+  ///
+  /// Example:
+  ///  - Full text: "�Hello � World!�"
+  ///  - text: "Hello  World!"
+  ///  - placeholders:
+  ///    - 0:  MyPlaceholder
+  ///    - 7:  MyPlaceholder
+  ///    - 15: MyPlaceholder
+  ///
+  /// Notice in the example above that the final placeholder index is greater
+  /// than the total length of the [text] `String`.
   AttributedText([
     String? text,
     AttributedSpans? spans,
