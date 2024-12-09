@@ -19,6 +19,14 @@ final _log = attributionsLog;
 // TODO: there is a mixture of mutable and immutable behavior in this class.
 //       Pick one or the other, or offer 2 classes: mutable and immutable (#113)
 class AttributedText {
+  /// The default character that's inserted in place of placeholders when converting
+  /// an [AttributedText] to plain text.
+  ///
+  /// `\uFFFC` is the unicode character for "object replacement" and it looks
+  /// like a regular space.
+  ///
+  /// `\uFFFD` is a similar character - it's the unicode character for replacing
+  /// unknown characters, and looks like: �
   static const placeholderCharacter = '\uFFFC';
 
   AttributedText([
