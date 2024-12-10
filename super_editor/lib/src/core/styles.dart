@@ -1,5 +1,6 @@
 import 'package:attributed_text/attributed_text.dart';
 import 'package:flutter/painting.dart';
+import 'package:super_editor/src/infrastructure/attributed_text_styles.dart';
 
 import 'document.dart';
 
@@ -13,6 +14,7 @@ class Stylesheet {
     this.documentPadding,
     required this.rules,
     required this.inlineTextStyler,
+    this.inlineWidgetBuilderChain = const [],
     this.selectedTextColorStrategy,
   });
 
@@ -26,6 +28,10 @@ class Stylesheet {
   /// Styles all in-line text in the document.
   final AttributionStyleAdjuster inlineTextStyler;
 
+  /// Chain of inline widget builders, used to map [AttributedText] placeholders
+  /// to inline widgets.
+  final InlineWidgetBuilderChain inlineWidgetBuilderChain;
+
   /// The strategy that chooses the color for selected text.
   final SelectedTextColorStrategy? selectedTextColorStrategy;
 
@@ -35,6 +41,7 @@ class Stylesheet {
   Stylesheet copyWith({
     EdgeInsets? documentPadding,
     AttributionStyleAdjuster? inlineTextStyler,
+    InlineWidgetBuilderChain? inlineWidgetBuilderChain,
     SelectedTextColorStrategy? selectedTextColorStrategy,
     List<StyleRule> addRulesBefore = const [],
     List<StyleRule>? rules,
@@ -43,6 +50,7 @@ class Stylesheet {
     return Stylesheet(
       documentPadding: documentPadding ?? this.documentPadding,
       inlineTextStyler: inlineTextStyler ?? this.inlineTextStyler,
+      inlineWidgetBuilderChain: inlineWidgetBuilderChain ?? this.inlineWidgetBuilderChain,
       selectedTextColorStrategy: selectedTextColorStrategy ?? this.selectedTextColorStrategy,
       rules: [
         ...addRulesBefore,
@@ -359,6 +367,9 @@ class Styles {
 
   /// Applies a [AttributionStyleAdjuster] to a text node.
   static const String inlineTextStyler = 'inlineTextStyler';
+
+  /// Applies a [InlineWidgetBuilderChain] to text-based components.
+  static const String inlineWidgetBuilderChain = 'inlineWidgetBuilderChain';
 
   /// Applies a [Color] to the dot of an unordered list item.
   static const String dotColor = 'dotColor';

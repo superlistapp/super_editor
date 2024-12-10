@@ -337,7 +337,7 @@ class SuperDesktopTextFieldState extends State<SuperDesktopTextField> implements
   }
 
   int _getEstimatedLinesOfText() {
-    if (_controller.text.text.isEmpty) {
+    if (_controller.text.isEmpty) {
       return 0;
     }
 
@@ -348,7 +348,7 @@ class SuperDesktopTextFieldState extends State<SuperDesktopTextField> implements
     final offsetAtEndOfText = textLayout.getOffsetAtPosition(TextPosition(offset: _controller.text.length));
     int lineCount = (offsetAtEndOfText.dy / _getEstimatedLineHeight()).ceil();
 
-    if (_controller.text.text.endsWith('\n')) {
+    if (_controller.text.toPlainText().endsWith('\n')) {
       lineCount += 1;
     }
 
@@ -364,7 +364,7 @@ class SuperDesktopTextFieldState extends State<SuperDesktopTextField> implements
     // We don't expect getHeightForCaret to ever return null, but since its return type is nullable,
     // we use getLineHeightAtPosition as a backup.
     // More information in https://github.com/flutter/flutter/issues/145507.
-    final lineHeight = _controller.text.text.isEmpty || textLayout == null
+    final lineHeight = _controller.text.isEmpty || textLayout == null
         ? 0.0
         : textLayout.getHeightForCaret(const TextPosition(offset: 0)) ??
             textLayout.getLineHeightAtPosition(const TextPosition(offset: 0));
@@ -492,7 +492,7 @@ class SuperDesktopTextFieldState extends State<SuperDesktopTextField> implements
       textAlign: widget.textAlign,
       textScaler: _textScaler,
       layerBeneathBuilder: (context, textLayout) {
-        final isTextEmpty = _controller.text.text.isEmpty;
+        final isTextEmpty = _controller.text.isEmpty;
         final showHint = widget.hintBuilder != null &&
             ((isTextEmpty && widget.hintBehavior == HintBehavior.displayHintUntilTextEntered) ||
                 (isTextEmpty && !_focusNode.hasFocus && widget.hintBehavior == HintBehavior.displayHintUntilFocus));

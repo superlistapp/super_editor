@@ -481,7 +481,7 @@ class _AndroidEditingOverlayControlsState extends State<AndroidEditingOverlayCon
 
     double extentLineHeight =
         _textLayout.getCharacterBox(extentTextPosition)?.toRect().height ?? _textLayout.estimatedLineHeight;
-    if (widget.editingController.textController.text.text.isEmpty) {
+    if (widget.editingController.textController.text.isEmpty) {
       extentLineHeight = _textLayout.getLineHeightAtPosition(extentTextPosition);
     }
 

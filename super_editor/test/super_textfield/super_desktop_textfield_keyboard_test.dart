@@ -18,7 +18,7 @@ void main() {
 
           await tester.typeKeyboardText("f");
 
-          expect(SuperTextFieldInspector.findText().text, "f");
+          expect(SuperTextFieldInspector.findText().toPlainText(), "f");
           expect(SuperTextFieldInspector.findSelection(), const TextSelection.collapsed(offset: 1));
         });
 
@@ -33,7 +33,7 @@ void main() {
 
           await tester.typeKeyboardText("f");
 
-          expect(SuperTextFieldInspector.findText().text, "-->f<--");
+          expect(SuperTextFieldInspector.findText().toPlainText(), "-->f<--");
           expect(SuperTextFieldInspector.findSelection(), const TextSelection.collapsed(offset: 4));
         });
 
@@ -48,7 +48,7 @@ void main() {
 
           await tester.typeKeyboardText("f");
 
-          expect(SuperTextFieldInspector.findText().text, "-->f");
+          expect(SuperTextFieldInspector.findText().toPlainText(), "-->f");
           expect(SuperTextFieldInspector.findSelection(), const TextSelection.collapsed(offset: 4));
         });
 
@@ -63,7 +63,7 @@ void main() {
 
           await tester.typeKeyboardText("f");
 
-          expect(SuperTextFieldInspector.findText().text, "-->f<--");
+          expect(SuperTextFieldInspector.findText().toPlainText(), "-->f<--");
           expect(SuperTextFieldInspector.findSelection(), const TextSelection.collapsed(offset: 4));
         });
       });
@@ -80,7 +80,7 @@ void main() {
 
           await tester.pressEnter();
 
-          expect(SuperTextFieldInspector.findText().text, "this is \nsome text");
+          expect(SuperTextFieldInspector.findText().toPlainText(), "this is \nsome text");
           expect(SuperTextFieldInspector.findSelection(), const TextSelection.collapsed(offset: 9));
         });
 
@@ -95,7 +95,7 @@ void main() {
 
           await tester.pressEnter();
 
-          expect(SuperTextFieldInspector.findText().text, "\nthis is some text");
+          expect(SuperTextFieldInspector.findText().toPlainText(), "\nthis is some text");
           expect(SuperTextFieldInspector.findSelection(), const TextSelection.collapsed(offset: 1));
         });
 
@@ -110,7 +110,7 @@ void main() {
 
           await tester.pressEnter();
 
-          expect(SuperTextFieldInspector.findText().text, "this is some text\n");
+          expect(SuperTextFieldInspector.findText().toPlainText(), "this is some text\n");
           expect(SuperTextFieldInspector.findSelection(), const TextSelection.collapsed(offset: 18));
         });
       });
@@ -503,7 +503,7 @@ void main() {
 
           await tester.pressBackspace();
 
-          expect(SuperTextFieldInspector.findText().text, "");
+          expect(SuperTextFieldInspector.findText().toPlainText(), "");
           expect(SuperTextFieldInspector.findSelection(), const TextSelection.collapsed(offset: 0));
         });
 
@@ -518,7 +518,7 @@ void main() {
 
           await tester.pressBackspace();
 
-          expect(SuperTextFieldInspector.findText().text, "tis is some text");
+          expect(SuperTextFieldInspector.findText().toPlainText(), "tis is some text");
           expect(SuperTextFieldInspector.findSelection(), const TextSelection.collapsed(offset: 1));
         });
 
@@ -540,7 +540,8 @@ void main() {
           await tester.pressBackspace();
 
           expect(SuperTextFieldInspector.findSelection(), const TextSelection.collapsed(offset: 0));
-          expect(SuperTextFieldInspector.findText().text, "is long enough to be multiline in the available space");
+          expect(SuperTextFieldInspector.findText().toPlainText(),
+              "is long enough to be multiline in the available space");
         });
 
         testWidgetsOnDesktop('DELETE does nothing when text is empty', (tester) async {
@@ -554,7 +555,7 @@ void main() {
 
           await tester.pressDelete();
 
-          expect(SuperTextFieldInspector.findText().text, "");
+          expect(SuperTextFieldInspector.findText().toPlainText(), "");
           expect(SuperTextFieldInspector.findSelection(), const TextSelection.collapsed(offset: 0));
         });
 
@@ -569,7 +570,7 @@ void main() {
 
           await tester.pressDelete();
 
-          expect(SuperTextFieldInspector.findText().text, "this is some text");
+          expect(SuperTextFieldInspector.findText().toPlainText(), "this is some text");
           expect(SuperTextFieldInspector.findSelection(), const TextSelection.collapsed(offset: 17));
         });
 
@@ -584,7 +585,7 @@ void main() {
 
           await tester.pressDelete();
 
-          expect(SuperTextFieldInspector.findText().text, "ths is some text");
+          expect(SuperTextFieldInspector.findText().toPlainText(), "ths is some text");
           expect(SuperTextFieldInspector.findSelection(), const TextSelection.collapsed(offset: 2));
         });
 
@@ -601,7 +602,7 @@ void main() {
 
           await tester.pressDelete();
 
-          expect(SuperTextFieldInspector.findText().text, "this is text");
+          expect(SuperTextFieldInspector.findText().toPlainText(), "this is text");
           expect(SuperTextFieldInspector.findSelection(), const TextSelection.collapsed(offset: 8));
         });
       });
@@ -699,7 +700,7 @@ void main() {
           await tester.pressCmdV();
 
           // Ensure that the clipboard text was pasted into the SuperTextField
-          expect(SuperTextFieldInspector.findText().text, 'Pasted content: this is clipboard text');
+          expect(SuperTextFieldInspector.findText().toPlainText(), 'Pasted content: this is clipboard text');
           expect(SuperTextFieldInspector.findSelection(), const TextSelection.collapsed(offset: 38));
         });
 
@@ -715,7 +716,7 @@ void main() {
           await tester.pressCtlV();
 
           // Ensure that the clipboard text was NOT pasted into the SuperTextField.
-          expect(SuperTextFieldInspector.findText().text, 'Pasted content: ');
+          expect(SuperTextFieldInspector.findText().toPlainText(), 'Pasted content: ');
           expect(SuperTextFieldInspector.findSelection(), const TextSelection.collapsed(offset: 16));
         });
 
@@ -731,7 +732,7 @@ void main() {
           await tester.sendKeyEvent(LogicalKeyboardKey.keyV);
 
           // Ensure that the clipboard text was NOT pasted into the SuperTextField.
-          expect(SuperTextFieldInspector.findText().text, 'Pasted content: v');
+          expect(SuperTextFieldInspector.findText().toPlainText(), 'Pasted content: v');
           expect(SuperTextFieldInspector.findSelection(), const TextSelection.collapsed(offset: 17));
         });
 
@@ -747,7 +748,7 @@ void main() {
           await tester.sendKeyEvent(LogicalKeyboardKey.metaLeft);
 
           // Ensure that the clipboard text was NOT pasted into the SuperTextField.
-          expect(SuperTextFieldInspector.findText().text, 'Pasted content: ');
+          expect(SuperTextFieldInspector.findText().toPlainText(), 'Pasted content: ');
           expect(SuperTextFieldInspector.findSelection(), const TextSelection.collapsed(offset: 16));
         });
       });
@@ -1041,7 +1042,7 @@ void main() {
           await tester.pressAltBackspace();
 
           expect(SuperTextFieldInspector.findSelection(), const TextSelection.collapsed(offset: 0));
-          expect(SuperTextFieldInspector.findText().text, " is some text");
+          expect(SuperTextFieldInspector.findText().toPlainText(), " is some text");
         });
 
         testWidgetsOnMac('ALT + BACKSPACE deletes until beginning of word', (tester) async {
@@ -1056,7 +1057,7 @@ void main() {
           await tester.pressAltBackspace();
 
           expect(SuperTextFieldInspector.findSelection(), const TextSelection.collapsed(offset: 0));
-          expect(SuperTextFieldInspector.findText().text, "is is some text");
+          expect(SuperTextFieldInspector.findText().toPlainText(), "is is some text");
         });
 
         testWidgetsOnMac('ALT + BACKSPACE deletes previous word with caret after whitespace', (tester) async {
@@ -1071,7 +1072,7 @@ void main() {
           await tester.pressAltBackspace();
 
           expect(SuperTextFieldInspector.findSelection(), const TextSelection.collapsed(offset: 5));
-          expect(SuperTextFieldInspector.findText().text, "this some text");
+          expect(SuperTextFieldInspector.findText().toPlainText(), "this some text");
         });
 
         testWidgetsOnMac('ALT + BACKSPACE deletes expanded selection', (tester) async {
@@ -1088,7 +1089,8 @@ void main() {
           // TODO: When #549 is fixed, I expect this offset to change to 0, and the first
           // character of the expected text to be deleted.
           expect(SuperTextFieldInspector.findSelection(), const TextSelection.collapsed(offset: 1));
-          expect(SuperTextFieldInspector.findText().text, "tis long enough to be multiline in the available space");
+          expect(SuperTextFieldInspector.findText().toPlainText(),
+              "tis long enough to be multiline in the available space");
         });
 
         testWidgetsOnMac('CMD + BACKSPACE deletes partial line before caret (flowed multiline)', (tester) async {
@@ -1103,7 +1105,8 @@ void main() {
           await tester.pressCmdBackspace();
 
           expect(SuperTextFieldInspector.findSelection(), const TextSelection.collapsed(offset: 18));
-          expect(SuperTextFieldInspector.findText().text, "this text is long be multiline in the available space");
+          expect(SuperTextFieldInspector.findText().toPlainText(),
+              "this text is long be multiline in the available space");
         });
 
         // TODO: When #549 is fixed, un-skip this test. The problem is that we need
@@ -1121,7 +1124,8 @@ void main() {
           await tester.pressCmdBackspace();
 
           expect(SuperTextFieldInspector.findSelection(), const TextSelection.collapsed(offset: 18));
-          expect(SuperTextFieldInspector.findText().text, "this text is long multiline in the available space");
+          expect(
+              SuperTextFieldInspector.findText().toPlainText(), "this text is long multiline in the available space");
         }, skip: true);
 
         testWidgetsOnMac('CMD + BACKSPACE deletes partial line before caret (explicit newlines)', (tester) async {
@@ -1135,7 +1139,7 @@ void main() {
 
           await tester.pressCmdBackspace();
 
-          expect(SuperTextFieldInspector.findText().text, "This is line 1\nline 2\nThis is line 3");
+          expect(SuperTextFieldInspector.findText().toPlainText(), "This is line 1\nline 2\nThis is line 3");
           expect(SuperTextFieldInspector.findSelection(), const TextSelection.collapsed(offset: 15));
         });
 
@@ -1150,7 +1154,7 @@ void main() {
 
           await tester.pressCmdBackspace();
 
-          expect(SuperTextFieldInspector.findText().text, "This is line 1\n\nThis is line 3");
+          expect(SuperTextFieldInspector.findText().toPlainText(), "This is line 1\n\nThis is line 3");
           expect(SuperTextFieldInspector.findSelection(), const TextSelection.collapsed(offset: 15));
         });
 
@@ -1172,7 +1176,8 @@ void main() {
           await tester.pressCmdBackspace();
 
           expect(SuperTextFieldInspector.findSelection(), const TextSelection.collapsed(offset: 0));
-          expect(SuperTextFieldInspector.findText().text, "is long enough to be multiline in the available space");
+          expect(SuperTextFieldInspector.findText().toPlainText(),
+              "is long enough to be multiline in the available space");
         });
 
         testWidgetsOnMac('CMD + BACKSPACE does nothing when selection is at start of line', (tester) async {
@@ -1187,7 +1192,7 @@ void main() {
           await tester.pressCmdBackspace();
 
           expect(SuperTextFieldInspector.findSelection(), const TextSelection.collapsed(offset: 18));
-          expect(SuperTextFieldInspector.findText().text, _multilineLayoutText);
+          expect(SuperTextFieldInspector.findText().toPlainText(), _multilineLayoutText);
         });
       });
 
@@ -1414,7 +1419,7 @@ void main() {
           await tester.pressCtlV();
 
           // Ensure that the clipboard text was pasted into the SuperTextField
-          expect(SuperTextFieldInspector.findText().text, 'Pasted content: this is clipboard text');
+          expect(SuperTextFieldInspector.findText().toPlainText(), 'Pasted content: this is clipboard text');
           expect(SuperTextFieldInspector.findSelection(), const TextSelection.collapsed(offset: 38));
         });
 
@@ -1430,7 +1435,7 @@ void main() {
           await tester.pressCmdV();
 
           // Ensure that the clipboard text was NOT pasted into the SuperTextField.
-          expect(SuperTextFieldInspector.findText().text, 'Pasted content: ');
+          expect(SuperTextFieldInspector.findText().toPlainText(), 'Pasted content: ');
           expect(SuperTextFieldInspector.findSelection(), const TextSelection.collapsed(offset: 16));
         });
 
@@ -1446,7 +1451,7 @@ void main() {
           await tester.sendKeyEvent(LogicalKeyboardKey.keyV);
 
           // Ensure that the clipboard text was NOT pasted into the SuperTextField.
-          expect(SuperTextFieldInspector.findText().text, 'Pasted content: v');
+          expect(SuperTextFieldInspector.findText().toPlainText(), 'Pasted content: v');
           expect(SuperTextFieldInspector.findSelection(), const TextSelection.collapsed(offset: 17));
         });
 
@@ -1462,7 +1467,7 @@ void main() {
           await tester.sendKeyEvent(LogicalKeyboardKey.controlLeft);
 
           // Ensure that the clipboard text was NOT pasted into the SuperTextField.
-          expect(SuperTextFieldInspector.findText().text, 'Pasted content: ');
+          expect(SuperTextFieldInspector.findText().toPlainText(), 'Pasted content: ');
           expect(SuperTextFieldInspector.findSelection(), const TextSelection.collapsed(offset: 16));
         });
       });
@@ -1689,7 +1694,7 @@ void main() {
           await tester.pressCtlBackspace();
 
           expect(SuperTextFieldInspector.findSelection(), const TextSelection.collapsed(offset: 0));
-          expect(SuperTextFieldInspector.findText().text, " is some text");
+          expect(SuperTextFieldInspector.findText().toPlainText(), " is some text");
         });
 
         testWidgetsOnWindowsAndLinux('CTL + BACKSPACE deletes until beginning of word', (tester) async {
@@ -1704,7 +1709,7 @@ void main() {
           await tester.pressCtlBackspace();
 
           expect(SuperTextFieldInspector.findSelection(), const TextSelection.collapsed(offset: 0));
-          expect(SuperTextFieldInspector.findText().text, "is is some text");
+          expect(SuperTextFieldInspector.findText().toPlainText(), "is is some text");
         });
 
         testWidgetsOnWindowsAndLinux('CTL + BACKSPACE deletes previous word with caret after whitespace',
@@ -1720,7 +1725,7 @@ void main() {
           await tester.pressCtlBackspace();
 
           expect(SuperTextFieldInspector.findSelection(), const TextSelection.collapsed(offset: 5));
-          expect(SuperTextFieldInspector.findText().text, "this some text");
+          expect(SuperTextFieldInspector.findText().toPlainText(), "this some text");
         });
 
         testWidgetsOnWindowsAndLinux('CTL + BACKSPACE deletes expanded selection', (tester) async {
@@ -1737,7 +1742,8 @@ void main() {
           // TODO: When #549 is fixed, I expect the selection offset to change to 0, and the
           // first letter of the final text to be deleted.
           expect(SuperTextFieldInspector.findSelection(), const TextSelection.collapsed(offset: 1));
-          expect(SuperTextFieldInspector.findText().text, "tis long enough to be multiline in the available space");
+          expect(SuperTextFieldInspector.findText().toPlainText(),
+              "tis long enough to be multiline in the available space");
         });
       });
 

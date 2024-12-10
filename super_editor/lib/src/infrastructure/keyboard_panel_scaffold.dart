@@ -584,24 +584,36 @@ class KeyboardPanelController {
 
   /// Opens the keyboard panel if the keyboard is open, or opens the keyboard
   /// if the keyboard panel is open.
-  void toggleSoftwareKeyboardWithPanel() => _delegate?.toggleSoftwareKeyboardWithPanel();
+  void toggleSoftwareKeyboardWithPanel() {
+    _delegate?.toggleSoftwareKeyboardWithPanel();
+  }
 
   /// Shows the software keyboard, if it's hidden.
-  void showSoftwareKeyboard() => _delegate?.showSoftwareKeyboard();
+  void showSoftwareKeyboard() {
+    _delegate?.showSoftwareKeyboard();
+  }
 
   /// Hides (doesn't close) the software keyboard, if it's open.
-  void hideSoftwareKeyboard() => _delegate?.hideSoftwareKeyboard();
+  void hideSoftwareKeyboard() {
+    _delegate?.hideSoftwareKeyboard();
+  }
 
   /// Shows the keyboard panel, if it's closed, and hides (doesn't close) the
   /// software keyboard, if it's open.
-  void showKeyboardPanel() => _delegate?.showKeyboardPanel();
+  void showKeyboardPanel() {
+    _delegate?.showKeyboardPanel();
+  }
 
   /// Hides the keyboard panel, if it's open.
-  void hideKeyboardPanel() => _delegate?.hideKeyboardPanel();
+  void hideKeyboardPanel() {
+    _delegate?.hideKeyboardPanel();
+  }
 
   /// Closes the software keyboard if it's open, or closes the keyboard panel if
   /// it's open, and fully closes the keyboard (IME) connection.
-  void closeKeyboardAndPanel() => _delegate?.closeKeyboardAndPanel();
+  void closeKeyboardAndPanel() {
+    _delegate?.closeKeyboardAndPanel();
+  }
 }
 
 abstract interface class KeyboardPanelScaffoldDelegate {

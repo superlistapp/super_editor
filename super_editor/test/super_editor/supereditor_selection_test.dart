@@ -850,7 +850,7 @@ Second Paragraph
       await tester.typeImeText("Hello, world", find.byType(SuperTextField));
 
       // Ensure the text field received the text.
-      expect(textFieldController.text.text, "Hello, world");
+      expect(textFieldController.text.toPlainText(), "Hello, world");
 
       // Ensure that SuperEditor has the same selection as before.
       expect(SuperEditorInspector.findDocumentSelection(), initialEditorSelection);
@@ -1126,7 +1126,7 @@ Second Paragraph
       // Place the caret at the middle of the first word.
       await tester.placeCaretInParagraph('1', 2);
 
-      final text = SuperEditorInspector.findTextInComponent('1').text;
+      final text = SuperEditorInspector.findTextInComponent('1').toPlainText();
 
       await tester.ime.sendDeltas(
         [

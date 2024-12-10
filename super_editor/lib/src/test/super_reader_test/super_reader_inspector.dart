@@ -95,7 +95,17 @@ class SuperReaderInspector {
   /// {@macro super_document_finder}
   static AttributedText findTextInParagraph(String nodeId, [Finder? superDocumentFinder]) {
     final documentLayout = _findDocumentLayout(superDocumentFinder);
-    return (documentLayout.getComponentByNodeId(nodeId) as TextComponentState).widget.text;
+    final component = documentLayout.getComponentByNodeId(nodeId);
+
+    if (component is TextComponentState) {
+      return component.widget.text;
+    }
+
+    if (component is ProxyDocumentComponent) {
+      return (component.childDocumentComponentKey.currentState as TextComponentState).widget.text;
+    }
+
+    throw Exception('The component for node id $nodeId is not a TextComponent.');
   }
 
   /// Finds the paragraph with the given [nodeId] and returns the paragraph's content as a [TextSpan].

@@ -244,7 +244,7 @@ class IOSTextFieldTouchInteractorState extends State<IOSTextFieldTouchInteractor
       return textPosition;
     }
 
-    final text = widget.textController.text.text;
+    final text = widget.textController.text.toPlainText();
     final tapOffset = textPosition.offset;
     if (tapOffset == text.length) {
       return textPosition;
@@ -416,7 +416,7 @@ class IOSTextFieldTouchInteractorState extends State<IOSTextFieldTouchInteractor
     // We show placeholder text when there is no text content. We don't want
     // to place the caret in the placeholder text, so when _currentText is
     // empty, explicitly set the text position to an offset of -1.
-    if (widget.textController.text.text.isEmpty) {
+    if (widget.textController.text.isEmpty) {
       return const TextPosition(offset: -1);
     }
 
@@ -433,7 +433,7 @@ class IOSTextFieldTouchInteractorState extends State<IOSTextFieldTouchInteractor
     // We show placeholder text when there is no text content. We don't want
     // to place the caret in the placeholder text, so when _currentText is
     // empty, explicitly set the text position to an offset of -1.
-    if (widget.textController.text.text.isEmpty) {
+    if (widget.textController.text.isEmpty) {
       return const TextPosition(offset: -1);
     }
 

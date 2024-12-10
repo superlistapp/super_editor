@@ -33,7 +33,7 @@ class BlockquoteComponentBuilder implements ComponentBuilder {
       return null;
     }
 
-    final textDirection = getParagraphDirection(node.text.text);
+    final textDirection = getParagraphDirection(node.text.toPlainText());
 
     TextAlign textAlign = (textDirection == TextDirection.ltr) ? TextAlign.left : TextAlign.right;
     final textAlignName = node.getMetadataValue('textAlign');
@@ -95,6 +95,7 @@ class BlockquoteComponentViewModel extends SingleColumnLayoutComponentViewModel 
     EdgeInsetsGeometry padding = EdgeInsets.zero,
     required this.text,
     required this.textStyleBuilder,
+    this.inlineWidgetBuilderChain = const [],
     this.textDirection = TextDirection.ltr,
     this.textAlignment = TextAlign.left,
     this.indent = 0,
@@ -125,6 +126,8 @@ class BlockquoteComponentViewModel extends SingleColumnLayoutComponentViewModel 
   AttributedText text;
   @override
   AttributionStyleBuilder textStyleBuilder;
+  @override
+  InlineWidgetBuilderChain inlineWidgetBuilderChain;
   @override
   TextDirection textDirection;
   @override
@@ -158,6 +161,7 @@ class BlockquoteComponentViewModel extends SingleColumnLayoutComponentViewModel 
       padding: padding,
       text: text,
       textStyleBuilder: textStyleBuilder,
+      inlineWidgetBuilderChain: inlineWidgetBuilderChain,
       textDirection: textDirection,
       textAlignment: textAlignment,
       indent: indent,
@@ -227,6 +231,7 @@ class BlockquoteComponent extends StatelessWidget {
     required this.textKey,
     required this.text,
     required this.styleBuilder,
+    this.inlineWidgetBuilderChain = const [],
     this.textSelection,
     this.indent = 0,
     this.indentCalculator = defaultParagraphIndentCalculator,
@@ -241,6 +246,7 @@ class BlockquoteComponent extends StatelessWidget {
   final GlobalKey textKey;
   final AttributedText text;
   final AttributionStyleBuilder styleBuilder;
+  final InlineWidgetBuilderChain inlineWidgetBuilderChain;
   final TextSelection? textSelection;
   final int indent;
   final TextBlockIndentCalculator indentCalculator;
@@ -275,6 +281,7 @@ class BlockquoteComponent extends StatelessWidget {
                 key: textKey,
                 text: text,
                 textStyleBuilder: styleBuilder,
+                inlineWidgetBuilderChain: inlineWidgetBuilderChain,
                 textSelection: textSelection,
                 selectionColor: selectionColor,
                 highlightWhenEmpty: highlightWhenEmpty,
@@ -408,7 +415,7 @@ class SplitBlockquoteCommand extends EditCommand {
 
     // Create a new node that will follow the current node. Set its text
     // to the text that was removed from the current node.
-    final isNewNodeABlockquote = endText.text.isNotEmpty;
+    final isNewNodeABlockquote = endText.isNotEmpty;
     final newNode = ParagraphNode(
       id: newNodeId,
       text: endText,

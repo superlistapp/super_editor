@@ -317,7 +317,7 @@ void main() {
 
           // Ensure that the whole word was deleted.
           final paragraphNode = testContext.findEditContext().document.first as ParagraphNode;
-          expect(paragraphNode.text.text.startsWith("Lorem  dolor sit amet"), isTrue);
+          expect(paragraphNode.text.toPlainText().startsWith("Lorem  dolor sit amet"), isTrue);
           expect(
             SuperEditorInspector.findDocumentSelection(),
             const DocumentSelection.collapsed(
@@ -346,7 +346,7 @@ void main() {
 
           // Ensure that the whole word was deleted.
           final paragraphNode = testContext.findEditContext().document.first as ParagraphNode;
-          expect(paragraphNode.text.text.startsWith("Lorem dolor sit amet"), isTrue);
+          expect(paragraphNode.text.toPlainText().startsWith("Lorem dolor sit amet"), isTrue);
           expect(
             SuperEditorInspector.findDocumentSelection(),
             const DocumentSelection.collapsed(
@@ -375,7 +375,7 @@ void main() {
 
           // Ensure that the whole word was deleted.
           final paragraphNode = testContext.findEditContext().document.first as ParagraphNode;
-          expect(paragraphNode.text.text, startsWith("Lorem ipsum  sit amet"));
+          expect(paragraphNode.text.toPlainText(), startsWith("Lorem ipsum  sit amet"));
           expect(
             SuperEditorInspector.findDocumentSelection(),
             const DocumentSelection.collapsed(
@@ -404,7 +404,7 @@ void main() {
 
           // Ensure that the whole word was deleted.
           final paragraphNode = testContext.findEditContext().document.first as ParagraphNode;
-          expect(paragraphNode.text.text.startsWith("Lorem ipsum sit amet"), isTrue);
+          expect(paragraphNode.text.toPlainText().startsWith("Lorem ipsum sit amet"), isTrue);
           expect(
             SuperEditorInspector.findDocumentSelection(),
             const DocumentSelection.collapsed(
@@ -431,7 +431,7 @@ void main() {
 
           // Ensure that a character was deleted.
           final paragraphNode = testContext.findEditContext().document.first as ParagraphNode;
-          expect(paragraphNode.text.text, startsWith("Lorem ipsu dolor sit amet"));
+          expect(paragraphNode.text.toPlainText(), startsWith("Lorem ipsu dolor sit amet"));
           expect(
             SuperEditorInspector.findDocumentSelection(),
             const DocumentSelection.collapsed(
@@ -460,7 +460,7 @@ void main() {
 
           // Ensure that a character was deleted.
           final paragraphNode = testContext.findEditContext().document.first as ParagraphNode;
-          expect(paragraphNode.text.text.startsWith("Lorem ipsumdolor sit amet"), isTrue);
+          expect(paragraphNode.text.toPlainText().startsWith("Lorem ipsumdolor sit amet"), isTrue);
           expect(
             SuperEditorInspector.findDocumentSelection(),
             const DocumentSelection.collapsed(
@@ -793,7 +793,7 @@ void main() {
 
           // Ensure that the whole word was deleted.
           final paragraphNode = testContext.findEditContext().document.first as ParagraphNode;
-          expect(paragraphNode.text.text.startsWith("Lorem  dolor sit amet"), isTrue);
+          expect(paragraphNode.text.toPlainText().startsWith("Lorem  dolor sit amet"), isTrue);
           expect(
             SuperEditorInspector.findDocumentSelection(),
             const DocumentSelection.collapsed(
@@ -820,7 +820,7 @@ void main() {
 
           // Ensure that the whole word was deleted.
           final paragraphNode = testContext.findEditContext().document.first as ParagraphNode;
-          expect(paragraphNode.text.text.startsWith("Lorem dolor sit amet"), isTrue);
+          expect(paragraphNode.text.toPlainText().startsWith("Lorem dolor sit amet"), isTrue);
           expect(
             SuperEditorInspector.findDocumentSelection(),
             const DocumentSelection.collapsed(
@@ -849,7 +849,7 @@ void main() {
 
           // Ensure that the whole word was deleted.
           final paragraphNode = testContext.findEditContext().document.first as ParagraphNode;
-          expect(paragraphNode.text.text, startsWith("Lorem ipsum  sit amet"));
+          expect(paragraphNode.text.toPlainText(), startsWith("Lorem ipsum  sit amet"));
           expect(
             SuperEditorInspector.findDocumentSelection(),
             const DocumentSelection.collapsed(
@@ -878,7 +878,7 @@ void main() {
 
           // Ensure that the whole word was deleted.
           final paragraphNode = testContext.findEditContext().document.first as ParagraphNode;
-          expect(paragraphNode.text.text.startsWith("Lorem ipsum sit amet"), isTrue);
+          expect(paragraphNode.text.toPlainText().startsWith("Lorem ipsum sit amet"), isTrue);
           expect(
             SuperEditorInspector.findDocumentSelection(),
             const DocumentSelection.collapsed(
@@ -905,7 +905,7 @@ void main() {
 
           // Ensure that nothing changed.
           final paragraphNode = testContext.findEditContext().document.first as ParagraphNode;
-          expect(paragraphNode.text.text, startsWith("Lorem ipsu dolor sit amet"));
+          expect(paragraphNode.text.toPlainText(), startsWith("Lorem ipsu dolor sit amet"));
           expect(
             SuperEditorInspector.findDocumentSelection(),
             const DocumentSelection.collapsed(
@@ -934,7 +934,7 @@ void main() {
 
           // Ensure that nothing changed.
           final paragraphNode = testContext.findEditContext().document.first as ParagraphNode;
-          expect(paragraphNode.text.text, startsWith("Lorem ipsumdolor sit amet"));
+          expect(paragraphNode.text.toPlainText(), startsWith("Lorem ipsumdolor sit amet"));
           expect(
             SuperEditorInspector.findDocumentSelection(),
             const DocumentSelection.collapsed(
@@ -965,7 +965,7 @@ void main() {
           await tester.pressBackspace();
 
           // Ensure the first character was deleted.
-          expect((node as TextNode).text.text, ' header');
+          expect((node as TextNode).text.toPlainText(), ' header');
 
           // Ensure the node is still a header.
           expect(node.getMetadataValue("blockType"), header1Attribution);
@@ -991,7 +991,7 @@ void main() {
           await tester.pressBackspace();
 
           // Ensure the text remains the same.
-          expect((node as TextNode).text.text, 'A header');
+          expect((node as TextNode).text.toPlainText(), 'A header');
 
           // Ensure the header was converted to a paragraph.
           expect(node.getMetadataValue("blockType"), paragraphAttribution);
@@ -2131,7 +2131,7 @@ This is a paragraph
         await tester.pressBackspace();
 
         // Ensure the selected content was deleted.
-        expect(SuperEditorInspector.findTextInComponent("1").text, "Text with [] selection");
+        expect(SuperEditorInspector.findTextInComponent("1").toPlainText(), "Text with [] selection");
         expect(
           SuperEditorInspector.findDocumentSelection(),
           const DocumentSelection.collapsed(
@@ -2179,7 +2179,7 @@ This is a paragraph
         await tester.pressDelete();
 
         // Ensure the selected content was deleted.
-        expect(SuperEditorInspector.findTextInComponent("1").text, "Text with [] selection");
+        expect(SuperEditorInspector.findTextInComponent("1").toPlainText(), "Text with [] selection");
         expect(
           SuperEditorInspector.findDocumentSelection(),
           const DocumentSelection.collapsed(
@@ -2228,7 +2228,7 @@ This is a paragraph
         await tester.typeKeyboardText("a");
 
         // Ensure the selected content was deleted.
-        expect(SuperEditorInspector.findTextInComponent("1").text, "Text with [a] selection");
+        expect(SuperEditorInspector.findTextInComponent("1").toPlainText(), "Text with [a] selection");
         expect(
           SuperEditorInspector.findDocumentSelection(),
           const DocumentSelection.collapsed(
@@ -2276,7 +2276,7 @@ This is a paragraph
         await tester.pressEscape();
 
         // Ensure the selected content was deleted.
-        expect(SuperEditorInspector.findTextInComponent("1").text, "Text with [SELECTME] selection");
+        expect(SuperEditorInspector.findTextInComponent("1").toPlainText(), "Text with [SELECTME] selection");
         expect(
           SuperEditorInspector.findDocumentSelection(),
           const DocumentSelection.collapsed(
@@ -2310,7 +2310,7 @@ This is a paragraph
       await tester.pressEscape();
 
       // Ensure that nothing changed.
-      expect(SuperEditorInspector.findTextInComponent("1").text, "This is some text");
+      expect(SuperEditorInspector.findTextInComponent("1").toPlainText(), "This is some text");
       expect(
         SuperEditorInspector.findDocumentSelection(),
         const DocumentSelection.collapsed(

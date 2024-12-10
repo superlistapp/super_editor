@@ -27,7 +27,7 @@ void main() {
         // Ensure it's not linkified yet.
         var text = SuperEditorInspector.findTextInComponent("1");
 
-        expect(text.text, "https://www.google.com");
+        expect(text.toPlainText(), "https://www.google.com");
         expect(
           text.getAttributionSpansInRange(
             attributionFilter: (attribution) => true,
@@ -42,7 +42,7 @@ void main() {
         // Ensure it's linkified.
         text = SuperEditorInspector.findTextInComponent("1");
 
-        expect(text.text, "https://www.google.com ");
+        expect(text.toPlainText(), "https://www.google.com ");
         expect(
           text.hasAttributionsThroughout(
             attributions: {
@@ -70,7 +70,7 @@ void main() {
         // Ensure it's not linkified yet.
         var text = SuperEditorInspector.findTextInComponent("1");
 
-        expect(text.text, "https://www.google.com");
+        expect(text.toPlainText(), "https://www.google.com");
         expect(
           text.getAttributionSpansInRange(
             attributionFilter: (attribution) => true,
@@ -85,7 +85,7 @@ void main() {
         // Ensure it's linkified.
         text = SuperEditorInspector.findTextInComponent("1");
 
-        expect(text.text, "https://www.google.com");
+        expect(text.toPlainText(), "https://www.google.com");
         expect(
           text.hasAttributionsThroughout(
             attributions: {
@@ -99,7 +99,7 @@ void main() {
         // Ensure we added a new empty paragraph.
         expect(textContext.document.nodeCount, 2);
         expect(textContext.document.getNodeAt(1)!, isA<ParagraphNode>());
-        expect((textContext.document.getNodeAt(1)! as ParagraphNode).text.text, "");
+        expect((textContext.document.getNodeAt(1)! as ParagraphNode).text.toPlainText(), "");
       });
 
       testWidgetsOnAllPlatforms('when pressing ENTER at the middle of a paragraph', (tester) async {
@@ -120,7 +120,7 @@ void main() {
         // Ensure it's not linkified yet.
         var text = SuperEditorInspector.findTextInComponent(nodeId);
 
-        expect(text.text, "Before link https://www.google.comafter link");
+        expect(text.toPlainText(), "Before link https://www.google.comafter link");
         expect(
           text.getAttributionSpansInRange(
             attributionFilter: (attribution) => true,
@@ -135,7 +135,7 @@ void main() {
         // Ensure it's linkified.
         text = SuperEditorInspector.findTextInComponent(nodeId);
 
-        expect(text.text, "Before link https://www.google.com");
+        expect(text.toPlainText(), "Before link https://www.google.com");
         expect(
           text.hasAttributionsThroughout(
             attributions: {
@@ -149,7 +149,7 @@ void main() {
         // Ensure we split the paragraph.
         expect(textContext.document.nodeCount, 2);
         expect(textContext.document.getNodeAt(1)!, isA<ParagraphNode>());
-        expect((textContext.document.getNodeAt(1)! as ParagraphNode).text.text, "after link");
+        expect((textContext.document.getNodeAt(1)! as ParagraphNode).text.toPlainText(), "after link");
       });
 
       testWidgetsOnAndroid(
@@ -170,7 +170,7 @@ void main() {
         // Ensure it's not linkified yet.
         var text = SuperEditorInspector.findTextInComponent("1");
 
-        expect(text.text, "https://www.google.com");
+        expect(text.toPlainText(), "https://www.google.com");
         expect(
           text.getAttributionSpansInRange(
             attributionFilter: (attribution) => true,
@@ -186,7 +186,7 @@ void main() {
         // Ensure it's linkified.
         text = SuperEditorInspector.findTextInComponent("1");
 
-        expect(text.text, "https://www.google.com");
+        expect(text.toPlainText(), "https://www.google.com");
         expect(
           text.hasAttributionsThroughout(
             attributions: {
@@ -200,7 +200,7 @@ void main() {
         // Ensure we added a new empty paragraph.
         expect(textContext.document.nodeCount, 2);
         expect(textContext.document.getNodeAt(1)!, isA<ParagraphNode>());
-        expect((textContext.document.getNodeAt(1)! as ParagraphNode).text.text, "");
+        expect((textContext.document.getNodeAt(1)! as ParagraphNode).text.toPlainText(), "");
       });
 
       testWidgetsOnAndroid(
@@ -223,7 +223,7 @@ void main() {
         // Ensure it's not linkified yet.
         var text = SuperEditorInspector.findTextInComponent(nodeId);
 
-        expect(text.text, "Before link https://www.google.comafter link");
+        expect(text.toPlainText(), "Before link https://www.google.comafter link");
         expect(
           text.getAttributionSpansInRange(
             attributionFilter: (attribution) => true,
@@ -239,7 +239,7 @@ void main() {
         // Ensure it's linkified.
         text = SuperEditorInspector.findTextInComponent(nodeId);
 
-        expect(text.text, "Before link https://www.google.com");
+        expect(text.toPlainText(), "Before link https://www.google.com");
         expect(
           text.hasAttributionsThroughout(
             attributions: {
@@ -253,7 +253,7 @@ void main() {
         // Ensure we split the paragraph.
         expect(textContext.document.nodeCount, 2);
         expect(textContext.document.getNodeAt(1)!, isA<ParagraphNode>());
-        expect((textContext.document.getNodeAt(1)! as ParagraphNode).text.text, "after link");
+        expect((textContext.document.getNodeAt(1)! as ParagraphNode).text.toPlainText(), "after link");
       });
 
       testWidgetsOnIos('when pressing the newline button on the software keyboard at the end of a paragraph (on iOS)',
@@ -273,7 +273,7 @@ void main() {
         // Ensure it's not linkified yet.
         var text = SuperEditorInspector.findTextInComponent("1");
 
-        expect(text.text, "https://www.google.com");
+        expect(text.toPlainText(), "https://www.google.com");
         expect(
           text.getAttributionSpansInRange(
             attributionFilter: (attribution) => true,
@@ -290,7 +290,7 @@ void main() {
         // Ensure it's linkified.
         text = SuperEditorInspector.findTextInComponent("1");
 
-        expect(text.text, "https://www.google.com");
+        expect(text.toPlainText(), "https://www.google.com");
         expect(
           text.hasAttributionsThroughout(
             attributions: {
@@ -304,7 +304,7 @@ void main() {
         // Ensure we added a new empty line.
         expect(textContext.document.nodeCount, 2);
         expect(textContext.document.getNodeAt(1)!, isA<ParagraphNode>());
-        expect((textContext.document.getNodeAt(1)! as ParagraphNode).text.text, "");
+        expect((textContext.document.getNodeAt(1)! as ParagraphNode).text.toPlainText(), "");
       });
 
       testWidgetsOnIos(
@@ -327,7 +327,7 @@ void main() {
         // Ensure it's not linkified yet.
         var text = SuperEditorInspector.findTextInComponent(nodeId);
 
-        expect(text.text, "Before link https://www.google.comafter link");
+        expect(text.toPlainText(), "Before link https://www.google.comafter link");
         expect(
           text.getAttributionSpansInRange(
             attributionFilter: (attribution) => true,
@@ -344,7 +344,7 @@ void main() {
         // Ensure it's linkified.
         text = SuperEditorInspector.findTextInComponent(nodeId);
 
-        expect(text.text, "Before link https://www.google.com");
+        expect(text.toPlainText(), "Before link https://www.google.com");
         expect(
           text.hasAttributionsThroughout(
             attributions: {
@@ -358,7 +358,7 @@ void main() {
         // Ensure we split the paragraph.
         expect(textContext.document.nodeCount, 2);
         expect(textContext.document.getNodeAt(1)!, isA<ParagraphNode>());
-        expect((textContext.document.getNodeAt(1)! as ParagraphNode).text.text, "after link");
+        expect((textContext.document.getNodeAt(1)! as ParagraphNode).text.toPlainText(), "after link");
       });
 
       testWidgetsOnAllPlatforms('when pressing ENTER at the end of a list item', (tester) async {
@@ -379,7 +379,7 @@ void main() {
         // Ensure it's not linkified yet.
         var text = SuperEditorInspector.findTextInComponent(nodeId);
 
-        expect(text.text, "Item https://www.google.com");
+        expect(text.toPlainText(), "Item https://www.google.com");
         expect(
           text.getAttributionSpansInRange(
             attributionFilter: (attribution) => true,
@@ -394,7 +394,7 @@ void main() {
         // Ensure it's linkified.
         text = SuperEditorInspector.findTextInComponent(nodeId);
 
-        expect(text.text, "Item https://www.google.com");
+        expect(text.toPlainText(), "Item https://www.google.com");
         expect(
           text.hasAttributionsThroughout(
             attributions: {
@@ -408,7 +408,7 @@ void main() {
         // Ensure we added a new empty list item.
         expect(textContext.document.nodeCount, 2);
         expect(textContext.document.getNodeAt(1)!, isA<ListItemNode>());
-        expect((textContext.document.getNodeAt(1)! as ListItemNode).text.text, "");
+        expect((textContext.document.getNodeAt(1)! as ListItemNode).text.toPlainText(), "");
       });
 
       testWidgetsOnAllPlatforms('when pressing ENTER at the middle of a list item', (tester) async {
@@ -429,7 +429,7 @@ void main() {
         // Ensure it's not linkified yet.
         var text = SuperEditorInspector.findTextInComponent(nodeId);
 
-        expect(text.text, "Before link https://www.google.comafter link");
+        expect(text.toPlainText(), "Before link https://www.google.comafter link");
         expect(
           text.getAttributionSpansInRange(
             attributionFilter: (attribution) => true,
@@ -444,7 +444,7 @@ void main() {
         // Ensure it's linkified.
         text = SuperEditorInspector.findTextInComponent(nodeId);
 
-        expect(text.text, "Before link https://www.google.com");
+        expect(text.toPlainText(), "Before link https://www.google.com");
         expect(
           text.hasAttributionsThroughout(
             attributions: {
@@ -458,7 +458,7 @@ void main() {
         // Ensure we split the list item.
         expect(textContext.document.nodeCount, 2);
         expect(textContext.document.getNodeAt(1)!, isA<ListItemNode>());
-        expect((textContext.document.getNodeAt(1)! as ListItemNode).text.text, "after link");
+        expect((textContext.document.getNodeAt(1)! as ListItemNode).text.toPlainText(), "after link");
       });
 
       testWidgetsOnAndroid(
@@ -481,7 +481,7 @@ void main() {
         // Ensure it's not linkified yet.
         var text = SuperEditorInspector.findTextInComponent(nodeId);
 
-        expect(text.text, "Item https://www.google.com");
+        expect(text.toPlainText(), "Item https://www.google.com");
         expect(
           text.getAttributionSpansInRange(
             attributionFilter: (attribution) => true,
@@ -497,7 +497,7 @@ void main() {
         // Ensure it's linkified.
         text = SuperEditorInspector.findTextInComponent(nodeId);
 
-        expect(text.text, "Item https://www.google.com");
+        expect(text.toPlainText(), "Item https://www.google.com");
         expect(
           text.hasAttributionsThroughout(
             attributions: {
@@ -511,7 +511,7 @@ void main() {
         // Ensure we added a new empty list item.
         expect(textContext.document.nodeCount, 2);
         expect(textContext.document.getNodeAt(1)!, isA<ListItemNode>());
-        expect((textContext.document.getNodeAt(1)! as ListItemNode).text.text, "");
+        expect((textContext.document.getNodeAt(1)! as ListItemNode).text.toPlainText(), "");
       });
 
       testWidgetsOnAndroid(
@@ -534,7 +534,7 @@ void main() {
         // Ensure it's not linkified yet.
         var text = SuperEditorInspector.findTextInComponent(nodeId);
 
-        expect(text.text, "Before link https://www.google.comafter link");
+        expect(text.toPlainText(), "Before link https://www.google.comafter link");
         expect(
           text.getAttributionSpansInRange(
             attributionFilter: (attribution) => true,
@@ -550,7 +550,7 @@ void main() {
         // Ensure it's linkified.
         text = SuperEditorInspector.findTextInComponent(nodeId);
 
-        expect(text.text, "Before link https://www.google.com");
+        expect(text.toPlainText(), "Before link https://www.google.com");
         expect(
           text.hasAttributionsThroughout(
             attributions: {
@@ -564,7 +564,7 @@ void main() {
         // Ensure we split the list item.
         expect(textContext.document.nodeCount, 2);
         expect(textContext.document.getNodeAt(1)!, isA<ListItemNode>());
-        expect((textContext.document.getNodeAt(1)! as ListItemNode).text.text, "after link");
+        expect((textContext.document.getNodeAt(1)! as ListItemNode).text.toPlainText(), "after link");
       });
 
       testWidgetsOnIos('when pressing the newline button on the software keyboard at the end of a list item (on iOS)',
@@ -586,7 +586,7 @@ void main() {
         // Ensure it's not linkified yet.
         var text = SuperEditorInspector.findTextInComponent(nodeId);
 
-        expect(text.text, "Item https://www.google.com");
+        expect(text.toPlainText(), "Item https://www.google.com");
         expect(
           text.getAttributionSpansInRange(
             attributionFilter: (attribution) => true,
@@ -603,7 +603,7 @@ void main() {
         // Ensure it's linkified.
         text = SuperEditorInspector.findTextInComponent(nodeId);
 
-        expect(text.text, "Item https://www.google.com");
+        expect(text.toPlainText(), "Item https://www.google.com");
         expect(
           text.hasAttributionsThroughout(
             attributions: {
@@ -617,7 +617,7 @@ void main() {
         // Ensure we added a new empty list item.
         expect(textContext.document.nodeCount, 2);
         expect(textContext.document.getNodeAt(1)!, isA<ListItemNode>());
-        expect((textContext.document.getNodeAt(1)! as ListItemNode).text.text, "");
+        expect((textContext.document.getNodeAt(1)! as ListItemNode).text.toPlainText(), "");
       });
 
       testWidgetsOnIos(
@@ -640,7 +640,7 @@ void main() {
         // Ensure it's not linkified yet.
         var text = SuperEditorInspector.findTextInComponent(nodeId);
 
-        expect(text.text, "Before link https://www.google.comafter link");
+        expect(text.toPlainText(), "Before link https://www.google.comafter link");
         expect(
           text.getAttributionSpansInRange(
             attributionFilter: (attribution) => true,
@@ -657,7 +657,7 @@ void main() {
         // Ensure it's linkified.
         text = SuperEditorInspector.findTextInComponent(nodeId);
 
-        expect(text.text, "Before link https://www.google.com");
+        expect(text.toPlainText(), "Before link https://www.google.com");
         expect(
           text.hasAttributionsThroughout(
             attributions: {
@@ -671,7 +671,7 @@ void main() {
         // Ensure we split the list item.
         expect(textContext.document.nodeCount, 2);
         expect(textContext.document.getNodeAt(1)!, isA<ListItemNode>());
-        expect((textContext.document.getNodeAt(1)! as ListItemNode).text.text, "after link");
+        expect((textContext.document.getNodeAt(1)! as ListItemNode).text.toPlainText(), "after link");
       });
 
       testWidgetsOnAllPlatforms('when pressing ENTER at the end of a task', (tester) async {
@@ -706,7 +706,7 @@ void main() {
         // Ensure it's not linkified yet.
         var text = task.text;
 
-        expect(text.text, "This is a task https://www.google.com");
+        expect(text.toPlainText(), "This is a task https://www.google.com");
         expect(
           text.getAttributionSpansInRange(
             attributionFilter: (attribution) => true,
@@ -721,7 +721,7 @@ void main() {
         // Ensure it's linkified.
         text = task.text;
 
-        expect(text.text, "This is a task https://www.google.com");
+        expect(text.toPlainText(), "This is a task https://www.google.com");
         expect(
           text.hasAttributionsThroughout(
             attributions: {
@@ -735,7 +735,7 @@ void main() {
         // Ensure we added a new empty task.
         expect(document.nodeCount, 2);
         expect(document.getNodeAt(1)!, isA<TaskNode>());
-        expect((document.getNodeAt(1)! as TaskNode).text.text, "");
+        expect((document.getNodeAt(1)! as TaskNode).text.toPlainText(), "");
       });
 
       testWidgetsOnAllPlatforms('when pressing ENTER at the middle of a task', (tester) async {
@@ -770,7 +770,7 @@ void main() {
         // Ensure it's not linkified yet.
         var text = task.text;
 
-        expect(text.text, "Before link https://www.google.comafter link");
+        expect(text.toPlainText(), "Before link https://www.google.comafter link");
         expect(
           text.getAttributionSpansInRange(
             attributionFilter: (attribution) => true,
@@ -785,7 +785,7 @@ void main() {
         // Ensure it's linkified.
         text = task.text;
 
-        expect(text.text, "Before link https://www.google.com");
+        expect(text.toPlainText(), "Before link https://www.google.com");
         expect(
           text.hasAttributionsThroughout(
             attributions: {
@@ -799,7 +799,7 @@ void main() {
         // Ensure we split the task
         expect(document.nodeCount, 2);
         expect(document.getNodeAt(1)!, isA<TaskNode>());
-        expect((document.getNodeAt(1)! as TaskNode).text.text, "after link");
+        expect((document.getNodeAt(1)! as TaskNode).text.toPlainText(), "after link");
       });
 
       testWidgetsOnAndroid(
@@ -836,7 +836,7 @@ void main() {
         // Ensure it's not linkified yet.
         var text = task.text;
 
-        expect(text.text, "This is a task https://www.google.com");
+        expect(text.toPlainText(), "This is a task https://www.google.com");
         expect(
           text.getAttributionSpansInRange(
             attributionFilter: (attribution) => true,
@@ -852,7 +852,7 @@ void main() {
         // Ensure it's linkified.
         text = task.text;
 
-        expect(text.text, "This is a task https://www.google.com");
+        expect(text.toPlainText(), "This is a task https://www.google.com");
         expect(
           text.hasAttributionsThroughout(
             attributions: {
@@ -866,7 +866,7 @@ void main() {
         // Ensure we added a new empty task.
         expect(document.nodeCount, 2);
         expect(document.getNodeAt(1)!, isA<TaskNode>());
-        expect((document.getNodeAt(1)! as TaskNode).text.text, "");
+        expect((document.getNodeAt(1)! as TaskNode).text.toPlainText(), "");
       });
 
       testWidgetsOnAndroid(
@@ -903,7 +903,7 @@ void main() {
         // Ensure it's not linkified yet.
         var text = task.text;
 
-        expect(text.text, "Before link https://www.google.comafter link");
+        expect(text.toPlainText(), "Before link https://www.google.comafter link");
         expect(
           text.getAttributionSpansInRange(
             attributionFilter: (attribution) => true,
@@ -919,7 +919,7 @@ void main() {
         // Ensure it's linkified.
         text = task.text;
 
-        expect(text.text, "Before link https://www.google.com");
+        expect(text.toPlainText(), "Before link https://www.google.com");
         expect(
           text.hasAttributionsThroughout(
             attributions: {
@@ -933,7 +933,7 @@ void main() {
         // Ensure we split the task.
         expect(document.nodeCount, 2);
         expect(document.getNodeAt(1)!, isA<TaskNode>());
-        expect((document.getNodeAt(1)! as TaskNode).text.text, "after link");
+        expect((document.getNodeAt(1)! as TaskNode).text.toPlainText(), "after link");
       });
 
       testWidgetsOnIos('when pressing the newline button on the software keyboard at the end of a task (on iOS)',
@@ -969,7 +969,7 @@ void main() {
         // Ensure it's not linkified yet.
         var text = task.text;
 
-        expect(text.text, "This is a task https://www.google.com");
+        expect(text.toPlainText(), "This is a task https://www.google.com");
         expect(
           text.getAttributionSpansInRange(
             attributionFilter: (attribution) => true,
@@ -986,7 +986,7 @@ void main() {
         // Ensure it's linkified.
         text = task.text;
 
-        expect(text.text, "This is a task https://www.google.com");
+        expect(text.toPlainText(), "This is a task https://www.google.com");
         expect(
           text.hasAttributionsThroughout(
             attributions: {
@@ -1000,7 +1000,7 @@ void main() {
         // Ensure we added a new empty task.
         expect(document.nodeCount, 2);
         expect(document.getNodeAt(1)!, isA<TaskNode>());
-        expect((document.getNodeAt(1)! as TaskNode).text.text, "");
+        expect((document.getNodeAt(1)! as TaskNode).text.toPlainText(), "");
       });
 
       testWidgetsOnIos('when pressing the newline button on the software keyboard at the middle of a task (on iOS)',
@@ -1036,7 +1036,7 @@ void main() {
         // Ensure it's not linkified yet.
         var text = task.text;
 
-        expect(text.text, "Before link https://www.google.comafter link");
+        expect(text.toPlainText(), "Before link https://www.google.comafter link");
         expect(
           text.getAttributionSpansInRange(
             attributionFilter: (attribution) => true,
@@ -1053,7 +1053,7 @@ void main() {
         // Ensure it's linkified.
         text = task.text;
 
-        expect(text.text, "Before link https://www.google.com");
+        expect(text.toPlainText(), "Before link https://www.google.com");
         expect(
           text.hasAttributionsThroughout(
             attributions: {
@@ -1067,7 +1067,7 @@ void main() {
         // Ensure we split the task.
         expect(document.nodeCount, 2);
         expect(document.getNodeAt(1)!, isA<TaskNode>());
-        expect((document.getNodeAt(1)! as TaskNode).text.text, "after link");
+        expect((document.getNodeAt(1)! as TaskNode).text.toPlainText(), "after link");
       });
     });
 
@@ -1091,7 +1091,7 @@ void main() {
       var text = SuperEditorInspector.findTextInComponent("1");
       text = SuperEditorInspector.findTextInComponent("1");
 
-      expect(text.text, "www.google.com ");
+      expect(text.toPlainText(), "www.google.com ");
       expect(
         text.getAttributionSpansByFilter((a) => a is LinkAttribution),
         {
@@ -1120,7 +1120,7 @@ void main() {
       // Ensure it's not linkified yet.
       var text = SuperEditorInspector.findTextInComponent("1");
 
-      expect(text.text, "google.com");
+      expect(text.toPlainText(), "google.com");
       expect(
         text.getAttributionSpansInRange(
           attributionFilter: (attribution) => true,
@@ -1135,7 +1135,7 @@ void main() {
       // Ensure it's linkified.
       text = SuperEditorInspector.findTextInComponent("1");
 
-      expect(text.text, "google.com ");
+      expect(text.toPlainText(), "google.com ");
       expect(
         text.getAttributionSpansByFilter((a) => a is LinkAttribution),
         {
@@ -1164,7 +1164,7 @@ void main() {
       // Ensure both URLs are linkified with the correct URLs.
       final text = SuperEditorInspector.findTextInComponent("1");
 
-      expect(text.text, "https://www.google.com and https://flutter.dev ");
+      expect(text.toPlainText(), "https://www.google.com and https://flutter.dev ");
       expect(
         text.getAttributionSpansByFilter((a) => a is LinkAttribution),
         {
@@ -1204,7 +1204,7 @@ void main() {
 
       // Ensure the URL is linkified.
       final text = SuperEditorInspector.findTextInComponent("1");
-      expect(text.text, "Hello https://www.google.com world");
+      expect(text.toPlainText(), "Hello https://www.google.com world");
       expect(
         text.getAttributionSpansByFilter((a) => a is LinkAttribution),
         {
@@ -1241,7 +1241,7 @@ void main() {
       var text = SuperEditorInspector.findTextInComponent("1");
       text = SuperEditorInspector.findTextInComponent("1");
 
-      expect(text.text, "Hello www.google.com world");
+      expect(text.toPlainText(), "Hello www.google.com world");
       expect(
         text.getAttributionSpansByFilter((a) => a is LinkAttribution),
         {
@@ -1276,7 +1276,7 @@ void main() {
 
       // Ensure the URL is linkified.
       final text = SuperEditorInspector.findTextInComponent("1");
-      expect(text.text, "Hello google.com world");
+      expect(text.toPlainText(), "Hello google.com world");
       expect(
         text.getAttributionSpansByFilter((a) => a is LinkAttribution),
         {
@@ -1449,7 +1449,7 @@ void main() {
         final nodeId = doc.first.id;
         var text = SuperEditorInspector.findTextInComponent(nodeId);
 
-        expect(text.text, "www.googoooole.com");
+        expect(text.toPlainText(), "www.googoooole.com");
         expect(
           text.hasAttributionsThroughout(
             attributions: {
@@ -1479,7 +1479,7 @@ void main() {
 
         // Ensure the characters were inserted and the link was updated.
         final text = SuperEditorInspector.findTextInComponent(doc.first.id);
-        expect(text.text, "www.googoooole.com");
+        expect(text.toPlainText(), "www.googoooole.com");
         expect(
           text.hasAttributionsThroughout(
             attributions: {
@@ -1509,7 +1509,7 @@ void main() {
 
         // Ensure the characters were inserted and the attribution was removed.
         final text = SuperEditorInspector.findTextInComponent(doc.first.id);
-        expect(text.text, "www.googoooole.com");
+        expect(text.toPlainText(), "www.googoooole.com");
         expect(text.spans.markers, isEmpty);
       });
     });
@@ -1537,7 +1537,7 @@ void main() {
         final nodeId = doc.first.id;
         var text = SuperEditorInspector.findTextInComponent(nodeId);
 
-        expect(text.text, "google.com");
+        expect(text.toPlainText(), "google.com");
         expect(
           text.hasAttributionsThroughout(
             attributions: {
@@ -1570,7 +1570,7 @@ void main() {
 
         // Ensure the characters were delete and link attribution was updated.
         final text = SuperEditorInspector.findTextInComponent(doc.first.id);
-        expect(text.text, "google.com");
+        expect(text.toPlainText(), "google.com");
         expect(
           text.hasAttributionsThroughout(
             attributions: {
@@ -1594,7 +1594,7 @@ void main() {
 
         // Ensure the attribution was updated.
         final textAfter = SuperEditorInspector.findTextInComponent(doc.first.id);
-        expect(textAfter.text, "m");
+        expect(textAfter.toPlainText(), "m");
         expect(
           (textAfter.getAllAttributionsAt(0).first as LinkAttribution).url.toString(),
           "https://m",
@@ -1604,7 +1604,7 @@ void main() {
         await tester.pressDelete();
 
         // Ensure the text was deleted.
-        expect(SuperEditorInspector.findTextInComponent(doc.first.id).text, isEmpty);
+        expect(SuperEditorInspector.findTextInComponent(doc.first.id).toPlainText(), isEmpty);
       });
 
       testWidgetsOnAllPlatforms('removing the attribution', (tester) async {
@@ -1628,7 +1628,7 @@ void main() {
 
         // Ensure the characters were delete and link attribution was removed.
         final text = SuperEditorInspector.findTextInComponent(doc.first.id);
-        expect(text.text, "google.com");
+        expect(text.toPlainText(), "google.com");
         expect(text.spans.markers, isEmpty);
       });
     });
@@ -1655,7 +1655,7 @@ void main() {
 
         // Ensure the characters were deleted and the whole link is still attributed.
         final text = SuperEditorInspector.findTextInComponent(doc.first.id);
-        expect(text.text, "www.g.com");
+        expect(text.toPlainText(), "www.g.com");
         expect(
           text.hasAttributionsThroughout(
             attributions: {
@@ -1693,7 +1693,7 @@ void main() {
 
         // Ensure the text and the link were updated.
         var text = SuperEditorInspector.findTextInComponent(doc.first.id);
-        expect(text.text, "www.duckduckgo.com");
+        expect(text.toPlainText(), "www.duckduckgo.com");
         expect(
           text.hasAttributionsThroughout(
             attributions: {
@@ -1723,7 +1723,7 @@ void main() {
 
         // Ensure the text was updated and the attribution was removed.
         final text = SuperEditorInspector.findTextInComponent(doc.first.id);
-        expect(text.text, "www.googl.com");
+        expect(text.toPlainText(), "www.googl.com");
         expect(text.spans.markers, isEmpty);
       });
     });
@@ -1751,7 +1751,7 @@ void main() {
         final nodeId = doc.first.id;
         var text = SuperEditorInspector.findTextInComponent(nodeId);
 
-        expect(text.text, "www.google");
+        expect(text.toPlainText(), "www.google");
         expect(
           text.hasAttributionsThroughout(
             attributions: {
@@ -1782,7 +1782,7 @@ void main() {
 
         // Ensure the characters were deleted and the link was updated.
         final text = SuperEditorInspector.findTextInComponent(doc.first.id);
-        expect(text.text, "www.google.c");
+        expect(text.toPlainText(), "www.google.c");
         expect(
           text.hasAttributionsThroughout(
             attributions: {
@@ -1812,7 +1812,7 @@ void main() {
 
         // Ensure the character was deleted and the link was removed.
         final text = SuperEditorInspector.findTextInComponent(doc.first.id);
-        expect(text.text, "www.google.co");
+        expect(text.toPlainText(), "www.google.co");
         expect(text.spans.markers, isEmpty);
       });
     });
@@ -1835,7 +1835,7 @@ void main() {
 
         // Ensure the text and the link were updated.
         final text = SuperEditorInspector.findTextInComponent(doc.first.id);
-        expect(text.text, "www.duckduckgo.com");
+        expect(text.toPlainText(), "www.duckduckgo.com");
         expect(
           text.hasAttributionsThroughout(
             attributions: {
@@ -1865,7 +1865,7 @@ void main() {
 
         // Ensure the text and the link were updated.
         final text = SuperEditorInspector.findTextInComponent(doc.first.id);
-        expect(text.text, "www.duckduckgo.com");
+        expect(text.toPlainText(), "www.duckduckgo.com");
         expect(
           text.hasAttributionsThroughout(
             attributions: {
@@ -1895,7 +1895,7 @@ void main() {
 
         // Ensure the text and the link were updated.
         final text = SuperEditorInspector.findTextInComponent(doc.first.id);
-        expect(text.text, "www.duckduckgo.com");
+        expect(text.toPlainText(), "www.duckduckgo.com");
         expect(text.spans.markers, isEmpty);
       });
     });
@@ -1922,7 +1922,7 @@ void main() {
       final nodeId = doc.first.id;
       var text = SuperEditorInspector.findTextInComponent(nodeId);
 
-      expect(text.text, "www.google.co hello");
+      expect(text.toPlainText(), "www.google.co hello");
       expect(
         text.hasAttributionsThroughout(
           attributions: {
@@ -1971,7 +1971,7 @@ void main() {
 
       // Ensure the text we typed didn't re-introduce a link attribution.
       newParagraphText = SuperEditorInspector.findTextInComponent(newParagraphId);
-      expect(newParagraphText.text, "New paragraph");
+      expect(newParagraphText.toPlainText(), "New paragraph");
       expect(
         newParagraphText.getAttributionSpansInRange(
           attributionFilter: (a) => a is LinkAttribution,
@@ -2013,7 +2013,7 @@ void main() {
 
       // Ensure the text we typed didn't re-introduce a link attribution.
       newListItemText = SuperEditorInspector.findTextInComponent(newListItemId);
-      expect(newListItemText.text, "New list item");
+      expect(newListItemText.toPlainText(), "New list item");
       expect(
         newListItemText.getAttributionSpansInRange(
           attributionFilter: (a) => a is LinkAttribution,
@@ -2037,7 +2037,7 @@ void main() {
 
       // Ensure that the Markdown was ignored and nothing was linkified.
       final text = SuperEditorInspector.findTextInComponent("1");
-      expect(text.text, "[google](www.google.com) ");
+      expect(text.toPlainText(), "[google](www.google.com) ");
       expect(text.getAttributionSpansByFilter((a) => true), isEmpty);
     });
 
@@ -2060,7 +2060,7 @@ void main() {
 
       // Ensure that the Markdown was ignored and nothing was linkified.
       final text = SuperEditorInspector.findTextInComponent("1");
-      expect(text.text, "Hello [google](www.google.com) ");
+      expect(text.toPlainText(), "Hello [google](www.google.com) ");
       expect(text.getAttributionSpansByFilter((a) => true), isEmpty);
       expect(
         SuperEditorInspector.findDocumentSelection(),

@@ -36,7 +36,7 @@ Paragraph 2
       expect(document.nodeCount, 4);
       final insertedNode = document.getNodeAt(2)!;
       expect(insertedNode, isA<ParagraphNode>());
-      expect((insertedNode as ParagraphNode).text.text, 'new paragraph');
+      expect((insertedNode as ParagraphNode).text.toPlainText(), 'new paragraph');
       expect(
         SuperEditorInspector.findDocumentSelection(),
         DocumentSelection.collapsed(
@@ -75,7 +75,7 @@ Paragraph 2
       expect(document.nodeCount, 4);
       final insertedNode = document.getNodeAt(1)!;
       expect(insertedNode, isA<ParagraphNode>());
-      expect((insertedNode as ParagraphNode).text.text, 'new paragraph');
+      expect((insertedNode as ParagraphNode).text.toPlainText(), 'new paragraph');
       expect(
         SuperEditorInspector.findDocumentSelection(),
         DocumentSelection.collapsed(
