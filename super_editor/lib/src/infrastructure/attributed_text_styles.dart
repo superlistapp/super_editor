@@ -1,7 +1,4 @@
-import 'dart:math';
-
 import 'package:attributed_text/attributed_text.dart';
-import 'package:flutter/painting.dart';
 import 'package:flutter/widgets.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 
@@ -29,9 +26,6 @@ extension ComputeTextSpan on AttributedText {
     AttributionStyleBuilder styleBuilder,
     InlineWidgetBuilderChain inlineWidgetBuilderChain,
   ) {
-    // print("");
-    // print("");
-    // print("computeInlineSpan()");
     if (isEmpty) {
       // There is no text and therefore no attributions.
       return TextSpan(text: '', style: styleBuilder({}));
@@ -44,14 +38,7 @@ extension ComputeTextSpan on AttributedText {
     var span = collapsedSpans.first;
 
     int start = 0;
-
-    // print("Text: '${toPlainText()}'");
-    // print("Length: $length");
-    // print("Span - start: ${span.start}, end: ${span.end}");
     while (start < length) {
-      // print("Span count: ${collapsedSpans.length}");
-      // print("Content start: $start");
-      // print("Current span attributions: ${span.attributions}");
       late int contentEnd;
       if (placeholders[start] != null) {
         // This section is a placeholder.
@@ -73,7 +60,6 @@ extension ComputeTextSpan on AttributedText {
               child: inlineWidget,
             ),
           );
-          // print("Adding placeholder: ${placeholders[start]} (at $start)");
         }
       } else {
         // This section is text. The end of this text is either the
@@ -86,7 +72,6 @@ extension ComputeTextSpan on AttributedText {
           }
         }
 
-        // print("Adding text span: '${substring(start, contentEnd)}'");
         inlineSpans.add(
           TextSpan(
             text: substring(start, contentEnd),
@@ -95,36 +80,23 @@ extension ComputeTextSpan on AttributedText {
         );
       }
 
-      // print("Content end: $contentEnd, span end: ${span.end + 1}");
       if (contentEnd == span.end + 1) {
-        // print("Content and span end at same place");
         // The content and span end at the same place.
         start = contentEnd;
       } else if (contentEnd < span.end + 1) {
-        // print("Content ends before the span");
         // The content ends before the span.
         start = contentEnd;
       } else {
-        // print("Span ends before the content");
         // The span ends before the content.
         start = span.end + 1;
       }
-      // print("New start value: $start");
 
       if (start > span.end && start < length) {
         spanIndex += 1;
         span = collapsedSpans[spanIndex];
       }
-      // print("-------");
-      // print("");
     }
 
-    // print("Returning inline spans:");
-    // for (final span in inlineSpans) {
-    //   print(" - $span");
-    // }
-    // print("");
-    // print("");
     return TextSpan(
       text: "",
       children: inlineSpans,
@@ -174,6 +146,9 @@ typedef InlineWidgetBuilderChain = List<InlineWidgetBuilder>;
 
 /// Builder that returns a [Widget] for a given [placeholder], or `null`
 /// if this builder doesn't know how to build the given [placeholder].
+///
+/// The given [textStyle] is the style applied to the text in the vicinity
+/// of the placeholder.
 typedef InlineWidgetBuilder = Widget? Function(
   BuildContext context,
   TextStyle textStyle,

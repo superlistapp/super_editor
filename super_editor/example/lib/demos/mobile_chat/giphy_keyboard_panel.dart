@@ -24,7 +24,6 @@ class _GiphyKeyboardPanelState extends State<GiphyKeyboardPanel> {
       return;
     }
 
-    // TODO: Replace this series of requests with a single TypeAttributedTextRequest
     widget.editor.execute([
       if (!selection.isCollapsed) //
         DeleteContentRequest(

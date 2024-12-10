@@ -258,7 +258,6 @@ class DocumentImeInputClient extends TextInputConnectionDecorator with TextInput
       return;
     }
 
-    print("Sending document to IME...");
     _isSendingToIme = true;
     editorImeLog.fine("[DocumentImeInputClient] - Serializing and sending document and selection to IME");
     editorImeLog.fine("[DocumentImeInputClient] - Selection: ${textDeltasDocumentEditor.selection.value}");
@@ -272,8 +271,6 @@ class DocumentImeInputClient extends TextInputConnectionDecorator with TextInput
     editorImeLog
         .fine("[DocumentImeInputClient] - Adding invisible characters?: ${imeSerialization.didPrependPlaceholder}");
     TextEditingValue textEditingValue = imeSerialization.toTextEditingValue();
-    print("IME text: '${textEditingValue.text}'");
-    print("IME composing: ${textEditingValue.composing}");
 
     editorImeLog.fine("[DocumentImeInputClient] - Sending IME serialization:");
     editorImeLog.fine("[DocumentImeInputClient] - $textEditingValue");
@@ -281,7 +278,6 @@ class DocumentImeInputClient extends TextInputConnectionDecorator with TextInput
     editorImeLog.fine("[DocumentImeInputClient] - Done sending document to IME");
 
     _isSendingToIme = false;
-    print("----- DONE SENDING TO IME -----");
   }
 
   @override

@@ -65,7 +65,6 @@ class _MobileChatDemoState extends State<MobileChatDemo> {
   }
 
   void _togglePanel(_Panel panel) {
-    print("_togglePanel(): $panel");
     setState(() {
       if (_visiblePanel == panel) {
         _visiblePanel = null;
