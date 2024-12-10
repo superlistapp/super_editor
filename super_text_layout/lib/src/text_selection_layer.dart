@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:flutter/widgets.dart';
 
 import 'text_layout.dart';
@@ -160,7 +162,10 @@ class TextSelectionPainter extends CustomPainter {
       return;
     }
 
-    final selectionBoxes = textLayout!.getBoxesForSelection(textSelection!);
+    final selectionBoxes = textLayout!.getBoxesForSelection(
+      textSelection!,
+      boxHeightStyle: BoxHeightStyle.max,
+    );
 
     for (final box in selectionBoxes) {
       final rawRect = box.toRect();

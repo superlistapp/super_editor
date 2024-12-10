@@ -246,7 +246,13 @@ class _RebuildOptimizedSuperTextWithSelectionState extends State<_RebuildOptimiz
                   style: userSelection.caretStyle,
                   blinkCaret: userSelection.blinkCaret,
                   blinkTimingMode: userSelection.blinkTimingMode,
-                  position: userSelection.selection.extent,
+                  position: TextPosition(
+                    offset: userSelection.selection.extent.offset,
+                    affinity: TextAffinity.downstream,
+                  ),
+                  // ^ We force downstream, instead of upstream, to reduce the buggyness
+                  //   of caret sizing in Flutter when placed near an inline widget.
+                  //   Issue: https://github.com/flutter/flutter/issues/159932
                   caretTracker: userSelection.caretFollower,
                 ),
           ],
