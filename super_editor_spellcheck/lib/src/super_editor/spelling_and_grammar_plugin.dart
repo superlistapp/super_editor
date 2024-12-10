@@ -12,9 +12,26 @@ import 'package:super_editor_spellcheck/src/super_editor/spelling_error_suggesti
 
 /// A [SuperEditorPlugin] that checks spelling and grammar across a [Document],
 /// underlining spelling and grammar mistakes, and offering corrections.
+///
+/// This plugin works on Android, iOS, and macOS.
 class SpellingAndGrammarPlugin extends SuperEditorPlugin {
   static const spellingErrorSuggestionsKey = "SpellingAndGrammarPlugin.spellingErrorSuggestions";
 
+  /// Creates a new [SpellingAndGrammarPlugin].
+  ///
+  /// - [isSpellingCheckEnabled]: determines whether spelling checks are initially enabled. This
+  ///   can be toggled at runtime by setting the value of [isSpellCheckEnabled].
+  /// - [spellingErrorUnderlineStyle]: the style of underline to apply to misspelled words.
+  /// - [isGrammarCheckEnabled]: determines whether grammar checks are initially enabled. This
+  ///   can be toggled at runtime by setting the value of [isGrammarCheckEnabled].
+  /// - [grammarErrorUnderlineStyle]: the style of underline to apply to grammar errors.
+  /// - [toolbarBuilder]: builds the toolbar for showing suggestions for misspelled words.
+  /// - [selectedWordHighlightColor]: the color to use when highlighting the selected word,
+  ///   if it's a misspelled word.
+  /// - [androidControlsController]: the controls controller to use when running on Android. This
+  ///   is required when running on Android.
+  /// - [iosControlsController]: the controls controller to use when running on iOS. This is
+  ///   required when running on iOS.
   SpellingAndGrammarPlugin({
     bool isSpellingCheckEnabled = true,
     UnderlineStyle spellingErrorUnderlineStyle = defaultSpellingErrorUnderlineStyle,
@@ -26,6 +43,12 @@ class SpellingAndGrammarPlugin extends SuperEditorPlugin {
     SuperEditorIosControlsController? iosControlsController,
   })  : _isSpellCheckEnabled = isSpellingCheckEnabled,
         _isGrammarCheckEnabled = isGrammarCheckEnabled {
+    assert(defaultTargetPlatform != TargetPlatform.android || androidControlsController != null,
+        'The androidControlsController must be provided when running on Android.');
+
+    assert(defaultTargetPlatform != TargetPlatform.iOS || iosControlsController != null,
+        'The iosControlsController must be provided when running on iOS.');
+
     documentOverlayBuilders = <SuperEditorLayerBuilder>[
       SpellingErrorSuggestionOverlayBuilder(
         _spellingErrorSuggestions,
@@ -38,13 +61,13 @@ class SpellingAndGrammarPlugin extends SuperEditorPlugin {
       selectionHighlightColor: selectedWordHighlightColor,
     );
 
-    _contentTapDelegate = switch (defaultTargetPlatform) {
-      TargetPlatform.android => _SuperEditorAndroidSpellCheckerTapHandler(
+    _contentTapHandler = switch (defaultTargetPlatform) {
+      TargetPlatform.android => SuperEditorAndroidSpellCheckerTapHandler(
           popoverController: _popoverController,
           controlsController: androidControlsController!,
           styler: _styler,
         ),
-      TargetPlatform.iOS => _SuperEditorIosSpellCheckerTapHandler(
+      TargetPlatform.iOS => SuperEditorIosSpellCheckerTapHandler(
           popoverController: _popoverController,
           controlsController: iosControlsController!,
           styler: _styler,
@@ -52,8 +75,6 @@ class SpellingAndGrammarPlugin extends SuperEditorPlugin {
       _ => _SuperEditorDesktopSpellCheckerTapHandler(popoverController: _popoverController),
     };
   }
-
-  final _popoverController = SpellCheckerPopoverController();
 
   final _spellingErrorSuggestions = SpellingErrorSuggestions();
 
@@ -97,10 +118,12 @@ class SpellingAndGrammarPlugin extends SuperEditorPlugin {
   late final List<SuperEditorLayerBuilder> documentOverlayBuilders;
 
   @override
-  List<ContentTapDelegate> get contentTapHandlers => _contentTapDelegate != null //
-      ? [_contentTapDelegate!]
+  List<ContentTapDelegate> get contentTapHandlers => _contentTapHandler != null //
+      ? [_contentTapHandler!]
       : const [];
-  late final _SpellCheckerContentTapDelegate? _contentTapDelegate;
+  late final _SpellCheckerContentTapDelegate? _contentTapHandler;
+
+  final _popoverController = SpellCheckerPopoverController();
 
   @override
   List<SingleColumnLayoutStylePhase> get appendedStylePhases => [_styler];
@@ -108,7 +131,7 @@ class SpellingAndGrammarPlugin extends SuperEditorPlugin {
   @override
   void attach(Editor editor) {
     editor.context.put(spellingErrorSuggestionsKey, _spellingErrorSuggestions);
-    _contentTapDelegate?.editor = editor;
+    _contentTapHandler?.editor = editor;
 
     _reaction = SpellingAndGrammarReaction(_spellingErrorSuggestions, _styler);
     editor.reactionPipeline.add(_reaction);
@@ -118,7 +141,7 @@ class SpellingAndGrammarPlugin extends SuperEditorPlugin {
   void detach(Editor editor) {
     _styler.clearAllErrors();
     editor.reactionPipeline.remove(_reaction);
-    _contentTapDelegate?.editor = null;
+    _contentTapHandler?.editor = null;
 
     editor.context.remove(spellingErrorSuggestionsKey);
     _spellingErrorSuggestions.clear();
@@ -165,6 +188,8 @@ extension SpellingAndGrammarEditorExtensions on Editor {
         textToInsert: correctSpelling,
         attributions: {},
       ),
+      // Make the composing region to start at the end of the corrected word. Otherwise,
+      // the software keyboard will keep the misspelled word bounds as the composing region.
       ChangeComposingRegionRequest(
         DocumentSelection.collapsed(
           position: DocumentPosition(
@@ -235,6 +260,7 @@ class SpellingAndGrammarReaction implements EditReaction {
   final _asyncRequestIds = <String, int>{};
 
   final _mobileSpellChecker = DefaultSpellCheckService();
+  final _macSpellChecker = SuperEditorSpellCheckerPlugin().macSpellChecker;
 
   @override
   void modifyContent(EditContext editorContext, RequestDispatcher requestDispatcher, List<EditEvent> changeList) {
@@ -317,8 +343,6 @@ class SpellingAndGrammarReaction implements EditReaction {
   }
 
   Future<void> _findSpellingAndGrammarErrorsOnMac(TextNode textNode) async {
-    final spellChecker = SuperEditorSpellCheckerPlugin().macSpellChecker;
-
     // TODO: Investigate whether we can parallelize spelling and grammar checks
     //       for a given node (and whether it's worth the complexity).
     final textErrors = <TextError>{};
@@ -332,11 +356,11 @@ class SpellingAndGrammarReaction implements EditReaction {
     int startingOffset = 0;
     TextRange prevError = TextRange.empty;
     final locale = PlatformDispatcher.instance.locale;
-    final language = spellChecker.convertDartLocaleToMacLanguageCode(locale)!;
+    final language = _macSpellChecker.convertDartLocaleToMacLanguageCode(locale)!;
     final spellingSuggestions = <TextRange, SpellingErrorSuggestion>{};
     if (isSpellCheckEnabled) {
       do {
-        prevError = await spellChecker.checkSpelling(
+        prevError = await _macSpellChecker.checkSpelling(
           stringToCheck: textNode.text.text,
           startingOffset: startingOffset,
           language: language,
@@ -346,7 +370,7 @@ class SpellingAndGrammarReaction implements EditReaction {
           final word = textNode.text.text.substring(prevError.start, prevError.end);
 
           // Ask platform for spelling correction guesses.
-          final guesses = await spellChecker.guesses(range: prevError, text: textNode.text.text);
+          final guesses = await _macSpellChecker.guesses(range: prevError, text: textNode.text.text);
 
           textErrors.add(
             TextError.spelling(
@@ -373,7 +397,7 @@ class SpellingAndGrammarReaction implements EditReaction {
       startingOffset = 0;
       prevError = TextRange.empty;
       do {
-        final result = await spellChecker.checkGrammar(
+        final result = await _macSpellChecker.checkGrammar(
           stringToCheck: textNode.text.text,
           startingOffset: startingOffset,
           language: language,
@@ -476,8 +500,8 @@ class SpellingAndGrammarReaction implements EditReaction {
 ///
 /// When the suggestions popover is displayed, the selection expands to the whole word
 /// and the selection handles are hidden.
-class _SuperEditorIosSpellCheckerTapHandler extends _SpellCheckerContentTapDelegate {
-  _SuperEditorIosSpellCheckerTapHandler({
+class SuperEditorIosSpellCheckerTapHandler extends _SpellCheckerContentTapDelegate {
+  SuperEditorIosSpellCheckerTapHandler({
     required this.popoverController,
     required this.controlsController,
     required this.styler,
@@ -558,8 +582,8 @@ class _SuperEditorIosSpellCheckerTapHandler extends _SpellCheckerContentTapDeleg
 ///
 /// When the suggestions popover is displayed, the selection and the composing region
 /// expand to the whole word and the selection handles are hidden.
-class _SuperEditorAndroidSpellCheckerTapHandler extends _SpellCheckerContentTapDelegate {
-  _SuperEditorAndroidSpellCheckerTapHandler({
+class SuperEditorAndroidSpellCheckerTapHandler extends _SpellCheckerContentTapDelegate {
+  SuperEditorAndroidSpellCheckerTapHandler({
     required this.popoverController,
     required this.controlsController,
     required this.styler,
