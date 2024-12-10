@@ -119,5 +119,24 @@ void main() {
         "This is ***bold*** text.",
       );
     });
+
+    test("First and last character in one attribution span is white space", () {
+      expect(
+        AttributedText(
+          //       b  b
+          //      i    i
+          "This is bold text.",
+          AttributedSpans(
+            attributions: [
+              const SpanMarker(attribution: boldAttribution, offset: 8, markerType: SpanMarkerType.start),
+              const SpanMarker(attribution: boldAttribution, offset: 11, markerType: SpanMarkerType.end), 
+              const SpanMarker(attribution: italicsAttribution, offset: 7, markerType: SpanMarkerType.start),
+              const SpanMarker(attribution: italicsAttribution, offset: 12, markerType: SpanMarkerType.end),
+            ],
+          ),
+        ).toMarkdown(),
+        "This is ***bold*** text.",
+      );
+    });
   });
 }
