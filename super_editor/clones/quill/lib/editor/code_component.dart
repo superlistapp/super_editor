@@ -73,7 +73,7 @@ class CodeBlockComponentViewModel extends SingleColumnLayoutComponentViewModel w
     super.padding = EdgeInsets.zero,
     required this.text,
     required this.textStyleBuilder,
-    this.inlineWidgetBuilderChain = const [],
+    this.inlineWidgetBuilders = const [],
     this.textDirection = TextDirection.ltr,
     this.textAlignment = TextAlign.left,
     required this.backgroundColor,
@@ -98,7 +98,7 @@ class CodeBlockComponentViewModel extends SingleColumnLayoutComponentViewModel w
   @override
   AttributionStyleBuilder textStyleBuilder;
   @override
-  InlineWidgetBuilderChain inlineWidgetBuilderChain;
+  InlineWidgetBuilderChain inlineWidgetBuilders;
   @override
   TextDirection textDirection;
   @override
@@ -128,7 +128,7 @@ class CodeBlockComponentViewModel extends SingleColumnLayoutComponentViewModel w
       padding: padding,
       text: text,
       textStyleBuilder: textStyleBuilder,
-      inlineWidgetBuilderChain: inlineWidgetBuilderChain,
+      inlineWidgetBuilders: inlineWidgetBuilders,
       textDirection: textDirection,
       textAlignment: textAlignment,
       backgroundColor: backgroundColor,

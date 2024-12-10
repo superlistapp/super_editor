@@ -95,7 +95,7 @@ class BlockquoteComponentViewModel extends SingleColumnLayoutComponentViewModel 
     EdgeInsetsGeometry padding = EdgeInsets.zero,
     required this.text,
     required this.textStyleBuilder,
-    this.inlineWidgetBuilderChain = const [],
+    this.inlineWidgetBuilders = const [],
     this.textDirection = TextDirection.ltr,
     this.textAlignment = TextAlign.left,
     this.indent = 0,
@@ -127,7 +127,7 @@ class BlockquoteComponentViewModel extends SingleColumnLayoutComponentViewModel 
   @override
   AttributionStyleBuilder textStyleBuilder;
   @override
-  InlineWidgetBuilderChain inlineWidgetBuilderChain;
+  InlineWidgetBuilderChain inlineWidgetBuilders;
   @override
   TextDirection textDirection;
   @override
@@ -161,7 +161,7 @@ class BlockquoteComponentViewModel extends SingleColumnLayoutComponentViewModel 
       padding: padding,
       text: text,
       textStyleBuilder: textStyleBuilder,
-      inlineWidgetBuilderChain: inlineWidgetBuilderChain,
+      inlineWidgetBuilders: inlineWidgetBuilders,
       textDirection: textDirection,
       textAlignment: textAlignment,
       indent: indent,
@@ -231,7 +231,7 @@ class BlockquoteComponent extends StatelessWidget {
     required this.textKey,
     required this.text,
     required this.styleBuilder,
-    this.inlineWidgetBuilderChain = const [],
+    this.inlineWidgetBuilders = const [],
     this.textSelection,
     this.indent = 0,
     this.indentCalculator = defaultParagraphIndentCalculator,
@@ -246,7 +246,7 @@ class BlockquoteComponent extends StatelessWidget {
   final GlobalKey textKey;
   final AttributedText text;
   final AttributionStyleBuilder styleBuilder;
-  final InlineWidgetBuilderChain inlineWidgetBuilderChain;
+  final InlineWidgetBuilderChain inlineWidgetBuilders;
   final TextSelection? textSelection;
   final int indent;
   final TextBlockIndentCalculator indentCalculator;
@@ -281,7 +281,7 @@ class BlockquoteComponent extends StatelessWidget {
                 key: textKey,
                 text: text,
                 textStyleBuilder: styleBuilder,
-                inlineWidgetBuilderChain: inlineWidgetBuilderChain,
+                inlineWidgetBuilders: inlineWidgetBuilders,
                 textSelection: textSelection,
                 selectionColor: selectionColor,
                 highlightWhenEmpty: highlightWhenEmpty,

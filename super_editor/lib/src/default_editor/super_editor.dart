@@ -1604,7 +1604,7 @@ final defaultStylesheet = Stylesheet(
     ),
   ],
   inlineTextStyler: defaultInlineTextStyler,
-  inlineWidgetBuilderChain: defaultInlineWidgetBuilderChain,
+  inlineWidgetBuilders: defaultInlineWidgetBuilderChain,
 );
 
 TextStyle defaultInlineTextStyler(Set<Attribution> attributions, TextStyle existingStyle) {

@@ -14,7 +14,7 @@ class Stylesheet {
     this.documentPadding,
     required this.rules,
     required this.inlineTextStyler,
-    this.inlineWidgetBuilderChain = const [],
+    this.inlineWidgetBuilders = const [],
     this.selectedTextColorStrategy,
   });
 
@@ -30,7 +30,7 @@ class Stylesheet {
 
   /// Chain of inline widget builders, used to map [AttributedText] placeholders
   /// to inline widgets.
-  final InlineWidgetBuilderChain inlineWidgetBuilderChain;
+  final InlineWidgetBuilderChain inlineWidgetBuilders;
 
   /// The strategy that chooses the color for selected text.
   final SelectedTextColorStrategy? selectedTextColorStrategy;
@@ -41,7 +41,7 @@ class Stylesheet {
   Stylesheet copyWith({
     EdgeInsets? documentPadding,
     AttributionStyleAdjuster? inlineTextStyler,
-    InlineWidgetBuilderChain? inlineWidgetBuilderChain,
+    InlineWidgetBuilderChain? inlineWidgetBuilders,
     SelectedTextColorStrategy? selectedTextColorStrategy,
     List<StyleRule> addRulesBefore = const [],
     List<StyleRule>? rules,
@@ -50,7 +50,7 @@ class Stylesheet {
     return Stylesheet(
       documentPadding: documentPadding ?? this.documentPadding,
       inlineTextStyler: inlineTextStyler ?? this.inlineTextStyler,
-      inlineWidgetBuilderChain: inlineWidgetBuilderChain ?? this.inlineWidgetBuilderChain,
+      inlineWidgetBuilders: inlineWidgetBuilders ?? this.inlineWidgetBuilders,
       selectedTextColorStrategy: selectedTextColorStrategy ?? this.selectedTextColorStrategy,
       rules: [
         ...addRulesBefore,
@@ -369,7 +369,7 @@ class Styles {
   static const String inlineTextStyler = 'inlineTextStyler';
 
   /// Applies a [InlineWidgetBuilderChain] to text-based components.
-  static const String inlineWidgetBuilderChain = 'inlineWidgetBuilderChain';
+  static const String inlineWidgetBuilders = 'inlineWidgetBuilders';
 
   /// Applies a [Color] to the dot of an unordered list item.
   static const String dotColor = 'dotColor';

@@ -182,7 +182,7 @@ class TaskComponentViewModel extends SingleColumnLayoutComponentViewModel with T
     required this.setComplete,
     required this.text,
     required this.textStyleBuilder,
-    this.inlineWidgetBuilderChain = const [],
+    this.inlineWidgetBuilders = const [],
     this.textDirection = TextDirection.ltr,
     this.textAlignment = TextAlign.left,
     this.selection,
@@ -216,7 +216,7 @@ class TaskComponentViewModel extends SingleColumnLayoutComponentViewModel with T
   @override
   AttributionStyleBuilder textStyleBuilder;
   @override
-  InlineWidgetBuilderChain inlineWidgetBuilderChain;
+  InlineWidgetBuilderChain inlineWidgetBuilders;
   @override
   TextDirection textDirection;
   @override
@@ -240,7 +240,7 @@ class TaskComponentViewModel extends SingleColumnLayoutComponentViewModel with T
       setComplete: setComplete,
       text: text,
       textStyleBuilder: textStyleBuilder,
-      inlineWidgetBuilderChain: inlineWidgetBuilderChain,
+      inlineWidgetBuilders: inlineWidgetBuilders,
       textDirection: textDirection,
       selection: selection,
       selectionColor: selectionColor,
@@ -368,7 +368,7 @@ class _TaskComponentState extends State<TaskComponent> with ProxyDocumentCompone
             key: _textKey,
             text: widget.viewModel.text,
             textStyleBuilder: _computeStyles,
-            inlineWidgetBuilderChain: widget.viewModel.inlineWidgetBuilderChain,
+            inlineWidgetBuilders: widget.viewModel.inlineWidgetBuilders,
             textSelection: widget.viewModel.selection,
             selectionColor: widget.viewModel.selectionColor,
             highlightWhenEmpty: widget.viewModel.highlightWhenEmpty,

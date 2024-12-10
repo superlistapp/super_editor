@@ -24,7 +24,7 @@ extension ComputeTextSpan on AttributedText {
   InlineSpan computeInlineSpan(
     BuildContext context,
     AttributionStyleBuilder styleBuilder,
-    InlineWidgetBuilderChain inlineWidgetBuilderChain,
+    InlineWidgetBuilderChain inlineWidgetBuilders,
   ) {
     if (isEmpty) {
       // There is no text and therefore no attributions.
@@ -46,7 +46,7 @@ extension ComputeTextSpan on AttributedText {
 
         final textStyle = styleBuilder({});
         Widget? inlineWidget;
-        for (final builder in inlineWidgetBuilderChain) {
+        for (final builder in inlineWidgetBuilders) {
           inlineWidget = builder(context, textStyle, placeholders[start]!);
           if (inlineWidget != null) {
             break;

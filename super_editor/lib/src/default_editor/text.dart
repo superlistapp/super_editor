@@ -497,8 +497,8 @@ mixin TextComponentViewModel on SingleColumnLayoutComponentViewModel {
   AttributionStyleBuilder get textStyleBuilder;
   set textStyleBuilder(AttributionStyleBuilder styleBuilder);
 
-  InlineWidgetBuilderChain get inlineWidgetBuilderChain;
-  set inlineWidgetBuilderChain(InlineWidgetBuilderChain inlineWidgetBuildChain);
+  InlineWidgetBuilderChain get inlineWidgetBuilders;
+  set inlineWidgetBuilders(InlineWidgetBuilderChain inlineWidgetBuildChain);
 
   TextDirection get textDirection;
   set textDirection(TextDirection direction);
@@ -565,7 +565,7 @@ mixin TextComponentViewModel on SingleColumnLayoutComponentViewModel {
       return inlineTextStyler(attributions, baseStyle);
     };
 
-    inlineWidgetBuilderChain = styles[Styles.inlineWidgetBuilderChain] ?? [];
+    inlineWidgetBuilders = styles[Styles.inlineWidgetBuilders] ?? [];
 
     composingRegionUnderlineStyle = styles[Styles.composingRegionUnderlineStyle] ?? composingRegionUnderlineStyle;
     showComposingRegionUnderline = styles[Styles.showComposingRegionUnderline] ?? showComposingRegionUnderline;
@@ -675,7 +675,7 @@ class TextComponent extends StatefulWidget {
     this.textDirection,
     this.textScaler,
     required this.textStyleBuilder,
-    this.inlineWidgetBuilderChain = const [],
+    this.inlineWidgetBuilders = const [],
     this.metadata = const {},
     this.textSelection,
     this.selectionColor = Colors.lightBlueAccent,
@@ -701,7 +701,7 @@ class TextComponent extends StatefulWidget {
   ///
   /// The first builder in the chain to return a non-null `Widget` will be
   /// used for a given inline placeholder.
-  final InlineWidgetBuilderChain inlineWidgetBuilderChain;
+  final InlineWidgetBuilderChain inlineWidgetBuilders;
 
   final Map<String, dynamic> metadata;
 
@@ -1139,7 +1139,7 @@ class TextComponentState extends State<TextComponent> with DocumentComponent imp
         richText: widget.text.computeInlineSpan(
           context,
           _textStyleWithBlockType,
-          widget.inlineWidgetBuilderChain,
+          widget.inlineWidgetBuilders,
         ),
         textAlign: widget.textAlign ?? TextAlign.left,
         textDirection: widget.textDirection ?? TextDirection.ltr,
@@ -1224,7 +1224,7 @@ Widget? inlineAssetImageBuilder(BuildContext context, TextStyle textStyle, Objec
 }
 
 /// A widget that sets its [child]'s height to the line-height of a given text [style].
-class LineHeight extends StatelessWidget {
+class LineHeight extends StatefulWidget {
   const LineHeight({
     super.key,
     required this.style,
@@ -1235,22 +1235,48 @@ class LineHeight extends StatelessWidget {
   final Widget child;
 
   @override
-  Widget build(BuildContext context) {
+  State<LineHeight> createState() => _LineHeightState();
+}
+
+class _LineHeightState extends State<LineHeight> {
+  late double _lineHeight;
+
+  @override
+  void initState() {
+    super.initState();
+    _calculateLineHeight();
+  }
+
+  @override
+  void didUpdateWidget(LineHeight oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    if (widget.style != oldWidget.style) {
+      _calculateLineHeight();
+    }
+  }
+
+  void _calculateLineHeight() {
     final textPainter = TextPainter(
-      text: TextSpan(text: "a", style: style),
+      text: TextSpan(text: "a", style: widget.style),
       textDirection: TextDirection.ltr,
     )..layout();
 
+    _lineHeight = textPainter.height;
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return SizedBox(
-      height: textPainter.height,
-      child: child,
+      height: _lineHeight,
+      child: widget.child,
     );
   }
 }
 
 /// A widget that sets its [child]'s width and height to the line-height of a
 /// given text [style].
-class LineHeightSquare extends StatelessWidget {
+class LineHeightSquare extends StatefulWidget {
   const LineHeightSquare({
     super.key,
     required this.style,
@@ -1261,16 +1287,42 @@ class LineHeightSquare extends StatelessWidget {
   final Widget child;
 
   @override
-  Widget build(BuildContext context) {
+  State<LineHeightSquare> createState() => _LineHeightSquareState();
+}
+
+class _LineHeightSquareState extends State<LineHeightSquare> {
+  late double _lineHeight;
+
+  @override
+  void initState() {
+    super.initState();
+    _calculateLineHeight();
+  }
+
+  @override
+  void didUpdateWidget(LineHeightSquare oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    if (widget.style != oldWidget.style) {
+      _calculateLineHeight();
+    }
+  }
+
+  void _calculateLineHeight() {
     final textPainter = TextPainter(
-      text: TextSpan(text: "a", style: style),
+      text: TextSpan(text: "a", style: widget.style),
       textDirection: TextDirection.ltr,
     )..layout();
 
+    _lineHeight = textPainter.height;
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return SizedBox(
-      width: textPainter.height,
-      height: textPainter.height,
-      child: child,
+      width: _lineHeight,
+      height: _lineHeight,
+      child: widget.child,
     );
   }
 }

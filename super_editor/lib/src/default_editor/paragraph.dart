@@ -143,7 +143,7 @@ class ParagraphComponentViewModel extends SingleColumnLayoutComponentViewModel w
     this.indentCalculator = defaultParagraphIndentCalculator,
     required this.text,
     required this.textStyleBuilder,
-    this.inlineWidgetBuilderChain = const [],
+    this.inlineWidgetBuilders = const [],
     this.textDirection = TextDirection.ltr,
     this.textAlignment = TextAlign.left,
     this.textScaler,
@@ -177,7 +177,7 @@ class ParagraphComponentViewModel extends SingleColumnLayoutComponentViewModel w
   @override
   AttributionStyleBuilder textStyleBuilder;
   @override
-  InlineWidgetBuilderChain inlineWidgetBuilderChain;
+  InlineWidgetBuilderChain inlineWidgetBuilders;
   @override
   TextDirection textDirection;
   @override
@@ -206,7 +206,7 @@ class ParagraphComponentViewModel extends SingleColumnLayoutComponentViewModel w
       indentCalculator: indentCalculator,
       text: text,
       textStyleBuilder: textStyleBuilder,
-      inlineWidgetBuilderChain: inlineWidgetBuilderChain,
+      inlineWidgetBuilders: inlineWidgetBuilders,
       textDirection: textDirection,
       textAlignment: textAlignment,
       textScaler: textScaler,
@@ -316,7 +316,7 @@ class _ParagraphComponentState extends State<ParagraphComponent>
             textAlign: widget.viewModel.textAlignment,
             textScaler: widget.viewModel.textScaler,
             textStyleBuilder: widget.viewModel.textStyleBuilder,
-            inlineWidgetBuilderChain: widget.viewModel.inlineWidgetBuilderChain,
+            inlineWidgetBuilders: widget.viewModel.inlineWidgetBuilders,
             metadata: widget.viewModel.blockType != null
                 ? {
                     'blockType': widget.viewModel.blockType,
