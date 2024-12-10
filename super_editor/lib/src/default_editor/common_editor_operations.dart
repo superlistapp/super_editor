@@ -179,7 +179,7 @@ class CommonEditorOperations {
       baseOffset: (docSelection.base.nodePosition as TextNodePosition).offset,
       extentOffset: (docSelection.extent.nodePosition as TextNodePosition).offset,
     );
-    final selectedText = currentSelection.textInside(selectedNode.text.text);
+    final selectedText = currentSelection.textInside(selectedNode.text.toPlainText());
 
     if (selectedText.contains(' ')) {
       // The selection already spans multiple paragraphs. Nothing to do.
@@ -187,7 +187,7 @@ class CommonEditorOperations {
     }
 
     final wordTextSelection = expandPositionToWord(
-      text: selectedNode.text.text,
+      text: selectedNode.text.toPlainText(),
       textPosition: TextPosition(offset: (docSelection.extent.nodePosition as TextNodePosition).offset),
     );
     final wordNodeSelection = TextNodeSelection.fromTextSelection(wordTextSelection);
@@ -908,7 +908,7 @@ class CommonEditorOperations {
 
     if (composer.selection!.extent.nodePosition is TextNodePosition) {
       final textPosition = composer.selection!.extent.nodePosition as TextNodePosition;
-      final text = (document.getNodeById(composer.selection!.extent.nodeId) as TextNode).text.text;
+      final text = (document.getNodeById(composer.selection!.extent.nodeId) as TextNode).text;
       if (textPosition.offset == text.length) {
         final node = document.getNodeById(composer.selection!.extent.nodeId)!;
         final nodeAfter = document.getNodeAfter(node);
@@ -1037,7 +1037,7 @@ class CommonEditorOperations {
       return false;
     }
 
-    final nextCharacterOffset = getCharacterEndBounds(text.text, currentTextOffset);
+    final nextCharacterOffset = getCharacterEndBounds(text.toPlainText(), currentTextOffset);
 
     // Delete the selected content.
     editor.execute([
@@ -1111,7 +1111,7 @@ class CommonEditorOperations {
 
         final componentBefore = documentLayoutResolver().getComponentByNodeId(nodeBefore.id)!;
 
-        if (nodeBefore is TextNode && nodeBefore.text.text.isEmpty) {
+        if (nodeBefore is TextNode && nodeBefore.text.isEmpty) {
           editor.execute([
             DeleteNodeRequest(nodeId: nodeBefore.id),
           ]);
@@ -1148,7 +1148,7 @@ class CommonEditorOperations {
           // The node/component above is not selectable. Delete it.
           deleteNonSelectedNode(nodeBefore);
           return true;
-        } else if ((node as TextNode).text.text.isEmpty) {
+        } else if ((node as TextNode).text.isEmpty) {
           // The caret is at the beginning of an empty TextNode and the preceding
           // node is not a TextNode. Delete the current TextNode and move the
           // selection up to the preceding node if exist.
@@ -1312,7 +1312,7 @@ class CommonEditorOperations {
     final textNode = document.getNode(composer.selection!.extent) as TextNode;
     final currentTextOffset = (composer.selection!.extent.nodePosition as TextNodePosition).offset;
 
-    final previousCharacterOffset = getCharacterStartBounds(textNode.text.text, currentTextOffset);
+    final previousCharacterOffset = getCharacterStartBounds(textNode.text.toPlainText(), currentTextOffset);
 
     final newSelectionPosition = DocumentPosition(
       nodeId: textNode.id,
@@ -1797,7 +1797,7 @@ class CommonEditorOperations {
     final newNodeId = Editor.createNodeId();
 
     if (extentNode is ListItemNode) {
-      if (extentNode.text.text.isEmpty) {
+      if (extentNode.text.isEmpty) {
         // The list item is empty. Convert it to a paragraph.
         editorOpsLog.finer(
             "The current node is an empty list item. Converting it to a paragraph instead of inserting block-level newline.");
@@ -1902,7 +1902,7 @@ class CommonEditorOperations {
         ]);
       }
     } else if (extentNode is TaskNode) {
-      if (extentNode.text.text.isEmpty) {
+      if (extentNode.text.isEmpty) {
         // The task is empty. Convert it to a paragraph.
         return convertToParagraph();
       }
@@ -2595,7 +2595,7 @@ class DeleteUpstreamCharacterCommand extends EditCommand {
     final textNode = document.getNode(selection.extent) as TextNode;
     final currentTextOffset = (selection.extent.nodePosition as TextNodePosition).offset;
 
-    final previousCharacterOffset = getCharacterStartBounds(textNode.text.text, currentTextOffset);
+    final previousCharacterOffset = getCharacterStartBounds(textNode.text.toPlainText(), currentTextOffset);
 
     // Delete the selected content.
     executor
@@ -2650,7 +2650,7 @@ class DeleteDownstreamCharacterCommand extends EditCommand {
       throw Exception("Tried to delete downstream character but the caret is sitting at the end of the text.");
     }
 
-    final nextCharacterOffset = getCharacterEndBounds(text.text, currentTextPositionOffset);
+    final nextCharacterOffset = getCharacterEndBounds(text.toPlainText(), currentTextPositionOffset);
 
     // Delete the selected content.
     executor.executeCommand(

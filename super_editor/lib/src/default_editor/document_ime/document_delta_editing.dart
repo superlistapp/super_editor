@@ -331,7 +331,7 @@ class TextDeltasDocumentEditor {
     }
 
     editorOpsLog.fine("Executing text insertion command.");
-    editorOpsLog.finer("Text before insertion: '${insertionNode.text.text}'");
+    editorOpsLog.finer("Text before insertion: '${insertionNode.text.toPlainText()}'");
     editor.execute([
       if (selection.value != DocumentSelection.collapsed(position: insertionPosition))
         ChangeSelectionRequest(
@@ -345,7 +345,7 @@ class TextDeltasDocumentEditor {
         attributions: composerPreferences.currentAttributions,
       ),
     ]);
-    editorOpsLog.finer("Text after insertion: '${insertionNode.text.text}'");
+    editorOpsLog.finer("Text after insertion: '${insertionNode.text.toPlainText()}'");
 
     return true;
   }
@@ -431,7 +431,7 @@ class TextDeltasDocumentEditor {
     final newNodeId = Editor.createNodeId();
 
     if (extentNode is ListItemNode) {
-      if (extentNode.text.text.isEmpty) {
+      if (extentNode.text.isEmpty) {
         // The list item is empty. Convert it to a paragraph.
         editorOpsLog.finer(
             "The current node is an empty list item. Converting it to a paragraph instead of inserting block-level newline.");
@@ -534,7 +534,7 @@ class TextDeltasDocumentEditor {
         ]);
       }
     } else if (extentNode is TaskNode) {
-      if (extentNode.text.text.isEmpty) {
+      if (extentNode.text.isEmpty) {
         // The task is empty. Convert it to a paragraph.
         editor.execute([
           ConvertTextNodeToParagraphRequest(nodeId: extentNode.id),

@@ -127,17 +127,20 @@ class SoftwareKeyboardController {
   /// Opens the software keyboard.
   void open() {
     assert(hasDelegate);
+    print("SoftwareKeyboardController: open()");
     _delegate?.open();
   }
 
   void hide() {
     assert(hasDelegate);
+    print("SoftwareKeyboardController: hide()");
     _delegate?.hide();
   }
 
   /// Closes the software keyboard.
   void close() {
     assert(hasDelegate);
+    print("SoftwareKeyboardController: close()");
     _delegate?.close();
   }
 }

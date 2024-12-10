@@ -243,11 +243,11 @@ void main() {
 
         // Ensure the existing item remains the same.
         expect(document.first, isA<ListItemNode>());
-        expect((document.first as ListItemNode).text.text, "Item 12");
+        expect((document.first as ListItemNode).text.toPlainText(), "Item 12");
 
         // Ensure the new item has the correct list item type and indentation.
         expect(document.last, isA<ListItemNode>());
-        expect((document.last as ListItemNode).text.text, "");
+        expect((document.last as ListItemNode).text.toPlainText(), "");
         expect((document.last as ListItemNode).type, ListItemType.unordered);
         expect((document.last as ListItemNode).indent, 0);
         expect(
@@ -291,11 +291,11 @@ void main() {
 
         // Ensure the existing item remains the same.
         expect(document.first, isA<ListItemNode>());
-        expect((document.first as ListItemNode).text.text, "Item 12");
+        expect((document.first as ListItemNode).text.toPlainText(), "Item 12");
 
         // Ensure the new item has the correct list item type and indentation.
         expect(document.last, isA<ListItemNode>());
-        expect((document.last as ListItemNode).text.text, "");
+        expect((document.last as ListItemNode).text.toPlainText(), "");
         expect((document.last as ListItemNode).type, ListItemType.unordered);
         expect((document.last as ListItemNode).indent, 0);
         expect(
@@ -339,11 +339,11 @@ void main() {
 
         // Ensure the existing item remains the same.
         expect(document.first, isA<ListItemNode>());
-        expect((document.first as ListItemNode).text.text, "Item 12");
+        expect((document.first as ListItemNode).text.toPlainText(), "Item 12");
 
         // Ensure the new item has the correct list item type and indentation.
         expect(document.last, isA<ListItemNode>());
-        expect((document.last as ListItemNode).text.text, "");
+        expect((document.last as ListItemNode).text.toPlainText(), "");
         expect((document.last as ListItemNode).type, ListItemType.unordered);
         expect((document.last as ListItemNode).indent, 0);
         expect(
@@ -374,9 +374,9 @@ void main() {
         // Ensure that a new item was created with part of the previous item.
         expect(document.nodeCount, 2);
         expect(document.first, isA<ListItemNode>());
-        expect((document.first as ListItemNode).text.text, "List ");
+        expect((document.first as ListItemNode).text.toPlainText(), "List ");
         expect(document.last, isA<ListItemNode>());
-        expect((document.last as ListItemNode).text.text, "Item");
+        expect((document.last as ListItemNode).text.toPlainText(), "Item");
         expect((document.last as ListItemNode).type, ListItemType.unordered);
         expect((document.last as ListItemNode).indent, 0);
         expect(
@@ -408,9 +408,9 @@ void main() {
         // Ensure that a new item was created with part of the previous item.
         expect(document.nodeCount, 2);
         expect(document.first, isA<ListItemNode>());
-        expect((document.first as ListItemNode).text.text, "List ");
+        expect((document.first as ListItemNode).text.toPlainText(), "List ");
         expect(document.last, isA<ListItemNode>());
-        expect((document.last as ListItemNode).text.text, "Item");
+        expect((document.last as ListItemNode).text.toPlainText(), "Item");
         expect((document.last as ListItemNode).type, ListItemType.unordered);
         expect((document.last as ListItemNode).indent, 0);
         expect(
@@ -442,9 +442,9 @@ void main() {
         // Ensure that a new item was created with part of the previous item.
         expect(document.nodeCount, 2);
         expect(document.first, isA<ListItemNode>());
-        expect((document.first as ListItemNode).text.text, "List ");
+        expect((document.first as ListItemNode).text.toPlainText(), "List ");
         expect(document.last, isA<ListItemNode>());
-        expect((document.last as ListItemNode).text.text, "Item");
+        expect((document.last as ListItemNode).text.toPlainText(), "Item");
         expect((document.last as ListItemNode).type, ListItemType.unordered);
         expect((document.last as ListItemNode).indent, 0);
         expect(
@@ -753,11 +753,11 @@ A paragraph
 
         // Ensure the existing item remains the same.
         expect(document.first, isA<ListItemNode>());
-        expect((document.first as ListItemNode).text.text, "Item 1");
+        expect((document.first as ListItemNode).text.toPlainText(), "Item 1");
 
         // Ensure the new item has the correct list item type and indentation.
         expect(document.last, isA<ListItemNode>());
-        expect((document.last as ListItemNode).text.text, "");
+        expect((document.last as ListItemNode).text.toPlainText(), "");
         expect((document.last as ListItemNode).type, ListItemType.ordered);
         expect((document.last as ListItemNode).indent, 0);
         expect(
@@ -790,11 +790,11 @@ A paragraph
 
         // Ensure the existing item remains the same.
         expect(document.first, isA<ListItemNode>());
-        expect((document.first as ListItemNode).text.text, "Item 1");
+        expect((document.first as ListItemNode).text.toPlainText(), "Item 1");
 
         // Ensure the new item has the correct list item type and indentation.
         expect(document.last, isA<ListItemNode>());
-        expect((document.last as ListItemNode).text.text, "");
+        expect((document.last as ListItemNode).text.toPlainText(), "");
         expect((document.last as ListItemNode).type, ListItemType.ordered);
         expect((document.last as ListItemNode).indent, 0);
         expect(
@@ -827,11 +827,11 @@ A paragraph
 
         // Ensure the existing item remains the same.
         expect(document.first, isA<ListItemNode>());
-        expect((document.first as ListItemNode).text.text, "Item 1");
+        expect((document.first as ListItemNode).text.toPlainText(), "Item 1");
 
         // Ensure the new item has the correct list item type and indentation.
         expect(document.last, isA<ListItemNode>());
-        expect((document.last as ListItemNode).text.text, "");
+        expect((document.last as ListItemNode).text.toPlainText(), "");
         expect((document.last as ListItemNode).type, ListItemType.ordered);
         expect((document.last as ListItemNode).indent, 0);
         expect(
@@ -862,9 +862,9 @@ A paragraph
         // Ensure that a new item was created with part of the previous item.
         expect(document.nodeCount, 2);
         expect(document.first, isA<ListItemNode>());
-        expect((document.first as ListItemNode).text.text, "List ");
+        expect((document.first as ListItemNode).text.toPlainText(), "List ");
         expect(document.last, isA<ListItemNode>());
-        expect((document.last as ListItemNode).text.text, "Item");
+        expect((document.last as ListItemNode).text.toPlainText(), "Item");
         expect((document.last as ListItemNode).type, ListItemType.ordered);
         expect((document.last as ListItemNode).indent, 0);
         expect(
@@ -896,9 +896,9 @@ A paragraph
         // Ensure that a new item was created with part of the previous item.
         expect(document.nodeCount, 2);
         expect(document.first, isA<ListItemNode>());
-        expect((document.first as ListItemNode).text.text, "List ");
+        expect((document.first as ListItemNode).text.toPlainText(), "List ");
         expect(document.last, isA<ListItemNode>());
-        expect((document.last as ListItemNode).text.text, "Item");
+        expect((document.last as ListItemNode).text.toPlainText(), "Item");
         expect((document.last as ListItemNode).type, ListItemType.ordered);
         expect((document.last as ListItemNode).indent, 0);
         expect(
@@ -930,9 +930,9 @@ A paragraph
         // Ensure that a new item was created with part of the previous item.
         expect(document.nodeCount, 2);
         expect(document.first, isA<ListItemNode>());
-        expect((document.first as ListItemNode).text.text, "List ");
+        expect((document.first as ListItemNode).text.toPlainText(), "List ");
         expect(document.last, isA<ListItemNode>());
-        expect((document.last as ListItemNode).text.text, "Item");
+        expect((document.last as ListItemNode).text.toPlainText(), "Item");
         expect((document.last as ListItemNode).type, ListItemType.ordered);
         expect((document.last as ListItemNode).indent, 0);
         expect(

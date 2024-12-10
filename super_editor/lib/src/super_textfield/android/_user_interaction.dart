@@ -413,7 +413,7 @@ class AndroidTextFieldTouchInteractorState extends State<AndroidTextFieldTouchIn
     // We show placeholder text when there is no text content. We don't want
     // to place the caret in the placeholder text, so when _currentText is
     // empty, explicitly set the text position to an offset of -1.
-    if (widget.textController.text.text.isEmpty) {
+    if (widget.textController.text.isEmpty) {
       return const TextPosition(offset: -1);
     }
 

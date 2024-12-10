@@ -281,7 +281,7 @@ class ImeAttributedTextEditingController extends AttributedTextEditingController
 
   @override
   TextEditingValue? get currentTextEditingValue => TextEditingValue(
-        text: text.text,
+        text: text.toPlainText(),
         selection: selection,
         composing: composingRegion,
       );

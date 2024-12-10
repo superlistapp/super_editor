@@ -692,12 +692,12 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
       return docPosition;
     }
 
-    final text = (widget.document.getNodeById(docPosition.nodeId) as TextNode).text.text;
+    final text = (widget.document.getNodeById(docPosition.nodeId) as TextNode).text;
     final tapOffset = (docPosition.nodePosition as TextNodePosition).offset;
     if (tapOffset == text.length) {
       return docPosition;
     }
-    final adjustedSelectionOffset = IosHeuristics.adjustTapOffset(text, tapOffset);
+    final adjustedSelectionOffset = IosHeuristics.adjustTapOffset(text.toPlainText(), tapOffset);
 
     return DocumentPosition(
       nodeId: docPosition.nodeId,

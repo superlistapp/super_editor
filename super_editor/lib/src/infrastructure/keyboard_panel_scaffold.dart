@@ -381,6 +381,7 @@ class _KeyboardPanelScaffoldState extends State<KeyboardPanelScaffold>
   /// Updates our local cache of the current bottom window insets, which we assume reflects
   /// the current software keyboard height.
   void _updateKeyboardHeightForCurrentViewInsets() {
+    print("_updateKeyboardHeightForCurrentViewInsets()");
     final newInsets = MediaQuery.viewInsetsOf(context);
     final newBottomInset = newInsets.bottom;
     final isKeyboardOpening = newBottomInset > _latestViewInsets.bottom;
@@ -391,6 +392,7 @@ class _KeyboardPanelScaffoldState extends State<KeyboardPanelScaffold>
       _isKeyboardOpen = false;
     } else if (!_isKeyboardOpen && isKeyboardOpening) {
       // The keyboard went from closed to open. If there's an open panel, close it.
+      print("Keyboard went from closed to open :(");
       _isKeyboardOpen = true;
       widget.controller.hideKeyboardPanel();
     }
@@ -584,24 +586,42 @@ class KeyboardPanelController {
 
   /// Opens the keyboard panel if the keyboard is open, or opens the keyboard
   /// if the keyboard panel is open.
-  void toggleSoftwareKeyboardWithPanel() => _delegate?.toggleSoftwareKeyboardWithPanel();
+  void toggleSoftwareKeyboardWithPanel() {
+    print("toggleSoftwareKeyboardWithPanel()");
+    _delegate?.toggleSoftwareKeyboardWithPanel();
+  }
 
   /// Shows the software keyboard, if it's hidden.
-  void showSoftwareKeyboard() => _delegate?.showSoftwareKeyboard();
+  void showSoftwareKeyboard() {
+    print("showSoftwareKeyboard()");
+    _delegate?.showSoftwareKeyboard();
+  }
 
   /// Hides (doesn't close) the software keyboard, if it's open.
-  void hideSoftwareKeyboard() => _delegate?.hideSoftwareKeyboard();
+  void hideSoftwareKeyboard() {
+    print("hideSoftwareKeyboard()");
+    _delegate?.hideSoftwareKeyboard();
+  }
 
   /// Shows the keyboard panel, if it's closed, and hides (doesn't close) the
   /// software keyboard, if it's open.
-  void showKeyboardPanel() => _delegate?.showKeyboardPanel();
+  void showKeyboardPanel() {
+    print("showKeyboardPanel");
+    _delegate?.showKeyboardPanel();
+  }
 
   /// Hides the keyboard panel, if it's open.
-  void hideKeyboardPanel() => _delegate?.hideKeyboardPanel();
+  void hideKeyboardPanel() {
+    print("hideKeyboardPanel");
+    _delegate?.hideKeyboardPanel();
+  }
 
   /// Closes the software keyboard if it's open, or closes the keyboard panel if
   /// it's open, and fully closes the keyboard (IME) connection.
-  void closeKeyboardAndPanel() => _delegate?.closeKeyboardAndPanel();
+  void closeKeyboardAndPanel() {
+    print("closeKeyboardAndPanel()");
+    _delegate?.closeKeyboardAndPanel();
+  }
 }
 
 abstract interface class KeyboardPanelScaffoldDelegate {

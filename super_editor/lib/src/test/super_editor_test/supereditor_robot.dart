@@ -453,7 +453,7 @@ extension SuperEditorRobot on WidgetTester {
       final componentBox = component.context.findRenderObject() as RenderBox;
       final edge = component.getEdgeForPosition(position.nodePosition);
 
-      final positionRect = position.nodePosition == UpstreamDownstreamNodePosition.upstream()
+      final positionRect = position.nodePosition == const UpstreamDownstreamNodePosition.upstream()
           // For upstream position, the edge is a zero width rect starting from the left.
           ? Rect.fromLTWH(
               edge.left,

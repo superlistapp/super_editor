@@ -598,7 +598,7 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField>
   }
 
   Widget _buildSelectableText() {
-    final textSpan = _textEditingController.text.text.isNotEmpty
+    final textSpan = _textEditingController.text.isNotEmpty
         ? _textEditingController.text.computeTextSpan(widget.textStyleBuilder)
         : AttributedText().computeTextSpan(widget.textStyleBuilder);
 
@@ -615,7 +615,7 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField>
       textAlign: widget.textAlign,
       textScaler: MediaQuery.textScalerOf(context),
       layerBeneathBuilder: (context, textLayout) {
-        final isTextEmpty = _textEditingController.text.text.isEmpty;
+        final isTextEmpty = _textEditingController.text.isEmpty;
         final showHint = widget.hintBuilder != null &&
             ((isTextEmpty && widget.hintBehavior == HintBehavior.displayHintUntilTextEntered) ||
                 (isTextEmpty && !_focusNode.hasFocus && widget.hintBehavior == HintBehavior.displayHintUntilFocus));
@@ -723,7 +723,7 @@ Widget defaultIosPopoverToolbarBuilder(BuildContext context, IOSEditingOverlayCo
         return;
       }
 
-      final selectedText = selection.textInside(textController.text.text);
+      final selectedText = selection.textInside(textController.text.toPlainText());
 
       textController.deleteSelectedText();
 
@@ -732,7 +732,7 @@ Widget defaultIosPopoverToolbarBuilder(BuildContext context, IOSEditingOverlayCo
     onCopyPressed: () {
       final textController = controller.textController;
       final selection = textController.selection;
-      final selectedText = selection.textInside(textController.text.text);
+      final selectedText = selection.textInside(textController.text.toPlainText());
 
       Clipboard.setData(ClipboardData(text: selectedText));
     },

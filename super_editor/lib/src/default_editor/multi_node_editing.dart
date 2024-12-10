@@ -418,7 +418,7 @@ class InsertNodeAtCaretCommand extends EditCommand {
     final endOfParagraph = selectedNode.endPosition;
 
     DocumentSelection newSelection;
-    if (selectedNode.text.text.isEmpty) {
+    if (selectedNode.text.isEmpty) {
       // Insert new block node above selected paragraph.
       document.insertNodeBefore(existingNode: selectedNode, newNode: newNode);
       executor.logChanges([

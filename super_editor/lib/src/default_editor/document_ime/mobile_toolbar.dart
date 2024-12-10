@@ -266,11 +266,10 @@ class _KeyboardEditingToolbarState extends State<KeyboardEditingToolbar> with Wi
                               icon: const Icon(Icons.format_quote),
                             ),
                             IconButton(
-                              onPressed: isSingleNodeSelected &&
-                                      selectedNode is ParagraphNode &&
-                                      selectedNode.text.text.isEmpty
-                                  ? _toolbarOps.convertToHr
-                                  : null,
+                              onPressed:
+                                  isSingleNodeSelected && selectedNode is ParagraphNode && selectedNode.text.isEmpty
+                                      ? _toolbarOps.convertToHr
+                                      : null,
                               icon: const Icon(Icons.horizontal_rule),
                             ),
                           ],

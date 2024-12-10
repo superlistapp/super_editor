@@ -78,7 +78,7 @@ void main() {
 
             // Ensure the color attribution was applied to the inserted text.
             final text = SuperEditorInspector.findTextInComponent(document.first.id);
-            expect(text.text, "Colors text");
+            expect(text.toPlainText(), "Colors text");
             expect(
               text.spans,
               AttributedSpans(attributions: [
@@ -176,7 +176,7 @@ void main() {
 
             // Ensure the color attribution was applied to the inserted text.
             final text = SuperEditorInspector.findTextInComponent(document.first.id);
-            expect(text.text, "Colors");
+            expect(text.toPlainText(), "Colors");
             expect(
               text.spans,
               AttributedSpans(attributions: [
@@ -1328,7 +1328,21 @@ void main() {
 
           // Ensure the text is colored orange.
           expect(
-            SuperEditorInspector.findRichTextInParagraph("1").style?.color,
+            SuperEditorInspector.findRichTextInParagraph("1")
+                .getSpanForPosition(
+                  const TextPosition(offset: 0),
+                )
+                ?.style
+                ?.color,
+            Colors.orange,
+          );
+          expect(
+            SuperEditorInspector.findRichTextInParagraph("1")
+                .getSpanForPosition(
+                  TextPosition(offset: SuperEditorInspector.findTextInComponent("1").length - 1),
+                )
+                ?.style
+                ?.color,
             Colors.orange,
           );
         });

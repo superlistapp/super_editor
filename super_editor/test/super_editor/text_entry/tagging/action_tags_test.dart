@@ -23,7 +23,7 @@ void main() {
 
         // Ensure that the tag has a composing attribution.
         final text = SuperEditorInspector.findTextInComponent("1");
-        expect(text.text, "/header");
+        expect(text.toPlainText(), "/header");
         expect(
           text.getAttributedRange({actionTagComposingAttribution}, 0),
           const SpanRange(0, 6),
@@ -51,7 +51,7 @@ void main() {
 
         // Ensure that the tag has a composing attribution.
         final text = SuperEditorInspector.findTextInComponent("1");
-        expect(text.text, "before /header after");
+        expect(text.toPlainText(), "before /header after");
         expect(
           text.getAttributedRange({actionTagComposingAttribution}, 7),
           const SpanRange(7, 13),
@@ -80,7 +80,7 @@ void main() {
         // Ensure that there's no more composing attribution because the tag
         // should have been submitted.
         final text = SuperEditorInspector.findTextInComponent("1");
-        expect(text.text, "before /header after");
+        expect(text.toPlainText(), "before /header after");
         expect(
           text.getAttributionSpansInRange(
             attributionFilter: (attribution) => attribution == actionTagComposingAttribution,
@@ -116,7 +116,7 @@ void main() {
 
         // Ensure that we started a composing tag before adding a space.
         var text = SuperEditorInspector.findTextInComponent("1");
-        expect(text.text, "before /header");
+        expect(text.toPlainText(), "before /header");
         expect(
           text.getAttributedRange({actionTagComposingAttribution}, 7),
           const SpanRange(7, 13),
@@ -126,7 +126,7 @@ void main() {
 
         // Ensure that the composing attribution continues after the space.
         text = SuperEditorInspector.findTextInComponent("1");
-        expect(text.text, "before /header after");
+        expect(text.toPlainText(), "before /header after");
         expect(
           text.getAttributedRange({actionTagComposingAttribution}, 7),
           const SpanRange(7, 19),
@@ -155,7 +155,7 @@ void main() {
 
         // Ensure that we're composing an action tag.
         var text = SuperEditorInspector.findTextInComponent("1");
-        expect(text.text, "before @john");
+        expect(text.toPlainText(), "before @john");
         expect(
           text.getAttributedRange({actionTagComposingAttribution}, 7),
           const SpanRange(7, 11),
@@ -332,7 +332,7 @@ void main() {
 
         // Ensure that the tag was submitted.
         final text = SuperEditorInspector.findTextInComponent("1");
-        expect(text.text, "before /header");
+        expect(text.toPlainText(), "before /header");
         expect(
           text.getAttributedRange({actionTagCancelledAttribution}, 7),
           const SpanRange(7, 7),
@@ -378,7 +378,7 @@ void main() {
 
         // Ensure that the action tag was cancelled.
         final text = SuperEditorInspector.findTextInComponent("1");
-        expect(text.text, "before /header");
+        expect(text.toPlainText(), "before /header");
         expect(
           text.getAttributedRange({actionTagCancelledAttribution}, 7),
           const SpanRange(7, 7),
@@ -431,7 +431,7 @@ void main() {
 
         // Ensure that the action tag was cancelled.
         final text = SuperEditorInspector.findTextInComponent("1");
-        expect(text.text, "before /header after");
+        expect(text.toPlainText(), "before /header after");
         expect(
           text.getAttributedRange({actionTagCancelledAttribution}, 7),
           const SpanRange(7, 7),
@@ -486,7 +486,7 @@ void main() {
 
         // Ensure that we didn't start composing again.
         text = SuperEditorInspector.findTextInComponent("1");
-        expect(text.text, "before /stuff ");
+        expect(text.toPlainText(), "before /stuff ");
         expect(
           text.getAttributionSpansInRange(
             attributionFilter: (attribution) => attribution == actionTagComposingAttribution,
@@ -561,7 +561,7 @@ void main() {
 
         // Ensure that the action tag was removed after submission.
         final text = SuperEditorInspector.findTextInComponent("1");
-        expect(text.text, "");
+        expect(text.toPlainText(), "");
       });
 
       testWidgetsOnAllPlatforms("after existing text", (tester) async {
@@ -588,7 +588,7 @@ void main() {
 
         // Ensure that the action tag was removed.
         final text = SuperEditorInspector.findTextInComponent("1");
-        expect(text.text, "before ");
+        expect(text.toPlainText(), "before ");
         expect(
           text.getAttributionSpansInRange(
             attributionFilter: (attribution) => attribution == actionTagComposingAttribution,
@@ -622,7 +622,7 @@ void main() {
 
         // Ensure that the action tag was removed.
         final text = SuperEditorInspector.findTextInComponent("1");
-        expect(text.text, "before  after");
+        expect(text.toPlainText(), "before  after");
         expect(
           text.getAttributionSpansInRange(
             attributionFilter: (attribution) => attribution == actionTagComposingAttribution,

@@ -77,7 +77,7 @@ class ParagraphComponentBuilder implements ComponentBuilder {
       return null;
     }
 
-    final textDirection = getParagraphDirection(node.text.text);
+    final textDirection = getParagraphDirection(node.text.toPlainText());
 
     TextAlign textAlign = (textDirection == TextDirection.ltr) ? TextAlign.left : TextAlign.right;
     final textAlignName = node.getMetadataValue('textAlign');
@@ -143,6 +143,7 @@ class ParagraphComponentViewModel extends SingleColumnLayoutComponentViewModel w
     this.indentCalculator = defaultParagraphIndentCalculator,
     required this.text,
     required this.textStyleBuilder,
+    this.inlineWidgetBuilderChain = const [],
     this.textDirection = TextDirection.ltr,
     this.textAlignment = TextAlign.left,
     this.textScaler,
@@ -176,6 +177,8 @@ class ParagraphComponentViewModel extends SingleColumnLayoutComponentViewModel w
   @override
   AttributionStyleBuilder textStyleBuilder;
   @override
+  InlineWidgetBuilderChain inlineWidgetBuilderChain;
+  @override
   TextDirection textDirection;
   @override
   TextAlign textAlignment;
@@ -203,6 +206,7 @@ class ParagraphComponentViewModel extends SingleColumnLayoutComponentViewModel w
       indentCalculator: indentCalculator,
       text: text,
       textStyleBuilder: textStyleBuilder,
+      inlineWidgetBuilderChain: inlineWidgetBuilderChain,
       textDirection: textDirection,
       textAlignment: textAlignment,
       textScaler: textScaler,
@@ -312,6 +316,7 @@ class _ParagraphComponentState extends State<ParagraphComponent>
             textAlign: widget.viewModel.textAlignment,
             textScaler: widget.viewModel.textScaler,
             textStyleBuilder: widget.viewModel.textStyleBuilder,
+            inlineWidgetBuilderChain: widget.viewModel.inlineWidgetBuilderChain,
             metadata: widget.viewModel.blockType != null
                 ? {
                     'blockType': widget.viewModel.blockType,
@@ -517,7 +522,7 @@ class CombineParagraphsCommand extends EditCommand {
     }
 
     // Combine the text and delete the currently selected node.
-    final isTopNodeEmpty = nodeAbove.text.text.isEmpty;
+    final isTopNodeEmpty = nodeAbove.text.isEmpty;
     nodeAbove.text = nodeAbove.text.copyAndAppend(secondNode.text);
 
     // Avoid overriding the metadata when the nodeAbove isn't a ParagraphNode.
@@ -619,8 +624,8 @@ class SplitParagraphCommand extends EditCommand {
     final startText = text.copyText(0, splitPosition.offset);
     final endText = text.copyText(splitPosition.offset);
     editorDocLog.info('Splitting paragraph:');
-    editorDocLog.info(' - start text: "${startText.text}"');
-    editorDocLog.info(' - end text: "${endText.text}"');
+    editorDocLog.info(' - start text: "${startText.toPlainText()}"');
+    editorDocLog.info(' - end text: "${endText.toPlainText()}"');
 
     if (splitPosition.offset == text.length) {
       // The paragraph was split at the very end, the user is creating a new,
@@ -701,7 +706,7 @@ class SplitParagraphCommand extends EditCommand {
       ),
     ];
 
-    if (newNode.text.text.isEmpty) {
+    if (newNode.text.isEmpty) {
       executor.logChanges([
         SubmitParagraphIntention.start(),
         ...documentChanges,
@@ -778,7 +783,7 @@ class DeleteUpstreamAtBeginningOfParagraphCommand extends EditCommand {
 
     moveSelectionToEndOfPrecedingNode(executor, document, composer);
 
-    if ((node as TextNode).text.text.isEmpty) {
+    if ((node as TextNode).text.isEmpty) {
       // The caret is at the beginning of an empty TextNode and the preceding
       // node is not a TextNode. Delete the current TextNode and move the
       // selection up to the preceding node if exist.
@@ -1040,7 +1045,7 @@ ExecutionInstruction enterToUnIndentParagraph({
     // Nothing to un-indent.
     return ExecutionInstruction.continueExecution;
   }
-  if (paragraph.text.text.isNotEmpty) {
+  if (paragraph.text.isNotEmpty) {
     // We only un-indent when the user presses Enter in an empty paragraph.
     return ExecutionInstruction.continueExecution;
   }
@@ -1327,7 +1332,7 @@ ExecutionInstruction moveParagraphSelectionUpWhenBackspaceIsPressed({
     return ExecutionInstruction.continueExecution;
   }
 
-  if (node.text.text.isEmpty) {
+  if (node.text.isEmpty) {
     return ExecutionInstruction.continueExecution;
   }
 

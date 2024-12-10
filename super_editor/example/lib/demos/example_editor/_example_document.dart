@@ -1,5 +1,6 @@
 import 'package:flutter/rendering.dart';
 import 'package:super_editor/super_editor.dart';
+import 'package:super_text_layout/super_text_layout.dart';
 
 MutableDocument createInitialDocument() {
   return MutableDocument(
