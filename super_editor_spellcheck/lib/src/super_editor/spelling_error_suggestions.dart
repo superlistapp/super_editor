@@ -1,8 +1,8 @@
 import 'dart:ui';
 
+import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
 import 'package:super_editor/super_editor.dart';
-import 'package:super_editor_spellcheck/src/super_editor/spell_checker_popover_controller.dart';
 
 /// Spelling error correction suggestions for all mis-spelled words within
 /// a [Document].
@@ -95,4 +95,40 @@ class SpellingErrorSuggestions with ChangeNotifier implements Editable {
   void reset() {
     clear();
   }
+}
+
+class SpellingErrorSuggestion {
+  const SpellingErrorSuggestion({
+    required this.word,
+    required this.nodeId,
+    required this.range,
+    required this.suggestions,
+  });
+
+  final String word;
+  final String nodeId;
+  final TextRange range;
+  final List<String> suggestions;
+
+  DocumentRange get toDocumentRange => DocumentRange(
+        start: DocumentPosition(nodeId: nodeId, nodePosition: TextNodePosition(offset: range.start)),
+        end: DocumentPosition(
+          nodeId: nodeId,
+          nodePosition: TextNodePosition(offset: range.end - 1),
+          // -1 because range is exclusive and doc positions are inclusive
+        ),
+      );
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is SpellingErrorSuggestion &&
+          runtimeType == other.runtimeType &&
+          word == other.word &&
+          nodeId == other.nodeId &&
+          range == other.range &&
+          const DeepCollectionEquality().equals(suggestions, other.suggestions);
+
+  @override
+  int get hashCode => word.hashCode ^ nodeId.hashCode ^ range.hashCode ^ suggestions.hashCode;
 }

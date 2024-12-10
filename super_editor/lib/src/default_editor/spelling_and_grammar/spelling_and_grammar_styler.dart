@@ -35,7 +35,7 @@ class SpellingAndGrammarStyler extends SingleColumnLayoutStylePhase {
     markDirty();
   }
 
-  /// Whether or not we should to override the default selection color with [selectionHighlightColor].
+  /// Whether or not we should override the default selection color with [selectionHighlightColor].
   ///
   /// On mobile platforms, when the suggestions popover is opened, the selected text uses a different
   /// highlight color.
@@ -69,13 +69,21 @@ class SpellingAndGrammarStyler extends SingleColumnLayoutStylePhase {
     markDirty();
   }
 
-  /// Temporarily use the [selectionHighlightColor] to override the default selection color.
+  /// Configure this styler to override the default selection color with [selectionHighlightColor].
+  ///
+  /// The default editor selection styler phase configures a selection color for all selections.
+  /// Call this method to use [selectionHighlightColor] instead. This is useful to highlight a
+  /// selected misspelled word with a color that is different from the default selection color.
+  ///
+  /// Call [useDefaultSelectionColor] to stop overriding the default selection color.
   void overrideSelectionColor() {
     _overrideSelectionColor = true;
     markDirty();
   }
 
-  /// Restore the default selection color.
+  /// Stop overriding the default selection color.
+  ///
+  /// After calling this method, all selections will use the default selection color.
   void useDefaultSelectionColor() {
     _overrideSelectionColor = false;
     markDirty();

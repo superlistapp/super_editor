@@ -617,7 +617,7 @@ class SuperEditorState extends State<SuperEditor> {
             showComposingUnderline: true,
           ),
         // Selection changes are very volatile. Put that phase last,
-        // just before the phases that the apps want to be at the end
+        // just before the phases that the app wants to be at the end
         // to minimize view model recalculations.
         _docLayoutSelectionStyler,
         for (final plugin in widget.plugins) //
@@ -1176,8 +1176,11 @@ abstract class SuperEditorPlugin {
   /// Additional overlay [SuperEditorLayerBuilder]s that will be added to a given [SuperEditor].
   List<SuperEditorLayerBuilder> get documentOverlayBuilders => [];
 
-  /// Optional handler that responds to taps on content, e.g., opening
+  /// Optional handlers that respond to taps on content, e.g., opening
   /// a link when the user taps on text with a link attribution.
+  ///
+  /// If a handler returns [TapHandlingInstruction.halt], no subsequent handlers
+  /// nor the default tap behavior will be executed.
   List<ContentTapDelegate> get contentTapHandlers => const [];
 
   /// Custom style phases that are added to the very end of the [SuperEditor] style phases.

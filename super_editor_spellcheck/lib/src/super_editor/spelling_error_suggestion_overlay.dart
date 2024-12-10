@@ -23,6 +23,8 @@ class SpellingErrorSuggestionOverlayBuilder implements SuperEditorLayerBuilder {
   /// the currently selected mis-spelled word.
   final SpellingErrorSuggestionToolbarBuilder toolbarBuilder;
 
+  /// A controller to which the overlay will attach itself as the delegate for
+  /// showing/hiding the spelling suggestions popover.
   final SpellCheckerPopoverController popoverController;
 
   @override
@@ -32,8 +34,8 @@ class SpellingErrorSuggestionOverlayBuilder implements SuperEditorLayerBuilder {
       editor: editContext.editor,
       suggestions: suggestions,
       selectedWordLink: selectedWordLink,
-      popoverController: popoverController,
       toolbarBuilder: toolbarBuilder,
+      popoverController: popoverController,
     );
   }
 }
@@ -45,8 +47,8 @@ class SpellingErrorSuggestionOverlay extends DocumentLayoutLayerStatefulWidget {
     required this.editor,
     required this.suggestions,
     required this.selectedWordLink,
-    this.popoverController,
     this.toolbarBuilder = defaultSpellingSuggestionToolbarBuilder,
+    this.popoverController,
     this.showDebugLeaderBounds = false,
   });
 
@@ -63,11 +65,13 @@ class SpellingErrorSuggestionOverlay extends DocumentLayoutLayerStatefulWidget {
   /// selected word isn't misspelled, then this link is left unattached.
   final LeaderLink selectedWordLink;
 
-  final SpellCheckerPopoverController? popoverController;
-
   /// Builder that creates the spelling suggestion toolbar, which appears near
   /// the currently selected mis-spelled word.
   final SpellingErrorSuggestionToolbarBuilder toolbarBuilder;
+
+  /// A controller to which this overlay will attach itself as the delegate for
+  /// showing/hiding the spelling suggestions popover.
+  final SpellCheckerPopoverController? popoverController;
 
   /// Whether to paint colorful bounds around the leader widgets, for debugging purposes.
   final bool showDebugLeaderBounds;
@@ -159,19 +163,19 @@ class _SpellingErrorSuggestionOverlayState
 
   @override
   SpellingErrorSuggestion? findSuggestionsForWordAt(DocumentRange wordRange) {
-    final spellingSuggestion = _findSpellingSuggestionAtRange(widget.suggestions, wordRange);
-    if (spellingSuggestion == null) {
+    final misspelledSpan = _findSpellingSuggestionAtRange(widget.suggestions, wordRange);
+    if (misspelledSpan == null) {
       // No selected mis-spelled word. Fizzle.
       return null;
     }
 
-    final misspelledWordRange = spellingSuggestion.toDocumentRange;
+    final misspelledWordRange = misspelledSpan.toDocumentRange;
     if (misspelledWordRange == _ignoredSpellingErrorRange) {
       // The user already cancelled the suggestions for this word.
       return null;
     }
 
-    return spellingSuggestion;
+    return misspelledSpan;
   }
 
   void _onSelectionChange() {
@@ -252,6 +256,7 @@ class _SpellingErrorSuggestionOverlayState
     });
 
     if (widget.editor.context.composer.selection == null) {
+      // There can't be any spelling suggestions because there's no selection. Fizzle.
       return null;
     }
 
@@ -371,16 +376,16 @@ class _SpellingErrorSuggestionOverlayState
           return const SizedBox();
         }
 
-        return _buildFollower(
+        return _buildToolbarPositioner(
           child: widget.toolbarBuilder(
             context,
             editorFocusNode: widget.editorFocusNode,
             editor: widget.editor,
             selectedWordRange: layoutData.selectedWordRange!,
+            selectedWordBounds: layoutData.selectedWordBounds!,
             suggestions: layoutData.suggestions,
             onCancelPressed: _onCancelPressed,
             closeToolbar: hideSuggestionsPopover,
-            selectedWordBounds: layoutData.selectedWordBounds!,
           ),
         );
       },
@@ -405,7 +410,7 @@ class _SpellingErrorSuggestionOverlayState
     );
   }
 
-  Widget _buildFollower({required Widget child}) {
+  Widget _buildToolbarPositioner({required Widget child}) {
     switch (defaultTargetPlatform) {
       case TargetPlatform.iOS:
         return Follower.withAligner(
@@ -445,15 +450,26 @@ class SpellingErrorSuggestionLayout {
   final List<String> suggestions;
 }
 
+/// Builds a toolbar widget for showing spelling error suggestions.
+///
+/// - [editorFocusNode]: The [FocusNode] attached to the editor.
+/// - [editor]: The [Editor] instance, which can be used to fix spelling errors.
+/// - [selectedWordRange]: The range of the selected word, which contains a spelling error.
+/// - [selectedWordBounds]: The the bounds of the selected word, in global coordinates.
+/// - [suggestions]: A list of possible substitutions for the misspelled word.
+/// - [onCancelPressed]: A callback to be called when the user attempts to close
+///   the toolbar without applying a substitution.
+/// - [closeToolbar]: A callback to be called to close the toolbar when the user
+///   selects a substitution to be applied.
 typedef SpellingErrorSuggestionToolbarBuilder = Widget Function(
   BuildContext context, {
   required FocusNode editorFocusNode,
   required Editor editor,
   required DocumentRange selectedWordRange,
+  required Rect selectedWordBounds,
   required List<String> suggestions,
   required VoidCallback onCancelPressed,
   required VoidCallback closeToolbar,
-  required Rect selectedWordBounds,
 });
 
 /// Creates a spelling suggestion toolbar depending on the
@@ -463,10 +479,10 @@ Widget defaultSpellingSuggestionToolbarBuilder(
   required FocusNode editorFocusNode,
   required Editor editor,
   required DocumentRange selectedWordRange,
+  required Rect selectedWordBounds,
   required List<String> suggestions,
   required VoidCallback onCancelPressed,
   required VoidCallback closeToolbar,
-  required Rect selectedWordBounds,
 }) {
   switch (defaultTargetPlatform) {
     case TargetPlatform.iOS:
@@ -484,7 +500,6 @@ Widget defaultSpellingSuggestionToolbarBuilder(
         editor: editor,
         selectedWordRange: selectedWordRange,
         suggestions: suggestions,
-        selectedWordBounds: selectedWordBounds,
         closeToolbar: closeToolbar,
       );
     default:
@@ -551,17 +566,17 @@ class DesktopSpellingSuggestionToolbar extends StatefulWidget {
 class _DesktopSpellingSuggestionToolbarState extends State<DesktopSpellingSuggestionToolbar> {
   @override
   void initState() {
-    widget.editor.document.addListener(_onDocumentChange);
     super.initState();
+    widget.editor.document.addListener(_onDocumentChange);
   }
 
   @override
   void didUpdateWidget(covariant DesktopSpellingSuggestionToolbar oldWidget) {
+    super.didUpdateWidget(oldWidget);
     if (widget.editor.document != oldWidget.editor.document) {
       oldWidget.editor.document.removeListener(_onDocumentChange);
       widget.editor.document.addListener(_onDocumentChange);
     }
-    super.didUpdateWidget(oldWidget);
   }
 
   @override
@@ -570,12 +585,12 @@ class _DesktopSpellingSuggestionToolbarState extends State<DesktopSpellingSugges
     super.dispose();
   }
 
-  void _applySpellingFix(String replacement) {
-    widget.editor.fixMisspelledWord(widget.selectedWordRange!, replacement);
+  void _onDocumentChange(DocumentChangeLog changeLog) {
     widget.closeToolbar();
   }
 
-  void _onDocumentChange(DocumentChangeLog changeLog) {
+  void _applySpellingFix(String replacement) {
+    widget.editor.fixMisspelledWord(widget.selectedWordRange!, replacement);
     widget.closeToolbar();
   }
 
@@ -671,10 +686,10 @@ class _DesktopSpellingSuggestionToolbarState extends State<DesktopSpellingSugges
 }
 
 /// A spelling suggestion toolbar, designed for the Android platform,
-/// which displays a vertical list alternative spellings for a given mis-spelled
+/// which displays a vertical list of possible substitutions for a given mis-spelled
 /// word and an option to remove the miss-pelled word.
 ///
-/// When the user taps on a suggested spelling, the mis-spelled word
+/// When the user taps on a suggested substitution, the mis-spelled word
 /// is replaced by selected word.
 class AndroidSpellingSuggestionToolbar extends StatefulWidget {
   const AndroidSpellingSuggestionToolbar({
@@ -684,7 +699,6 @@ class AndroidSpellingSuggestionToolbar extends StatefulWidget {
     required this.editor,
     required this.selectedWordRange,
     required this.suggestions,
-    required this.selectedWordBounds,
     required this.closeToolbar,
   });
 
@@ -693,7 +707,6 @@ class AndroidSpellingSuggestionToolbar extends StatefulWidget {
   final Editor editor;
   final DocumentRange selectedWordRange;
   final List<String> suggestions;
-  final Rect selectedWordBounds;
   final VoidCallback closeToolbar;
 
   @override
@@ -808,8 +821,8 @@ class IosSpellingSuggestionToolbar extends StatefulWidget {
     this.tapRegionId,
     required this.editor,
     required this.selectedWordRange,
-    required this.suggestions,
     required this.selectedWordBounds,
+    required this.suggestions,
     required this.closeToolbar,
   });
 
@@ -817,8 +830,10 @@ class IosSpellingSuggestionToolbar extends StatefulWidget {
   final Object? tapRegionId;
   final Editor editor;
   final DocumentRange selectedWordRange;
-  final List<String> suggestions;
+
+  /// The bounds of the selected word, in global coordinates.
   final Rect selectedWordBounds;
+  final List<String> suggestions;
   final VoidCallback closeToolbar;
 
   @override
@@ -868,11 +883,11 @@ class _IosSpellingSuggestionToolbarState extends State<IosSpellingSuggestionTool
           focalPoint: StationaryMenuFocalPoint(widget.selectedWordBounds.center),
           backgroundColor: _getBackgroundColor(brightness),
           activeButtonTextColor: brightness == Brightness.dark //
-              ? iOSToolbarDarkArrowActiveColor
-              : iOSToolbarLightArrowActiveColor,
+              ? _iOSToolbarDarkArrowActiveColor
+              : _iOSToolbarLightArrowActiveColor,
           inactiveButtonTextColor: brightness == Brightness.dark //
-              ? iOSToolbarDarkArrowInactiveColor
-              : iOSToolbarLightArrowInactiveColor,
+              ? _iOSToolbarDarkArrowInactiveColor
+              : _iOSToolbarLightArrowInactiveColor,
           elevation: 8.0,
           children: [
             for (final suggestion in widget.suggestions) ...[
@@ -931,11 +946,8 @@ class _IosSpellingSuggestionToolbarState extends State<IosSpellingSuggestionTool
   }
 }
 
-const iOSToolbarDarkBackgroundColor = Color(0xFF333333);
-const iOSToolbarLightBackgroundColor = Colors.white;
+const _iOSToolbarLightArrowActiveColor = Color(0xFF000000);
+const _iOSToolbarDarkArrowActiveColor = Color(0xFFFFFFFF);
 
-const iOSToolbarLightArrowActiveColor = Color(0xFF000000);
-const iOSToolbarDarkArrowActiveColor = Color(0xFFFFFFFF);
-
-const iOSToolbarLightArrowInactiveColor = Color(0xFF999999);
-const iOSToolbarDarkArrowInactiveColor = Color(0xFF757575);
+const _iOSToolbarLightArrowInactiveColor = Color(0xFF999999);
+const _iOSToolbarDarkArrowInactiveColor = Color(0xFF757575);

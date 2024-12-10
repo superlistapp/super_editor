@@ -1,7 +1,5 @@
-import 'dart:ui';
-
-import 'package:collection/collection.dart';
 import 'package:super_editor/super_editor.dart';
+import 'package:super_editor_spellcheck/src/super_editor/spelling_error_suggestions.dart';
 
 /// Shows/hides a popover with spelling suggestions.
 ///
@@ -14,7 +12,7 @@ class SpellCheckerPopoverController {
   /// show a popover with spelling suggestions.
   ///
   /// A [SpellCheckerPopoverDelegate] must call this method after
-  /// being mounted to the widget tree.
+  /// to register itself as the active delegate.
   void attach(SpellCheckerPopoverDelegate delegate) {
     _delegate = delegate;
   }
@@ -23,8 +21,8 @@ class SpellCheckerPopoverController {
   ///
   /// This controller can't show/hide the popover while detached from a delegate.
   ///
-  /// A [SpellCheckerPopoverDelegate] must call this method after
-  /// being unmounted from the widget tree.
+  /// A [SpellCheckerPopoverDelegate] must call this method to unregister itself
+  /// when it can no longer be used.
   void detach() {
     _delegate = null;
   }
@@ -54,8 +52,8 @@ class SpellCheckerPopoverController {
 /// a popover with spelling suggestions.
 ///
 /// A [SpellCheckerPopoverDelegate] must call [SpellCheckerPopoverController.attach]
-/// after being mounted to the widget tree, and [SpellCheckerPopoverController.detach]
-/// after being unmounted.
+/// to register itself as the active delegate, and [SpellCheckerPopoverController.detach]
+/// to unregister itself when it can no longer be used.
 ///
 /// The popover should be displayed only upon a [showSuggestions] call. The delegate
 /// should not display the popover on its own when selection changes.
@@ -79,40 +77,4 @@ abstract class SpellCheckerPopoverDelegate {
   ///
   /// Returns `null` if no suggestions are found.
   SpellingErrorSuggestion? findSuggestionsForWordAt(DocumentRange wordRange) => null;
-}
-
-class SpellingErrorSuggestion {
-  const SpellingErrorSuggestion({
-    required this.word,
-    required this.nodeId,
-    required this.range,
-    required this.suggestions,
-  });
-
-  final String word;
-  final String nodeId;
-  final TextRange range;
-  final List<String> suggestions;
-
-  DocumentRange get toDocumentRange => DocumentRange(
-        start: DocumentPosition(nodeId: nodeId, nodePosition: TextNodePosition(offset: range.start)),
-        end: DocumentPosition(
-          nodeId: nodeId,
-          nodePosition: TextNodePosition(offset: range.end - 1),
-          // -1 because range is exclusive and doc positions are inclusive
-        ),
-      );
-
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is SpellingErrorSuggestion &&
-          runtimeType == other.runtimeType &&
-          word == other.word &&
-          nodeId == other.nodeId &&
-          range == other.range &&
-          const DeepCollectionEquality().equals(suggestions, other.suggestions);
-
-  @override
-  int get hashCode => word.hashCode ^ nodeId.hashCode ^ range.hashCode ^ suggestions.hashCode;
 }

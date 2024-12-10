@@ -315,10 +315,9 @@ class AndroidControlsDocumentLayerState
   }
 
   void _onSelectionHandlesAllowedChange() {
-    // The controller went from allowing selection handles to disallowing them, or vis-a-versa.
-    // Rebuild this widget to show/hide the handles.
     setState(() {
-      //
+      // The controller went from allowing selection handles to disallowing them, or vis-a-versa.
+      // Rebuild this widget to show/hide the handles.
     });
   }
 
