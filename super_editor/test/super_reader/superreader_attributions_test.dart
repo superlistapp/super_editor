@@ -18,8 +18,14 @@ void main() {
             .pump();
 
         // Ensure the text is colored orange.
+        final text = SuperReaderInspector.findTextInParagraph("1");
+        final richText = SuperReaderInspector.findRichTextInParagraph("1");
         expect(
-          SuperReaderInspector.findRichTextInParagraph("1").style!.color,
+          richText.getSpanForPosition(const TextPosition(offset: 1))!.style!.color,
+          Colors.orange,
+        );
+        expect(
+          richText.getSpanForPosition(TextPosition(offset: text.length - 1))!.style!.color,
           Colors.orange,
         );
       });

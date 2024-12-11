@@ -53,7 +53,8 @@ class SingleColumnStylesheetStyler extends SingleColumnLayoutStylePhase {
     // Combine all applicable style rules into a single set of styles
     // for this component.
     final aggregateStyles = <String, dynamic>{
-      "inlineTextStyler": _stylesheet.inlineTextStyler,
+      Styles.inlineTextStyler: _stylesheet.inlineTextStyler,
+      Styles.inlineWidgetBuilders: _stylesheet.inlineWidgetBuilders,
     };
     for (final rule in _stylesheet.rules) {
       if (rule.selector.matches(document, node)) {

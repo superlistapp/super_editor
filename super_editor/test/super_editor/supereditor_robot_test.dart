@@ -178,7 +178,7 @@ void main() {
       await tester.typeKeyboardText("Hello, world!");
 
       // Verify that SuperEditor displays the text we typed.
-      expect(SuperEditorInspector.findTextInComponent("1").text, "Hello, world!");
+      expect(SuperEditorInspector.findTextInComponent("1").toPlainText(), "Hello, world!");
     });
 
     testWidgetsOnDesktop("enters text with hardware keyboard with multiple taps", (tester) async {
@@ -201,7 +201,7 @@ void main() {
       await tester.typeKeyboardText("ABC");
 
       // Ensure that the text is inserted.
-      expect(SuperEditorInspector.findTextInComponent("1").text, "Hello, world!ABC");
+      expect(SuperEditorInspector.findTextInComponent("1").toPlainText(), "Hello, world!ABC");
     });
 
     testWidgetsOnDesktop("enters text with IME keyboard", (tester) async {
@@ -221,7 +221,7 @@ void main() {
       await tester.typeImeText("Hello, world!");
 
       // Verify that SuperEditor displays the text we typed.
-      expect(SuperEditorInspector.findTextInComponent("1").text, "Hello, world!");
+      expect(SuperEditorInspector.findTextInComponent("1").toPlainText(), "Hello, world!");
     });
 
     testWidgetsOnDesktop("enters text with IME keyboard with multiple taps", (tester) async {
@@ -244,7 +244,7 @@ void main() {
       await tester.typeImeText("ABC");
 
       // Ensure that the text is inserted.
-      expect(SuperEditorInspector.findTextInComponent("1").text, "Hello, world!ABC");
+      expect(SuperEditorInspector.findTextInComponent("1").toPlainText(), "Hello, world!ABC");
     });
 
     testWidgetsOnAllPlatforms("performs back to back taps with hardware keyboard", (tester) async {
@@ -266,7 +266,7 @@ void main() {
       await tester.typeKeyboardText("new ");
 
       // Ensure that the text is inserted.
-      expect(SuperEditorInspector.findTextInComponent(nodeId).text, "Hello, new world!");
+      expect(SuperEditorInspector.findTextInComponent(nodeId).toPlainText(), "Hello, new world!");
     });
 
     testWidgetsOnAllPlatforms("performs back to back taps with software keyboard", (tester) async {
@@ -288,7 +288,7 @@ void main() {
       await tester.typeImeText("new ");
 
       // Ensure that the text is inserted.
-      expect(SuperEditorInspector.findTextInComponent(nodeId).text, "Hello, new world!");
+      expect(SuperEditorInspector.findTextInComponent(nodeId).toPlainText(), "Hello, new world!");
     });
   });
 }

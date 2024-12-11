@@ -172,7 +172,7 @@ void main() {
 
       // Ensure that the text was edited upon pressing backspace.
       expect(
-        SuperEditorInspector.findTextInComponent("Editor2_Header").text,
+        SuperEditorInspector.findTextInComponent("Editor2_Header").toPlainText(),
         "Document #",
       );
 
@@ -180,7 +180,7 @@ void main() {
 
       // Ensure that the text was inserted into the paragraph.
       expect(
-        SuperEditorInspector.findTextInComponent("Editor2_Header").text,
+        SuperEditorInspector.findTextInComponent("Editor2_Header").toPlainText(),
         "Document #Edit",
       );
     });

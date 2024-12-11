@@ -170,7 +170,7 @@ class TextNode extends DocumentNode with ChangeNotifier {
   String copyContent(dynamic selection) {
     assert(selection is TextSelection);
 
-    return (selection as TextSelection).textInside(text.text);
+    return (selection as TextSelection).textInside(text.toPlainText());
   }
 
   @override
@@ -292,7 +292,7 @@ extension DocumentSelectionWithText on Document {
       } else if (textNode == nodes.first) {
         // Handle partial node selection in first node.
         startOffset = (nodeRange.start.nodePosition as TextPosition).offset;
-        endOffset = max(textNode.text.text.length - 1, 0);
+        endOffset = max(textNode.text.length - 1, 0);
       } else if (textNode == nodes.last) {
         // Handle partial node selection in last node.
         startOffset = 0;
@@ -303,7 +303,7 @@ extension DocumentSelectionWithText on Document {
       } else {
         // Handle full node selection.
         startOffset = 0;
-        endOffset = max(textNode.text.text.length - 1, 0);
+        endOffset = max(textNode.text.length - 1, 0);
       }
 
       final selectionRange = SpanRange(startOffset, endOffset);
@@ -351,7 +351,7 @@ extension DocumentSelectionWithText on Document {
       } else if (textNode == nodes.first) {
         // Handle partial node selection in first node.
         startOffset = (nodeRange.start.nodePosition as TextPosition).offset;
-        endOffset = max(textNode.text.text.length - 1, 0);
+        endOffset = max(textNode.text.length - 1, 0);
       } else if (textNode == nodes.last) {
         // Handle partial node selection in last node.
         startOffset = 0;
@@ -362,7 +362,7 @@ extension DocumentSelectionWithText on Document {
       } else {
         // Handle full node selection.
         startOffset = 0;
-        endOffset = max(textNode.text.text.length - 1, 0);
+        endOffset = max(textNode.text.length - 1, 0);
       }
 
       final selectionRange = SpanRange(startOffset, endOffset);
@@ -497,6 +497,9 @@ mixin TextComponentViewModel on SingleColumnLayoutComponentViewModel {
   AttributionStyleBuilder get textStyleBuilder;
   set textStyleBuilder(AttributionStyleBuilder styleBuilder);
 
+  InlineWidgetBuilderChain get inlineWidgetBuilders;
+  set inlineWidgetBuilders(InlineWidgetBuilderChain inlineWidgetBuildChain);
+
   TextDirection get textDirection;
   set textDirection(TextDirection direction);
 
@@ -561,6 +564,8 @@ mixin TextComponentViewModel on SingleColumnLayoutComponentViewModel {
 
       return inlineTextStyler(attributions, baseStyle);
     };
+
+    inlineWidgetBuilders = styles[Styles.inlineWidgetBuilders] ?? [];
 
     composingRegionUnderlineStyle = styles[Styles.composingRegionUnderlineStyle] ?? composingRegionUnderlineStyle;
     showComposingRegionUnderline = styles[Styles.showComposingRegionUnderline] ?? showComposingRegionUnderline;
@@ -635,7 +640,7 @@ class _TextWithHintComponentState extends State<TextWithHintComponent>
   Widget build(BuildContext context) {
     return Stack(
       children: [
-        if (widget.text.text.isEmpty)
+        if (widget.text.isEmpty)
           IgnorePointer(
             child: Text.rich(
               widget.hintText?.computeTextSpan(_styleBuilder) ?? const TextSpan(text: ''),
@@ -670,6 +675,7 @@ class TextComponent extends StatefulWidget {
     this.textDirection,
     this.textScaler,
     required this.textStyleBuilder,
+    this.inlineWidgetBuilders = const [],
     this.metadata = const {},
     this.textSelection,
     this.selectionColor = Colors.lightBlueAccent,
@@ -690,6 +696,12 @@ class TextComponent extends StatefulWidget {
   final TextScaler? textScaler;
 
   final AttributionStyleBuilder textStyleBuilder;
+
+  /// A Chain of Responsibility that's used to build inline widgets.
+  ///
+  /// The first builder in the chain to return a non-null `Widget` will be
+  /// used for a given inline placeholder.
+  final InlineWidgetBuilderChain inlineWidgetBuilders;
 
   final Map<String, dynamic> metadata;
 
@@ -890,7 +902,8 @@ class TextComponentState extends State<TextComponent> with DocumentComponent imp
       final TextPosition endPosition = getEndPosition();
 
       // Note: we compare offset values because we don't care if the affinitys are equal
-      final isAutoWrapLine = endOfLine.offset != endPosition.offset && (widget.text.text[endOfLine.offset] != '\n');
+      final isAutoWrapLine =
+          endOfLine.offset != endPosition.offset && (widget.text.toPlainText()[endOfLine.offset] != '\n');
 
       // Note: For lines that auto-wrap, moving the cursor to `offset` causes the
       //       cursor to jump to the next line because the cursor is placed after
@@ -1018,12 +1031,12 @@ class TextComponentState extends State<TextComponent> with DocumentComponent imp
 
   @override
   String getAllText() {
-    return widget.text.text;
+    return widget.text.toPlainText();
   }
 
   @override
   String getContiguousTextAt(TextNodePosition textPosition) {
-    return getContiguousTextSelectionAt(textPosition).textInside(widget.text.text);
+    return getContiguousTextSelectionAt(textPosition).textInside(widget.text.toPlainText());
   }
 
   @override
@@ -1035,7 +1048,7 @@ class TextComponentState extends State<TextComponent> with DocumentComponent imp
 
   @override
   TextNodeSelection getContiguousTextSelectionAt(TextNodePosition textPosition) {
-    final text = widget.text.text;
+    final text = widget.text.toPlainText();
     if (text.isEmpty) {
       return const TextNodeSelection.collapsed(offset: -1);
     }
@@ -1123,7 +1136,11 @@ class TextComponentState extends State<TextComponent> with DocumentComponent imp
     return IgnorePointer(
       child: SuperText(
         key: _textKey,
-        richText: widget.text.computeTextSpan(_textStyleWithBlockType),
+        richText: widget.text.computeInlineSpan(
+          context,
+          _textStyleWithBlockType,
+          widget.inlineWidgetBuilders,
+        ),
         textAlign: widget.textAlign ?? TextAlign.left,
         textDirection: widget.textDirection ?? TextDirection.ltr,
         textScaler: widget.textScaler ?? MediaQuery.textScalerOf(context),
@@ -1172,6 +1189,141 @@ class TextComponentState extends State<TextComponent> with DocumentComponent imp
     }
 
     return widget.textStyleBuilder(attributionsWithBlockType);
+  }
+}
+
+/// The default priority list of inline widget builders, which map [AttributedText]
+/// placeholders to widgets.
+const defaultInlineWidgetBuilderChain = [
+  inlineNetworkImageBuilder,
+  inlineAssetImageBuilder,
+];
+
+/// An inline widget builder that displays an image from the network.
+Widget? inlineNetworkImageBuilder(BuildContext context, TextStyle textStyle, Object placeholder) {
+  if (placeholder is! InlineNetworkImagePlaceholder) {
+    return null;
+  }
+
+  return LineHeight(
+    style: textStyle,
+    child: Image.network(placeholder.url),
+  );
+}
+
+/// An inline widget builder that displays an image from local assets.
+Widget? inlineAssetImageBuilder(BuildContext context, TextStyle textStyle, Object placeholder) {
+  if (placeholder is! InlineAssetImagePlaceholder) {
+    return null;
+  }
+
+  return LineHeight(
+    style: textStyle,
+    child: Image.asset(placeholder.assetPath),
+  );
+}
+
+/// A widget that sets its [child]'s height to the line-height of a given text [style].
+class LineHeight extends StatefulWidget {
+  const LineHeight({
+    super.key,
+    required this.style,
+    required this.child,
+  });
+
+  final TextStyle style;
+  final Widget child;
+
+  @override
+  State<LineHeight> createState() => _LineHeightState();
+}
+
+class _LineHeightState extends State<LineHeight> {
+  late double _lineHeight;
+
+  @override
+  void initState() {
+    super.initState();
+    _calculateLineHeight();
+  }
+
+  @override
+  void didUpdateWidget(LineHeight oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    if (widget.style != oldWidget.style) {
+      _calculateLineHeight();
+    }
+  }
+
+  void _calculateLineHeight() {
+    final textPainter = TextPainter(
+      text: TextSpan(text: "a", style: widget.style),
+      textDirection: TextDirection.ltr,
+    )..layout();
+
+    _lineHeight = textPainter.height;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: _lineHeight,
+      child: widget.child,
+    );
+  }
+}
+
+/// A widget that sets its [child]'s width and height to the line-height of a
+/// given text [style].
+class LineHeightSquare extends StatefulWidget {
+  const LineHeightSquare({
+    super.key,
+    required this.style,
+    required this.child,
+  });
+
+  final TextStyle style;
+  final Widget child;
+
+  @override
+  State<LineHeightSquare> createState() => _LineHeightSquareState();
+}
+
+class _LineHeightSquareState extends State<LineHeightSquare> {
+  late double _lineHeight;
+
+  @override
+  void initState() {
+    super.initState();
+    _calculateLineHeight();
+  }
+
+  @override
+  void didUpdateWidget(LineHeightSquare oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    if (widget.style != oldWidget.style) {
+      _calculateLineHeight();
+    }
+  }
+
+  void _calculateLineHeight() {
+    final textPainter = TextPainter(
+      text: TextSpan(text: "a", style: widget.style),
+      textDirection: TextDirection.ltr,
+    )..layout();
+
+    _lineHeight = textPainter.height;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: _lineHeight,
+      height: _lineHeight,
+      child: widget.child,
+    );
   }
 }
 
@@ -1327,7 +1479,7 @@ class AddTextAttributionsCommand extends EditCommand {
         // Create a new AttributedText with updated attribution spans, so that the presentation system can
         // see that we made a change, and re-renders the text in the document.
         node.text = AttributedText(
-          node.text.text,
+          node.text.toPlainText(),
           node.text.spans.copy()
             ..addAttribution(
               newAttribution: attribution,
@@ -1335,6 +1487,7 @@ class AddTextAttributionsCommand extends EditCommand {
               end: range.end,
               autoMerge: autoMerge,
             ),
+          Map.from(node.text.placeholders),
         );
 
         executor.logChanges([
@@ -1446,8 +1599,7 @@ class RemoveTextAttributionsCommand extends EditCommand {
 
         // Create a new AttributedText with updated attribution spans, so that the presentation system can
         // see that we made a change, and re-renders the text in the document.
-        node.text = AttributedText(
-          node.text.text,
+        node.text = node.text.replaceAttributions(
           node.text.spans.copy()
             ..removeAttribution(
               attributionToRemove: attribution,
@@ -1601,10 +1753,8 @@ class ToggleTextAttributionsCommand extends EditCommand {
 
           // Create a new AttributedText with updated attribution spans, so that the presentation system can
           // see that we made a change, and re-renders the text in the document.
-          node.text = AttributedText(
-            node.text.text,
-            node.text.spans.copy(),
-          )..removeAttribution(
+          node.text = node.text.copy()
+            ..removeAttribution(
               attribution,
               range,
             );
@@ -1615,8 +1765,7 @@ class ToggleTextAttributionsCommand extends EditCommand {
 
           // Create a new AttributedText with updated attribution spans, so that the presentation system can
           // see that we made a change, and re-renders the text in the document.
-          node.text = AttributedText(
-            node.text.text,
+          node.text = node.text.replaceAttributions(
             node.text.spans.copy()
               ..addAttribution(
                 newAttribution: attribution,
@@ -1810,10 +1959,10 @@ class TextInsertionEvent extends NodeChangeEvent {
   final AttributedText text;
 
   @override
-  String describe() => "Inserted text ($nodeId) @ $offset: '${text.text}'";
+  String describe() => "Inserted text ($nodeId) @ $offset: '${text.toPlainText()}'";
 
   @override
-  String toString() => "TextInsertionEvent ('$nodeId' - $offset -> '${text.text}')";
+  String toString() => "TextInsertionEvent ('$nodeId' - $offset -> '${text.toPlainText()}')";
 
   @override
   bool operator ==(Object other) =>
@@ -1839,10 +1988,10 @@ class TextDeletedEvent extends NodeChangeEvent {
   final AttributedText deletedText;
 
   @override
-  String describe() => "Deleted text ($nodeId) @ $offset: ${deletedText.text}";
+  String describe() => "Deleted text ($nodeId) @ $offset: ${deletedText.toPlainText()}";
 
   @override
-  String toString() => "TextDeletedEvent ('$nodeId' - $offset -> '${deletedText.text}')";
+  String toString() => "TextDeletedEvent ('$nodeId' - $offset -> '${deletedText.toPlainText()}')";
 
   @override
   bool operator ==(Object other) =>
@@ -2223,7 +2372,7 @@ void _insertBlockLevelNewline({
   final newNodeId = Editor.createNodeId();
 
   if (extentNode is ListItemNode) {
-    if (extentNode.text.text.isEmpty) {
+    if (extentNode.text.isEmpty) {
       // The list item is empty. Convert it to a paragraph.
       _convertToParagraph(
         context: context,

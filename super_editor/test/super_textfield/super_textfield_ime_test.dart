@@ -19,7 +19,7 @@ void main() {
 
           await tester.ime.typeText("f", getter: imeClientGetter);
 
-          expect(SuperTextFieldInspector.findText().text, "f");
+          expect(SuperTextFieldInspector.findText().toPlainText(), "f");
           expect(SuperTextFieldInspector.findSelection(), const TextSelection.collapsed(offset: 1));
         });
 
@@ -34,7 +34,7 @@ void main() {
 
           await tester.ime.typeText("f", getter: imeClientGetter);
 
-          expect(SuperTextFieldInspector.findText().text, "-->f<--");
+          expect(SuperTextFieldInspector.findText().toPlainText(), "-->f<--");
           expect(SuperTextFieldInspector.findSelection(), const TextSelection.collapsed(offset: 4));
         });
 
@@ -49,7 +49,7 @@ void main() {
 
           await tester.ime.typeText("f", getter: imeClientGetter);
 
-          expect(SuperTextFieldInspector.findText().text, "-->f");
+          expect(SuperTextFieldInspector.findText().toPlainText(), "-->f");
           expect(SuperTextFieldInspector.findSelection(), const TextSelection.collapsed(offset: 4));
         });
 
@@ -69,7 +69,7 @@ void main() {
 
           await tester.ime.typeText("f", getter: imeClientGetter);
 
-          expect(SuperTextFieldInspector.findText().text, "-->f<--");
+          expect(SuperTextFieldInspector.findText().toPlainText(), "-->f<--");
           expect(SuperTextFieldInspector.findSelection(), const TextSelection.collapsed(offset: 4));
         });
 
@@ -137,7 +137,7 @@ void main() {
           await tester.ime.typeText('a', getter: imeClientGetter);
 
           // Ensure that after the insertion our value is also "a".
-          expect(SuperTextFieldInspector.findText().text, 'a');
+          expect(SuperTextFieldInspector.findText().toPlainText(), 'a');
 
           // Ensure we don't send the value back to the OS.
           //
@@ -241,7 +241,7 @@ void main() {
 
           await tester.pressEnterAdaptive(getter: imeClientGetter);
 
-          expect(SuperTextFieldInspector.findText().text, "this is \nsome text");
+          expect(SuperTextFieldInspector.findText().toPlainText(), "this is \nsome text");
           expect(SuperTextFieldInspector.findSelection(), const TextSelection.collapsed(offset: 9));
         });
 
@@ -256,7 +256,7 @@ void main() {
 
           await tester.pressEnterAdaptive(getter: imeClientGetter);
 
-          expect(SuperTextFieldInspector.findText().text, "\nthis is some text");
+          expect(SuperTextFieldInspector.findText().toPlainText(), "\nthis is some text");
           expect(SuperTextFieldInspector.findSelection(), const TextSelection.collapsed(offset: 1));
         });
 
@@ -271,7 +271,7 @@ void main() {
 
           await tester.pressEnterAdaptive(getter: imeClientGetter);
 
-          expect(SuperTextFieldInspector.findText().text, "this is some text\n");
+          expect(SuperTextFieldInspector.findText().toPlainText(), "this is some text\n");
           expect(SuperTextFieldInspector.findSelection(), const TextSelection.collapsed(offset: 18));
         });
 
@@ -287,7 +287,7 @@ void main() {
 
           await tester.pressNumpadEnterAdaptive(getter: imeClientGetter);
 
-          expect(SuperTextFieldInspector.findText().text, "this is \nsome text");
+          expect(SuperTextFieldInspector.findText().toPlainText(), "this is \nsome text");
           expect(SuperTextFieldInspector.findSelection(), const TextSelection.collapsed(offset: 9));
         });
 
@@ -302,7 +302,7 @@ void main() {
 
           await tester.pressNumpadEnterAdaptive(getter: imeClientGetter);
 
-          expect(SuperTextFieldInspector.findText().text, "this is \nsome text");
+          expect(SuperTextFieldInspector.findText().toPlainText(), "this is \nsome text");
           expect(SuperTextFieldInspector.findSelection(), const TextSelection.collapsed(offset: 9));
         });
 
@@ -318,7 +318,7 @@ void main() {
 
           await tester.pressNumpadEnterAdaptive(getter: imeClientGetter);
 
-          expect(SuperTextFieldInspector.findText().text, "\nthis is some text");
+          expect(SuperTextFieldInspector.findText().toPlainText(), "\nthis is some text");
           expect(SuperTextFieldInspector.findSelection(), const TextSelection.collapsed(offset: 1));
         });
 
@@ -333,7 +333,7 @@ void main() {
 
           await tester.pressNumpadEnterAdaptive(getter: imeClientGetter);
 
-          expect(SuperTextFieldInspector.findText().text, "\nthis is some text");
+          expect(SuperTextFieldInspector.findText().toPlainText(), "\nthis is some text");
           expect(SuperTextFieldInspector.findSelection(), const TextSelection.collapsed(offset: 1));
         });
 
@@ -349,7 +349,7 @@ void main() {
 
           await tester.pressNumpadEnterAdaptive(getter: imeClientGetter);
 
-          expect(SuperTextFieldInspector.findText().text, "this is some text\n");
+          expect(SuperTextFieldInspector.findText().toPlainText(), "this is some text\n");
           expect(SuperTextFieldInspector.findSelection(), const TextSelection.collapsed(offset: 18));
         });
 
@@ -364,7 +364,7 @@ void main() {
 
           await tester.pressNumpadEnterAdaptive(getter: imeClientGetter);
 
-          expect(SuperTextFieldInspector.findText().text, "this is some text\n");
+          expect(SuperTextFieldInspector.findText().toPlainText(), "this is some text\n");
           expect(SuperTextFieldInspector.findSelection(), const TextSelection.collapsed(offset: 18));
         });
       });
@@ -381,7 +381,7 @@ void main() {
 
           await tester.ime.backspace(getter: imeClientGetter);
 
-          expect(SuperTextFieldInspector.findText().text, "");
+          expect(SuperTextFieldInspector.findText().toPlainText(), "");
           expect(SuperTextFieldInspector.findSelection(), const TextSelection.collapsed(offset: 0));
         });
 
@@ -396,7 +396,7 @@ void main() {
 
           await tester.ime.backspace(getter: imeClientGetter);
 
-          expect(SuperTextFieldInspector.findText().text, "tis is some text");
+          expect(SuperTextFieldInspector.findText().toPlainText(), "tis is some text");
           expect(SuperTextFieldInspector.findSelection(), const TextSelection.collapsed(offset: 1));
         });
 
@@ -417,7 +417,8 @@ void main() {
           await tester.ime.backspace(getter: imeClientGetter);
 
           expect(SuperTextFieldInspector.findSelection(), const TextSelection.collapsed(offset: 0));
-          expect(SuperTextFieldInspector.findText().text, "is long enough to be multiline in the available space");
+          expect(SuperTextFieldInspector.findText().toPlainText(),
+              "is long enough to be multiline in the available space");
         });
       });
 
@@ -654,7 +655,7 @@ void main() {
         await tester.pump();
 
         // Ensure the correction was ignored.
-        expect(SuperTextFieldInspector.findText().text, 'run tom');
+        expect(SuperTextFieldInspector.findText().toPlainText(), 'run tom');
       });
     });
   });
@@ -831,7 +832,7 @@ void main() {
       await tester.pressBackspace();
 
       // Ensure text is deleted
-      expect(controller.text.text, 'Thi is a text');
+      expect(controller.text.toPlainText(), 'Thi is a text');
     });
 
     testWidgetsOnAndroid('handles BACKSPACE key event instead of deletion for a expanded selection (on Android)',
@@ -856,7 +857,7 @@ void main() {
       await tester.pressBackspace();
 
       // Ensure text is deleted
-      expect(controller.text.text, 'This is a');
+      expect(controller.text.toPlainText(), 'This is a');
     });
   });
 }
@@ -977,8 +978,8 @@ class _ObscuringTextController extends AttributedTextEditingController {
     );
 
     // Replace everything but the last char with *.
-    final updatedText = (''.padLeft(textAfterInsertion.text.length - 1, '*')) +
-        textAfterInsertion.text.substring(textAfterInsertion.text.length - 1);
+    final updatedText = (''.padLeft(textAfterInsertion.length - 1, '*')) +
+        textAfterInsertion.toPlainText().substring(textAfterInsertion.length - 1);
 
     final updatedSelection = _moveSelectionForInsertion(
       selection: selection,
