@@ -1,3 +1,6 @@
+## [0.1.17] - Dec, 2024
+ * Upgrade `attributed_text` dependency to `v0.4.0` (forgot to do it in `0.1.16`).
+
 ## [0.1.16] - Dec, 2024
  * [FEATURE] - Added support for inline images. Only minor changes needed in this package.
    * Selection boxes now take up the `max` vertical space - this will result in taller selection boxes.
