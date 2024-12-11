@@ -14,6 +14,9 @@ class SpellCheckerPopoverController {
   /// A [SpellCheckerPopoverDelegate] must call this method after
   /// to register itself as the active delegate.
   void attach(SpellCheckerPopoverDelegate delegate) {
+    // Detach from the previous delegate, if any.
+    detach();
+
     _delegate = delegate;
   }
 
@@ -24,6 +27,7 @@ class SpellCheckerPopoverController {
   /// A [SpellCheckerPopoverDelegate] must call this method to unregister itself
   /// when it can no longer be used.
   void detach() {
+    _delegate?.onDetached();
     _delegate = null;
   }
 
@@ -58,6 +62,16 @@ class SpellCheckerPopoverController {
 /// The popover should be displayed only upon a [showSuggestions] call. The delegate
 /// should not display the popover on its own when selection changes.
 abstract class SpellCheckerPopoverDelegate {
+  /// Called on this delegate by the [SpellCheckerPopoverController] when the controller
+  /// attaches to the delegate.
+  void onAttached(SpellCheckerPopoverController controller);
+
+  /// Called on this delegate by the [SpellCheckerPopoverController] when the controller
+  /// detaches from the delegate.
+  ///
+  /// The delegate should hide the popover when detached, if it's visible.
+  void onDetached();
+
   /// Shows the spelling suggestions popover with the suggetions
   /// provided by [SpellingErrorSuggestion.suggestions].
   ///
