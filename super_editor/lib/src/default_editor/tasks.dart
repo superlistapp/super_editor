@@ -353,6 +353,7 @@ class _TaskComponentState extends State<TaskComponent> with ProxyDocumentCompone
         Padding(
           padding: const EdgeInsets.only(left: 16, right: 4),
           child: Checkbox(
+            visualDensity: Theme.of(context).visualDensity,
             value: widget.viewModel.isComplete,
             onChanged: (newValue) {
               widget.viewModel.setComplete(newValue!);
