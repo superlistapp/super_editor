@@ -17,7 +17,7 @@ void main() {
         await tester.pumpAndSettle();
         await tester.typeKeyboardText("Hello, World!");
 
-        expect(SuperTextFieldInspector.findText().text, "Hello, World!");
+        expect(SuperTextFieldInspector.findText().toPlainText(), "Hello, World!");
       });
 
       testWidgets("symbol characters", (tester) async {
@@ -27,7 +27,7 @@ void main() {
         await tester.pumpAndSettle();
         await tester.typeKeyboardText("@");
 
-        expect(SuperTextFieldInspector.findText().text, "@");
+        expect(SuperTextFieldInspector.findText().toPlainText(), "@");
       });
 
       testWidgets("in middle of existing text", (tester) async {
@@ -41,7 +41,7 @@ void main() {
         await tester.pumpAndSettle();
         await tester.typeKeyboardText("new ");
 
-        expect(SuperTextFieldInspector.findText().text, "hello new world");
+        expect(SuperTextFieldInspector.findText().toPlainText(), "hello new world");
       });
 
       testWidgets("doesn't support Android", (tester) async {

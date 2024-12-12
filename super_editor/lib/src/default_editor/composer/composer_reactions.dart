@@ -135,7 +135,7 @@ class UpdateComposerTextStylesReaction extends EditReaction {
 
     final textPosition = composer.selection!.extent.nodePosition as TextPosition;
 
-    if (textPosition.offset == 0 && node.text.text.isEmpty) {
+    if (textPosition.offset == 0 && node.text.isEmpty) {
       return;
     }
 

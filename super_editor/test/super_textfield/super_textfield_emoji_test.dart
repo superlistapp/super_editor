@@ -453,13 +453,13 @@ void main() {
         );
 
         // Place the caret at the end of the text field.
-        await tester.placeCaretInSuperTextField(SuperTextFieldInspector.findText().text.length);
+        await tester.placeCaretInSuperTextField(SuperTextFieldInspector.findText().length);
 
         // Press backspace to delete the previous character.
         await tester.pressBackspace();
 
         // Ensure the emoji is deleted.
-        expect(SuperTextFieldInspector.findText().text, 'This is a text with an emoji ');
+        expect(SuperTextFieldInspector.findText().toPlainText(), 'This is a text with an emoji ');
       });
     });
   });

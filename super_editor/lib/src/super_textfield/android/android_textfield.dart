@@ -598,7 +598,7 @@ class SuperAndroidTextFieldState extends State<SuperAndroidTextField>
   }
 
   Widget _buildSelectableText() {
-    final textSpan = _textEditingController.text.text.isNotEmpty
+    final textSpan = _textEditingController.text.isNotEmpty
         ? _textEditingController.text.computeTextSpan(widget.textStyleBuilder)
         : TextSpan(text: "", style: widget.textStyleBuilder({}));
 
@@ -608,7 +608,7 @@ class SuperAndroidTextFieldState extends State<SuperAndroidTextField>
       textAlign: widget.textAlign,
       textScaler: MediaQuery.textScalerOf(context),
       layerBeneathBuilder: (context, textLayout) {
-        final isTextEmpty = _textEditingController.text.text.isEmpty;
+        final isTextEmpty = _textEditingController.text.isEmpty;
         final showHint = widget.hintBuilder != null &&
             ((isTextEmpty && widget.hintBehavior == HintBehavior.displayHintUntilTextEntered) ||
                 (isTextEmpty && !_focusNode.hasFocus && widget.hintBehavior == HintBehavior.displayHintUntilFocus));
@@ -708,7 +708,7 @@ void _onToolbarCutPressed(AndroidEditingOverlayController controller) {
     return;
   }
 
-  final selectedText = selection.textInside(textController.text.text);
+  final selectedText = selection.textInside(textController.text.toPlainText());
 
   textController.deleteSelectedText();
 
@@ -718,7 +718,7 @@ void _onToolbarCutPressed(AndroidEditingOverlayController controller) {
 void _onToolbarCopyPressed(AndroidEditingOverlayController controller) {
   final textController = controller.textController;
   final selection = textController.selection;
-  final selectedText = selection.textInside(textController.text.text);
+  final selectedText = selection.textInside(textController.text.toPlainText());
 
   Clipboard.setData(ClipboardData(text: selectedText));
 }

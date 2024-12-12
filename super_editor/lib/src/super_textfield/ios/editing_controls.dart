@@ -507,7 +507,7 @@ class _IOSEditingControlsState extends State<IOSEditingControls>
     required Color debugColor,
     required void Function(DragStartDetails) onPanStart,
   }) {
-    final ballRadius = defaultIosHandleBallDiameter / 2;
+    const ballRadius = defaultIosHandleBallDiameter / 2;
 
     return CompositedTransformFollower(
       key: handleKey,

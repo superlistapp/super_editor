@@ -39,7 +39,7 @@ void main() {
         // Ensure a new empty paragraph was added.
         expect(document.nodeCount, equals(3));
         expect(document.last, isA<ParagraphNode>());
-        expect((document.last as ParagraphNode).text.text, isEmpty);
+        expect((document.last as ParagraphNode).text.toPlainText(), isEmpty);
 
         // Ensure the selection was placed in the newly added paragraph.
         expect(
@@ -83,7 +83,7 @@ void main() {
         // Ensure the existing paragraph was kept.
         expect(document.nodeCount, equals(2));
         expect(document.last, isA<ParagraphNode>());
-        expect((document.last as ParagraphNode).text.text, 'First paragraph');
+        expect((document.last as ParagraphNode).text.toPlainText(), 'First paragraph');
 
         // Ensure the selection was placed at the end of the paragraph.
         expect(

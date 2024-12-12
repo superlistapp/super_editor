@@ -62,7 +62,7 @@ class _IncrementDecrementFieldState extends State<IncrementDecrementField> {
 
   void _onPerformAction(TextInputAction action) {
     if (action == TextInputAction.done) {
-      final value = int.tryParse(_controller.text.text.trim());
+      final value = int.tryParse(_controller.text.toPlainText(includePlaceholders: false).trim());
       if (value != null) {
         widget.onChange(value);
       }
@@ -72,7 +72,7 @@ class _IncrementDecrementFieldState extends State<IncrementDecrementField> {
   }
 
   void _onIncrement() {
-    final value = int.tryParse(_controller.text.text.trim());
+    final value = int.tryParse(_controller.text.toPlainText(includePlaceholders: false).trim());
     if (value == null) {
       return;
     }
@@ -81,7 +81,7 @@ class _IncrementDecrementFieldState extends State<IncrementDecrementField> {
   }
 
   void _onDecrement() {
-    final value = int.tryParse(_controller.text.text.trim());
+    final value = int.tryParse(_controller.text.toPlainText(includePlaceholders: false).trim());
     if (value == null) {
       return;
     }
