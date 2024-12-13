@@ -2,10 +2,12 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:follow_the_leader/follow_the_leader.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
+import 'package:super_editor/src/infrastructure/document_gestures_interaction_overrides.dart';
 import 'package:super_editor/src/infrastructure/flutter/flutter_scheduler.dart';
 import 'package:super_editor/src/infrastructure/flutter/text_selection.dart';
 import 'package:super_editor/src/infrastructure/multi_tap_gesture.dart';
 import 'package:super_editor/src/infrastructure/platforms/ios/selection_heuristics.dart';
+import 'package:super_editor/src/super_textfield/infrastructure/text_field_gestures_interaction_overrides.dart';
 import 'package:super_editor/src/super_textfield/super_textfield.dart';
 import 'package:super_editor/src/test/test_globals.dart';
 import 'package:super_text_layout/super_text_layout.dart';
@@ -40,6 +42,7 @@ class IOSTextFieldTouchInteractor extends StatefulWidget {
   const IOSTextFieldTouchInteractor({
     Key? key,
     required this.focusNode,
+    this.tapHandlers,
     required this.textFieldLayerLink,
     required this.textController,
     required this.editingOverlayController,
@@ -59,6 +62,9 @@ class IOSTextFieldTouchInteractor extends StatefulWidget {
   ///
   /// [IOSTextFieldInteractor] requests focus when the user taps on it.
   final FocusNode focusNode;
+
+  /// {@macro super_text_field_tap_handlers}
+  final List<SuperTextFieldTapHandler>? tapHandlers;
 
   /// [LayerLink] that follows the text field that contains this
   /// [IOSExtFieldInteractor].
@@ -184,6 +190,26 @@ class IOSTextFieldTouchInteractorState extends State<IOSTextFieldTouchInteractor
   void _onTapUp(TapUpDetails details) {
     _log.fine('User released a tap');
 
+    if (widget.tapHandlers != null) {
+      final textOffset = _globalOffsetToTextOffset(details.globalPosition);
+
+      for (final handler in widget.tapHandlers!) {
+        final result = handler.onTap(
+          TextFieldGestureDetails(
+            textLayout: _textLayout,
+            textController: widget.textController,
+            globalOffset: details.globalPosition,
+            layoutOffset: details.localPosition,
+            textOffset: textOffset,
+          ),
+        );
+
+        if (result == TapHandlingInstruction.halt) {
+          return;
+        }
+      }
+    }
+
     _selectionBeforeTap = widget.textController.selection;
 
     if (widget.focusNode.hasFocus && widget.textController.isAttachedToIme) {
@@ -268,6 +294,27 @@ class IOSTextFieldTouchInteractorState extends State<IOSTextFieldTouchInteractor
 
   void _onDoubleTapDown(TapDownDetails details) {
     _log.fine('Double tap');
+
+    if (widget.tapHandlers != null) {
+      final textOffset = _globalOffsetToTextOffset(details.globalPosition);
+
+      for (final handler in widget.tapHandlers!) {
+        final result = handler.onDoubleTap(
+          TextFieldGestureDetails(
+            textLayout: _textLayout,
+            textController: widget.textController,
+            globalOffset: details.globalPosition,
+            layoutOffset: details.localPosition,
+            textOffset: textOffset,
+          ),
+        );
+
+        if (result == TapHandlingInstruction.halt) {
+          return;
+        }
+      }
+    }
+
     widget.focusNode.requestFocus();
 
     // When the user released the first tap, the toolbar was set
@@ -290,6 +337,26 @@ class IOSTextFieldTouchInteractorState extends State<IOSTextFieldTouchInteractor
   }
 
   void _onTripleTapDown(TapDownDetails details) {
+    if (widget.tapHandlers != null) {
+      final textOffset = _globalOffsetToTextOffset(details.globalPosition);
+
+      for (final handler in widget.tapHandlers!) {
+        final result = handler.onTripleTap(
+          TextFieldGestureDetails(
+            textLayout: _textLayout,
+            textController: widget.textController,
+            globalOffset: details.globalPosition,
+            layoutOffset: details.localPosition,
+            textOffset: textOffset,
+          ),
+        );
+
+        if (result == TapHandlingInstruction.halt) {
+          return;
+        }
+      }
+    }
+
     final textLayout = _textLayout;
     final tapTextPosition = textLayout.getPositionAtOffset(details.localPosition)!;
 

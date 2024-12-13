@@ -310,6 +310,19 @@ extension SuperTextFieldRobot on WidgetTester {
   /// {@macro supertextfield_finder}
   Future<void> doubleTapAtSuperTextField(int offset,
       [Finder? superTextFieldFinder, TextAffinity affinity = TextAffinity.downstream]) async {
+    await _tapAtSuperTextField(offset, 2, superTextFieldFinder, affinity);
+  }
+
+  /// Triple taps in a [SuperTextField] at the given [offset]
+  ///
+  /// {@macro supertextfield_finder}
+  Future<void> tripleTapAtSuperTextField(int offset,
+      [Finder? superTextFieldFinder, TextAffinity affinity = TextAffinity.downstream]) async {
+    await _tapAtSuperTextField(offset, 3, superTextFieldFinder, affinity);
+  }
+
+  Future<void> _tapAtSuperTextField(int offset, int tapCount,
+      [Finder? superTextFieldFinder, TextAffinity affinity = TextAffinity.downstream]) async {
     // TODO: De-duplicate this behavior with placeCaretInSuperTextField
     final fieldFinder =
         SuperTextFieldInspector.findInnerPlatformTextField(superTextFieldFinder ?? find.byType(SuperTextField));
@@ -320,16 +333,12 @@ extension SuperTextFieldRobot on WidgetTester {
 
     if (match is SuperDesktopTextField) {
       final superDesktopTextField = state<SuperDesktopTextFieldState>(fieldFinder);
-
-      bool didTap = await _tapAtTextPositionOnDesktop(superDesktopTextField, offset, affinity, scrollOffset);
-      if (!didTap) {
-        throw Exception("The desired text offset wasn't tappable in SuperTextField: $offset");
-      }
-      await pump(kDoubleTapMinTime);
-
-      didTap = await _tapAtTextPositionOnDesktop(superDesktopTextField, offset, affinity, scrollOffset);
-      if (!didTap) {
-        throw Exception("The desired text offset wasn't tappable in SuperTextField: $offset");
+      for (int i = 1; i <= tapCount; i++) {
+        bool didTap = await _tapAtTextPositionOnDesktop(superDesktopTextField, offset, affinity, scrollOffset);
+        if (!didTap) {
+          throw Exception("The desired text offset wasn't tappable in SuperTextField: $offset");
+        }
+        await pump(kDoubleTapMinTime);
       }
 
       await pumpAndSettle();
@@ -338,17 +347,13 @@ extension SuperTextFieldRobot on WidgetTester {
     }
 
     if (match is SuperAndroidTextField) {
-      bool didTap = await _tapAtTextPositionOnAndroid(
-          state<SuperAndroidTextFieldState>(fieldFinder), offset, affinity, scrollOffset);
-      if (!didTap) {
-        throw Exception("The desired text offset wasn't tappable in SuperTextField: $offset");
-      }
-      await pump(kDoubleTapMinTime);
-
-      didTap = await _tapAtTextPositionOnAndroid(
-          state<SuperAndroidTextFieldState>(fieldFinder), offset, affinity, scrollOffset);
-      if (!didTap) {
-        throw Exception("The desired text offset wasn't tappable in SuperTextField: $offset");
+      for (int i = 1; i <= tapCount; i++) {
+        bool didTap = await _tapAtTextPositionOnAndroid(
+            state<SuperAndroidTextFieldState>(fieldFinder), offset, affinity, scrollOffset);
+        if (!didTap) {
+          throw Exception("The desired text offset wasn't tappable in SuperTextField: $offset");
+        }
+        await pump(kDoubleTapMinTime);
       }
 
       await pumpAndSettle();
@@ -357,17 +362,13 @@ extension SuperTextFieldRobot on WidgetTester {
     }
 
     if (match is SuperIOSTextField) {
-      bool didTap =
-          await _tapAtTextPositionOnIOS(state<SuperIOSTextFieldState>(fieldFinder), offset, affinity, scrollOffset);
-      if (!didTap) {
-        throw Exception("The desired text offset wasn't tappable in SuperTextField: $offset");
-      }
-      await pump(kDoubleTapMinTime);
-
-      didTap =
-          await _tapAtTextPositionOnIOS(state<SuperIOSTextFieldState>(fieldFinder), offset, affinity, scrollOffset);
-      if (!didTap) {
-        throw Exception("The desired text offset wasn't tappable in SuperTextField: $offset");
+      for (int i = 1; i <= tapCount; i++) {
+        bool didTap =
+            await _tapAtTextPositionOnIOS(state<SuperIOSTextFieldState>(fieldFinder), offset, affinity, scrollOffset);
+        if (!didTap) {
+          throw Exception("The desired text offset wasn't tappable in SuperTextField: $offset");
+        }
+        await pump(kDoubleTapMinTime);
       }
 
       await pumpAndSettle();
