@@ -13,6 +13,7 @@ import 'package:super_editor/src/infrastructure/platforms/mobile_documents.dart'
 import 'package:super_editor/src/infrastructure/signal_notifier.dart';
 import 'package:super_editor/src/super_textfield/infrastructure/fill_width_if_constrained.dart';
 import 'package:super_editor/src/super_textfield/infrastructure/hint_text.dart';
+import 'package:super_editor/src/super_textfield/infrastructure/text_field_gestures_interaction_overrides.dart';
 import 'package:super_editor/src/super_textfield/infrastructure/text_scrollview.dart';
 import 'package:super_editor/src/super_textfield/input_method_engine/_ime_text_editing_controller.dart';
 import 'package:super_editor/src/super_textfield/ios/editing_controls.dart';
@@ -37,6 +38,7 @@ class SuperIOSTextField extends StatefulWidget {
     Key? key,
     this.focusNode,
     this.tapRegionGroupId,
+    this.tapHandlers,
     this.textController,
     this.textStyleBuilder = defaultTextFieldStyleBuilder,
     this.textAlign = TextAlign.left,
@@ -62,6 +64,9 @@ class SuperIOSTextField extends StatefulWidget {
 
   /// {@macro super_text_field_tap_region_group_id}
   final String? tapRegionGroupId;
+
+  /// {@macro super_text_field_tap_handlers}
+  final List<SuperTextFieldTapHandler>? tapHandlers;
 
   /// Controller that owns the text content and text selection for
   /// this text field.
@@ -555,6 +560,7 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField>
           link: _textFieldLayerLink,
           child: IOSTextFieldTouchInteractor(
             focusNode: _focusNode,
+            tapHandlers: widget.tapHandlers,
             selectableTextKey: _textContentKey,
             getGlobalCaretRect: _getGlobalCaretRect,
             textFieldLayerLink: _textFieldLayerLink,
