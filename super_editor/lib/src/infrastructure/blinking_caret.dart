@@ -128,7 +128,7 @@ class _CaretPainter extends CustomPainter {
       return;
     }
 
-    caretPaint.color = caretColor.withOpacity(blinkController.opacity);
+    caretPaint.color = caretColor.withValues(alpha: blinkController.opacity);
 
     final height = caretHeight?.roundToDouble() ?? size.height;
 

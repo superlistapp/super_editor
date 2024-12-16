@@ -536,7 +536,7 @@ class IOSTextFieldTouchInteractorState extends State<IOSTextFieldTouchInteractor
           rect: selectionRect,
           child: Leader(
             link: widget.editingOverlayController.toolbarFocalPoint,
-            child: widget.showDebugPaint ? ColoredBox(color: Colors.green.withOpacity(0.2)) : const SizedBox(),
+            child: widget.showDebugPaint ? ColoredBox(color: Colors.green.withValues(alpha: 0.2)) : const SizedBox(),
           ),
         );
       },
@@ -593,7 +593,7 @@ class IOSTextFieldTouchInteractorState extends State<IOSTextFieldTouchInteractor
                 child: Container(
                   width: 20,
                   height: 20,
-                  color: Colors.purpleAccent.withOpacity(0.5),
+                  color: Colors.purpleAccent.withValues(alpha: 0.5),
                 ),
               )
             : const SizedBox(width: 1, height: 1),

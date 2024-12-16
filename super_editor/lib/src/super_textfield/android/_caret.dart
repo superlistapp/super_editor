@@ -138,7 +138,7 @@ class AndroidCursorPainter extends CustomPainter {
   void _drawCaret({
     required Canvas canvas,
   }) {
-    caretPaint.color = caretColor.withOpacity(blinkController.opacity);
+    caretPaint.color = caretColor.withValues(alpha: blinkController.opacity);
 
     double caretHeight = textLayout.getHeightForCaret(selection.extent) ?? emptyTextCaretHeight;
     final caretOffset = textLayout.getOffsetAtPosition(selection.extent);

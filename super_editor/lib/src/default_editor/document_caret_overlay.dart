@@ -217,7 +217,7 @@ class CaretDocumentOverlayState extends DocumentLayoutLayerState<CaretDocumentOv
                       key: DocumentKeys.caret,
                       width: widget.caretStyle.width,
                       decoration: BoxDecoration(
-                        color: widget.caretStyle.color.withOpacity(_blinkController.opacity),
+                        color: widget.caretStyle.color.withValues(alpha: _blinkController.opacity),
                         borderRadius: widget.caretStyle.borderRadius,
                       ),
                     );

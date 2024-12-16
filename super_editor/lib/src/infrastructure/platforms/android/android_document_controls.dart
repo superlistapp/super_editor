@@ -414,7 +414,7 @@ class AndroidControlsDocumentLayerState
           builder: (context, child) {
             return ColoredBox(
               key: DocumentKeys.caret,
-              color: caretColor.withOpacity(_caretBlinkController.opacity),
+              color: caretColor.withValues(alpha: _caretBlinkController.opacity),
             );
           },
         ),

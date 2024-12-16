@@ -108,7 +108,7 @@ class _IconSelectorState extends State<IconSelector> {
         color: item == widget.selectedIcon
             ? toolbarButtonSelectedColor
             : isActive
-                ? Colors.grey.withOpacity(0.2)
+                ? Colors.grey.withValues(alpha: 0.2)
                 : Colors.transparent,
       ),
       child: InkWell(

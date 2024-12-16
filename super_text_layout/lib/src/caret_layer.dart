@@ -179,7 +179,7 @@ class CaretPainter extends CustomPainter {
         //       update painter to support generic geometry
         _caretStyle.borderRadius.resolve(TextDirection.ltr).topLeft,
       ),
-      Paint()..color = _caretStyle.color.withOpacity(blinkController?.opacity ?? 1.0),
+      Paint()..color = _caretStyle.color.withValues(alpha: blinkController?.opacity ?? 1.0),
     );
   }
 

@@ -448,7 +448,7 @@ class _TextScrollViewState extends State<TextScrollView>
           child: IgnorePointer(
             child: Container(
               height: _mulitlineFieldAutoScrollGap,
-              color: Colors.purpleAccent.withOpacity(0.5),
+              color: Colors.purpleAccent.withValues(alpha: 0.5),
             ),
           ),
         ),
@@ -459,7 +459,7 @@ class _TextScrollViewState extends State<TextScrollView>
           child: IgnorePointer(
             child: Container(
               height: _mulitlineFieldAutoScrollGap,
-              color: Colors.purpleAccent.withOpacity(0.5),
+              color: Colors.purpleAccent.withValues(alpha: 0.5),
             ),
           ),
         ),
@@ -472,7 +472,7 @@ class _TextScrollViewState extends State<TextScrollView>
           bottom: 0,
           child: Container(
             width: _singleLineFieldAutoScrollGap,
-            color: Colors.purpleAccent.withOpacity(0.5),
+            color: Colors.purpleAccent.withValues(alpha: 0.5),
           ),
         ),
         Positioned(
@@ -481,7 +481,7 @@ class _TextScrollViewState extends State<TextScrollView>
           bottom: 0,
           child: Container(
             width: _singleLineFieldAutoScrollGap,
-            color: Colors.purpleAccent.withOpacity(0.5),
+            color: Colors.purpleAccent.withValues(alpha: 0.5),
           ),
         ),
       ];

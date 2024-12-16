@@ -183,7 +183,7 @@ class _EditorHistoryPanelState extends State<_EditorHistoryPanel> {
                       "${history.commands.map((command) => command.describe()).join("\n\n")}\n-------------\n${history.changes.map((event) => event.describe()).join("\n\n")}",
                     ),
                     subtitleTextStyle: TextStyle(
-                      color: Colors.white.withOpacity(0.5),
+                      color: Colors.white.withValues(alpha: 0.5),
                       fontSize: 10,
                       height: 1.4,
                     ),

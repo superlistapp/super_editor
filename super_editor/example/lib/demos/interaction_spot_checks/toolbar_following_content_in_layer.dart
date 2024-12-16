@@ -60,7 +60,7 @@ class _ToolbarFollowingContentInLayerState extends State<ToolbarFollowingContent
                             height: 12,
                             width: _baseContentWidth + (2 * expansionExtent) + 2, // +2 for border
                             decoration: BoxDecoration(
-                              border: Border.all(color: Colors.white.withOpacity(0.1)),
+                              border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
                             ),
                             child: Align(
                               alignment: Alignment.centerLeft,
@@ -68,7 +68,7 @@ class _ToolbarFollowingContentInLayerState extends State<ToolbarFollowingContent
                                 key: _leaderBoundsKey,
                                 width: _baseContentWidth + expansionExtent,
                                 height: 10,
-                                color: Colors.white.withOpacity(0.2),
+                                color: Colors.white.withValues(alpha: 0.2),
                               ),
                             ),
                           );

@@ -73,14 +73,14 @@ class InTheLabScaffold extends StatelessWidget {
       width: 250,
       height: double.infinity,
       decoration: BoxDecoration(
-        border: Border(left: BorderSide(color: Colors.white.withOpacity(0.1))),
+        border: Border(left: BorderSide(color: Colors.white.withValues(alpha: 0.1))),
       ),
       child: Stack(
         children: [
           Center(
             child: Icon(
               Icons.biotech,
-              color: Colors.white.withOpacity(0.05),
+              color: Colors.white.withValues(alpha: 0.05),
               size: 84,
             ),
           ),
@@ -125,14 +125,14 @@ class InTheLabScaffold extends StatelessWidget {
       width: double.infinity,
       height: 200,
       decoration: BoxDecoration(
-        border: Border(top: BorderSide(color: Colors.white.withOpacity(0.1))),
+        border: Border(top: BorderSide(color: Colors.white.withValues(alpha: 0.1))),
       ),
       child: Stack(
         children: [
           Center(
             child: Icon(
               Icons.biotech,
-              color: Colors.white.withOpacity(0.05),
+              color: Colors.white.withValues(alpha: 0.05),
               size: 84,
             ),
           ),

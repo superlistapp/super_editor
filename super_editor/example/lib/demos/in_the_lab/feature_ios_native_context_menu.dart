@@ -80,7 +80,7 @@ class _NativeIosContextMenuFeatureDemoState extends State<NativeIosContextMenuFe
           editor: _editor,
           documentLayoutKey: _documentLayoutKey,
           selectionStyle: SelectionStyles(
-            selectionColor: Colors.red.withOpacity(0.3),
+            selectionColor: Colors.red.withValues(alpha: 0.3),
           ),
           stylesheet: defaultStylesheet.copyWith(
             addRulesAfter: [

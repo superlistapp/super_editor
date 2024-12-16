@@ -123,7 +123,7 @@ class _IosFloatingToolbarOverlayState extends State<IosFloatingToolbarOverlay> w
       child: Container(
         width: double.infinity,
         height: double.infinity,
-        color: Colors.yellow.withOpacity(0.2),
+        color: Colors.yellow.withValues(alpha: 0.2),
       ),
     );
   }

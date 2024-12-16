@@ -77,7 +77,7 @@ class _DeltasDisplayState extends State<DeltasDisplay> implements EditListener {
       child: Column(
         children: [
           _buildToolbar(),
-          Divider(height: 1, color: Colors.white.withOpacity(0.1)),
+          Divider(height: 1, color: Colors.white.withValues(alpha: 0.1)),
           Expanded(
             child: _buildDeltaList(),
           ),
@@ -133,7 +133,7 @@ class _DeltasDisplayState extends State<DeltasDisplay> implements EditListener {
         return Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           decoration: BoxDecoration(
-            border: Border(bottom: BorderSide(color: Colors.white.withOpacity(0.1))),
+            border: Border(bottom: BorderSide(color: Colors.white.withValues(alpha: 0.1))),
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -150,7 +150,7 @@ class _DeltasDisplayState extends State<DeltasDisplay> implements EditListener {
                 Text(
                   op.attributes?.entries.map((entry) => "${entry.key}: ${entry.value}").join(", ") ?? "",
                   style: TextStyle(
-                    color: Colors.white.withOpacity(0.5),
+                    color: Colors.white.withValues(alpha: 0.5),
                     fontFamily: "Monospace",
                     fontSize: 10,
                     fontWeight: FontWeight.bold,

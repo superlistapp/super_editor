@@ -1812,7 +1812,7 @@ class _EditorFloatingCursorState extends State<EditorFloatingCursor> {
           rect: floatingCursorRect,
           child: IgnorePointer(
             child: ColoredBox(
-              color: Colors.red.withOpacity(0.75),
+              color: Colors.red.withValues(alpha: 0.75),
             ),
           ),
         );

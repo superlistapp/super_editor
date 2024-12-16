@@ -122,7 +122,7 @@ class _SliverExampleEditorState extends State<SliverExampleEditor> {
       right: 0,
       width: 200,
       child: ColoredBox(
-        color: Colors.black.withOpacity(0.2),
+        color: Colors.black.withValues(alpha: 0.2),
         child: Center(
           child: ScrollingMinimap.fromRepository(
             key: _minimapKey,

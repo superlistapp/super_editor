@@ -218,7 +218,7 @@ class IOSRoundedRectangleMagnifyingGlass extends StatelessWidget {
                       width: borderWidth,
                     ),
                   ),
-                  color: borderColor.withOpacity(tintOpacity),
+                  color: borderColor.withValues(alpha: tintOpacity),
                   shadows: const [
                     OuterBoxShadow(
                       color: Color(0x33000000),

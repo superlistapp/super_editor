@@ -865,7 +865,7 @@ class _DocsEditorToolbarState extends State<DocsEditorToolbar> {
               itemBuilder: (context, item, isActive, onTap) => SizedBox(
                 height: 40,
                 child: ColoredBox(
-                  color: isActive ? Colors.grey.withOpacity(0.2) : Colors.transparent,
+                  color: isActive ? Colors.grey.withValues(alpha: 0.2) : Colors.transparent,
                   child: Padding(
                     padding: const EdgeInsets.all(8.0),
                     child: Row(
@@ -936,7 +936,7 @@ class _DocsEditorToolbarState extends State<DocsEditorToolbar> {
         onSelected: _onChangeBlockTypeRequested,
         itemBuilder: (context, item, isActive, onTap) => DecoratedBox(
           decoration: BoxDecoration(
-            color: isActive ? Colors.grey.withOpacity(0.2) : Colors.transparent,
+            color: isActive ? Colors.grey.withValues(alpha: 0.2) : Colors.transparent,
           ),
           child: InkWell(
             onTap: onTap,
@@ -995,7 +995,7 @@ class _DocsEditorToolbarState extends State<DocsEditorToolbar> {
         ),
         itemBuilder: (context, item, isActive, onTap) => DecoratedBox(
           decoration: BoxDecoration(
-            color: isActive ? Colors.grey.withOpacity(0.2) : Colors.transparent,
+            color: isActive ? Colors.grey.withValues(alpha: 0.2) : Colors.transparent,
           ),
           child: InkWell(
             onTap: onTap,

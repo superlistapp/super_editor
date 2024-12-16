@@ -131,7 +131,7 @@ class _MobileChatDemoState extends State<MobileChatDemo> {
                           border: Border.all(color: Colors.grey.shade200),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withOpacity(0.2),
+                              color: Colors.black.withValues(alpha: 0.2),
                               blurRadius: 16,
                               offset: Offset(0, 8),
                             ),
@@ -197,7 +197,7 @@ class _MobileChatDemoState extends State<MobileChatDemo> {
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.075),
+                    color: Colors.black.withValues(alpha: 0.075),
                     blurRadius: 8,
                     spreadRadius: 4,
                   ),
