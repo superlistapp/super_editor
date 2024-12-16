@@ -1071,81 +1071,274 @@ void main() {
       });
     });
 
-    testWidgetsOnAllPlatforms('inserts https scheme if it is missing', (tester) async {
-      await tester //
-          .createDocument()
-          .withSingleEmptyParagraph()
-          .withInputSource(TextInputSource.ime)
-          .pump();
+    group('URL protocol >', () {
+      testWidgetsOnAllPlatforms('inserts https scheme if it is missing', (tester) async {
+        await tester //
+            .createDocument()
+            .withSingleEmptyParagraph()
+            .withInputSource(TextInputSource.ime)
+            .pump();
 
-      // Place the caret at the beginning of the empty document.
-      await tester.placeCaretInParagraph("1", 0);
+        // Place the caret at the beginning of the empty document.
+        await tester.placeCaretInParagraph("1", 0);
 
-      // Type a URL. It shouldn't linkify until we add a space.
-      await tester.typeImeText("www.google.com");
+        // Type a URL. It shouldn't linkify until we add a space.
+        await tester.typeImeText("www.google.com");
 
-      // Type a space, to cause a linkify reaction.
-      await tester.typeImeText(" ");
+        // Type a space, to cause a linkify reaction.
+        await tester.typeImeText(" ");
 
-      // Ensure it's linkified with a URL schema.
-      var text = SuperEditorInspector.findTextInComponent("1");
-      text = SuperEditorInspector.findTextInComponent("1");
+        // Ensure it's linkified with a URL schema.
+        var text = SuperEditorInspector.findTextInComponent("1");
+        text = SuperEditorInspector.findTextInComponent("1");
 
-      expect(text.toPlainText(), "www.google.com ");
-      expect(
-        text.getAttributionSpansByFilter((a) => a is LinkAttribution),
-        {
-          AttributionSpan(
-            attribution: LinkAttribution.fromUri(Uri.parse("https://www.google.com")),
-            start: 0,
-            end: 13,
+        expect(text.toPlainText(), "www.google.com ");
+        expect(
+          text.getAttributionSpansByFilter((a) => a is LinkAttribution),
+          {
+            AttributionSpan(
+              attribution: LinkAttribution.fromUri(Uri.parse("https://www.google.com")),
+              start: 0,
+              end: 13,
+            ),
+          },
+        );
+      });
+
+      testWidgetsOnAllPlatforms('inserts email scheme if it is missing', (tester) async {
+        await tester //
+            .createDocument()
+            .withSingleEmptyParagraph()
+            .withInputSource(TextInputSource.ime)
+            .pump();
+
+        // Place the caret at the beginning of the empty document.
+        await tester.placeCaretInParagraph("1", 0);
+
+        // Type a URL. It shouldn't linkify until we add a space.
+        await tester.typeImeText("me@gmail.com");
+
+        // Type a space, to cause a linkify reaction.
+        await tester.typeImeText(" ");
+
+        // Ensure it's linkified with a URL schema.
+        var text = SuperEditorInspector.findTextInComponent("1");
+        text = SuperEditorInspector.findTextInComponent("1");
+
+        expect(text.toPlainText(), "me@gmail.com ");
+        expect(
+          text.getAttributionSpansByFilter((a) => a is LinkAttribution),
+          {
+            AttributionSpan(
+              attribution: LinkAttribution.fromUri(Uri.parse("me@gmail.com")),
+              start: 0,
+              end: 11,
+            ),
+          },
+        );
+      });
+
+      testWidgetsOnAllPlatforms('recognizes a URL without https and www and converts it to a link', (tester) async {
+        await tester //
+            .createDocument()
+            .withSingleEmptyParagraph()
+            .withInputSource(TextInputSource.ime)
+            .pump();
+
+        // Place the caret at the beginning of the empty document.
+        await tester.placeCaretInParagraph("1", 0);
+
+        // Type a URL without the www. It shouldn't linkify until we add a space.
+        await tester.typeImeText("google.com");
+
+        // Ensure it's not linkified yet.
+        var text = SuperEditorInspector.findTextInComponent("1");
+
+        expect(text.toPlainText(), "google.com");
+        expect(
+          text.getAttributionSpansInRange(
+            attributionFilter: (attribution) => true,
+            range: SpanRange(0, text.length - 1),
           ),
-        },
-      );
+          isEmpty,
+        );
+
+        // Type a space, to cause a linkify reaction.
+        await tester.typeImeText(" ");
+
+        // Ensure it's linkified.
+        text = SuperEditorInspector.findTextInComponent("1");
+
+        expect(text.toPlainText(), "google.com ");
+        expect(
+          text.getAttributionSpansByFilter((a) => a is LinkAttribution),
+          {
+            AttributionSpan(
+              attribution: LinkAttribution.fromUri(Uri.parse("https://google.com")),
+              start: 0,
+              end: 9,
+            ),
+          },
+        );
+      });
+
+      testWidgetsOnDesktop('recognizes a pasted URL with www and converts it to a link', (tester) async {
+        await tester //
+            .createDocument()
+            .withSingleEmptyParagraph()
+            .withInputSource(TextInputSource.ime)
+            .pump();
+
+        // Place the caret at the beginning of the empty document.
+        await tester.placeCaretInParagraph("1", 0);
+
+        // Paste text with a URL.
+        tester.simulateClipboard();
+        await tester.setSimulatedClipboardContent("Hello https://www.google.com world");
+        // TODO: create and use something like tester.pressPasteAdaptive()
+        if (debugDefaultTargetPlatformOverride == TargetPlatform.macOS) {
+          await tester.pressCmdV();
+        } else {
+          await tester.pressCtlV();
+        }
+
+        // Ensure the URL is linkified.
+        final text = SuperEditorInspector.findTextInComponent("1");
+        expect(text.toPlainText(), "Hello https://www.google.com world");
+        expect(
+          text.getAttributionSpansByFilter((a) => a is LinkAttribution),
+          {
+            AttributionSpan(
+              attribution: LinkAttribution.fromUri(Uri.parse("https://www.google.com")),
+              start: 6,
+              end: 27,
+            ),
+          },
+        );
+      });
+
+      testWidgetsOnDesktop('recognizes a pasted URL and inserts https scheme if it is missing', (tester) async {
+        await tester //
+            .createDocument()
+            .withSingleEmptyParagraph()
+            .withInputSource(TextInputSource.ime)
+            .pump();
+
+        // Place the caret at the beginning of the empty document.
+        await tester.placeCaretInParagraph("1", 0);
+
+        // Paste text with a URL.
+        tester.simulateClipboard();
+        await tester.setSimulatedClipboardContent("Hello www.google.com world");
+        // TODO: create and use something like tester.pressPasteAdaptive()
+        if (debugDefaultTargetPlatformOverride == TargetPlatform.macOS) {
+          await tester.pressCmdV();
+        } else {
+          await tester.pressCtlV();
+        }
+
+        // Ensure it's linkified with a URL schema.
+        var text = SuperEditorInspector.findTextInComponent("1");
+        text = SuperEditorInspector.findTextInComponent("1");
+
+        expect(text.toPlainText(), "Hello www.google.com world");
+        expect(
+          text.getAttributionSpansByFilter((a) => a is LinkAttribution),
+          {
+            AttributionSpan(
+              attribution: LinkAttribution.fromUri(Uri.parse("https://www.google.com")),
+              start: 6,
+              end: 19,
+            ),
+          },
+        );
+      });
+
+      testWidgetsOnDesktop('recognizes a pasted URL without https or www and converts it to a link', (tester) async {
+        await tester //
+            .createDocument()
+            .withSingleEmptyParagraph()
+            .withInputSource(TextInputSource.ime)
+            .pump();
+
+        // Place the caret at the beginning of the empty document.
+        await tester.placeCaretInParagraph("1", 0);
+
+        // Paste text with a URL.
+        tester.simulateClipboard();
+        await tester.setSimulatedClipboardContent("Hello google.com world");
+        // TODO: create and use something like tester.pressPasteAdaptive()
+        if (debugDefaultTargetPlatformOverride == TargetPlatform.macOS) {
+          await tester.pressCmdV();
+        } else {
+          await tester.pressCtlV();
+        }
+
+        // Ensure the URL is linkified.
+        final text = SuperEditorInspector.findTextInComponent("1");
+        expect(text.toPlainText(), "Hello google.com world");
+        expect(
+          text.getAttributionSpansByFilter((a) => a is LinkAttribution),
+          {
+            AttributionSpan(
+              attribution: LinkAttribution.fromUri(Uri.parse("https://google.com")),
+              start: 6,
+              end: 15,
+            ),
+          },
+        );
+      });
     });
 
-    testWidgetsOnAllPlatforms('recognizes a URL without https and www and converts it to a link', (tester) async {
-      await tester //
-          .createDocument()
-          .withSingleEmptyParagraph()
-          .withInputSource(TextInputSource.ime)
-          .pump();
+    group('recognizes a URL for an app and converts it to a link', () {
+      // This group of tests are just spot checks for recognizing an app-based
+      // URL. The tests for a generic URL already cover the many moments when
+      // recognition might take place.
 
-      // Place the caret at the beginning of the empty document.
-      await tester.placeCaretInParagraph("1", 0);
+      testWidgetsOnAllPlatforms('when typing', (tester) async {
+        await tester //
+            .createDocument()
+            .withSingleEmptyParagraph()
+            .withInputSource(TextInputSource.ime)
+            .pump();
 
-      // Type a URL without the www. It shouldn't linkify until we add a space.
-      await tester.typeImeText("google.com");
+        // Place the caret at the beginning of the empty document.
+        await tester.placeCaretInParagraph("1", 0);
 
-      // Ensure it's not linkified yet.
-      var text = SuperEditorInspector.findTextInComponent("1");
+        // Type a URL. It shouldn't linkify until we add a space.
+        await tester.typeImeText("obsidian://open?vault=98_Obsidian_NEW_2023&file=30-");
 
-      expect(text.toPlainText(), "google.com");
-      expect(
-        text.getAttributionSpansInRange(
-          attributionFilter: (attribution) => true,
-          range: SpanRange(0, text.length - 1),
-        ),
-        isEmpty,
-      );
+        // Ensure it's not linkified yet.
+        var text = SuperEditorInspector.findTextInComponent("1");
 
-      // Type a space, to cause a linkify reaction.
-      await tester.typeImeText(" ");
-
-      // Ensure it's linkified.
-      text = SuperEditorInspector.findTextInComponent("1");
-
-      expect(text.toPlainText(), "google.com ");
-      expect(
-        text.getAttributionSpansByFilter((a) => a is LinkAttribution),
-        {
-          AttributionSpan(
-            attribution: LinkAttribution.fromUri(Uri.parse("https://google.com")),
-            start: 0,
-            end: 9,
+        expect(text.toPlainText(), "obsidian://open?vault=98_Obsidian_NEW_2023&file=30-");
+        expect(
+          text.getAttributionSpansInRange(
+            attributionFilter: (attribution) => true,
+            range: SpanRange(0, text.length - 1),
           ),
-        },
-      );
+          isEmpty,
+        );
+
+        // Type a space, to cause a linkify reaction.
+        await tester.typeImeText(" ");
+
+        // Ensure it's linkified.
+        text = SuperEditorInspector.findTextInComponent("1");
+
+        expect(text.toPlainText(), "obsidian://open?vault=98_Obsidian_NEW_2023&file=30- ");
+        expect(
+          text.hasAttributionsThroughout(
+            attributions: {
+              LinkAttribution.fromUri(
+                Uri.parse("obsidian://open?vault=98_Obsidian_NEW_2023&file=30-"),
+              ),
+            },
+            range: SpanRange(0, text.length - 2),
+          ),
+          isTrue,
+        );
+      });
     });
 
     testWidgetsOnAllPlatforms('recognizes a second URL when typing and converts it to a link', (tester) async {
@@ -1177,113 +1370,6 @@ void main() {
             attribution: LinkAttribution.fromUri(Uri.parse("https://flutter.dev")),
             start: 27,
             end: 45,
-          ),
-        },
-      );
-    });
-
-    testWidgetsOnDesktop('recognizes a pasted URL with www and converts it to a link', (tester) async {
-      await tester //
-          .createDocument()
-          .withSingleEmptyParagraph()
-          .withInputSource(TextInputSource.ime)
-          .pump();
-
-      // Place the caret at the beginning of the empty document.
-      await tester.placeCaretInParagraph("1", 0);
-
-      // Paste text with a URL.
-      tester.simulateClipboard();
-      await tester.setSimulatedClipboardContent("Hello https://www.google.com world");
-      // TODO: create and use something like tester.pressPasteAdaptive()
-      if (debugDefaultTargetPlatformOverride == TargetPlatform.macOS) {
-        await tester.pressCmdV();
-      } else {
-        await tester.pressCtlV();
-      }
-
-      // Ensure the URL is linkified.
-      final text = SuperEditorInspector.findTextInComponent("1");
-      expect(text.toPlainText(), "Hello https://www.google.com world");
-      expect(
-        text.getAttributionSpansByFilter((a) => a is LinkAttribution),
-        {
-          AttributionSpan(
-            attribution: LinkAttribution.fromUri(Uri.parse("https://www.google.com")),
-            start: 6,
-            end: 27,
-          ),
-        },
-      );
-    });
-
-    testWidgetsOnDesktop('recognizes a pasted URL and inserts https scheme if it is missing', (tester) async {
-      await tester //
-          .createDocument()
-          .withSingleEmptyParagraph()
-          .withInputSource(TextInputSource.ime)
-          .pump();
-
-      // Place the caret at the beginning of the empty document.
-      await tester.placeCaretInParagraph("1", 0);
-
-      // Paste text with a URL.
-      tester.simulateClipboard();
-      await tester.setSimulatedClipboardContent("Hello www.google.com world");
-      // TODO: create and use something like tester.pressPasteAdaptive()
-      if (debugDefaultTargetPlatformOverride == TargetPlatform.macOS) {
-        await tester.pressCmdV();
-      } else {
-        await tester.pressCtlV();
-      }
-
-      // Ensure it's linkified with a URL schema.
-      var text = SuperEditorInspector.findTextInComponent("1");
-      text = SuperEditorInspector.findTextInComponent("1");
-
-      expect(text.toPlainText(), "Hello www.google.com world");
-      expect(
-        text.getAttributionSpansByFilter((a) => a is LinkAttribution),
-        {
-          AttributionSpan(
-            attribution: LinkAttribution.fromUri(Uri.parse("https://www.google.com")),
-            start: 6,
-            end: 19,
-          ),
-        },
-      );
-    });
-
-    testWidgetsOnDesktop('recognizes a pasted URL without https or www and converts it to a link', (tester) async {
-      await tester //
-          .createDocument()
-          .withSingleEmptyParagraph()
-          .withInputSource(TextInputSource.ime)
-          .pump();
-
-      // Place the caret at the beginning of the empty document.
-      await tester.placeCaretInParagraph("1", 0);
-
-      // Paste text with a URL.
-      tester.simulateClipboard();
-      await tester.setSimulatedClipboardContent("Hello google.com world");
-      // TODO: create and use something like tester.pressPasteAdaptive()
-      if (debugDefaultTargetPlatformOverride == TargetPlatform.macOS) {
-        await tester.pressCmdV();
-      } else {
-        await tester.pressCtlV();
-      }
-
-      // Ensure the URL is linkified.
-      final text = SuperEditorInspector.findTextInComponent("1");
-      expect(text.toPlainText(), "Hello google.com world");
-      expect(
-        text.getAttributionSpansByFilter((a) => a is LinkAttribution),
-        {
-          AttributionSpan(
-            attribution: LinkAttribution.fromUri(Uri.parse("https://google.com")),
-            start: 6,
-            end: 15,
           ),
         },
       );

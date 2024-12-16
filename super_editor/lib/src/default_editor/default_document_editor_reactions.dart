@@ -651,6 +651,8 @@ class LinkifyReaction extends EditReaction {
     final wordStartOffset = _moveOffsetByWord(text.toPlainText(), endOffset, true) ?? 0;
     final word = text.substring(wordStartOffset, endOffset);
 
+    print("Inspecting word for URL: '$word'");
+
     // Ensure that the preceding word doesn't already contain a full or partial
     // link attribution.
     if (text
@@ -663,16 +665,42 @@ class LinkifyReaction extends EditReaction {
       return;
     }
 
+    // First, try extracting emails.
+    final extractedEmails = linkify(
+      word,
+      options: const LinkifyOptions(
+        humanize: false,
+        looseUrl: true,
+      ),
+      linkifiers: [
+        const EmailLinkifier(),
+      ],
+    );
+    final int emailCount = extractedEmails.fold(0, (value, element) => element is EmailElement ? value + 1 : value);
+    if (emailCount == 1) {
+      // Found exactly one email. Attribute it and return.
+      text.addAttribution(
+        LinkAttribution.fromEmail((extractedEmails.first as EmailElement).emailAddress),
+        SpanRange(wordStartOffset, endOffset - 1),
+      );
+      return;
+    }
+
+    // Second, try extracting links.
     final extractedLinks = linkify(
       word,
       options: const LinkifyOptions(
         humanize: false,
         looseUrl: true,
       ),
+      linkifiers: [
+        const UrlLinkifier(),
+      ],
     );
     final int linkCount = extractedLinks.fold(0, (value, element) => element is UrlElement ? value + 1 : value);
     if (linkCount != 1) {
       // There's either zero links, or more than one link. Either way we fizzle.
+      print(" - link count: $linkCount");
       return;
     }
 
@@ -892,10 +920,23 @@ class LinkifyReaction extends EditReaction {
 //       and the paste behavior in common_editor_operations. Once we create a way for reactions to identify
 //       paste behaviors, move the paste linkification into the linkify reaction and make this private again.
 Uri parseLink(String text) {
-  final uri = text.startsWith("http://") || text.startsWith("https://") //
+  // Try parsing the text directly as a URI and see if we find all needed
+  // pieces.
+  var uri = Uri.parse(text);
+  if (uri.hasScheme) {
+    // Direct parsing worked. Return it.
+    return uri;
+  }
+
+  final atIndex = text.indexOf("@");
+  final slashIndex = text.indexOf("/");
+  if (atIndex >= 0 && (slashIndex < 0 || atIndex < slashIndex)) {
+    // We believe this is an email address. It contains an "@"
+  }
+
+  return text.startsWith("http://") || text.startsWith("https://") //
       ? Uri.parse(text)
       : Uri.parse("https://$text");
-  return uri;
 }
 
 /// Configuration for the action that should happen when a text containing

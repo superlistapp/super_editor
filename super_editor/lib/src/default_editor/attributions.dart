@@ -217,13 +217,22 @@ class FontFamilyAttribution implements Attribution {
 /// relationship with [AttributedText].
 class LinkAttribution implements Attribution {
   factory LinkAttribution.fromUri(Uri uri) {
-    return LinkAttribution(uri.toString());
+    return LinkAttribution(uri.toString(), LinkType.url);
   }
 
-  const LinkAttribution(this.url);
+  factory LinkAttribution.fromEmail(String email) {
+    return LinkAttribution(email, LinkType.email);
+  }
+
+  // The default [type] is set to a URL so that we could introduce a [type]
+  // property without breaking existing uses.
+  const LinkAttribution(this.url, [this.type = LinkType.url]);
 
   @override
   String get id => 'link';
+
+  /// The type of link in this attribution, e.g., URL, link.
+  final LinkType type;
 
   /// The URL associated with the attributed text, as a `String`.
   final String url;
@@ -256,4 +265,9 @@ class LinkAttribution implements Attribution {
   String toString() {
     return '[LinkAttribution]: $url';
   }
+}
+
+enum LinkType {
+  url,
+  email;
 }
