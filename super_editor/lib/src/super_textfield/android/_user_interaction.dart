@@ -2,8 +2,10 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
+import 'package:super_editor/src/infrastructure/document_gestures_interaction_overrides.dart';
 import 'package:super_editor/src/infrastructure/flutter/flutter_scheduler.dart';
 import 'package:super_editor/src/infrastructure/multi_tap_gesture.dart';
+import 'package:super_editor/src/super_textfield/infrastructure/text_field_gestures_interaction_overrides.dart';
 import 'package:super_editor/src/super_textfield/super_textfield.dart';
 import 'package:super_text_layout/super_text_layout.dart';
 
@@ -51,6 +53,7 @@ class AndroidTextFieldTouchInteractor extends StatefulWidget {
     required this.getGlobalCaretRect,
     required this.isMultiline,
     required this.handleColor,
+    this.tapHandlers,
     this.showDebugPaint = false,
     required this.child,
   }) : super(key: key);
@@ -92,6 +95,9 @@ class AndroidTextFieldTouchInteractor extends StatefulWidget {
 
   /// The color of expanded selection drag handles.
   final Color handleColor;
+
+  /// {@macro super_text_field_tap_handlers}
+  final List<SuperTextFieldTapHandler>? tapHandlers;
 
   /// Whether to paint debugging guides and regions.
   final bool showDebugPaint;
@@ -169,6 +175,26 @@ class AndroidTextFieldTouchInteractorState extends State<AndroidTextFieldTouchIn
   void _onTapUp(TapUpDetails details) {
     _log.fine('User released a tap');
 
+    if (widget.tapHandlers != null) {
+      final textOffset = _globalOffsetToTextOffset(details.globalPosition);
+
+      for (final handler in widget.tapHandlers!) {
+        final result = handler.onTap(
+          SuperTextFieldGestureDetails(
+            textLayout: _textLayout,
+            textController: widget.textController,
+            globalOffset: details.globalPosition,
+            layoutOffset: details.localPosition,
+            textOffset: textOffset,
+          ),
+        );
+
+        if (result == TapHandlingInstruction.halt) {
+          return;
+        }
+      }
+    }
+
     if (widget.focusNode.hasFocus && widget.textController.isAttachedToIme) {
       widget.textController.showKeyboard();
     } else {
@@ -242,6 +268,27 @@ class AndroidTextFieldTouchInteractorState extends State<AndroidTextFieldTouchIn
 
   void _onDoubleTapDown(TapDownDetails details) {
     _log.fine("User double-tapped down");
+
+    if (widget.tapHandlers != null) {
+      final textOffset = _globalOffsetToTextOffset(details.globalPosition);
+
+      for (final handler in widget.tapHandlers!) {
+        final result = handler.onDoubleTap(
+          SuperTextFieldGestureDetails(
+            textLayout: _textLayout,
+            textController: widget.textController,
+            globalOffset: details.globalPosition,
+            layoutOffset: details.localPosition,
+            textOffset: textOffset,
+          ),
+        );
+
+        if (result == TapHandlingInstruction.halt) {
+          return;
+        }
+      }
+    }
+
     widget.focusNode.requestFocus();
 
     final tapTextPosition = _getTextPositionAtOffset(details.localPosition);
@@ -267,6 +314,27 @@ class AndroidTextFieldTouchInteractorState extends State<AndroidTextFieldTouchIn
 
   void _onTripleTapDown(TapDownDetails details) {
     _log.fine("User triple-tapped down");
+
+    if (widget.tapHandlers != null) {
+      final textOffset = _globalOffsetToTextOffset(details.globalPosition);
+
+      for (final handler in widget.tapHandlers!) {
+        final result = handler.onTripleTap(
+          SuperTextFieldGestureDetails(
+            textLayout: _textLayout,
+            textController: widget.textController,
+            globalOffset: details.globalPosition,
+            layoutOffset: details.localPosition,
+            textOffset: textOffset,
+          ),
+        );
+
+        if (result == TapHandlingInstruction.halt) {
+          return;
+        }
+      }
+    }
+
     final tapTextPosition = _textLayout.getPositionAtOffset(details.localPosition)!;
 
     widget.textController.selection =
