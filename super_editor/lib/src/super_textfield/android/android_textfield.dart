@@ -30,7 +30,6 @@ class SuperAndroidTextField extends StatefulWidget {
     Key? key,
     this.focusNode,
     this.tapRegionGroupId,
-    this.tapHandlers,
     this.textController,
     this.textAlign = TextAlign.left,
     this.textStyleBuilder = defaultTextFieldStyleBuilder,
@@ -46,6 +45,7 @@ class SuperAndroidTextField extends StatefulWidget {
     this.textInputAction,
     this.imeConfiguration,
     this.showComposingUnderline = true,
+    this.tapHandlers,
     this.popoverToolbarBuilder = _defaultAndroidToolbarBuilder,
     this.showDebugPaint = false,
     this.padding,
@@ -56,9 +56,6 @@ class SuperAndroidTextField extends StatefulWidget {
 
   /// {@macro super_text_field_tap_region_group_id}
   final String? tapRegionGroupId;
-
-  /// {@macro super_text_field_tap_handlers}
-  final List<SuperTextFieldTapHandler>? tapHandlers;
 
   /// Controller that owns the text content and text selection for
   /// this text field.
@@ -143,6 +140,9 @@ class SuperAndroidTextField extends StatefulWidget {
 
   /// Whether to show an underline beneath the text in the composing region.
   final bool showComposingUnderline;
+
+  /// {@macro super_text_field_tap_handlers}
+  final List<SuperTextFieldTapHandler>? tapHandlers;
 
   /// Whether to paint debug guides.
   final bool showDebugPaint;

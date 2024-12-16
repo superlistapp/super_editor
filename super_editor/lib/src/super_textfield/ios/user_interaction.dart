@@ -195,7 +195,7 @@ class IOSTextFieldTouchInteractorState extends State<IOSTextFieldTouchInteractor
 
       for (final handler in widget.tapHandlers!) {
         final result = handler.onTap(
-          TextFieldGestureDetails(
+          SuperTextFieldGestureDetails(
             textLayout: _textLayout,
             textController: widget.textController,
             globalOffset: details.globalPosition,
@@ -300,7 +300,7 @@ class IOSTextFieldTouchInteractorState extends State<IOSTextFieldTouchInteractor
 
       for (final handler in widget.tapHandlers!) {
         final result = handler.onDoubleTap(
-          TextFieldGestureDetails(
+          SuperTextFieldGestureDetails(
             textLayout: _textLayout,
             textController: widget.textController,
             globalOffset: details.globalPosition,
@@ -342,7 +342,7 @@ class IOSTextFieldTouchInteractorState extends State<IOSTextFieldTouchInteractor
 
       for (final handler in widget.tapHandlers!) {
         final result = handler.onTripleTap(
-          TextFieldGestureDetails(
+          SuperTextFieldGestureDetails(
             textLayout: _textLayout,
             textController: widget.textController,
             globalOffset: details.globalPosition,

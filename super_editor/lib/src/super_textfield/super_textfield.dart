@@ -22,6 +22,8 @@ export 'infrastructure/attributed_text_editing_controller.dart';
 export 'infrastructure/hint_text.dart';
 export 'infrastructure/magnifier.dart';
 export 'infrastructure/text_scrollview.dart';
+export 'infrastructure/text_field_gestures_interaction_overrides.dart';
+export 'infrastructure/text_field_tap_handlers.dart';
 export 'input_method_engine/_ime_text_editing_controller.dart';
 export 'ios/ios_textfield.dart';
 export 'styles.dart';

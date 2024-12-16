@@ -5,7 +5,6 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_test_runners/flutter_test_runners.dart';
 import 'package:super_editor/src/infrastructure/document_gestures_interaction_overrides.dart';
-import 'package:super_editor/src/super_textfield/infrastructure/text_field_gestures_interaction_overrides.dart';
 import 'package:super_editor/super_text_field.dart';
 
 import 'super_textfield_inspector.dart';
@@ -38,10 +37,10 @@ void main() {
 
       group('multiple handlers >', () {
         testWidgetsOnAllPlatforms('run seach handler until the gesture is handled', (tester) async {
-          final noopHandler = _NoopTextFieldTapHandler();
+          final noOpHandler = _NoOpTextFieldTapHandler();
           final handler = _SuperTextFieldTestTapHandler();
 
-          await _pumpSingleFieldTestApp(tester, tapHandlers: [noopHandler, handler]);
+          await _pumpSingleFieldTestApp(tester, tapHandlers: [noOpHandler, handler]);
 
           // Tap on the text field.
           await tester.placeCaretInSuperTextField(0);
@@ -109,10 +108,10 @@ void main() {
 
       group('multiple handlers > ', () {
         testWidgetsOnAllPlatforms('run each handler until the gesture is handled', (tester) async {
-          final noopHandler = _NoopTextFieldTapHandler();
+          final noOpHandler = _NoOpTextFieldTapHandler();
           final handler = _SuperTextFieldTestTapHandler();
 
-          await _pumpSingleFieldTestApp(tester, tapHandlers: [noopHandler, handler]);
+          await _pumpSingleFieldTestApp(tester, tapHandlers: [noOpHandler, handler]);
 
           await tester.doubleTapAtSuperTextField(0);
 
@@ -178,10 +177,10 @@ void main() {
 
       group('multiple handlers > ', () {
         testWidgetsOnAllPlatforms('run each handler until the gesture is handled', (tester) async {
-          final noopHandler = _NoopTextFieldTapHandler();
+          final noOpHandler = _NoOpTextFieldTapHandler();
           final handler = _SuperTextFieldTestTapHandler();
 
-          await _pumpSingleFieldTestApp(tester, tapHandlers: [noopHandler, handler]);
+          await _pumpSingleFieldTestApp(tester, tapHandlers: [noOpHandler, handler]);
 
           await tester.tripleTapAtSuperTextField(0);
 
@@ -216,6 +215,65 @@ void main() {
             SuperTextFieldInspector.findSelection(),
             const TextSelection.collapsed(offset: -1),
           );
+        });
+      });
+    });
+
+    group('secondary tap >', () {
+      group('single handler >', () {
+        testWidgetsOnDesktop('can be customized', (tester) async {
+          final handler = _SuperTextFieldTestTapHandler();
+
+          await _pumpSingleFieldTestApp(tester, tapHandlers: [handler]);
+
+          // Tap on the text field.
+          await tester.tapAtSuperTextField(0, buttons: kSecondaryMouseButton);
+
+          // Ensure the custom tap handler was called.
+          expect(handler.wasSecondaryTapHandled, isTrue);
+          expect(handler.wasTapHandled, isFalse);
+          expect(handler.wasDoubleTapHandled, isFalse);
+          expect(handler.wasTripleTapHandled, isFalse);
+        });
+      });
+
+      group('multiple handlers >', () {
+        testWidgetsOnDesktop('run seach handler until the gesture is handled', (tester) async {
+          final noOpHandler = _NoOpTextFieldTapHandler();
+          final handler = _SuperTextFieldTestTapHandler();
+
+          await _pumpSingleFieldTestApp(tester, tapHandlers: [noOpHandler, handler]);
+
+          // Tap on the text field.
+          await tester.tapAtSuperTextField(0, buttons: kSecondaryMouseButton);
+
+          // Ensure the custom tap handler was called.
+          expect(handler.wasSecondaryTapHandled, isTrue);
+          expect(handler.wasTapHandled, isFalse);
+          expect(handler.wasDoubleTapHandled, isFalse);
+          expect(handler.wasTripleTapHandled, isFalse);
+        });
+
+        testWidgetsOnDesktop('stops when a handler handles the gesture', (tester) async {
+          final handler1 = _SuperTextFieldTestTapHandler();
+          final handler2 = _SuperTextFieldTestTapHandler();
+
+          await _pumpSingleFieldTestApp(tester, tapHandlers: [handler1, handler2]);
+
+          // Tap on the text field.
+          await tester.tapAtSuperTextField(0, buttons: kSecondaryMouseButton);
+
+          // Ensure the first tap handler was called.
+          expect(handler1.wasSecondaryTapHandled, isTrue);
+          expect(handler1.wasTapHandled, isFalse);
+          expect(handler1.wasDoubleTapHandled, isFalse);
+          expect(handler1.wasTripleTapHandled, isFalse);
+
+          // Ensure the second tap handler was not called.
+          expect(handler2.wasSecondaryTapHandled, isFalse);
+          expect(handler2.wasTapHandled, isFalse);
+          expect(handler2.wasDoubleTapHandled, isFalse);
+          expect(handler2.wasTripleTapHandled, isFalse);
         });
       });
     });
@@ -287,29 +345,38 @@ class _SuperTextFieldTestTapHandler extends SuperTextFieldTapHandler {
   bool get wasTripleTapHandled => _wasTripleTapHandled;
   bool _wasTripleTapHandled = false;
 
+  bool get wasSecondaryTapHandled => _wasSecondaryTapHandled;
+  bool _wasSecondaryTapHandled = false;
+
   @override
-  MouseCursor? mouseCursorForContentHover(TextFieldGestureDetails details) {
+  MouseCursor? mouseCursorForContentHover(SuperTextFieldGestureDetails details) {
     return SystemMouseCursors.move;
   }
 
   @override
-  TapHandlingInstruction onTap(TextFieldGestureDetails details) {
+  TapHandlingInstruction onTap(SuperTextFieldGestureDetails details) {
     _wasTapHandled = true;
     return TapHandlingInstruction.halt;
   }
 
   @override
-  TapHandlingInstruction onDoubleTap(TextFieldGestureDetails details) {
+  TapHandlingInstruction onDoubleTap(SuperTextFieldGestureDetails details) {
     _wasDoubleTapHandled = true;
     return TapHandlingInstruction.halt;
   }
 
   @override
-  TapHandlingInstruction onTripleTap(TextFieldGestureDetails details) {
+  TapHandlingInstruction onTripleTap(SuperTextFieldGestureDetails details) {
     _wasTripleTapHandled = true;
+    return TapHandlingInstruction.halt;
+  }
+
+  @override
+  TapHandlingInstruction onSecondaryTap(SuperTextFieldGestureDetails details) {
+    _wasSecondaryTapHandled = true;
     return TapHandlingInstruction.halt;
   }
 }
 
 /// A [SuperTextFieldTapHandler] that does nothing.
-class _NoopTextFieldTapHandler extends SuperTextFieldTapHandler {}
+class _NoOpTextFieldTapHandler extends SuperTextFieldTapHandler {}
