@@ -1,13 +1,12 @@
 import 'package:flutter/widgets.dart';
 import 'package:super_editor/src/infrastructure/links.dart';
-import 'package:super_editor/src/super_textfield/infrastructure/text_field_gestures_interaction_overrides.dart';
 import 'package:super_editor/super_editor.dart';
 
 /// A [SuperTextFieldTapHandler] that opens links when the user taps text with
 /// a [LinkAttribution].
 class SuperTextFieldLaunchLinkTapHandler extends SuperTextFieldTapHandler {
   @override
-  MouseCursor? mouseCursorForContentHover(TextFieldGestureDetails details) {
+  MouseCursor? mouseCursorForContentHover(SuperTextFieldGestureDetails details) {
     final linkAttribution = _getLinkAttribution(details);
     if (linkAttribution == null) {
       return null;
@@ -17,7 +16,7 @@ class SuperTextFieldLaunchLinkTapHandler extends SuperTextFieldTapHandler {
   }
 
   @override
-  TapHandlingInstruction onTap(TextFieldGestureDetails details) {
+  TapHandlingInstruction onTap(SuperTextFieldGestureDetails details) {
     final linkAttribution = _getLinkAttribution(details);
     if (linkAttribution == null) {
       return TapHandlingInstruction.continueHandling;
@@ -35,7 +34,7 @@ class SuperTextFieldLaunchLinkTapHandler extends SuperTextFieldTapHandler {
   }
 
   /// Returns the [LinkAttribution] at the given [details.textOffset], if any.
-  LinkAttribution? _getLinkAttribution(TextFieldGestureDetails details) {
+  LinkAttribution? _getLinkAttribution(SuperTextFieldGestureDetails details) {
     final textPosition = details.textLayout.getPositionNearestToOffset(details.textOffset);
 
     final attributions = details.textController.text //

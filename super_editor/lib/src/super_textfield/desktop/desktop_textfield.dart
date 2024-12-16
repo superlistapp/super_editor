@@ -122,6 +122,7 @@ class SuperDesktopTextField extends StatefulWidget {
 
   final DecorationBuilder? decorationBuilder;
 
+  @Deprecated('Use tapHandlers instead')
   final RightClickListener? onRightClick;
 
   /// The [SuperDesktopTextField] input source, e.g., keyboard or Input Method Engine.
@@ -599,6 +600,7 @@ class SuperTextFieldGestureInteractor extends StatefulWidget {
   final bool isMultiline;
 
   /// Callback invoked when the user right clicks on this text field.
+  @Deprecated('Use tapHandlers instead')
   final RightClickListener? onRightClick;
 
   /// {@macro super_text_field_tap_handlers}
@@ -690,7 +692,7 @@ class _SuperTextFieldGestureInteractorState extends State<SuperTextFieldGestureI
     if (widget.tapHandlers != null) {
       for (final handler in widget.tapHandlers!) {
         final cursorForContent = handler.mouseCursorForContentHover(
-          TextFieldGestureDetails(
+          SuperTextFieldGestureDetails(
             textController: widget.textController,
             textLayout: _textLayout,
             globalOffset: globalPosition,
@@ -716,7 +718,7 @@ class _SuperTextFieldGestureInteractorState extends State<SuperTextFieldGestureI
 
       for (final handler in widget.tapHandlers!) {
         final result = handler.onTap(
-          TextFieldGestureDetails(
+          SuperTextFieldGestureDetails(
             textLayout: _textLayout,
             textController: widget.textController,
             globalOffset: details.globalPosition,
@@ -764,7 +766,7 @@ class _SuperTextFieldGestureInteractorState extends State<SuperTextFieldGestureI
 
       for (final handler in widget.tapHandlers!) {
         final result = handler.onDoubleTap(
-          TextFieldGestureDetails(
+          SuperTextFieldGestureDetails(
             textLayout: _textLayout,
             textController: widget.textController,
             globalOffset: details.globalPosition,
@@ -806,7 +808,7 @@ class _SuperTextFieldGestureInteractorState extends State<SuperTextFieldGestureI
 
       for (final handler in widget.tapHandlers!) {
         final result = handler.onTripleTap(
-          TextFieldGestureDetails(
+          SuperTextFieldGestureDetails(
             textLayout: _textLayout,
             textController: widget.textController,
             globalOffset: details.globalPosition,
@@ -841,6 +843,25 @@ class _SuperTextFieldGestureInteractorState extends State<SuperTextFieldGestureI
   }
 
   void _onRightClick(TapUpDetails details) {
+    if (widget.tapHandlers != null) {
+      final textOffset = _getTextOffset(details.localPosition);
+
+      for (final handler in widget.tapHandlers!) {
+        final result = handler.onSecondaryTap(
+          SuperTextFieldGestureDetails(
+            textLayout: _textLayout,
+            textController: widget.textController,
+            globalOffset: details.globalPosition,
+            layoutOffset: details.localPosition,
+            textOffset: textOffset,
+          ),
+        );
+
+        if (result == TapHandlingInstruction.halt) {
+          return;
+        }
+      }
+    }
     widget.onRightClick?.call(context, widget.textController, details.localPosition);
   }
 

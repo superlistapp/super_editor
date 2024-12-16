@@ -43,19 +43,20 @@ class _InteractiveTextFieldDemoState extends State<InteractiveTextFieldDemo> {
     super.dispose();
   }
 
-  void _onRightClick(
-      BuildContext textFieldContext, AttributedTextEditingController textController, Offset localOffset) {
+  TapHandlingInstruction _onRightClick(SuperTextFieldGestureDetails details) {
     // Only show menu if some text is selected
-    if (textController.selection.isCollapsed) {
-      return;
+    if (details.textController.selection.isCollapsed) {
+      return TapHandlingInstruction.continueHandling;
     }
 
     final overlay = Overlay.of(context);
-    final overlayBox = overlay.context.findRenderObject() as RenderBox?;
-    final textFieldBox = textFieldContext.findRenderObject() as RenderBox;
-    _popupOffset = textFieldBox.localToGlobal(localOffset, ancestor: overlayBox);
+    final overlayBox = overlay.context.findRenderObject() as RenderBox;
+
+    _popupOffset = overlayBox.globalToLocal(details.globalOffset);
 
     _popupOverlayController.show();
+
+    return TapHandlingInstruction.halt;
   }
 
   void _closePopup() {
@@ -86,6 +87,9 @@ class _InteractiveTextFieldDemoState extends State<InteractiveTextFieldDemo> {
                 textStyleBuilder: demoTextStyleBuilder,
                 blinkTimingMode: BlinkTimingMode.timer,
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                tapHandlers: [
+                  _SuperTextFieldRightClickListener(rightClickHandler: _onRightClick),
+                ],
                 decorationBuilder: (context, child) {
                   return Container(
                     decoration: BoxDecoration(
@@ -109,7 +113,6 @@ class _InteractiveTextFieldDemoState extends State<InteractiveTextFieldDemo> {
                 hintBehavior: HintBehavior.displayHintUntilTextEntered,
                 minLines: 5,
                 maxLines: 5,
-                onRightClick: _onRightClick,
               ),
             ),
           ),
@@ -119,50 +122,70 @@ class _InteractiveTextFieldDemoState extends State<InteractiveTextFieldDemo> {
   }
 
   Widget _buildPopover(BuildContext context) {
-    return GestureDetector(
-      behavior: HitTestBehavior.translucent,
-      onTapDown: (_) {
-        _closePopup();
-      },
-      child: Container(
-        width: double.infinity,
-        height: double.infinity,
-        color: Colors.transparent,
-        child: Stack(
-          children: [
-            Positioned(
-              left: _popupOffset.dx,
-              top: _popupOffset.dy,
-              child: Container(
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(4),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.3),
-                      blurRadius: 5,
-                      offset: const Offset(3, 3),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  children: [
-                    TextButton(
-                      onPressed: () {
-                        Clipboard.setData(ClipboardData(
-                          text: _textFieldController.selection.textInside(_textFieldController.text.text),
-                        ));
-                        _closePopup();
-                      },
-                      child: const Text('Copy'),
-                    ),
-                  ],
+    return TapRegion(
+      groupId: _tapRegionGroupId,
+      child: GestureDetector(
+        behavior: HitTestBehavior.translucent,
+        onTapDown: (_) {
+          _closePopup();
+        },
+        child: Container(
+          width: double.infinity,
+          height: double.infinity,
+          color: Colors.transparent,
+          child: Stack(
+            children: [
+              Positioned(
+                left: _popupOffset.dx,
+                top: _popupOffset.dy,
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(4),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.3),
+                        blurRadius: 5,
+                        offset: const Offset(3, 3),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    children: [
+                      TextButton(
+                        onPressed: () {
+                          Clipboard.setData(ClipboardData(
+                            text: _textFieldController.selection.textInside(_textFieldController.text.text),
+                          ));
+                          _closePopup();
+                        },
+                        child: const Text('Copy'),
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
   }
 }
+
+/// A [SuperTextFieldTapHandler] that listens for right clicks and invokes the
+/// [rightClickHandler] when a right click happens.
+class _SuperTextFieldRightClickListener extends SuperTextFieldTapHandler {
+  _SuperTextFieldRightClickListener({
+    required this.rightClickHandler,
+  });
+
+  final RightClickHandler rightClickHandler;
+
+  @override
+  TapHandlingInstruction onSecondaryTap(SuperTextFieldGestureDetails details) {
+    return rightClickHandler(details);
+  }
+}
+
+typedef RightClickHandler = TapHandlingInstruction Function(SuperTextFieldGestureDetails details);

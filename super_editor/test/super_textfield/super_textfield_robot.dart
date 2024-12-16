@@ -305,6 +305,18 @@ extension SuperTextFieldRobot on WidgetTester {
     await tapAt(handleCenter);
   }
 
+  /// Taps in a [SuperTextField] at the given [offset]
+  ///
+  /// {@macro supertextfield_finder}
+  Future<void> tapAtSuperTextField(
+    int offset, {
+    Finder? superTextFieldFinder,
+    TextAffinity affinity = TextAffinity.downstream,
+    int buttons = kPrimaryButton,
+  }) async {
+    await _tapAtSuperTextField(offset, 1, superTextFieldFinder, affinity, buttons);
+  }
+
   /// Double taps in a [SuperTextField] at the given [offset]
   ///
   /// {@macro supertextfield_finder}
@@ -322,7 +334,9 @@ extension SuperTextFieldRobot on WidgetTester {
   }
 
   Future<void> _tapAtSuperTextField(int offset, int tapCount,
-      [Finder? superTextFieldFinder, TextAffinity affinity = TextAffinity.downstream]) async {
+      [Finder? superTextFieldFinder,
+      TextAffinity affinity = TextAffinity.downstream,
+      int buttons = kPrimaryButton]) async {
     // TODO: De-duplicate this behavior with placeCaretInSuperTextField
     final fieldFinder =
         SuperTextFieldInspector.findInnerPlatformTextField(superTextFieldFinder ?? find.byType(SuperTextField));
@@ -334,11 +348,17 @@ extension SuperTextFieldRobot on WidgetTester {
     if (match is SuperDesktopTextField) {
       final superDesktopTextField = state<SuperDesktopTextFieldState>(fieldFinder);
       for (int i = 1; i <= tapCount; i++) {
-        bool didTap = await _tapAtTextPositionOnDesktop(superDesktopTextField, offset, affinity, scrollOffset);
+        bool didTap = await _tapAtTextPositionOnDesktop(
+          superDesktopTextField,
+          offset,
+          affinity,
+          scrollOffset,
+          buttons,
+        );
         if (!didTap) {
           throw Exception("The desired text offset wasn't tappable in SuperTextField: $offset");
         }
-        await pump(kDoubleTapMinTime);
+        await pump(tapCount > 1 ? kDoubleTapMinTime : kDoubleTapTimeout);
       }
 
       await pumpAndSettle();
@@ -349,11 +369,16 @@ extension SuperTextFieldRobot on WidgetTester {
     if (match is SuperAndroidTextField) {
       for (int i = 1; i <= tapCount; i++) {
         bool didTap = await _tapAtTextPositionOnAndroid(
-            state<SuperAndroidTextFieldState>(fieldFinder), offset, affinity, scrollOffset);
+          state<SuperAndroidTextFieldState>(fieldFinder),
+          offset,
+          affinity,
+          scrollOffset,
+          buttons,
+        );
         if (!didTap) {
           throw Exception("The desired text offset wasn't tappable in SuperTextField: $offset");
         }
-        await pump(kDoubleTapMinTime);
+        await pump(tapCount > 1 ? kDoubleTapMinTime : kDoubleTapTimeout);
       }
 
       await pumpAndSettle();
@@ -363,12 +388,17 @@ extension SuperTextFieldRobot on WidgetTester {
 
     if (match is SuperIOSTextField) {
       for (int i = 1; i <= tapCount; i++) {
-        bool didTap =
-            await _tapAtTextPositionOnIOS(state<SuperIOSTextFieldState>(fieldFinder), offset, affinity, scrollOffset);
+        bool didTap = await _tapAtTextPositionOnIOS(
+          state<SuperIOSTextFieldState>(fieldFinder),
+          offset,
+          affinity,
+          scrollOffset,
+          buttons,
+        );
         if (!didTap) {
           throw Exception("The desired text offset wasn't tappable in SuperTextField: $offset");
         }
-        await pump(kDoubleTapMinTime);
+        await pump(tapCount > 1 ? kDoubleTapMinTime : kDoubleTapTimeout);
       }
 
       await pumpAndSettle();
@@ -384,6 +414,7 @@ extension SuperTextFieldRobot on WidgetTester {
     int offset, [
     TextAffinity textAffinity = TextAffinity.downstream,
     Offset scrollOffset = Offset.zero,
+    int buttons = kPrimaryButton,
   ]) async {
     final textFieldBox = textField.context.findRenderObject() as RenderBox;
     return await _tapAtTextPositionInTextLayout(
@@ -393,6 +424,7 @@ extension SuperTextFieldRobot on WidgetTester {
       offset,
       textAffinity,
       scrollOffset,
+      buttons,
     );
   }
 
@@ -401,6 +433,7 @@ extension SuperTextFieldRobot on WidgetTester {
     int offset, [
     TextAffinity textAffinity = TextAffinity.downstream,
     Offset scrollOffset = Offset.zero,
+    int buttons = kPrimaryButton,
   ]) async {
     final textFieldBox = textField.context.findRenderObject() as RenderBox;
     return await _tapAtTextPositionInTextLayout(
@@ -410,6 +443,7 @@ extension SuperTextFieldRobot on WidgetTester {
       offset,
       textAffinity,
       scrollOffset,
+      buttons,
     );
   }
 
@@ -418,6 +452,7 @@ extension SuperTextFieldRobot on WidgetTester {
     int offset, [
     TextAffinity textAffinity = TextAffinity.downstream,
     Offset scrollOffset = Offset.zero,
+    int buttons = kPrimaryButton,
   ]) async {
     final textFieldBox = textField.context.findRenderObject() as RenderBox;
     return await _tapAtTextPositionInTextLayout(
@@ -427,6 +462,7 @@ extension SuperTextFieldRobot on WidgetTester {
       offset,
       textAffinity,
       scrollOffset,
+      buttons,
     );
   }
 
@@ -437,6 +473,7 @@ extension SuperTextFieldRobot on WidgetTester {
     int offset, [
     TextAffinity textAffinity = TextAffinity.downstream,
     Offset scrollOffset = Offset.zero,
+    int buttons = kPrimaryButton,
   ]) async {
     final textPositionOffset = textLayout.getOffsetForCaret(
       TextPosition(offset: offset, affinity: textAffinity),
@@ -474,7 +511,10 @@ extension SuperTextFieldRobot on WidgetTester {
     }
 
     final globalTapOffset = textOffsetInField + adjustedOffset + textFieldBox.localToGlobal(Offset.zero);
-    await tapAt(globalTapOffset);
+    await tapAt(
+      globalTapOffset,
+      buttons: buttons,
+    );
     return true;
   }
 

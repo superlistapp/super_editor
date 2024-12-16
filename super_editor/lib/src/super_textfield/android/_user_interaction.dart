@@ -45,7 +45,6 @@ class AndroidTextFieldTouchInteractor extends StatefulWidget {
   const AndroidTextFieldTouchInteractor({
     Key? key,
     required this.focusNode,
-    this.tapHandlers,
     required this.textFieldLayerLink,
     required this.textController,
     required this.editingOverlayController,
@@ -54,6 +53,7 @@ class AndroidTextFieldTouchInteractor extends StatefulWidget {
     required this.getGlobalCaretRect,
     required this.isMultiline,
     required this.handleColor,
+    this.tapHandlers,
     this.showDebugPaint = false,
     required this.child,
   }) : super(key: key);
@@ -65,9 +65,6 @@ class AndroidTextFieldTouchInteractor extends StatefulWidget {
   ///
   /// [AndroidTextFieldInteractor] requests focus when the user taps on it.
   final FocusNode focusNode;
-
-  /// {@macro super_text_field_tap_handlers}
-  final List<SuperTextFieldTapHandler>? tapHandlers;
 
   /// [LayerLink] that follows the text field that contains this
   /// [AndroidTextFieldInteractor].
@@ -98,6 +95,9 @@ class AndroidTextFieldTouchInteractor extends StatefulWidget {
 
   /// The color of expanded selection drag handles.
   final Color handleColor;
+
+  /// {@macro super_text_field_tap_handlers}
+  final List<SuperTextFieldTapHandler>? tapHandlers;
 
   /// Whether to paint debugging guides and regions.
   final bool showDebugPaint;
@@ -180,7 +180,7 @@ class AndroidTextFieldTouchInteractorState extends State<AndroidTextFieldTouchIn
 
       for (final handler in widget.tapHandlers!) {
         final result = handler.onTap(
-          TextFieldGestureDetails(
+          SuperTextFieldGestureDetails(
             textLayout: _textLayout,
             textController: widget.textController,
             globalOffset: details.globalPosition,
@@ -274,7 +274,7 @@ class AndroidTextFieldTouchInteractorState extends State<AndroidTextFieldTouchIn
 
       for (final handler in widget.tapHandlers!) {
         final result = handler.onDoubleTap(
-          TextFieldGestureDetails(
+          SuperTextFieldGestureDetails(
             textLayout: _textLayout,
             textController: widget.textController,
             globalOffset: details.globalPosition,
@@ -320,7 +320,7 @@ class AndroidTextFieldTouchInteractorState extends State<AndroidTextFieldTouchIn
 
       for (final handler in widget.tapHandlers!) {
         final result = handler.onTripleTap(
-          TextFieldGestureDetails(
+          SuperTextFieldGestureDetails(
             textLayout: _textLayout,
             textController: widget.textController,
             globalOffset: details.globalPosition,

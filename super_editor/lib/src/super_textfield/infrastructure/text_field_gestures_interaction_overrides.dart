@@ -3,24 +3,27 @@ import 'package:super_editor/src/infrastructure/document_gestures_interaction_ov
 import 'package:super_editor/super_text_field.dart';
 import 'package:super_text_layout/super_text_layout.dart';
 
-/// Delegate for mouse status and clicking on special types of content,
-/// e.g., tapping on a link open the URL.
+/// Tap handler that can (optionally) respond to single, double, and triple taps, as well as dictate the cursor
+/// appearance on desktop.
 ///
 /// Listeners are notified when any time that the desired mouse cursor
 /// may have changed.
 abstract class SuperTextFieldTapHandler with ChangeNotifier {
-  MouseCursor? mouseCursorForContentHover(TextFieldGestureDetails details) => null;
+  MouseCursor? mouseCursorForContentHover(SuperTextFieldGestureDetails details) => null;
 
-  TapHandlingInstruction onTap(TextFieldGestureDetails details) => TapHandlingInstruction.continueHandling;
+  TapHandlingInstruction onTap(SuperTextFieldGestureDetails details) => TapHandlingInstruction.continueHandling;
 
-  TapHandlingInstruction onDoubleTap(TextFieldGestureDetails details) => TapHandlingInstruction.continueHandling;
+  TapHandlingInstruction onDoubleTap(SuperTextFieldGestureDetails details) => TapHandlingInstruction.continueHandling;
 
-  TapHandlingInstruction onTripleTap(TextFieldGestureDetails details) => TapHandlingInstruction.continueHandling;
+  TapHandlingInstruction onTripleTap(SuperTextFieldGestureDetails details) => TapHandlingInstruction.continueHandling;
+
+  TapHandlingInstruction onSecondaryTap(SuperTextFieldGestureDetails details) =>
+      TapHandlingInstruction.continueHandling;
 }
 
 /// Information about a gesture that happened within a [SuperTextField].
-class TextFieldGestureDetails {
-  TextFieldGestureDetails({
+class SuperTextFieldGestureDetails {
+  SuperTextFieldGestureDetails({
     required this.textLayout,
     required this.textController,
     required this.globalOffset,
