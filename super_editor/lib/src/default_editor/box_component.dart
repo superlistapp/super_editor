@@ -307,7 +307,7 @@ class SelectableBox extends StatelessWidget {
       child: IgnorePointer(
         child: DecoratedBox(
           decoration: BoxDecoration(
-            color: isSelected ? selectionColor.withOpacity(0.5) : Colors.transparent,
+            color: isSelected ? selectionColor.withValues(alpha: 0.5) : Colors.transparent,
           ),
           position: DecorationPosition.foreground,
           child: child,

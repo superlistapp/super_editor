@@ -1314,7 +1314,7 @@ class _AndroidDocumentTouchEditingControlsState extends State<AndroidDocumentTou
                       child: Container(
                         width: double.infinity,
                         height: double.infinity,
-                        color: Colors.yellow.withOpacity(0.2),
+                        color: Colors.yellow.withValues(alpha: 0.2),
                       ),
                     ),
                 ],
