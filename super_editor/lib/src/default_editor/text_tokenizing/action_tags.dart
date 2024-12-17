@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:attributed_text/attributed_text.dart';
 import 'package:characters/characters.dart';
 import 'package:flutter/foundation.dart';
@@ -133,12 +135,14 @@ class SubmitComposingActionTagCommand extends EditCommand {
 
     final textNode = document.getNodeById(extent.nodeId) as TextNode;
 
-    final tagAroundPosition = _findTagBeforeCaret(
+    final normalizedSelection = composer.selection!.normalize(document);
+    final tagAroundPosition = _findTag(
       // TODO: deal with these tag rules in requests and commands, should the user really pass them?
       tagRule: defaultActionTagRule,
       nodeId: composer.selection!.extent.nodeId,
       text: textNode.text,
-      caretPosition: extentPosition,
+      expansionPosition: extentPosition,
+      endPosition: normalizedSelection.end.nodePosition as TextNodePosition,
       isTokenCandidate: (attributions) => !attributions.contains(actionTagCancelledAttribution),
     );
 
@@ -215,23 +219,26 @@ class CancelComposingActionTagCommand extends EditCommand {
     TagAroundPosition? composingToken;
     TextNode? textNode;
 
+    final normalizedSelection = selection.normalize(document);
     if (base.nodePosition is TextNodePosition) {
       textNode = document.getNodeById(selection.base.nodeId) as TextNode;
-      composingToken = _findTagBeforeCaret(
+      composingToken = _findTag(
         tagRule: _tagRule,
         nodeId: textNode.id,
         text: textNode.text,
-        caretPosition: base.nodePosition as TextNodePosition,
+        expansionPosition: base.nodePosition as TextNodePosition,
+        endPosition: normalizedSelection.end.nodePosition as TextNodePosition,
         isTokenCandidate: (tokenAttributions) => tokenAttributions.contains(actionTagComposingAttribution),
       );
     }
     if (composingToken == null && extent.nodePosition is TextNodePosition) {
       textNode = document.getNodeById(selection.extent.nodeId) as TextNode;
-      composingToken = _findTagBeforeCaret(
+      composingToken = _findTag(
         tagRule: _tagRule,
         nodeId: textNode.id,
         text: textNode.text,
-        caretPosition: base.nodePosition as TextNodePosition,
+        expansionPosition: base.nodePosition as TextNodePosition,
+        endPosition: normalizedSelection.end.nodePosition as TextNodePosition,
         isTokenCandidate: (tokenAttributions) => tokenAttributions.contains(actionTagComposingAttribution),
       );
     }
@@ -301,23 +308,27 @@ class ActionTagComposingReaction extends EditReaction {
     TagAroundPosition? tagAroundPosition;
     TextNode? textNode;
 
+    final normalizedSelection = selection.normalize(document);
+
     if (base.nodePosition is TextNodePosition) {
       textNode = document.getNodeById(selection.base.nodeId) as TextNode;
-      tagAroundPosition = _findTagBeforeCaret(
+      tagAroundPosition = _findTag(
         tagRule: _tagRule,
         nodeId: textNode.id,
         text: textNode.text,
-        caretPosition: base.nodePosition as TextNodePosition,
+        expansionPosition: base.nodePosition as TextNodePosition,
+        endPosition: normalizedSelection.end.nodePosition as TextNodePosition,
         isTokenCandidate: (attributions) => !attributions.contains(actionTagCancelledAttribution),
       );
     }
     if (tagAroundPosition == null && extent.nodePosition is TextNodePosition) {
       textNode = document.getNodeById(selection.extent.nodeId) as TextNode;
-      tagAroundPosition = _findTagBeforeCaret(
+      tagAroundPosition = _findTag(
         tagRule: _tagRule,
         nodeId: textNode.id,
         text: textNode.text,
-        caretPosition: extent.nodePosition as TextNodePosition,
+        expansionPosition: extent.nodePosition as TextNodePosition,
+        endPosition: normalizedSelection.end.nodePosition as TextNodePosition,
         isTokenCandidate: (attributions) => !attributions.contains(actionTagCancelledAttribution),
       );
     }
@@ -456,12 +467,14 @@ class ActionTagComposingReaction extends EditReaction {
   }
 }
 
-/// Finds a tag that starts at [caretPosition].
-TagAroundPosition? _findTagBeforeCaret({
+/// Finds a tag that touches the given [expansionPosition], constaining it
+/// to not cross the [endPosition].
+TagAroundPosition? _findTag({
   required TagRule tagRule,
   required String nodeId,
   required AttributedText text,
-  required TextNodePosition caretPosition,
+  required TextNodePosition expansionPosition,
+  required TextNodePosition endPosition,
   required bool Function(Set<Attribution> tokenAttributions) isTokenCandidate,
 }) {
   final rawText = text.text;
@@ -469,11 +482,17 @@ TagAroundPosition? _findTagBeforeCaret({
     return null;
   }
 
-  final caretOffset = caretPosition.offset;
+  int splitIndex = min(expansionPosition.offset, rawText.length);
+  splitIndex = max(splitIndex, 0);
 
-  // Extract the text before the caret.
-  final charactersBefore = rawText.substring(0, caretOffset).characters;
+  // Create 2 splits of characters to navigate upstream and downstream the caret position.
+  // ex: "this is a very|long string"
+  // -> split around the caret into charactersBefore="this is a very" and charactersAfter="long string"
+  final charactersBefore = rawText.substring(0, splitIndex).characters;
   final iteratorUpstream = charactersBefore.iteratorAtEnd;
+
+  final charactersAfter = rawText.substring(splitIndex, endPosition.offset).characters;
+  final iteratorDownstream = charactersAfter.iterator;
 
   if (charactersBefore.isNotEmpty && tagRule.excludedCharacters.contains(charactersBefore.last)) {
     // The character where we're supposed to begin our expansion is a
@@ -498,8 +517,16 @@ TagAroundPosition? _findTagBeforeCaret({
     }
   }
 
-  final tokenStartOffset = caretOffset - iteratorUpstream.stringAfterLength;
-  final tokenRange = SpanRange(tokenStartOffset, caretOffset);
+  // Move downstream the caret position until we find excluded character or reach the end of the text.
+  while (iteratorDownstream.moveNext()) {
+    final current = iteratorDownstream.current;
+    if (tagRule.excludedCharacters.contains(current)) {
+      break;
+    }
+  }
+
+  final tokenStartOffset = splitIndex - iteratorUpstream.stringAfterLength;
+  final tokenRange = SpanRange(tokenStartOffset, splitIndex + iteratorDownstream.stringBeforeLength);
 
   final tagText = text.substringInRange(tokenRange);
   if (!tagText.startsWith(tagRule.trigger)) {
@@ -517,7 +544,7 @@ TagAroundPosition? _findTagBeforeCaret({
       nodeId,
       tokenStartOffset,
     ),
-    searchOffset: caretPosition.offset,
+    searchOffset: expansionPosition.offset,
   );
 }
 
