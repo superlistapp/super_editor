@@ -1,4 +1,5 @@
 import 'package:attributed_text/attributed_text.dart';
+import 'package:characters/characters.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:super_editor/src/core/document.dart';
@@ -132,12 +133,12 @@ class SubmitComposingActionTagCommand extends EditCommand {
 
     final textNode = document.getNodeById(extent.nodeId) as TextNode;
 
-    final tagAroundPosition = TagFinder.findTagAroundPosition(
+    final tagAroundPosition = _findTagBeforeCaret(
       // TODO: deal with these tag rules in requests and commands, should the user really pass them?
       tagRule: defaultActionTagRule,
       nodeId: composer.selection!.extent.nodeId,
       text: textNode.text,
-      expansionPosition: extentPosition,
+      caretPosition: extentPosition,
       isTokenCandidate: (attributions) => !attributions.contains(actionTagCancelledAttribution),
     );
 
@@ -147,19 +148,17 @@ class SubmitComposingActionTagCommand extends EditCommand {
 
     context.composingActionTag.value = null;
 
-    final indexedTag = _constrainTagToCaret(tagAroundPosition, document, composer.selection!);
-
     executor.executeCommand(
       DeleteContentCommand(
         documentRange: DocumentSelection(
-          base: indexedTag.start,
-          extent: indexedTag.end,
+          base: tagAroundPosition.indexedTag.start,
+          extent: tagAroundPosition.indexedTag.end,
         ),
       ),
     );
     executor.executeCommand(
       ChangeSelectionCommand(
-        DocumentSelection.collapsed(position: indexedTag.start),
+        DocumentSelection.collapsed(position: tagAroundPosition.indexedTag.start),
         SelectionChangeType.deleteContent,
         SelectionReason.userInteraction,
       ),
@@ -218,21 +217,21 @@ class CancelComposingActionTagCommand extends EditCommand {
 
     if (base.nodePosition is TextNodePosition) {
       textNode = document.getNodeById(selection.base.nodeId) as TextNode;
-      composingToken = TagFinder.findTagAroundPosition(
+      composingToken = _findTagBeforeCaret(
         tagRule: _tagRule,
         nodeId: textNode.id,
         text: textNode.text,
-        expansionPosition: base.nodePosition as TextNodePosition,
+        caretPosition: base.nodePosition as TextNodePosition,
         isTokenCandidate: (tokenAttributions) => tokenAttributions.contains(actionTagComposingAttribution),
       );
     }
     if (composingToken == null && extent.nodePosition is TextNodePosition) {
       textNode = document.getNodeById(selection.extent.nodeId) as TextNode;
-      composingToken = TagFinder.findTagAroundPosition(
+      composingToken = _findTagBeforeCaret(
         tagRule: _tagRule,
         nodeId: textNode.id,
         text: textNode.text,
-        expansionPosition: base.nodePosition as TextNodePosition,
+        caretPosition: base.nodePosition as TextNodePosition,
         isTokenCandidate: (tokenAttributions) => tokenAttributions.contains(actionTagComposingAttribution),
       );
     }
@@ -244,14 +243,12 @@ class CancelComposingActionTagCommand extends EditCommand {
       return;
     }
 
-    final indexedTag = _constrainTagToCaret(composingToken, document, selection);
-
     // Remove the composing attribution.
     executor.executeCommand(
       RemoveTextAttributionsCommand(
         documentRange: textNode!.selectionBetween(
-          indexedTag.startOffset,
-          indexedTag.endOffset,
+          composingToken.indexedTag.startOffset,
+          composingToken.indexedTag.endOffset,
         ),
         attributions: {actionTagComposingAttribution},
       ),
@@ -259,8 +256,8 @@ class CancelComposingActionTagCommand extends EditCommand {
     executor.executeCommand(
       AddTextAttributionsCommand(
         documentRange: textNode.selectionBetween(
-          indexedTag.startOffset,
-          indexedTag.startOffset + 1,
+          composingToken.indexedTag.startOffset,
+          composingToken.indexedTag.startOffset + 1,
         ),
         attributions: {actionTagCancelledAttribution},
       ),
@@ -306,21 +303,21 @@ class ActionTagComposingReaction extends EditReaction {
 
     if (base.nodePosition is TextNodePosition) {
       textNode = document.getNodeById(selection.base.nodeId) as TextNode;
-      tagAroundPosition = TagFinder.findTagAroundPosition(
+      tagAroundPosition = _findTagBeforeCaret(
         tagRule: _tagRule,
         nodeId: textNode.id,
         text: textNode.text,
-        expansionPosition: base.nodePosition as TextNodePosition,
+        caretPosition: base.nodePosition as TextNodePosition,
         isTokenCandidate: (attributions) => !attributions.contains(actionTagCancelledAttribution),
       );
     }
     if (tagAroundPosition == null && extent.nodePosition is TextNodePosition) {
       textNode = document.getNodeById(selection.extent.nodeId) as TextNode;
-      tagAroundPosition = TagFinder.findTagAroundPosition(
+      tagAroundPosition = _findTagBeforeCaret(
         tagRule: _tagRule,
         nodeId: textNode.id,
         text: textNode.text,
-        expansionPosition: extent.nodePosition as TextNodePosition,
+        caretPosition: extent.nodePosition as TextNodePosition,
         isTokenCandidate: (attributions) => !attributions.contains(actionTagCancelledAttribution),
       );
     }
@@ -332,11 +329,9 @@ class ActionTagComposingReaction extends EditReaction {
       return;
     }
 
-    final indexedTag = _constrainTagToCaret(tagAroundPosition, document, selection);
-
-    _updateComposingTag(requestDispatcher, indexedTag);
-    editorContext.composingActionTag.value = indexedTag;
-    _onUpdateComposingActionTag(indexedTag);
+    _updateComposingTag(requestDispatcher, tagAroundPosition.indexedTag);
+    editorContext.composingActionTag.value = tagAroundPosition.indexedTag;
+    _onUpdateComposingActionTag(tagAroundPosition.indexedTag);
   }
 
   /// Finds all cancelled action tags across all changed text nodes in [changeList] and corrects
@@ -461,36 +456,68 @@ class ActionTagComposingReaction extends EditReaction {
   }
 }
 
-/// Given a [tagAroundPosition], returns a new [IndexedTag] which ends before the caret position.
-///
-/// For example, consider "hello|world", where "|" represents the caret position. If the user
-/// types "/" to start composing a tag, we don't want "world" to be included in the tag. If the
-/// user types "/header", we will have the text "hello/headerworld", and only "/header" should be
-/// included in the tag.
-IndexedTag _constrainTagToCaret(
-    TagAroundPosition tagAroundPosition, MutableDocument document, DocumentSelection selection) {
-  final indexedTag = tagAroundPosition.indexedTag;
-
-  final normalizedSelection = selection.normalize(document);
-  final endPosition = normalizedSelection.end.nodePosition is TextNodePosition
-      ? normalizedSelection.end.nodePosition as TextNodePosition
-      : null;
-
-  if (endPosition == null) {
-    // It shouldn't be possible to have a tag without a `TextNodePosition`. Fizzle.
-    return indexedTag;
+/// Finds a tag that starts at [caretPosition].
+TagAroundPosition? _findTagBeforeCaret({
+  required TagRule tagRule,
+  required String nodeId,
+  required AttributedText text,
+  required TextNodePosition caretPosition,
+  required bool Function(Set<Attribution> tokenAttributions) isTokenCandidate,
+}) {
+  final rawText = text.text;
+  if (rawText.isEmpty) {
+    return null;
   }
 
-  if (indexedTag.endOffset < endPosition.offset) {
-    // The tag is already constrained to the caret.
-    return indexedTag;
+  final caretOffset = caretPosition.offset;
+
+  // Extract the text before the caret.
+  final charactersBefore = rawText.substring(0, caretOffset).characters;
+  final iteratorUpstream = charactersBefore.iteratorAtEnd;
+
+  if (charactersBefore.isNotEmpty && tagRule.excludedCharacters.contains(charactersBefore.last)) {
+    // The character where we're supposed to begin our expansion is a
+    // character that's not allowed in a tag. Therefore, no tag exists
+    // around the search offset.
+    return null;
   }
 
-  // Constrain the tag to the caret.
-  return IndexedTag(
-    Tag(indexedTag.tag.trigger, indexedTag.tag.token.substring(0, endPosition.offset - indexedTag.startOffset - 1)),
-    indexedTag.nodeId,
-    indexedTag.startOffset,
+  // Move upstream until we find the trigger character or an excluded character.
+  while (iteratorUpstream.moveBack()) {
+    final currentCharacter = iteratorUpstream.current;
+    if (tagRule.excludedCharacters.contains(currentCharacter)) {
+      // The upstream character isn't allowed to appear in a tag. end the search.
+      return null;
+    }
+
+    if (currentCharacter == tagRule.trigger) {
+      // The character we are reading is the trigger.
+      // We move the iteratorUpstream one last time to include the trigger in the tokenRange and stop looking any further upstream
+      iteratorUpstream.moveBack();
+      break;
+    }
+  }
+
+  final tokenStartOffset = caretOffset - iteratorUpstream.stringAfterLength;
+  final tokenRange = SpanRange(tokenStartOffset, caretOffset);
+
+  final tagText = text.substringInRange(tokenRange);
+  if (!tagText.startsWith(tagRule.trigger)) {
+    return null;
+  }
+
+  final tokenAttributions = text.getAttributionSpansInRange(attributionFilter: (a) => true, range: tokenRange);
+  if (!isTokenCandidate(tokenAttributions.map((span) => span.attribution).toSet())) {
+    return null;
+  }
+
+  return TagAroundPosition(
+    indexedTag: IndexedTag(
+      Tag(tagRule.trigger, tagText.substring(1)),
+      nodeId,
+      tokenStartOffset,
+    ),
+    searchOffset: caretPosition.offset,
   );
 }
 
