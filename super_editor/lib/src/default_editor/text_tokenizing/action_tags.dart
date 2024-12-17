@@ -216,11 +216,6 @@ class CancelComposingActionTagCommand extends EditCommand {
     TagAroundPosition? composingToken;
     TextNode? textNode;
 
-    final normalizedSelection = selection.normalize(document);
-    final endPosition = normalizedSelection.end.nodePosition is TextNodePosition
-        ? normalizedSelection.end.nodePosition as TextNodePosition
-        : null;
-
     if (base.nodePosition is TextNodePosition) {
       textNode = document.getNodeById(selection.base.nodeId) as TextNode;
       composingToken = TagFinder.findTagAroundPosition(
@@ -249,12 +244,14 @@ class CancelComposingActionTagCommand extends EditCommand {
       return;
     }
 
+    final indexedTag = _constrainTagToCaret(composingToken, document, selection);
+
     // Remove the composing attribution.
     executor.executeCommand(
       RemoveTextAttributionsCommand(
         documentRange: textNode!.selectionBetween(
-          composingToken.indexedTag.startOffset,
-          composingToken.indexedTag.endOffset,
+          indexedTag.startOffset,
+          indexedTag.endOffset,
         ),
         attributions: {actionTagComposingAttribution},
       ),
@@ -262,8 +259,8 @@ class CancelComposingActionTagCommand extends EditCommand {
     executor.executeCommand(
       AddTextAttributionsCommand(
         documentRange: textNode.selectionBetween(
-          composingToken.indexedTag.startOffset,
-          composingToken.indexedTag.startOffset + 1,
+          indexedTag.startOffset,
+          indexedTag.startOffset + 1,
         ),
         attributions: {actionTagCancelledAttribution},
       ),
