@@ -138,7 +138,6 @@ class SubmitComposingActionTagCommand extends EditCommand {
       nodeId: composer.selection!.extent.nodeId,
       text: textNode.text,
       expansionPosition: extentPosition,
-      endPosition: extentPosition,
       isTokenCandidate: (attributions) => !attributions.contains(actionTagCancelledAttribution),
     );
 
@@ -148,17 +147,19 @@ class SubmitComposingActionTagCommand extends EditCommand {
 
     context.composingActionTag.value = null;
 
+    final indexedTag = _constrainTagToCaret(tagAroundPosition, document, composer.selection!);
+
     executor.executeCommand(
       DeleteContentCommand(
         documentRange: DocumentSelection(
-          base: tagAroundPosition.indexedTag.start,
-          extent: tagAroundPosition.indexedTag.end,
+          base: indexedTag.start,
+          extent: indexedTag.end,
         ),
       ),
     );
     executor.executeCommand(
       ChangeSelectionCommand(
-        DocumentSelection.collapsed(position: tagAroundPosition.indexedTag.start),
+        DocumentSelection.collapsed(position: indexedTag.start),
         SelectionChangeType.deleteContent,
         SelectionReason.userInteraction,
       ),
@@ -227,7 +228,6 @@ class CancelComposingActionTagCommand extends EditCommand {
         nodeId: textNode.id,
         text: textNode.text,
         expansionPosition: base.nodePosition as TextNodePosition,
-        endPosition: endPosition,
         isTokenCandidate: (tokenAttributions) => tokenAttributions.contains(actionTagComposingAttribution),
       );
     }
@@ -238,7 +238,6 @@ class CancelComposingActionTagCommand extends EditCommand {
         nodeId: textNode.id,
         text: textNode.text,
         expansionPosition: base.nodePosition as TextNodePosition,
-        endPosition: endPosition,
         isTokenCandidate: (tokenAttributions) => tokenAttributions.contains(actionTagComposingAttribution),
       );
     }
@@ -308,11 +307,6 @@ class ActionTagComposingReaction extends EditReaction {
     TagAroundPosition? tagAroundPosition;
     TextNode? textNode;
 
-    final normalizedSelection = selection.normalize(document);
-    final endPosition = normalizedSelection.end.nodePosition is TextNodePosition
-        ? normalizedSelection.end.nodePosition as TextNodePosition
-        : null;
-
     if (base.nodePosition is TextNodePosition) {
       textNode = document.getNodeById(selection.base.nodeId) as TextNode;
       tagAroundPosition = TagFinder.findTagAroundPosition(
@@ -320,7 +314,6 @@ class ActionTagComposingReaction extends EditReaction {
         nodeId: textNode.id,
         text: textNode.text,
         expansionPosition: base.nodePosition as TextNodePosition,
-        endPosition: endPosition,
         isTokenCandidate: (attributions) => !attributions.contains(actionTagCancelledAttribution),
       );
     }
@@ -331,7 +324,6 @@ class ActionTagComposingReaction extends EditReaction {
         nodeId: textNode.id,
         text: textNode.text,
         expansionPosition: extent.nodePosition as TextNodePosition,
-        endPosition: endPosition,
         isTokenCandidate: (attributions) => !attributions.contains(actionTagCancelledAttribution),
       );
     }
@@ -343,9 +335,11 @@ class ActionTagComposingReaction extends EditReaction {
       return;
     }
 
-    _updateComposingTag(requestDispatcher, tagAroundPosition.indexedTag);
-    editorContext.composingActionTag.value = tagAroundPosition.indexedTag;
-    _onUpdateComposingActionTag(tagAroundPosition.indexedTag);
+    final indexedTag = _constrainTagToCaret(tagAroundPosition, document, selection);
+
+    _updateComposingTag(requestDispatcher, indexedTag);
+    editorContext.composingActionTag.value = indexedTag;
+    _onUpdateComposingActionTag(indexedTag);
   }
 
   /// Finds all cancelled action tags across all changed text nodes in [changeList] and corrects
@@ -468,6 +462,39 @@ class ActionTagComposingReaction extends EditReaction {
       ),
     ]);
   }
+}
+
+/// Given a [tagAroundPosition], returns a new [IndexedTag] which ends before the caret position.
+///
+/// For example, consider "hello|world", where "|" represents the caret position. If the user
+/// types "/" to start composing a tag, we don't want "world" to be included in the tag. If the
+/// user types "/header", we will have the text "hello/headerworld", and only "/header" should be
+/// included in the tag.
+IndexedTag _constrainTagToCaret(
+    TagAroundPosition tagAroundPosition, MutableDocument document, DocumentSelection selection) {
+  final indexedTag = tagAroundPosition.indexedTag;
+
+  final normalizedSelection = selection.normalize(document);
+  final endPosition = normalizedSelection.end.nodePosition is TextNodePosition
+      ? normalizedSelection.end.nodePosition as TextNodePosition
+      : null;
+
+  if (endPosition == null) {
+    // It shouldn't be possible to have a tag without a `TextNodePosition`. Fizzle.
+    return indexedTag;
+  }
+
+  if (indexedTag.endOffset < endPosition.offset) {
+    // The tag is already constrained to the caret.
+    return indexedTag;
+  }
+
+  // Constrain the tag to the caret.
+  return IndexedTag(
+    Tag(indexedTag.tag.trigger, indexedTag.tag.token.substring(0, endPosition.offset - indexedTag.startOffset - 1)),
+    indexedTag.nodeId,
+    indexedTag.startOffset,
+  );
 }
 
 const _composingActionTagKey = "composing_action_tag";
