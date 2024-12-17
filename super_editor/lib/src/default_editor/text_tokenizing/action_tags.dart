@@ -142,7 +142,7 @@ class SubmitComposingActionTagCommand extends EditCommand {
       nodeId: composer.selection!.extent.nodeId,
       text: textNode.text,
       expansionPosition: extentPosition,
-      endPosition: normalizedSelection.end.nodePosition as TextNodePosition,
+      endPosition: normalizedSelection.end.nodePosition,
       isTokenCandidate: (attributions) => !attributions.contains(actionTagCancelledAttribution),
     );
 
@@ -227,7 +227,7 @@ class CancelComposingActionTagCommand extends EditCommand {
         nodeId: textNode.id,
         text: textNode.text,
         expansionPosition: base.nodePosition as TextNodePosition,
-        endPosition: normalizedSelection.end.nodePosition as TextNodePosition,
+        endPosition: normalizedSelection.end.nodePosition,
         isTokenCandidate: (tokenAttributions) => tokenAttributions.contains(actionTagComposingAttribution),
       );
     }
@@ -238,7 +238,7 @@ class CancelComposingActionTagCommand extends EditCommand {
         nodeId: textNode.id,
         text: textNode.text,
         expansionPosition: base.nodePosition as TextNodePosition,
-        endPosition: normalizedSelection.end.nodePosition as TextNodePosition,
+        endPosition: normalizedSelection.end.nodePosition,
         isTokenCandidate: (tokenAttributions) => tokenAttributions.contains(actionTagComposingAttribution),
       );
     }
@@ -317,7 +317,7 @@ class ActionTagComposingReaction extends EditReaction {
         nodeId: textNode.id,
         text: textNode.text,
         expansionPosition: base.nodePosition as TextNodePosition,
-        endPosition: normalizedSelection.end.nodePosition as TextNodePosition,
+        endPosition: normalizedSelection.end.nodePosition,
         isTokenCandidate: (attributions) => !attributions.contains(actionTagCancelledAttribution),
       );
     }
@@ -328,7 +328,7 @@ class ActionTagComposingReaction extends EditReaction {
         nodeId: textNode.id,
         text: textNode.text,
         expansionPosition: extent.nodePosition as TextNodePosition,
-        endPosition: normalizedSelection.end.nodePosition as TextNodePosition,
+        endPosition: normalizedSelection.end.nodePosition,
         isTokenCandidate: (attributions) => !attributions.contains(actionTagCancelledAttribution),
       );
     }
@@ -469,12 +469,14 @@ class ActionTagComposingReaction extends EditReaction {
 
 /// Finds a tag that touches the given [expansionPosition], constaining it
 /// to not cross the [endPosition].
+///
+/// If [endPosition] is not a `TextNodePosition`, it will be ignored .
 TagAroundPosition? _findTag({
   required TagRule tagRule,
   required String nodeId,
   required AttributedText text,
   required TextNodePosition expansionPosition,
-  required TextNodePosition endPosition,
+  required NodePosition endPosition,
   required bool Function(Set<Attribution> tokenAttributions) isTokenCandidate,
 }) {
   final rawText = text.text;
@@ -485,13 +487,15 @@ TagAroundPosition? _findTag({
   int splitIndex = min(expansionPosition.offset, rawText.length);
   splitIndex = max(splitIndex, 0);
 
+  final endOffset = endPosition is TextNodePosition ? endPosition.offset : null;
+
   // Create 2 splits of characters to navigate upstream and downstream the caret position.
   // ex: "this is a very|long string"
   // -> split around the caret into charactersBefore="this is a very" and charactersAfter="long string"
   final charactersBefore = rawText.substring(0, splitIndex).characters;
   final iteratorUpstream = charactersBefore.iteratorAtEnd;
 
-  final charactersAfter = rawText.substring(splitIndex, endPosition.offset).characters;
+  final charactersAfter = rawText.substring(splitIndex, endOffset).characters;
   final iteratorDownstream = charactersAfter.iterator;
 
   if (charactersBefore.isNotEmpty && tagRule.excludedCharacters.contains(charactersBefore.last)) {
