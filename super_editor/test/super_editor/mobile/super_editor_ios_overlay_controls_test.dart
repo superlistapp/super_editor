@@ -1,10 +1,13 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_test_robots/flutter_test_robots.dart';
 import 'package:flutter_test_runners/flutter_test_runners.dart';
+import 'package:super_editor/super_editor.dart';
 import 'package:super_editor/super_editor_test.dart';
 import 'package:super_text_layout/super_text_layout.dart';
 
 import '../../test_runners.dart';
+import '../../test_tools.dart';
 import '../supereditor_test_tools.dart';
 
 void main() {
@@ -214,6 +217,63 @@ void main() {
       expect(SuperEditorInspector.isCaretVisible(), true);
     });
 
+    testWidgetsOnIos("keeps current selection when tapping on caret", (tester) async {
+      await _pumpSingleParagraphApp(tester, useIosSelectionHeuristics: true);
+
+      // Tap at "con|sectetur" to place the caret at the end of the word.
+      await tester.tapInParagraph("1", 32);
+
+      // Ensure that the selection was placed at the end of the word.
+      expect(
+        SuperEditorInspector.findDocumentSelection(),
+        selectionEquivalentTo(const DocumentSelection.collapsed(
+          position: DocumentPosition(
+            nodeId: "1",
+            nodePosition: TextNodePosition(offset: 39),
+          ),
+        )),
+      );
+
+      // Press and drag the caret to "con|sectetur".
+      final gesture = await tester.tapDownInParagraph("1", 39);
+      for (int i = 0; i < 7; i += 1) {
+        await gesture.moveBy(const Offset(-19, 0));
+        await tester.pump();
+      }
+
+      // Resolve the gesture so that we don't have pending gesture timers.
+      await gesture.up();
+      await tester.pump(kDoubleTapTimeout);
+
+      // Ensure that the selection moved to "con|sectetur".
+      expect(
+        SuperEditorInspector.findDocumentSelection(),
+        selectionEquivalentTo(const DocumentSelection.collapsed(
+          position: DocumentPosition(
+            nodeId: "1",
+            nodePosition: TextNodePosition(offset: 32),
+          ),
+        )),
+      );
+
+      // Tap at the caret.
+      await tester.tapInParagraph("1", 32);
+
+      // Ensure the selection was kept at "con|sectetur".
+      expect(
+        SuperEditorInspector.findDocumentSelection(),
+        selectionEquivalentTo(const DocumentSelection.collapsed(
+          position: DocumentPosition(
+            nodeId: "1",
+            nodePosition: TextNodePosition(offset: 32),
+          ),
+        )),
+      );
+
+      // Ensure the toolbar is visible.
+      expect(SuperEditorInspector.isMobileToolbarVisible(), isTrue);
+    });
+
     group("on device and web > shows ", () {
       testWidgetsOnIosDeviceAndWeb("caret", (tester) async {
         await _pumpSingleParagraphApp(tester);
@@ -309,11 +369,15 @@ void main() {
   });
 }
 
-Future<void> _pumpSingleParagraphApp(WidgetTester tester) async {
+Future<void> _pumpSingleParagraphApp(
+  WidgetTester tester, {
+  bool useIosSelectionHeuristics = false,
+}) async {
   await tester
       .createDocument()
       // Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor...
       .withSingleParagraph()
       .simulateSoftwareKeyboardInsets(true)
+      .useIosSelectionHeuristics(useIosSelectionHeuristics)
       .pump();
 }

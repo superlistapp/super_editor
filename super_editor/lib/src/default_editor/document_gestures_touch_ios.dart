@@ -624,8 +624,8 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
 
       final didTapOnExistingSelection = selection != null &&
           selection.isCollapsed &&
-          selection.extent.nodeId == adjustedSelectionPosition.nodeId &&
-          selection.extent.nodePosition.isEquivalentTo(adjustedSelectionPosition.nodePosition);
+          selection.extent.nodeId == docPosition.nodeId &&
+          selection.extent.nodePosition.isEquivalentTo(docPosition.nodePosition);
 
       if (didTapOnExistingSelection && _isKeyboardOpen) {
         // Toggle the toolbar display when the user taps on the collapsed caret,
@@ -640,31 +640,31 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
         _controlsController!.hideToolbar();
       }
 
-      final tappedComponent = _docLayout.getComponentByNodeId(adjustedSelectionPosition.nodeId)!;
-      if (!tappedComponent.isVisualSelectionSupported()) {
-        // The user tapped a non-selectable component.
-        // Place the document selection at the nearest selectable node
-        // to the tapped component.
-        moveSelectionToNearestSelectableNode(
-          editor: widget.editor,
-          document: widget.document,
-          documentLayoutResolver: widget.getDocumentLayout,
-          currentSelection: widget.selection.value,
-          startingNode: widget.document.getNodeById(adjustedSelectionPosition.nodeId)!,
-        );
-        return;
-      } else {
-        // Place the document selection at the location where the
-        // user tapped.
-        _selectPosition(adjustedSelectionPosition);
-      }
-
       if (didTapOnExistingSelection) {
         // The user tapped on the existing selection. Show the software keyboard.
         //
         // If the user didn't tap on an existing selection, the software keyboard will
         // already be visible.
         widget.openSoftwareKeyboard();
+      } else {
+        final tappedComponent = _docLayout.getComponentByNodeId(adjustedSelectionPosition.nodeId)!;
+        if (!tappedComponent.isVisualSelectionSupported()) {
+          // The user tapped a non-selectable component.
+          // Place the document selection at the nearest selectable node
+          // to the tapped component.
+          moveSelectionToNearestSelectableNode(
+            editor: widget.editor,
+            document: widget.document,
+            documentLayoutResolver: widget.getDocumentLayout,
+            currentSelection: widget.selection.value,
+            startingNode: widget.document.getNodeById(adjustedSelectionPosition.nodeId)!,
+          );
+          return;
+        } else {
+          // Place the document selection at the location where the
+          // user tapped.
+          _selectPosition(adjustedSelectionPosition);
+        }
       }
     } else {
       widget.editor.execute([
@@ -908,7 +908,12 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
     }
 
     final extentRect = _docLayout.getRectForPosition(collapsedPosition)!;
-    final caretRect = Rect.fromLTWH(extentRect.left - 1, extentRect.center.dy, 1, 1).inflate(24);
+    final caretRect = Rect.fromLTRB(
+      extentRect.left - 24,
+      extentRect.top,
+      extentRect.right + 24,
+      extentRect.bottom,
+    );
 
     final docOffset = _interactorOffsetToDocumentOffset(interactorOffset);
     return caretRect.contains(docOffset);
