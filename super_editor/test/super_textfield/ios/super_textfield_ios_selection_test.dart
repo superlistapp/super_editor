@@ -7,6 +7,7 @@ import 'package:super_editor/src/infrastructure/platforms/ios/toolbar.dart';
 import 'package:super_editor/super_text_field.dart';
 
 import '../super_textfield_inspector.dart';
+import '../super_textfield_robot.dart';
 
 void main() {
   group("SuperTextField mobile selection > iOS", () {
@@ -52,6 +53,56 @@ void main() {
 
       // Ensure that the text field toolbar disappeared.
       expect(find.byType(IOSTextEditingFloatingToolbar), findsNothing);
+    });
+
+    testWidgetsOnIos("keeps current selection when tapping on caret", (tester) async {
+      IOSTextFieldTouchInteractor.useIosSelectionHeuristics = true;
+      addTearDown(() => IOSTextFieldTouchInteractor.useIosSelectionHeuristics = false);
+
+      await _pumpScaffold(
+        tester,
+        controller: AttributedTextEditingController(
+          text: AttributedText('Lorem ipsum dolor'),
+        ),
+      );
+
+      // Ensure there's no selection to begin with.
+      expect(
+        SuperTextFieldInspector.findSelection(),
+        const TextSelection.collapsed(offset: -1),
+      );
+
+      // Tap at "ips|um" to place the caret at the end of the word.
+      await tester.placeCaretInSuperTextField(9);
+      await tester.pump(kDoubleTapTimeout);
+
+      // Ensure the selection was placed at the end of the word.
+      expect(
+        SuperTextFieldInspector.findSelection(),
+        const TextSelection.collapsed(offset: 11),
+      );
+
+      // Press and drag the caret to "ips|um".
+      final dragGesture = await tester.dragCaretByDistanceInSuperTextField(const Offset(-32, 0));
+      await dragGesture.up();
+
+      // Ensure the selection moved to "ips|um".
+      expect(
+        SuperTextFieldInspector.findSelection(),
+        const TextSelection.collapsed(offset: 9),
+      );
+
+      // Tap at the caret to show the toolbar.
+      await tester.placeCaretInSuperTextField(9);
+
+      // Ensure the selection was kept at "ips|um".
+      expect(
+        SuperTextFieldInspector.findSelection(),
+        const TextSelection.collapsed(offset: 9),
+      );
+
+      // Ensure that the text field toolbar is visible.
+      expect(find.byType(IOSTextEditingFloatingToolbar), findsOneWidget);
     });
   });
 }
