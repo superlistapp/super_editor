@@ -14,7 +14,7 @@ A `Stylesheet` is a priority list of `StyleRule`s. Each `StyleRule` has a `Block
 The easiest way is to create a custom stylesheet is to copy the `defaultStylesheet` and add your rules at the end. For example, to make all level one headers green, create the following stylesheet:
 
 ```dart
-const myStyleSheet = defaultStylesheet.copyWith(
+final myStyleSheet = defaultStylesheet.copyWith(
   addRulesAfter: [
     StyleRule(
       // Matches all level one headers.
@@ -45,12 +45,14 @@ class MyApp extends StatelessWidget {
 
 See the `Styles` class for the list of keys to the style metadata used by `SuperEditor`.
 
+[TODO: what is the meaning of "key" in this context?]
+
 ## Multiple matching rules
 
 Multiple `StyleRule`s can match a single node. When that happens, `SuperEditor` attempts to merge them, by looking at each key. For example, consider the following stylesheet:
 
 ```dart
-const myStyleSheet = defaultStylesheet.copyWith(
+final myStyleSheet = defaultStylesheet.copyWith(
   addRulesAfter: [
     StyleRule(
       // Matches all level one headers.
@@ -79,7 +81,7 @@ Both styles will be applied. Each level one header will have green text with a f
 If the styles can't be merged, the first one wins. For example, consider the following stylesheet:
 
 ```dart
-const myStyleSheet = defaultStylesheet.copyWith(
+final myStyleSheet = defaultStylesheet.copyWith(
   addRulesAfter: [
     StyleRule(
       // Matches all nodes. 
@@ -108,7 +110,7 @@ Since we cannot match two different text alignments, the first one is used. All 
 However, non-conflicting keys are preserved. For example, consider the following stylesheet:
 
 ```dart
-const myStyleSheet = defaultStylesheet.copyWith(
+final myStyleSheet = defaultStylesheet.copyWith(
   addRulesAfter: [
     StyleRule(
       // Matches all nodes. 
