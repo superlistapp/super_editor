@@ -1312,3 +1312,54 @@ class DeleteNodeCommand extends EditCommand {
     ]);
   }
 }
+
+/// An [EditRequest] to clear the document's content.
+///
+/// This request:
+///
+/// - Removes all nodes from the document.
+/// - Adds a new empty paragraph.
+/// - Places the caret at the beginning of the new paragraph.
+/// - Clears the composing region.
+class ClearDocumentRequest implements EditRequest {
+  const ClearDocumentRequest();
+}
+
+class ClearDocumentCommand extends EditCommand {
+  @override
+  void execute(EditContext context, CommandExecutor executor) {
+    final document = context.document;
+
+    final idsToDelete = document.map((node) => node.id).toList();
+    for (final id in idsToDelete) {
+      executor.executeCommand(
+        DeleteNodeCommand(nodeId: id),
+      );
+    }
+
+    final newNodeId = Editor.createNodeId();
+    executor
+      ..executeCommand(
+        InsertNodeAtIndexCommand(
+          nodeIndex: 0,
+          newNode: ParagraphNode(
+            id: newNodeId,
+            text: AttributedText(),
+          ),
+        ),
+      )
+      ..executeCommand(
+        ChangeSelectionCommand(
+          DocumentSelection.collapsed(
+            position: DocumentPosition(
+              nodeId: newNodeId,
+              nodePosition: const TextNodePosition(offset: 0),
+            ),
+          ),
+          SelectionChangeType.insertContent,
+          SelectionReason.userInteraction,
+        ),
+      )
+      ..executeCommand(ChangeComposingRegionCommand(null));
+  }
+}
