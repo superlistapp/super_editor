@@ -104,10 +104,8 @@ class HomePage extends StatelessWidget {
               ),
             ],
           ),
-          child: SingleChildScrollView(
-            child: FeaturedEditor(
-              displayMode: displayMode,
-            ),
+          child: FeaturedEditor(
+            displayMode: displayMode,
           ),
         ),
       ),
