@@ -120,6 +120,9 @@ final defaultRequestHandlers = List.unmodifiable(<EditRequestHandler>[
   (request) => request is DeleteNodeRequest //
       ? DeleteNodeCommand(nodeId: request.nodeId)
       : null,
+  (request) => request is ClearDocumentRequest //
+      ? ClearDocumentCommand()
+      : null,
   (request) => request is DeleteUpstreamCharacterRequest //
       ? const DeleteUpstreamCharacterCommand()
       : null,
