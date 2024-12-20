@@ -271,34 +271,32 @@ class ContentLayersElement extends RenderObjectElement {
     super.markNeedsBuild();
   }
 
+  /// Builds the underlays and overlays.
   void buildLayers() {
     contentLayersLog.finer("ContentLayersElement - (re)building layers");
-
-    owner!.buildScope(this, () {
-      final List<Element> underlays = List<Element>.filled(widget.underlays.length, _NullElement.instance);
-      for (int i = 0; i < underlays.length; i += 1) {
-        late final Element child;
-        if (i > _underlays.length - 1) {
-          child = inflateWidget(widget.underlays[i](this), _UnderlaySlot(i));
-        } else {
-          child = super.updateChild(_underlays[i], widget.underlays[i](this), _UnderlaySlot(i))!;
-        }
-        underlays[i] = child;
+    final List<Element> underlays = List<Element>.filled(widget.underlays.length, _NullElement.instance);
+    for (int i = 0; i < underlays.length; i += 1) {
+      late final Element child;
+      if (i > _underlays.length - 1) {
+        child = inflateWidget(widget.underlays[i](this), _UnderlaySlot(i));
+      } else {
+        child = super.updateChild(_underlays[i], widget.underlays[i](this), _UnderlaySlot(i))!;
       }
-      _underlays = underlays;
+      underlays[i] = child;
+    }
+    _underlays = underlays;
 
-      final List<Element> overlays = List<Element>.filled(widget.overlays.length, _NullElement.instance);
-      for (int i = 0; i < overlays.length; i += 1) {
-        late final Element child;
-        if (i > _overlays.length - 1) {
-          child = inflateWidget(widget.overlays[i](this), _OverlaySlot(i));
-        } else {
-          child = super.updateChild(_overlays[i], widget.overlays[i](this), _OverlaySlot(i))!;
-        }
-        overlays[i] = child;
+    final List<Element> overlays = List<Element>.filled(widget.overlays.length, _NullElement.instance);
+    for (int i = 0; i < overlays.length; i += 1) {
+      late final Element child;
+      if (i > _overlays.length - 1) {
+        child = inflateWidget(widget.overlays[i](this), _OverlaySlot(i));
+      } else {
+        child = super.updateChild(_overlays[i], widget.overlays[i](this), _OverlaySlot(i))!;
       }
-      _overlays = overlays;
-    });
+      overlays[i] = child;
+    }
+    _overlays = overlays;
   }
 
   @override
@@ -345,9 +343,19 @@ class ContentLayersElement extends RenderObjectElement {
     assert(!debugChildrenHaveDuplicateKeys(widget, [newContent]));
 
     _content = updateChild(_content, newContent, _contentSlot);
-    // super.update() and updateChild() is where the framework reparents 
-    // forgotten children. Therefore, at this point, the framework is 
-    // done with the concept of forgotten children, so we clear our 
+
+    if (!renderObject.contentNeedsLayout) {
+      // Layout has already run. No layout bounds changed. There might be a
+      // non-layout change that needs to be painted, e.g., change to theme brightness.
+      // Re-build all layers, which is safe to do because no layout constraints changed.
+      buildLayers();
+    }
+    // Else, dirty content layout will cause this whole widget to re-layout. The
+    // layers will be re-built during that layout pass.
+
+    // super.update() and updateChild() is where the framework reparents
+    // forgotten children. Therefore, at this point, the framework is
+    // done with the concept of forgotten children, so we clear our
     // local cache of them, too.
     _forgottenChildren.clear();
   }
@@ -644,7 +652,11 @@ class RenderContentLayers extends RenderSliver with RenderSliverHelpers {
     // content changes.
     contentLayersLog.fine("Building layers");
     invokeLayoutCallback((constraints) {
-      _element!.buildLayers();
+      // Usually, widgets are built during the build phase, but we're building the layers
+      // during layout phase, so we need to explicitly tell Flutter to build all elements.
+      _element!.owner!.buildScope(_element!, () {
+        _element!.buildLayers();
+      });
     });
     contentLayersLog.finer("Done building layers");
 
