@@ -77,8 +77,12 @@ void main() {
         final downstreamCaretOffset = SuperEditorInspector.findCaretOffsetInDocument();
         final downstreamSelection = SuperEditorInspector.findDocumentSelection();
 
+        // Tap on another character, because tapping on the same character shows the toolbar
+        // instead of changing the selection.
+        await tester.placeCaretInParagraph('1', 0);
+
         // Place the caret at the same offset but with an upstream affinity.
-        await tester.pump(kTapTimeout * 2); // Simulate a pause to avoid a double tap.
+        await tester.pump();
         await tester.placeCaretInParagraph('1', textOffset, affinity: TextAffinity.upstream);
         final upstreamCaretOffset = SuperEditorInspector.findCaretOffsetInDocument();
         final upstreamSelection = SuperEditorInspector.findDocumentSelection();
