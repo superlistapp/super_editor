@@ -923,16 +923,9 @@ Widget iOSSystemPopoverEditorToolbarWithFallbackBuilder(
     return const SizedBox();
   }
 
-  if (focalPoint.offset == null || focalPoint.leaderSize == null) {
-    // It's unclear when/why this might happen. But there seem to be some
-    // cases, such as placing a caret in an empty document and tapping again
-    // to show the toolbar.
-    return const SizedBox();
-  }
-
   if (IOSSystemContextMenu.isSupported(context)) {
     return IOSSystemContextMenu(
-      anchor: focalPoint.offset! & focalPoint.leaderSize!,
+      leaderLink: focalPoint,
     );
   }
 

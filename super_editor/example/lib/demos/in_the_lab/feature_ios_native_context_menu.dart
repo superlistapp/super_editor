@@ -123,6 +123,10 @@ class _NativeIosContextMenuFeatureDemoState extends State<NativeIosContextMenuFe
     Key mobileToolbarKey,
     LeaderLink focalPoint,
   ) {
+    if (_editor.composer.selection == null) {
+      return const SizedBox();
+    }
+
     return iOSSystemPopoverEditorToolbarWithFallbackBuilder(
       context,
       mobileToolbarKey,
