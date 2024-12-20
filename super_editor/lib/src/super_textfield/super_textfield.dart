@@ -8,6 +8,7 @@ import 'package:super_editor/src/super_textfield/android/android_textfield.dart'
 import 'package:super_editor/src/super_textfield/desktop/desktop_textfield.dart';
 import 'package:super_editor/src/super_textfield/infrastructure/attributed_text_editing_controller.dart';
 import 'package:super_editor/src/super_textfield/infrastructure/hint_text.dart';
+import 'package:super_editor/src/super_textfield/infrastructure/text_field_gestures_interaction_overrides.dart';
 import 'package:super_editor/src/super_textfield/input_method_engine/_ime_text_editing_controller.dart';
 import 'package:super_editor/src/super_textfield/ios/ios_textfield.dart';
 import 'package:super_editor/src/infrastructure/text_input.dart';
@@ -21,6 +22,8 @@ export 'infrastructure/attributed_text_editing_controller.dart';
 export 'infrastructure/hint_text.dart';
 export 'infrastructure/magnifier.dart';
 export 'infrastructure/text_scrollview.dart';
+export 'infrastructure/text_field_gestures_interaction_overrides.dart';
+export 'infrastructure/text_field_tap_handlers.dart';
 export 'input_method_engine/_ime_text_editing_controller.dart';
 export 'ios/ios_textfield.dart';
 export 'styles.dart';
@@ -71,6 +74,7 @@ class SuperTextField extends StatefulWidget {
     this.inputSource,
     this.keyboardHandlers,
     this.selectorHandlers,
+    this.tapHandlers = const [],
     this.padding,
     this.textInputAction,
     this.imeConfiguration,
@@ -181,6 +185,15 @@ class SuperTextField extends StatefulWidget {
   /// The IME reports selectors as unique `String`s, therefore selector handlers are
   /// defined as a mapping from selector names to handler functions.
   final Map<String, SuperTextFieldSelectorHandler>? selectorHandlers;
+
+  /// {@template super_text_field_tap_handlers}
+  /// Optional list of handlers that respond to taps on content, e.g., opening
+  /// a link when the user taps on text with a link attribution.
+  ///
+  /// If a handler returns [TapHandlingInstruction.halt], no subsequent handlers
+  /// nor the default tap behavior will be executed.
+  /// {@endtemplate}
+  final List<SuperTextFieldTapHandler> tapHandlers;
 
   /// Padding placed around the text content of this text field, but within the
   /// scrollable viewport.
@@ -363,6 +376,7 @@ class SuperTextFieldState extends State<SuperTextField> implements ImeInputOwner
           maxLines: widget.maxLines,
           keyboardHandlers: widget.keyboardHandlers,
           selectorHandlers: widget.selectorHandlers,
+          tapHandlers: widget.tapHandlers,
           padding: widget.padding ?? EdgeInsets.zero,
           inputSource: _inputSource,
           textInputAction: _textInputAction,
@@ -377,6 +391,7 @@ class SuperTextFieldState extends State<SuperTextField> implements ImeInputOwner
             key: _platformFieldKey,
             focusNode: _focusNode,
             tapRegionGroupId: widget.tapRegionGroupId,
+            tapHandlers: widget.tapHandlers,
             textController: _controller,
             textAlign: widget.textAlign,
             textStyleBuilder: widget.textStyleBuilder,
@@ -405,6 +420,7 @@ class SuperTextFieldState extends State<SuperTextField> implements ImeInputOwner
             key: _platformFieldKey,
             focusNode: _focusNode,
             tapRegionGroupId: widget.tapRegionGroupId,
+            tapHandlers: widget.tapHandlers,
             textController: _controller,
             textAlign: widget.textAlign,
             textStyleBuilder: widget.textStyleBuilder,

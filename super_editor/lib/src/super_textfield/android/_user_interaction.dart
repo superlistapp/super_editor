@@ -2,8 +2,10 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
+import 'package:super_editor/src/infrastructure/document_gestures_interaction_overrides.dart';
 import 'package:super_editor/src/infrastructure/flutter/flutter_scheduler.dart';
 import 'package:super_editor/src/infrastructure/multi_tap_gesture.dart';
+import 'package:super_editor/src/super_textfield/infrastructure/text_field_gestures_interaction_overrides.dart';
 import 'package:super_editor/src/super_textfield/super_textfield.dart';
 import 'package:super_text_layout/super_text_layout.dart';
 
@@ -51,6 +53,7 @@ class AndroidTextFieldTouchInteractor extends StatefulWidget {
     required this.getGlobalCaretRect,
     required this.isMultiline,
     required this.handleColor,
+    this.tapHandlers = const [],
     this.showDebugPaint = false,
     required this.child,
   }) : super(key: key);
@@ -92,6 +95,9 @@ class AndroidTextFieldTouchInteractor extends StatefulWidget {
 
   /// The color of expanded selection drag handles.
   final Color handleColor;
+
+  /// {@macro super_text_field_tap_handlers}
+  final List<SuperTextFieldTapHandler> tapHandlers;
 
   /// Whether to paint debugging guides and regions.
   final bool showDebugPaint;
@@ -166,8 +172,46 @@ class AndroidTextFieldTouchInteractorState extends State<AndroidTextFieldTouchIn
     }
   }
 
+  void _onTapDown(TapDownDetails details) {
+    final textOffset = _globalOffsetToTextOffset(details.globalPosition);
+
+    for (final handler in widget.tapHandlers) {
+      final result = handler.onTapDown(
+        SuperTextFieldGestureDetails(
+          textLayout: _textLayout,
+          textController: widget.textController,
+          globalOffset: details.globalPosition,
+          layoutOffset: details.localPosition,
+          textOffset: textOffset,
+        ),
+      );
+
+      if (result == TapHandlingInstruction.halt) {
+        return;
+      }
+    }
+  }
+
   void _onTapUp(TapUpDetails details) {
     _log.fine('User released a tap');
+
+    final textOffset = _globalOffsetToTextOffset(details.globalPosition);
+
+    for (final handler in widget.tapHandlers) {
+      final result = handler.onTapUp(
+        SuperTextFieldGestureDetails(
+          textLayout: _textLayout,
+          textController: widget.textController,
+          globalOffset: details.globalPosition,
+          layoutOffset: details.localPosition,
+          textOffset: textOffset,
+        ),
+      );
+
+      if (result == TapHandlingInstruction.halt) {
+        return;
+      }
+    }
 
     if (widget.focusNode.hasFocus && widget.textController.isAttachedToIme) {
       widget.textController.showKeyboard();
@@ -209,6 +253,16 @@ class AndroidTextFieldTouchInteractorState extends State<AndroidTextFieldTouchIn
       ..startCollapsedHandleAutoHideCountdown();
   }
 
+  void _onTapCancel() {
+    for (final handler in widget.tapHandlers) {
+      final result = handler.onTapCancel();
+
+      if (result == TapHandlingInstruction.halt) {
+        return;
+      }
+    }
+  }
+
   /// Places the caret in the field's text based on the given [localOffset],
   /// and displays the drag handle.
   void _selectAtOffset(Offset localOffset) {
@@ -242,6 +296,25 @@ class AndroidTextFieldTouchInteractorState extends State<AndroidTextFieldTouchIn
 
   void _onDoubleTapDown(TapDownDetails details) {
     _log.fine("User double-tapped down");
+
+    final textOffset = _globalOffsetToTextOffset(details.globalPosition);
+
+    for (final handler in widget.tapHandlers) {
+      final result = handler.onDoubleTapDown(
+        SuperTextFieldGestureDetails(
+          textLayout: _textLayout,
+          textController: widget.textController,
+          globalOffset: details.globalPosition,
+          layoutOffset: details.localPosition,
+          textOffset: textOffset,
+        ),
+      );
+
+      if (result == TapHandlingInstruction.halt) {
+        return;
+      }
+    }
+
     widget.focusNode.requestFocus();
 
     final tapTextPosition = _getTextPositionAtOffset(details.localPosition);
@@ -265,8 +338,57 @@ class AndroidTextFieldTouchInteractorState extends State<AndroidTextFieldTouchIn
     }
   }
 
+  void _onDoubleTapUp(TapUpDetails details) {
+    final textOffset = _globalOffsetToTextOffset(details.globalPosition);
+
+    for (final handler in widget.tapHandlers) {
+      final result = handler.onDoubleTapUp(
+        SuperTextFieldGestureDetails(
+          textLayout: _textLayout,
+          textController: widget.textController,
+          globalOffset: details.globalPosition,
+          layoutOffset: details.localPosition,
+          textOffset: textOffset,
+        ),
+      );
+
+      if (result == TapHandlingInstruction.halt) {
+        return;
+      }
+    }
+  }
+
+  void _onDoubleTapCancel() {
+    for (final handler in widget.tapHandlers) {
+      final result = handler.onDoubleTapCancel();
+
+      if (result == TapHandlingInstruction.halt) {
+        return;
+      }
+    }
+  }
+
   void _onTripleTapDown(TapDownDetails details) {
     _log.fine("User triple-tapped down");
+
+    final textOffset = _globalOffsetToTextOffset(details.globalPosition);
+
+    for (final handler in widget.tapHandlers) {
+      final result = handler.onTripleTapDown(
+        SuperTextFieldGestureDetails(
+          textLayout: _textLayout,
+          textController: widget.textController,
+          globalOffset: details.globalPosition,
+          layoutOffset: details.localPosition,
+          textOffset: textOffset,
+        ),
+      );
+
+      if (result == TapHandlingInstruction.halt) {
+        return;
+      }
+    }
+
     final tapTextPosition = _textLayout.getPositionAtOffset(details.localPosition)!;
 
     widget.textController.selection =
@@ -279,6 +401,36 @@ class AndroidTextFieldTouchInteractorState extends State<AndroidTextFieldTouchIn
       widget.editingOverlayController
         ..unHideCollapsedHandle()
         ..startCollapsedHandleAutoHideCountdown();
+    }
+  }
+
+  void _onTripleTapUp(TapUpDetails details) {
+    final textOffset = _globalOffsetToTextOffset(details.globalPosition);
+
+    for (final handler in widget.tapHandlers) {
+      final result = handler.onTripleTapUp(
+        SuperTextFieldGestureDetails(
+          textLayout: _textLayout,
+          textController: widget.textController,
+          globalOffset: details.globalPosition,
+          layoutOffset: details.localPosition,
+          textOffset: textOffset,
+        ),
+      );
+
+      if (result == TapHandlingInstruction.halt) {
+        return;
+      }
+    }
+  }
+
+  void _onTripleTapCancel() {
+    for (final handler in widget.tapHandlers) {
+      final result = handler.onTripleTapCancel();
+
+      if (result == TapHandlingInstruction.halt) {
+        return;
+      }
     }
   }
 
@@ -479,9 +631,15 @@ class AndroidTextFieldTouchInteractorState extends State<AndroidTextFieldTouchIn
             () => TapSequenceGestureRecognizer(),
             (TapSequenceGestureRecognizer recognizer) {
               recognizer
+                ..onTapDown = _onTapDown
                 ..onTapUp = _onTapUp
+                ..onTapCancel = _onTapCancel
                 ..onDoubleTapDown = _onDoubleTapDown
+                ..onDoubleTapUp = _onDoubleTapUp
+                ..onDoubleTapCancel = _onDoubleTapCancel
                 ..onTripleTapDown = _onTripleTapDown
+                ..onTripleTapUp = _onTripleTapUp
+                ..onTripleTapCancel = _onTripleTapCancel
                 ..gestureSettings = gestureSettings;
             },
           ),
