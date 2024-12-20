@@ -1330,12 +1330,15 @@ class ClearDocumentCommand extends EditCommand {
   void execute(EditContext context, CommandExecutor executor) {
     final document = context.document;
 
-    final idsToDelete = document.map((node) => node.id).toList();
-    for (final id in idsToDelete) {
-      executor.executeCommand(
-        DeleteNodeCommand(nodeId: id),
-      );
+    for (final node in document) {
+      executor.logChanges([
+        DocumentEdit(
+          NodeRemovedEvent(node.id, node),
+        )
+      ]);
     }
+
+    document.clear();
 
     final newNodeId = Editor.createNodeId();
     executor

@@ -55,7 +55,7 @@ void main() {
       expect(document.first, isA<ParagraphNode>());
       expect((document.first as ParagraphNode).text.text, equals(''));
 
-      // Ensure the selection was moved to the beginning of the document.
+      // Ensure the selection was moved to the end of the document.
       expect(
         SuperEditorInspector.findDocumentSelection(),
         DocumentSelection.collapsed(
