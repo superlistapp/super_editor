@@ -42,7 +42,7 @@ class IOSTextFieldTouchInteractor extends StatefulWidget {
   const IOSTextFieldTouchInteractor({
     Key? key,
     required this.focusNode,
-    this.tapHandlers,
+    this.tapHandlers = const [],
     required this.textFieldLayerLink,
     required this.textController,
     required this.editingOverlayController,
@@ -64,7 +64,7 @@ class IOSTextFieldTouchInteractor extends StatefulWidget {
   final FocusNode focusNode;
 
   /// {@macro super_text_field_tap_handlers}
-  final List<SuperTextFieldTapHandler>? tapHandlers;
+  final List<SuperTextFieldTapHandler> tapHandlers;
 
   /// [LayerLink] that follows the text field that contains this
   /// [IOSExtFieldInteractor].
@@ -181,32 +181,44 @@ class IOSTextFieldTouchInteractorState extends State<IOSTextFieldTouchInteractor
 
   void _onTapDown(TapDownDetails details) {
     _log.fine("User tapped down");
-    if (!widget.focusNode.hasFocus) {
-      _log.finer("Field isn't focused. Ignoring press.");
-      return;
+
+    final textOffset = _globalOffsetToTextOffset(details.globalPosition);
+
+    for (final handler in widget.tapHandlers) {
+      final result = handler.onTapDown(
+        SuperTextFieldGestureDetails(
+          textLayout: _textLayout,
+          textController: widget.textController,
+          globalOffset: details.globalPosition,
+          layoutOffset: details.localPosition,
+          textOffset: textOffset,
+        ),
+      );
+
+      if (result == TapHandlingInstruction.halt) {
+        return;
+      }
     }
   }
 
   void _onTapUp(TapUpDetails details) {
     _log.fine('User released a tap');
 
-    if (widget.tapHandlers != null) {
-      final textOffset = _globalOffsetToTextOffset(details.globalPosition);
+    final textOffset = _globalOffsetToTextOffset(details.globalPosition);
 
-      for (final handler in widget.tapHandlers!) {
-        final result = handler.onTap(
-          SuperTextFieldGestureDetails(
-            textLayout: _textLayout,
-            textController: widget.textController,
-            globalOffset: details.globalPosition,
-            layoutOffset: details.localPosition,
-            textOffset: textOffset,
-          ),
-        );
+    for (final handler in widget.tapHandlers) {
+      final result = handler.onTapUp(
+        SuperTextFieldGestureDetails(
+          textLayout: _textLayout,
+          textController: widget.textController,
+          globalOffset: details.globalPosition,
+          layoutOffset: details.localPosition,
+          textOffset: textOffset,
+        ),
+      );
 
-        if (result == TapHandlingInstruction.halt) {
-          return;
-        }
+      if (result == TapHandlingInstruction.halt) {
+        return;
       }
     }
 
@@ -257,6 +269,16 @@ class IOSTextFieldTouchInteractorState extends State<IOSTextFieldTouchInteractor
     _selectionBeforeTap = null;
   }
 
+  void _onTapCancel() {
+    for (final handler in widget.tapHandlers) {
+      final result = handler.onTapCancel();
+
+      if (result == TapHandlingInstruction.halt) {
+        return;
+      }
+    }
+  }
+
   TextPosition _moveTapPositionToWordBoundary(TextPosition textPosition) {
     if (Testing.isInTest) {
       // Don't adjust the tap location in tests because we want tests to be
@@ -295,23 +317,21 @@ class IOSTextFieldTouchInteractorState extends State<IOSTextFieldTouchInteractor
   void _onDoubleTapDown(TapDownDetails details) {
     _log.fine('Double tap');
 
-    if (widget.tapHandlers != null) {
-      final textOffset = _globalOffsetToTextOffset(details.globalPosition);
+    final textOffset = _globalOffsetToTextOffset(details.globalPosition);
 
-      for (final handler in widget.tapHandlers!) {
-        final result = handler.onDoubleTap(
-          SuperTextFieldGestureDetails(
-            textLayout: _textLayout,
-            textController: widget.textController,
-            globalOffset: details.globalPosition,
-            layoutOffset: details.localPosition,
-            textOffset: textOffset,
-          ),
-        );
+    for (final handler in widget.tapHandlers) {
+      final result = handler.onDoubleTapDown(
+        SuperTextFieldGestureDetails(
+          textLayout: _textLayout,
+          textController: widget.textController,
+          globalOffset: details.globalPosition,
+          layoutOffset: details.localPosition,
+          textOffset: textOffset,
+        ),
+      );
 
-        if (result == TapHandlingInstruction.halt) {
-          return;
-        }
+      if (result == TapHandlingInstruction.halt) {
+        return;
       }
     }
 
@@ -336,24 +356,52 @@ class IOSTextFieldTouchInteractorState extends State<IOSTextFieldTouchInteractor
     }
   }
 
+  void _onDoubleTapUp(TapUpDetails details) {
+    final textOffset = _globalOffsetToTextOffset(details.globalPosition);
+
+    for (final handler in widget.tapHandlers) {
+      final result = handler.onDoubleTapUp(
+        SuperTextFieldGestureDetails(
+          textLayout: _textLayout,
+          textController: widget.textController,
+          globalOffset: details.globalPosition,
+          layoutOffset: details.localPosition,
+          textOffset: textOffset,
+        ),
+      );
+
+      if (result == TapHandlingInstruction.halt) {
+        return;
+      }
+    }
+  }
+
+  void _onDoubleTapCancel() {
+    for (final handler in widget.tapHandlers) {
+      final result = handler.onDoubleTapCancel();
+
+      if (result == TapHandlingInstruction.halt) {
+        return;
+      }
+    }
+  }
+
   void _onTripleTapDown(TapDownDetails details) {
-    if (widget.tapHandlers != null) {
-      final textOffset = _globalOffsetToTextOffset(details.globalPosition);
+    final textOffset = _globalOffsetToTextOffset(details.globalPosition);
 
-      for (final handler in widget.tapHandlers!) {
-        final result = handler.onTripleTap(
-          SuperTextFieldGestureDetails(
-            textLayout: _textLayout,
-            textController: widget.textController,
-            globalOffset: details.globalPosition,
-            layoutOffset: details.localPosition,
-            textOffset: textOffset,
-          ),
-        );
+    for (final handler in widget.tapHandlers) {
+      final result = handler.onTripleTapDown(
+        SuperTextFieldGestureDetails(
+          textLayout: _textLayout,
+          textController: widget.textController,
+          globalOffset: details.globalPosition,
+          layoutOffset: details.localPosition,
+          textOffset: textOffset,
+        ),
+      );
 
-        if (result == TapHandlingInstruction.halt) {
-          return;
-        }
+      if (result == TapHandlingInstruction.halt) {
+        return;
       }
     }
 
@@ -362,6 +410,36 @@ class IOSTextFieldTouchInteractorState extends State<IOSTextFieldTouchInteractor
 
     widget.textController.selection =
         textLayout.expandSelection(tapTextPosition, paragraphExpansionFilter, TextAffinity.downstream);
+  }
+
+  void _onTripleTapUp(TapUpDetails details) {
+    final textOffset = _globalOffsetToTextOffset(details.globalPosition);
+
+    for (final handler in widget.tapHandlers) {
+      final result = handler.onTripleTapUp(
+        SuperTextFieldGestureDetails(
+          textLayout: _textLayout,
+          textController: widget.textController,
+          globalOffset: details.globalPosition,
+          layoutOffset: details.localPosition,
+          textOffset: textOffset,
+        ),
+      );
+
+      if (result == TapHandlingInstruction.halt) {
+        return;
+      }
+    }
+  }
+
+  void _onTripleTapCancel() {
+    for (final handler in widget.tapHandlers) {
+      final result = handler.onTripleTapCancel();
+
+      if (result == TapHandlingInstruction.halt) {
+        return;
+      }
+    }
   }
 
   void _onPanStart(DragStartDetails details) {
@@ -570,8 +648,13 @@ class IOSTextFieldTouchInteractorState extends State<IOSTextFieldTouchInteractor
               recognizer
                 ..onTapDown = _onTapDown
                 ..onTapUp = _onTapUp
+                ..onTapCancel = _onTapCancel
                 ..onDoubleTapDown = _onDoubleTapDown
+                ..onDoubleTapUp = _onDoubleTapUp
+                ..onDoubleTapCancel = _onDoubleTapCancel
                 ..onTripleTapDown = _onTripleTapDown
+                ..onTripleTapUp = _onTripleTapUp
+                ..onTripleTapCancel = _onTripleTapCancel
                 ..gestureSettings = gestureSettings;
             },
           ),

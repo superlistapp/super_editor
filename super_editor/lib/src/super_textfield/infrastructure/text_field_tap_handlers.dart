@@ -16,7 +16,7 @@ class SuperTextFieldLaunchLinkTapHandler extends SuperTextFieldTapHandler {
   }
 
   @override
-  TapHandlingInstruction onTap(SuperTextFieldGestureDetails details) {
+  TapHandlingInstruction onTapUp(SuperTextFieldGestureDetails details) {
     final linkAttribution = _getLinkAttribution(details);
     if (linkAttribution == null) {
       return TapHandlingInstruction.continueHandling;

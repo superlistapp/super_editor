@@ -45,7 +45,7 @@ class SuperAndroidTextField extends StatefulWidget {
     this.textInputAction,
     this.imeConfiguration,
     this.showComposingUnderline = true,
-    this.tapHandlers,
+    this.tapHandlers = const [],
     this.popoverToolbarBuilder = _defaultAndroidToolbarBuilder,
     this.showDebugPaint = false,
     this.padding,
@@ -142,7 +142,7 @@ class SuperAndroidTextField extends StatefulWidget {
   final bool showComposingUnderline;
 
   /// {@macro super_text_field_tap_handlers}
-  final List<SuperTextFieldTapHandler>? tapHandlers;
+  final List<SuperTextFieldTapHandler> tapHandlers;
 
   /// Whether to paint debug guides.
   final bool showDebugPaint;

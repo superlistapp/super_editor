@@ -38,7 +38,7 @@ class SuperIOSTextField extends StatefulWidget {
     Key? key,
     this.focusNode,
     this.tapRegionGroupId,
-    this.tapHandlers,
+    this.tapHandlers = const [],
     this.textController,
     this.textStyleBuilder = defaultTextFieldStyleBuilder,
     this.textAlign = TextAlign.left,
@@ -66,7 +66,7 @@ class SuperIOSTextField extends StatefulWidget {
   final String? tapRegionGroupId;
 
   /// {@macro super_text_field_tap_handlers}
-  final List<SuperTextFieldTapHandler>? tapHandlers;
+  final List<SuperTextFieldTapHandler> tapHandlers;
 
   /// Controller that owns the text content and text selection for
   /// this text field.

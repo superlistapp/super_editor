@@ -74,7 +74,7 @@ class SuperTextField extends StatefulWidget {
     this.inputSource,
     this.keyboardHandlers,
     this.selectorHandlers,
-    this.tapHandlers,
+    this.tapHandlers = const [],
     this.padding,
     this.textInputAction,
     this.imeConfiguration,
@@ -193,7 +193,7 @@ class SuperTextField extends StatefulWidget {
   /// If a handler returns [TapHandlingInstruction.halt], no subsequent handlers
   /// nor the default tap behavior will be executed.
   /// {@endtemplate}
-  final List<SuperTextFieldTapHandler>? tapHandlers;
+  final List<SuperTextFieldTapHandler> tapHandlers;
 
   /// Padding placed around the text content of this text field, but within the
   /// scrollable viewport.

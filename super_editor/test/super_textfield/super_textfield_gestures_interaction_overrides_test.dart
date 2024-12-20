@@ -23,9 +23,10 @@ void main() {
           await tester.placeCaretInSuperTextField(0);
 
           // Ensure the custom tap handler was called.
-          expect(handler.wasTapHandled, isTrue);
-          expect(handler.wasDoubleTapHandled, isFalse);
-          expect(handler.wasTripleTapHandled, isFalse);
+          expect(handler.wasTapDownHandled, isTrue);
+          expect(handler.wasTapUpHandled, isTrue);
+          expect(handler.wasDoubleTapDownHandled, isFalse);
+          expect(handler.wasTripleTapDownHandled, isFalse);
 
           // Ensure the default behavior of placing the caret was not called.
           expect(
@@ -46,9 +47,10 @@ void main() {
           await tester.placeCaretInSuperTextField(0);
 
           // Ensure the custom tap handler was called.
-          expect(handler.wasTapHandled, isTrue);
-          expect(handler.wasDoubleTapHandled, isFalse);
-          expect(handler.wasTripleTapHandled, isFalse);
+          expect(handler.wasTapDownHandled, isTrue);
+          expect(handler.wasTapUpHandled, isTrue);
+          expect(handler.wasDoubleTapDownHandled, isFalse);
+          expect(handler.wasTripleTapDownHandled, isFalse);
 
           // Ensure the default behavior of placing the caret was not called.
           expect(
@@ -67,14 +69,16 @@ void main() {
           await tester.placeCaretInSuperTextField(0);
 
           // Ensure the first tap handler was called.
-          expect(handler1.wasTapHandled, isTrue);
-          expect(handler1.wasDoubleTapHandled, isFalse);
-          expect(handler1.wasTripleTapHandled, isFalse);
+          expect(handler1.wasTapDownHandled, isTrue);
+          expect(handler1.wasTapUpHandled, isTrue);
+          expect(handler1.wasDoubleTapDownHandled, isFalse);
+          expect(handler1.wasTripleTapDownHandled, isFalse);
 
           // Ensure the second tap handler was not called.
-          expect(handler2.wasTapHandled, isFalse);
-          expect(handler2.wasDoubleTapHandled, isFalse);
-          expect(handler2.wasTripleTapHandled, isFalse);
+          expect(handler2.wasTapDownHandled, isFalse);
+          expect(handler2.wasTapUpHandled, isFalse);
+          expect(handler2.wasDoubleTapDownHandled, isFalse);
+          expect(handler2.wasTripleTapDownHandled, isFalse);
 
           // Ensure the default behavior of placing the caret was not called.
           expect(
@@ -95,8 +99,9 @@ void main() {
           await tester.doubleTapAtSuperTextField(0);
 
           // Ensure the custom tap handler was called.
-          expect(handler.wasDoubleTapHandled, isTrue);
-          expect(handler.wasTripleTapHandled, isFalse);
+          expect(handler.wasDoubleTapDownHandled, isTrue);
+          expect(handler.wasDoubleTapUpHandled, isTrue);
+          expect(handler.wasTripleTapDownHandled, isFalse);
 
           // Ensure the default behavior of placing the caret was not called.
           expect(
@@ -116,8 +121,9 @@ void main() {
           await tester.doubleTapAtSuperTextField(0);
 
           // Ensure the custom tap handler was called.
-          expect(handler.wasDoubleTapHandled, isTrue);
-          expect(handler.wasTripleTapHandled, isFalse);
+          expect(handler.wasDoubleTapDownHandled, isTrue);
+          expect(handler.wasDoubleTapUpHandled, isTrue);
+          expect(handler.wasTripleTapDownHandled, isFalse);
 
           // Ensure the default behavior of placing an expanded selection
           // was not called.
@@ -136,12 +142,14 @@ void main() {
           await tester.doubleTapAtSuperTextField(0);
 
           // Ensure the first tap handler was called.
-          expect(handler1.wasDoubleTapHandled, isTrue);
-          expect(handler1.wasTripleTapHandled, isFalse);
+          expect(handler1.wasDoubleTapDownHandled, isTrue);
+          expect(handler1.wasDoubleTapUpHandled, isTrue);
+          expect(handler1.wasTripleTapDownHandled, isFalse);
 
           // Ensure the second tap handler was not called.
-          expect(handler2.wasDoubleTapHandled, isFalse);
-          expect(handler2.wasTripleTapHandled, isFalse);
+          expect(handler2.wasDoubleTapDownHandled, isFalse);
+          expect(handler2.wasDoubleTapUpHandled, isFalse);
+          expect(handler2.wasTripleTapDownHandled, isFalse);
 
           // Ensure the default behavior of placing an expanded selection
           // was not called.
@@ -164,7 +172,8 @@ void main() {
           await tester.tripleTapAtSuperTextField(0);
 
           // Ensure the custom tap handler was called.
-          expect(handler.wasTripleTapHandled, isTrue);
+          expect(handler.wasTripleTapDownHandled, isTrue);
+          expect(handler.wasTripleTapUpHandled, isTrue);
 
           // Ensure the default behavior of placing an expanded selection
           // was not called.
@@ -185,7 +194,8 @@ void main() {
           await tester.tripleTapAtSuperTextField(0);
 
           // Ensure the custom tap handler was called.
-          expect(handler.wasTripleTapHandled, isTrue);
+          expect(handler.wasTripleTapDownHandled, isTrue);
+          expect(handler.wasTripleTapUpHandled, isTrue);
 
           // Ensure the default behavior of placing an expanded selection
           // was not called.
@@ -204,10 +214,12 @@ void main() {
           await tester.tripleTapAtSuperTextField(0);
 
           // Ensure the first tap handler was called.
-          expect(handler1.wasTripleTapHandled, isTrue);
+          expect(handler1.wasTripleTapDownHandled, isTrue);
+          expect(handler1.wasTripleTapUpHandled, isTrue);
 
           // Ensure the second tap handler was not called.
-          expect(handler2.wasTripleTapHandled, isFalse);
+          expect(handler2.wasTripleTapDownHandled, isFalse);
+          expect(handler2.wasTripleTapUpHandled, isFalse);
 
           // Ensure the default behavior of placing an expanded selection
           // was not called.
@@ -230,10 +242,11 @@ void main() {
           await tester.tapAtSuperTextField(0, buttons: kSecondaryMouseButton);
 
           // Ensure the custom tap handler was called.
-          expect(handler.wasSecondaryTapHandled, isTrue);
-          expect(handler.wasTapHandled, isFalse);
-          expect(handler.wasDoubleTapHandled, isFalse);
-          expect(handler.wasTripleTapHandled, isFalse);
+          expect(handler.wasSecondaryTapDownHandled, isTrue);
+          expect(handler.wasSecondaryTapUpHandled, isTrue);
+          expect(handler.wasTapUpHandled, isFalse);
+          expect(handler.wasDoubleTapDownHandled, isFalse);
+          expect(handler.wasTripleTapDownHandled, isFalse);
         });
       });
 
@@ -248,10 +261,11 @@ void main() {
           await tester.tapAtSuperTextField(0, buttons: kSecondaryMouseButton);
 
           // Ensure the custom tap handler was called.
-          expect(handler.wasSecondaryTapHandled, isTrue);
-          expect(handler.wasTapHandled, isFalse);
-          expect(handler.wasDoubleTapHandled, isFalse);
-          expect(handler.wasTripleTapHandled, isFalse);
+          expect(handler.wasSecondaryTapDownHandled, isTrue);
+          expect(handler.wasSecondaryTapUpHandled, isTrue);
+          expect(handler.wasTapUpHandled, isFalse);
+          expect(handler.wasDoubleTapDownHandled, isFalse);
+          expect(handler.wasTripleTapDownHandled, isFalse);
         });
 
         testWidgetsOnDesktop('stops when a handler handles the gesture', (tester) async {
@@ -264,16 +278,18 @@ void main() {
           await tester.tapAtSuperTextField(0, buttons: kSecondaryMouseButton);
 
           // Ensure the first tap handler was called.
-          expect(handler1.wasSecondaryTapHandled, isTrue);
-          expect(handler1.wasTapHandled, isFalse);
-          expect(handler1.wasDoubleTapHandled, isFalse);
-          expect(handler1.wasTripleTapHandled, isFalse);
+          expect(handler1.wasSecondaryTapDownHandled, isTrue);
+          expect(handler1.wasSecondaryTapUpHandled, isTrue);
+          expect(handler1.wasTapUpHandled, isFalse);
+          expect(handler1.wasDoubleTapDownHandled, isFalse);
+          expect(handler1.wasTripleTapDownHandled, isFalse);
 
           // Ensure the second tap handler was not called.
-          expect(handler2.wasSecondaryTapHandled, isFalse);
-          expect(handler2.wasTapHandled, isFalse);
-          expect(handler2.wasDoubleTapHandled, isFalse);
-          expect(handler2.wasTripleTapHandled, isFalse);
+          expect(handler2.wasSecondaryTapDownHandled, isFalse);
+          expect(handler2.wasSecondaryTapUpHandled, isFalse);
+          expect(handler2.wasTapUpHandled, isFalse);
+          expect(handler2.wasDoubleTapDownHandled, isFalse);
+          expect(handler2.wasTripleTapDownHandled, isFalse);
         });
       });
     });
@@ -336,17 +352,29 @@ Future<void> _pumpSingleFieldTestApp(
 /// This handler prevents any other handlers from running, because it always
 /// returns [TapHandlingInstruction.halt].
 class _SuperTextFieldTestTapHandler extends SuperTextFieldTapHandler {
-  bool get wasTapHandled => _wasTapHandled;
-  bool _wasTapHandled = false;
+  bool get wasTapDownHandled => _wasTapDownHandled;
+  bool _wasTapDownHandled = false;
 
-  bool get wasDoubleTapHandled => _wasDoubleTapHandled;
-  bool _wasDoubleTapHandled = false;
+  bool get wasTapUpHandled => _wasTapUpHandled;
+  bool _wasTapUpHandled = false;
 
-  bool get wasTripleTapHandled => _wasTripleTapHandled;
-  bool _wasTripleTapHandled = false;
+  bool get wasDoubleTapDownHandled => _wasDoubleTapDownHandled;
+  bool _wasDoubleTapDownHandled = false;
 
-  bool get wasSecondaryTapHandled => _wasSecondaryTapHandled;
-  bool _wasSecondaryTapHandled = false;
+  bool get wasDoubleTapUpHandled => _wasDoubleTapUpHandled;
+  bool _wasDoubleTapUpHandled = false;
+
+  bool get wasTripleTapDownHandled => _wasTripleTapDownHandled;
+  bool _wasTripleTapDownHandled = false;
+
+  bool get wasTripleTapUpHandled => _wasTripleTapUpHandled;
+  bool _wasTripleTapUpHandled = false;
+
+  bool get wasSecondaryTapDownHandled => _wasSecondaryTapDownHandled;
+  bool _wasSecondaryTapDownHandled = false;
+
+  bool get wasSecondaryTapUpHandled => _wasSecondaryTapUpHandled;
+  bool _wasSecondaryTapUpHandled = false;
 
   @override
   MouseCursor? mouseCursorForContentHover(SuperTextFieldGestureDetails details) {
@@ -354,26 +382,50 @@ class _SuperTextFieldTestTapHandler extends SuperTextFieldTapHandler {
   }
 
   @override
-  TapHandlingInstruction onTap(SuperTextFieldGestureDetails details) {
-    _wasTapHandled = true;
+  TapHandlingInstruction onTapDown(SuperTextFieldGestureDetails details) {
+    _wasTapDownHandled = true;
     return TapHandlingInstruction.halt;
   }
 
   @override
-  TapHandlingInstruction onDoubleTap(SuperTextFieldGestureDetails details) {
-    _wasDoubleTapHandled = true;
+  TapHandlingInstruction onTapUp(SuperTextFieldGestureDetails details) {
+    _wasTapUpHandled = true;
     return TapHandlingInstruction.halt;
   }
 
   @override
-  TapHandlingInstruction onTripleTap(SuperTextFieldGestureDetails details) {
-    _wasTripleTapHandled = true;
+  TapHandlingInstruction onDoubleTapDown(SuperTextFieldGestureDetails details) {
+    _wasDoubleTapDownHandled = true;
     return TapHandlingInstruction.halt;
   }
 
   @override
-  TapHandlingInstruction onSecondaryTap(SuperTextFieldGestureDetails details) {
-    _wasSecondaryTapHandled = true;
+  TapHandlingInstruction onDoubleTapUp(SuperTextFieldGestureDetails details) {
+    _wasDoubleTapUpHandled = true;
+    return TapHandlingInstruction.halt;
+  }
+
+  @override
+  TapHandlingInstruction onTripleTapDown(SuperTextFieldGestureDetails details) {
+    _wasTripleTapDownHandled = true;
+    return TapHandlingInstruction.halt;
+  }
+
+  @override
+  TapHandlingInstruction onTripleTapUp(SuperTextFieldGestureDetails details) {
+    _wasTripleTapUpHandled = true;
+    return TapHandlingInstruction.halt;
+  }
+
+  @override
+  TapHandlingInstruction onSecondaryTapDown(SuperTextFieldGestureDetails details) {
+    _wasSecondaryTapDownHandled = true;
+    return TapHandlingInstruction.halt;
+  }
+
+  @override
+  TapHandlingInstruction onSecondaryTapUp(SuperTextFieldGestureDetails details) {
+    _wasSecondaryTapUpHandled = true;
     return TapHandlingInstruction.halt;
   }
 }

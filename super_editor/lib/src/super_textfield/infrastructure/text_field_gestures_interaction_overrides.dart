@@ -11,14 +11,33 @@ import 'package:super_text_layout/super_text_layout.dart';
 abstract class SuperTextFieldTapHandler with ChangeNotifier {
   MouseCursor? mouseCursorForContentHover(SuperTextFieldGestureDetails details) => null;
 
-  TapHandlingInstruction onTap(SuperTextFieldGestureDetails details) => TapHandlingInstruction.continueHandling;
+  TapHandlingInstruction onTapDown(SuperTextFieldGestureDetails details) => TapHandlingInstruction.continueHandling;
 
-  TapHandlingInstruction onDoubleTap(SuperTextFieldGestureDetails details) => TapHandlingInstruction.continueHandling;
+  TapHandlingInstruction onTapUp(SuperTextFieldGestureDetails details) => TapHandlingInstruction.continueHandling;
 
-  TapHandlingInstruction onTripleTap(SuperTextFieldGestureDetails details) => TapHandlingInstruction.continueHandling;
+  TapHandlingInstruction onTapCancel() => TapHandlingInstruction.continueHandling;
 
-  TapHandlingInstruction onSecondaryTap(SuperTextFieldGestureDetails details) =>
+  TapHandlingInstruction onDoubleTapDown(SuperTextFieldGestureDetails details) =>
       TapHandlingInstruction.continueHandling;
+
+  TapHandlingInstruction onDoubleTapUp(SuperTextFieldGestureDetails details) => TapHandlingInstruction.continueHandling;
+
+  TapHandlingInstruction onDoubleTapCancel() => TapHandlingInstruction.continueHandling;
+
+  TapHandlingInstruction onTripleTapDown(SuperTextFieldGestureDetails details) =>
+      TapHandlingInstruction.continueHandling;
+
+  TapHandlingInstruction onTripleTapUp(SuperTextFieldGestureDetails details) => TapHandlingInstruction.continueHandling;
+
+  TapHandlingInstruction onTripleTapCancel() => TapHandlingInstruction.continueHandling;
+
+  TapHandlingInstruction onSecondaryTapDown(SuperTextFieldGestureDetails details) =>
+      TapHandlingInstruction.continueHandling;
+
+  TapHandlingInstruction onSecondaryTapUp(SuperTextFieldGestureDetails details) =>
+      TapHandlingInstruction.continueHandling;
+
+  TapHandlingInstruction onSecondaryTapCancel() => TapHandlingInstruction.continueHandling;
 }
 
 /// Information about a gesture that happened within a [SuperTextField].
