@@ -247,7 +247,7 @@ class _DrawerButton extends StatelessWidget {
               }
 
               if (states.contains(WidgetState.hovered)) {
-                return Colors.grey.withOpacity(0.1);
+                return Colors.grey.withValues(alpha: 0.1);
               }
 
               return Colors.transparent;
