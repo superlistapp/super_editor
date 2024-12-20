@@ -774,7 +774,7 @@ class _IOSSuperTextFieldSystemContextMenuState extends State<IOSSuperTextFieldSy
     _systemContextMenuController = SystemContextMenuController();
     widget.controller.addListener(_onControllerChanged);
     onNextFrame((_) {
-      _showSystemMenu();
+      _positionSystemMenu();
     });
   }
 
@@ -786,7 +786,7 @@ class _IOSSuperTextFieldSystemContextMenuState extends State<IOSSuperTextFieldSy
       widget.controller.addListener(_onControllerChanged);
     }
     onNextFrame((_) {
-      _showSystemMenu();
+      _positionSystemMenu();
     });
   }
 
@@ -799,11 +799,11 @@ class _IOSSuperTextFieldSystemContextMenuState extends State<IOSSuperTextFieldSy
 
   void _onControllerChanged() {
     onNextFrame((_) {
-      _showSystemMenu();
+      _positionSystemMenu();
     });
   }
 
-  void _showSystemMenu() {
+  void _positionSystemMenu() {
     // The size reported by the controller's toolbarFocalPoint is one frame behind. Query the information
     // overlayController instead.
     final topAnchor = widget.controller.overlayController.toolbarTopAnchor;

@@ -917,7 +917,6 @@ Widget iOSSystemPopoverEditorToolbarWithFallbackBuilder(
   LeaderLink focalPoint,
   CommonEditorOperations editorOps,
   SuperEditorIosControlsController editorControlsController,
-  DocumentLayout documentLayout,
 ) {
   if (CurrentPlatform.isWeb) {
     // On web, we defer to the browser's internal overlay controls for mobile.

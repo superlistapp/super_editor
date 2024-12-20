@@ -66,7 +66,7 @@ class _IOSSystemContextMenuState extends State<IOSSystemContextMenu> {
       onSystemHide: widget.onSystemHide,
     );
     widget.leaderLink.addListener(_onLeaderChanged);
-    onNextFrame((_) => _showSystemMenu());
+    onNextFrame((_) => _positionSystemMenu());
   }
 
   @override
@@ -75,7 +75,7 @@ class _IOSSystemContextMenuState extends State<IOSSystemContextMenu> {
     if (widget.leaderLink != oldWidget.leaderLink) {
       oldWidget.leaderLink.removeListener(_onLeaderChanged);
       widget.leaderLink.addListener(_onLeaderChanged);
-      onNextFrame((_) => _showSystemMenu());
+      onNextFrame((_) => _positionSystemMenu());
     }
   }
 
@@ -92,11 +92,11 @@ class _IOSSystemContextMenuState extends State<IOSSystemContextMenu> {
     }
 
     onNextFrame((_) {
-      _showSystemMenu();
+      _positionSystemMenu();
     });
   }
 
-  void _showSystemMenu() {
+  void _positionSystemMenu() {
     _systemContextMenuController.show(widget.leaderLink.offset! & widget.leaderLink.leaderSize!);
   }
 

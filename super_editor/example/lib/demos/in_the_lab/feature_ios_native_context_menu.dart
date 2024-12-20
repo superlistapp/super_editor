@@ -133,7 +133,6 @@ class _NativeIosContextMenuFeatureDemoState extends State<NativeIosContextMenuFe
       focalPoint,
       _commonEditorOperations,
       SuperEditorIosControlsScope.rootOf(context),
-      _documentLayoutKey.currentState as DocumentLayout,
     );
   }
 
