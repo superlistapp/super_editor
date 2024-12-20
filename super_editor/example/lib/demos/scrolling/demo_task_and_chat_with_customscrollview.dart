@@ -96,7 +96,7 @@ class _TaskAndChatWithCustomScrollViewDemoState extends State<TaskAndChatWithCus
               BoxShadow(
                 offset: const Offset(0, 5),
                 blurRadius: 5,
-                color: Colors.black.withOpacity(0.4),
+                color: Colors.black.withValues(alpha: 0.4),
               ),
             ],
           ),
