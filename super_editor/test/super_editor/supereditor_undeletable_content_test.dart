@@ -71,7 +71,7 @@ void main() {
 
           // Ensure the two paragraphs were merged.
           expect(
-            SuperEditorInspector.findTextInComponent('1').text,
+            SuperEditorInspector.findTextInComponent('1').toPlainText(),
             'Paragraph 1Paragraph 2',
           );
 
@@ -145,7 +145,7 @@ void main() {
 
           // Ensure the two paragraphs were merged.
           expect(
-            SuperEditorInspector.findTextInComponent('1').text,
+            SuperEditorInspector.findTextInComponent('1').toPlainText(),
             'Paragraph 1Paragraph 2',
           );
 
@@ -378,7 +378,7 @@ void main() {
           // Ensure that the deletable content was deleted and selection moved to the beginning
           // of the selected paragraph.
           expect(
-            SuperEditorInspector.findTextInComponent('1').text,
+            SuperEditorInspector.findTextInComponent('1').toPlainText(),
             'graph 1',
           );
           expect(
@@ -425,7 +425,7 @@ void main() {
           // Ensure that the deletable content was deleted and selection moved to the upstream edge
           // of the selection
           expect(
-            SuperEditorInspector.findTextInComponent('1').text,
+            SuperEditorInspector.findTextInComponent('1').toPlainText(),
             'Para',
           );
           expect(
@@ -471,7 +471,7 @@ void main() {
 
           // Ensure that the deletable content was deleted and selection moved to the beginning
           // of the selected paragraph.
-          expect(SuperEditorInspector.findTextInComponent('1').text, 'Para');
+          expect(SuperEditorInspector.findTextInComponent('1').toPlainText(), 'Para');
           expect(
             SuperEditorInspector.findDocumentSelection(),
             selectionEquivalentTo(
@@ -515,7 +515,7 @@ void main() {
 
           // Ensure that the deletable content was deleted and selection moved to the beginning
           // of the selected paragraph.
-          expect(SuperEditorInspector.findTextInComponent('1').text, 'graph 1');
+          expect(SuperEditorInspector.findTextInComponent('1').toPlainText(), 'graph 1');
           expect(
             SuperEditorInspector.findDocumentSelection(),
             selectionEquivalentTo(
@@ -751,7 +751,7 @@ void main() {
           expect(document.nodeCount, equals(2));
           expect(document.first, isA<HorizontalRuleNode>());
           expect(document.last, isA<ParagraphNode>());
-          expect((document.last as TextNode).text.text, equals(''));
+          expect((document.last as TextNode).text.toPlainText(), equals(''));
 
           // Ensure the caret was placed at the beginning of the newly inserted paragraph.
           expect(
@@ -817,7 +817,7 @@ void main() {
           expect(document.nodeCount, equals(2));
           expect(document.first, isA<HorizontalRuleNode>());
           expect(document.last, isA<ParagraphNode>());
-          expect((document.last as TextNode).text.text, equals(''));
+          expect((document.last as TextNode).text.toPlainText(), equals(''));
 
           // Ensure the caret was placed at the beginning of the newly inserted paragraph.
           expect(
@@ -888,7 +888,7 @@ void main() {
           expect(document.getNodeAt(0), isA<HorizontalRuleNode>());
           expect(document.getNodeAt(1), isA<HorizontalRuleNode>());
           expect(document.getNodeAt(2), isA<ParagraphNode>());
-          expect((document.last as TextNode).text.text, equals(''));
+          expect((document.last as TextNode).text.toPlainText(), equals(''));
 
           // Ensure the caret was placed at the beginning of the newly inserted paragraph.
           expect(
@@ -1207,7 +1207,7 @@ void main() {
           // Ensure that the deletable content was deleted and selection moved to the beginning
           // of the selected paragraph.
           expect(
-            SuperEditorInspector.findTextInComponent('1').text,
+            SuperEditorInspector.findTextInComponent('1').toPlainText(),
             'graph 1',
           );
           expect(
@@ -1254,7 +1254,7 @@ void main() {
           // Ensure that the deletable content was deleted and selection moved to the upstream edge
           // of the selection
           expect(
-            SuperEditorInspector.findTextInComponent('1').text,
+            SuperEditorInspector.findTextInComponent('1').toPlainText(),
             'Para',
           );
           expect(
@@ -1300,7 +1300,7 @@ void main() {
 
           // Ensure that the deletable content was deleted and selection moved to the beginning
           // of the selected paragraph.
-          expect(SuperEditorInspector.findTextInComponent('1').text, 'Para');
+          expect(SuperEditorInspector.findTextInComponent('1').toPlainText(), 'Para');
           expect(
             SuperEditorInspector.findDocumentSelection(),
             selectionEquivalentTo(
@@ -1344,7 +1344,7 @@ void main() {
 
           // Ensure that the deletable content was deleted and selection moved to the beginning
           // of the selected paragraph.
-          expect(SuperEditorInspector.findTextInComponent('1').text, 'graph 1');
+          expect(SuperEditorInspector.findTextInComponent('1').toPlainText(), 'graph 1');
           expect(
             SuperEditorInspector.findDocumentSelection(),
             selectionEquivalentTo(
@@ -1579,7 +1579,7 @@ void main() {
           expect(document.nodeCount, equals(2));
           expect(document.first, isA<HorizontalRuleNode>());
           expect(document.last, isA<ParagraphNode>());
-          expect((document.last as TextNode).text.text, equals(''));
+          expect((document.last as TextNode).text.toPlainText(), equals(''));
 
           // Ensure the caret was placed at the beginning of the newly inserted paragraph.
           expect(
@@ -1645,7 +1645,7 @@ void main() {
           expect(document.nodeCount, equals(2));
           expect(document.first, isA<HorizontalRuleNode>());
           expect(document.last, isA<ParagraphNode>());
-          expect((document.last as TextNode).text.text, equals(''));
+          expect((document.last as TextNode).text.toPlainText(), equals(''));
 
           // Ensure the caret was placed at the beginning of the newly inserted paragraph.
           expect(
@@ -1716,7 +1716,7 @@ void main() {
           expect(document.getNodeAt(0), isA<HorizontalRuleNode>());
           expect(document.getNodeAt(1), isA<HorizontalRuleNode>());
           expect(document.getNodeAt(2), isA<ParagraphNode>());
-          expect((document.last as TextNode).text.text, equals(''));
+          expect((document.last as TextNode).text.toPlainText(), equals(''));
 
           // Ensure the caret was placed at the beginning of the newly inserted paragraph.
           expect(
@@ -2139,7 +2139,7 @@ void main() {
           // Ensure that the deletable content was deleted and selection moved to the beginning
           // of the selected paragraph.
           expect(
-            SuperEditorInspector.findTextInComponent('1').text,
+            SuperEditorInspector.findTextInComponent('1').toPlainText(),
             'graph 1',
           );
           expect(
@@ -2200,7 +2200,7 @@ void main() {
           // Ensure that the deletable content was deleted and selection moved to the upstream edge
           // of the selection
           expect(
-            SuperEditorInspector.findTextInComponent('1').text,
+            SuperEditorInspector.findTextInComponent('1').toPlainText(),
             'Para',
           );
           expect(
@@ -2260,7 +2260,7 @@ void main() {
 
           // Ensure that the deletable content was deleted and selection moved to the beginning
           // of the selected paragraph.
-          expect(SuperEditorInspector.findTextInComponent('1').text, 'Para');
+          expect(SuperEditorInspector.findTextInComponent('1').toPlainText(), 'Para');
           expect(
             SuperEditorInspector.findDocumentSelection(),
             selectionEquivalentTo(
@@ -2318,7 +2318,7 @@ void main() {
 
           // Ensure that the deletable content was deleted and selection moved to the beginning
           // of the selected paragraph.
-          expect(SuperEditorInspector.findTextInComponent('1').text, 'graph 1');
+          expect(SuperEditorInspector.findTextInComponent('1').toPlainText(), 'graph 1');
           expect(
             SuperEditorInspector.findDocumentSelection(),
             selectionEquivalentTo(
@@ -2386,7 +2386,7 @@ void main() {
           expect(document.nodeCount, equals(2));
           expect(document.first, isA<HorizontalRuleNode>());
           expect(document.last, isA<ParagraphNode>());
-          expect((document.last as TextNode).text.text, equals(''));
+          expect((document.last as TextNode).text.toPlainText(), equals(''));
 
           // Ensure the caret was placed at the beginning of the newly inserted paragraph.
           expect(
@@ -2453,7 +2453,7 @@ void main() {
           expect(document.nodeCount, equals(2));
           expect(document.first, isA<HorizontalRuleNode>());
           expect(document.last, isA<ParagraphNode>());
-          expect((document.last as TextNode).text.text, equals(''));
+          expect((document.last as TextNode).text.toPlainText(), equals(''));
 
           // Ensure the caret was placed at the beginning of the newly inserted paragraph.
           expect(
@@ -2538,7 +2538,7 @@ void main() {
           expect(document.getNodeAt(0), isA<HorizontalRuleNode>());
           expect(document.getNodeAt(1), isA<HorizontalRuleNode>());
           expect(document.getNodeAt(2), isA<ParagraphNode>());
-          expect((document.last as TextNode).text.text, equals(''));
+          expect((document.last as TextNode).text.toPlainText(), equals(''));
 
           // Ensure the caret was placed at the beginning of the newly inserted paragraph.
           expect(

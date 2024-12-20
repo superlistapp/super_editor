@@ -182,6 +182,7 @@ class TaskComponentViewModel extends SingleColumnLayoutComponentViewModel with T
     required this.setComplete,
     required this.text,
     required this.textStyleBuilder,
+    this.inlineWidgetBuilders = const [],
     this.textDirection = TextDirection.ltr,
     this.textAlignment = TextAlign.left,
     this.selection,
@@ -215,6 +216,8 @@ class TaskComponentViewModel extends SingleColumnLayoutComponentViewModel with T
   @override
   AttributionStyleBuilder textStyleBuilder;
   @override
+  InlineWidgetBuilderChain inlineWidgetBuilders;
+  @override
   TextDirection textDirection;
   @override
   TextAlign textAlignment;
@@ -237,6 +240,7 @@ class TaskComponentViewModel extends SingleColumnLayoutComponentViewModel with T
       setComplete: setComplete,
       text: text,
       textStyleBuilder: textStyleBuilder,
+      inlineWidgetBuilders: inlineWidgetBuilders,
       textDirection: textDirection,
       selection: selection,
       selectionColor: selectionColor,
@@ -365,6 +369,7 @@ class _TaskComponentState extends State<TaskComponent> with ProxyDocumentCompone
             key: _textKey,
             text: widget.viewModel.text,
             textStyleBuilder: _computeStyles,
+            inlineWidgetBuilders: widget.viewModel.inlineWidgetBuilders,
             textSelection: widget.viewModel.selection,
             selectionColor: widget.viewModel.selectionColor,
             highlightWhenEmpty: widget.viewModel.highlightWhenEmpty,
@@ -402,7 +407,7 @@ ExecutionInstruction enterToInsertNewTask({
     return ExecutionInstruction.continueExecution;
   }
 
-  if (node.text.text.isEmpty) {
+  if (node.text.isEmpty) {
     // The task is empty. Convert it to a paragraph.
     editContext.editor.execute([
       ConvertTextNodeToParagraphRequest(nodeId: node.id),
