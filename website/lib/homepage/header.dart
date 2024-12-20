@@ -88,7 +88,7 @@ class _DrawerLayoutState extends State<DrawerLayout> {
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 250),
               curve: Curves.ease,
-              color: Colors.black.withOpacity(_open ? 0.64 : 0),
+              color: Colors.black.withValues(alpha: _open ? 0.64 : 0),
             ),
           ),
         ),

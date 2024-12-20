@@ -189,15 +189,17 @@ class _MaterialScrollbarState extends RawScrollbarWithCustomPhysicsState<_Materi
     late Color idleColor;
     switch (brightness) {
       case Brightness.light:
-        dragColor = onSurface.withOpacity(0.6);
-        hoverColor = onSurface.withOpacity(0.5);
-        idleColor =
-            _useAndroidScrollbar ? Theme.of(context).highlightColor.withOpacity(1.0) : onSurface.withOpacity(0.1);
+        dragColor = onSurface.withValues(alpha: 0.6);
+        hoverColor = onSurface.withValues(alpha: 0.5);
+        idleColor = _useAndroidScrollbar
+            ? Theme.of(context).highlightColor.withValues(alpha: 1.0)
+            : onSurface.withValues(alpha: 0.1);
       case Brightness.dark:
-        dragColor = onSurface.withOpacity(0.75);
-        hoverColor = onSurface.withOpacity(0.65);
-        idleColor =
-            _useAndroidScrollbar ? Theme.of(context).highlightColor.withOpacity(1.0) : onSurface.withOpacity(0.3);
+        dragColor = onSurface.withValues(alpha: 0.75);
+        hoverColor = onSurface.withValues(alpha: 0.65);
+        idleColor = _useAndroidScrollbar
+            ? Theme.of(context).highlightColor.withValues(alpha: 1.0)
+            : onSurface.withValues(alpha: 0.3);
     }
 
     return WidgetStateProperty.resolveWith((Set<WidgetState> states) {
@@ -225,7 +227,7 @@ class _MaterialScrollbarState extends RawScrollbarWithCustomPhysicsState<_Materi
     return WidgetStateProperty.resolveWith((Set<WidgetState> states) {
       if (showScrollbar && _trackVisibility.resolve(states)) {
         return _scrollbarTheme.trackColor?.resolve(states) ??
-            (brightness == Brightness.light ? onSurface.withOpacity(0.03) : onSurface.withOpacity(0.05));
+            (brightness == Brightness.light ? onSurface.withValues(alpha: 0.03) : onSurface.withValues(alpha: 0.05));
       }
       return const Color(0x00000000);
     });
@@ -237,7 +239,7 @@ class _MaterialScrollbarState extends RawScrollbarWithCustomPhysicsState<_Materi
     return WidgetStateProperty.resolveWith((Set<WidgetState> states) {
       if (showScrollbar && _trackVisibility.resolve(states)) {
         return _scrollbarTheme.trackBorderColor?.resolve(states) ??
-            (brightness == Brightness.light ? onSurface.withOpacity(0.1) : onSurface.withOpacity(0.25));
+            (brightness == Brightness.light ? onSurface.withValues(alpha: 0.1) : onSurface.withValues(alpha: 0.25));
       }
       return const Color(0x00000000);
     });

@@ -64,7 +64,7 @@ class AndroidSelectionHandle extends StatelessWidget {
       padding: touchRegionExpansion,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: showDebugTouchRegion ? Colors.red.withOpacity(0.5) : Colors.transparent,
+        color: showDebugTouchRegion ? Colors.red.withValues(alpha: 0.5) : Colors.transparent,
       ),
       child: handle,
     );

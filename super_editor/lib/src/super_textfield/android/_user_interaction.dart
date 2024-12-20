@@ -541,7 +541,7 @@ class AndroidTextFieldTouchInteractorState extends State<AndroidTextFieldTouchIn
                 child: Container(
                   width: 20,
                   height: 20,
-                  color: Colors.purpleAccent.withOpacity(0.5),
+                  color: Colors.purpleAccent.withValues(alpha: 0.5),
                 ),
               )
             : const SizedBox(width: 1, height: 1),
