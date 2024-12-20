@@ -271,26 +271,9 @@ class ContentLayersElement extends RenderObjectElement {
     super.markNeedsBuild();
   }
 
+  /// Builds the underlays and overlays.
   void buildLayers() {
     contentLayersLog.finer("ContentLayersElement - (re)building layers");
-
-    owner!.buildScope(this, () {
-      _buildLayersWithExistingScope();
-    });
-  }
-
-  /// Builds the underlays and overlays without establishing a new build scope.
-  ///
-  /// We build the layers in two situations:
-  ///
-  /// 1. When the content's layout is dirty. This happens during layout phase, when we need to
-  ///    establish a build scope. This is done when [buildLayers] is called.
-  /// 2. When the content's layout is clean. This happens when [update] is called, but only
-  ///    non-layout changes happened, like changing a color. In this case, we are already
-  ///    inside a build scope, so we can't try to establish a new one.
-  ///
-  /// See [BuildOwner.buildScope] for more information.
-  void _buildLayersWithExistingScope() {
     final List<Element> underlays = List<Element>.filled(widget.underlays.length, _NullElement.instance);
     for (int i = 0; i < underlays.length; i += 1) {
       late final Element child;
@@ -365,7 +348,7 @@ class ContentLayersElement extends RenderObjectElement {
       // Layout has already run. No layout bounds changed. There might be a
       // non-layout change that needs to be painted, e.g., change to theme brightness.
       // Re-build all layers, which is safe to do because no layout constraints changed.
-      _buildLayersWithExistingScope();
+      buildLayers();
     }
     // Else, dirty content layout will cause this whole widget to re-layout. The
     // layers will be re-built during that layout pass.
@@ -669,7 +652,11 @@ class RenderContentLayers extends RenderSliver with RenderSliverHelpers {
     // content changes.
     contentLayersLog.fine("Building layers");
     invokeLayoutCallback((constraints) {
-      _element!.buildLayers();
+      // Usually, widgets are built during the build phase, but we're building the layers
+      // during layout phase, so we need to explicitly tell Flutter to build all elements.
+      _element!.owner!.buildScope(_element!, () {
+        _element!.buildLayers();
+      });
     });
     contentLayersLog.finer("Done building layers");
 
