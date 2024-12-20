@@ -704,8 +704,8 @@ typedef IOSPopoverToolbarBuilder = Widget Function(BuildContext, IOSEditingOverl
 /// iOS is recent enough, otherwise builds [defaultIosPopoverToolbarBuilder].
 Widget iOSSystemPopoverTextFieldToolbarWithFallback(BuildContext context, IOSEditingOverlayController controller) {
   if (IOSSystemContextMenu.isSupported(context)) {
-    return IOSSystemContextMenu(
-      anchor: controller.toolbarFocalPoint.offset! & controller.toolbarFocalPoint.leaderSize!,
+    return IOSSuperTextFieldSystemContextMenu(
+      controller: controller,
     );
   }
 
@@ -751,4 +751,76 @@ Widget defaultIosPopoverToolbarBuilder(BuildContext context, IOSEditingOverlayCo
       }
     },
   );
+}
+
+class IOSSuperTextFieldSystemContextMenu extends StatefulWidget {
+  const IOSSuperTextFieldSystemContextMenu({
+    super.key,
+    required this.controller,
+  });
+
+  final IOSEditingOverlayController controller;
+
+  @override
+  State<IOSSuperTextFieldSystemContextMenu> createState() => _IOSSuperTextFieldSystemContextMenuState();
+}
+
+class _IOSSuperTextFieldSystemContextMenuState extends State<IOSSuperTextFieldSystemContextMenu> {
+  late final SystemContextMenuController _systemContextMenuController;
+
+  @override
+  void initState() {
+    super.initState();
+    _systemContextMenuController = SystemContextMenuController();
+    widget.controller.addListener(_onControllerChanged);
+    onNextFrame((_) {
+      _positionSystemMenu();
+    });
+  }
+
+  @override
+  void didUpdateWidget(covariant IOSSuperTextFieldSystemContextMenu oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.controller != oldWidget.controller) {
+      oldWidget.controller.removeListener(_onControllerChanged);
+      widget.controller.addListener(_onControllerChanged);
+    }
+    onNextFrame((_) {
+      _positionSystemMenu();
+    });
+  }
+
+  @override
+  void dispose() {
+    widget.controller.removeListener(_onControllerChanged);
+    _systemContextMenuController.dispose();
+    super.dispose();
+  }
+
+  void _onControllerChanged() {
+    onNextFrame((_) {
+      _positionSystemMenu();
+    });
+  }
+
+  void _positionSystemMenu() {
+    // The size reported by the controller's toolbarFocalPoint is one frame behind. Query the information
+    // overlayController instead.
+    final topAnchor = widget.controller.overlayController.toolbarTopAnchor;
+    final bottomAnchor = widget.controller.overlayController.toolbarTopAnchor;
+
+    if (topAnchor == null || bottomAnchor == null) {
+      // We don't expect the toolbar builder to be called without having the anchors
+      // defined. But, since these properties are nullable, we account for that.
+      return;
+    }
+
+    _systemContextMenuController.show(Rect.fromLTRB(topAnchor.dx, topAnchor.dy, bottomAnchor.dx, bottomAnchor.dy));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    assert(IOSSystemContextMenu.isSupported(context));
+    return const SizedBox.shrink();
+  }
 }
