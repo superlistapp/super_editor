@@ -194,15 +194,15 @@ void main() {
         // Ensure the word was selected.
         expect(
           SuperTextFieldInspector.findSelection(),
-          TextSelection(baseOffset: 12, extentOffset: 17),
+          const TextSelection(baseOffset: 12, extentOffset: 17),
         );
 
         // Drag the downstream handle to the beginning of the downstream word.
         // "Lorem ipsum [dolor sit a]met"
         //                          ^ position 23
         final textLayout = SuperTextFieldInspector.findProseTextLayout();
-        final downstreamPositionBox = textLayout.getCharacterBox(TextPosition(offset: 17));
-        final desiredPositionBox = textLayout.getCharacterBox(TextPosition(offset: 23));
+        final downstreamPositionBox = textLayout.getCharacterBox(const TextPosition(offset: 17));
+        final desiredPositionBox = textLayout.getCharacterBox(const TextPosition(offset: 23));
         final gesture = await tester.dragDownstreamMobileHandleByDistanceInSuperTextField(
           Offset(desiredPositionBox!.right - downstreamPositionBox!.right, 0.0),
         );
@@ -251,15 +251,15 @@ void main() {
         // Ensure the word was selected.
         expect(
           SuperTextFieldInspector.findSelection(),
-          TextSelection(baseOffset: 27, extentOffset: 38),
+          const TextSelection(baseOffset: 27, extentOffset: 38),
         );
 
         // Drag the downstream handle towards the beginning of the selected word.
         // "Lorem ipsum dolor sit amet [con]sectetur"
         //                                 ^ position 30
         final textLayout = SuperTextFieldInspector.findProseTextLayout();
-        final downstreamPositionBox = textLayout.getCharacterBox(TextPosition(offset: 38));
-        final desiredPositionBox = textLayout.getCharacterBox(TextPosition(offset: 30));
+        final downstreamPositionBox = textLayout.getCharacterBox(const TextPosition(offset: 38));
+        final desiredPositionBox = textLayout.getCharacterBox(const TextPosition(offset: 30));
         final gesture = await tester.dragDownstreamMobileHandleByDistanceInSuperTextField(
           Offset(desiredPositionBox!.left - downstreamPositionBox!.right, 0.0),
         );
@@ -310,15 +310,15 @@ void main() {
         // Ensure the word was selected.
         expect(
           SuperTextFieldInspector.findSelection(),
-          TextSelection(baseOffset: 12, extentOffset: 17),
+          const TextSelection(baseOffset: 12, extentOffset: 17),
         );
 
         // Drag the upstream handle to the end of the upstream word.
         // "Lorem ipsu[m dolor] sit amet"
         //            ^ position 10
         final textLayout = SuperTextFieldInspector.findProseTextLayout();
-        final upstreamPositionBox = textLayout.getCharacterBox(TextPosition(offset: 12));
-        final desiredPositionBox = textLayout.getCharacterBox(TextPosition(offset: 10));
+        final upstreamPositionBox = textLayout.getCharacterBox(const TextPosition(offset: 12));
+        final desiredPositionBox = textLayout.getCharacterBox(const TextPosition(offset: 10));
         final gesture = await tester.dragUpstreamMobileHandleByDistanceInSuperTextField(
           Offset(desiredPositionBox!.left - upstreamPositionBox!.left, 0.0),
         );
@@ -367,15 +367,15 @@ void main() {
         // Ensure the word was selected.
         expect(
           SuperTextFieldInspector.findSelection(),
-          TextSelection(baseOffset: 27, extentOffset: 38),
+          const TextSelection(baseOffset: 27, extentOffset: 38),
         );
 
         // Drag the upstream handle towards the end of the selected word.
         // "Lorem ipsum dolor sit amet consect[etur]"
         //                                    ^ position 34
         final textLayout = SuperTextFieldInspector.findProseTextLayout();
-        final upstreamPositionBox = textLayout.getCharacterBox(TextPosition(offset: 27));
-        final desiredPositionBox = textLayout.getCharacterBox(TextPosition(offset: 34));
+        final upstreamPositionBox = textLayout.getCharacterBox(const TextPosition(offset: 27));
+        final desiredPositionBox = textLayout.getCharacterBox(const TextPosition(offset: 34));
         final gesture = await tester.dragUpstreamMobileHandleByDistanceInSuperTextField(
           Offset(desiredPositionBox!.left - upstreamPositionBox!.left, 0.0),
         );

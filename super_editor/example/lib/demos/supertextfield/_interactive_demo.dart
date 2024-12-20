@@ -150,7 +150,9 @@ class _InteractiveTextFieldDemoState extends State<InteractiveTextFieldDemo> {
                     TextButton(
                       onPressed: () {
                         Clipboard.setData(ClipboardData(
-                          text: _textFieldController.selection.textInside(_textFieldController.text.text),
+                          text: _textFieldController.selection.textInside(
+                            _textFieldController.text.toPlainText(includePlaceholders: false),
+                          ),
                         ));
                         _closePopup();
                       },

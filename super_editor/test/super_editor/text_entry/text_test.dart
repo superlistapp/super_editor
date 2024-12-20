@@ -240,7 +240,7 @@ Future<void> main() async {
         // The handler should insert a character
         expect(result, ExecutionInstruction.haltExecution);
         expect(
-          (editContext.document.first as TextNode).text.text,
+          (editContext.document.first as TextNode).text.toPlainText(),
           'aThis is some text',
         );
       });
@@ -284,7 +284,7 @@ Future<void> main() async {
         // The handler should insert a character
         expect(result, ExecutionInstruction.haltExecution);
         expect(
-          (editContext.document.first as TextNode).text.text,
+          (editContext.document.first as TextNode).text.toPlainText(),
           'ßThis is some text',
         );
       });

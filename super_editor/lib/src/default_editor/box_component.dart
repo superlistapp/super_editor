@@ -353,7 +353,7 @@ class DeleteUpstreamAtBeginningOfBlockNodeCommand extends EditCommand {
       return;
     }
 
-    if (nodeBefore is TextNode && nodeBefore.text.text.isEmpty) {
+    if (nodeBefore is TextNode && nodeBefore.text.isEmpty) {
       executor.executeCommand(
         DeleteNodeCommand(nodeId: nodeBefore.id),
       );
