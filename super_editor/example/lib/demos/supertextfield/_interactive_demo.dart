@@ -182,7 +182,7 @@ class _SuperTextFieldRightClickListener extends SuperTextFieldTapHandler {
   final RightClickHandler rightClickHandler;
 
   @override
-  TapHandlingInstruction onSecondaryTap(SuperTextFieldGestureDetails details) {
+  TapHandlingInstruction onSecondaryTapUp(SuperTextFieldGestureDetails details) {
     return rightClickHandler(details);
   }
 }
