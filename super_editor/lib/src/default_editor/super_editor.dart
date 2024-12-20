@@ -917,7 +917,6 @@ Widget iOSSystemPopoverEditorToolbarWithFallbackBuilder(
   LeaderLink focalPoint,
   CommonEditorOperations editorOps,
   SuperEditorIosControlsController editorControlsController,
-  DocumentRange documentRange,
   DocumentLayout documentLayout,
 ) {
   if (CurrentPlatform.isWeb) {
@@ -926,21 +925,8 @@ Widget iOSSystemPopoverEditorToolbarWithFallbackBuilder(
   }
 
   if (IOSSystemContextMenu.isSupported(context)) {
-    // The size reported by the focalPoint is one frame behind. Query the selection bounds
-    // from the DocumentLayout instead.
-    final selectionBounds = documentLayout.getRectForSelection(documentRange.start, documentRange.end);
-    if (selectionBounds == null) {
-      // The selection bounds can be null if we can't find the component for the nodes in the
-      // selected range. We don't expect that to happen when trying to show the toolbar.
-      return const SizedBox();
-    }
-
-    // The selection bounds are in the layout coordinate space, so we need to convert them to
-    // global coordinate space.
-    final selectionTopLeft = documentLayout.getGlobalOffsetFromDocumentOffset(selectionBounds.topLeft);
-
     return IOSSystemContextMenu(
-      anchor: selectionTopLeft & selectionBounds.size,
+      leaderLink: focalPoint,
     );
   }
 

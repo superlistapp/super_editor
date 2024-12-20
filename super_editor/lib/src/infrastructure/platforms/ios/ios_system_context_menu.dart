@@ -1,5 +1,7 @@
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
+import 'package:follow_the_leader/follow_the_leader.dart';
+import 'package:super_editor/src/infrastructure/flutter/flutter_scheduler.dart';
 
 /// Displays the iOS system context menu on top of the Flutter view.
 ///
@@ -33,12 +35,13 @@ class IOSSystemContextMenu extends StatefulWidget {
 
   const IOSSystemContextMenu({
     super.key,
-    required this.anchor,
+    required this.leaderLink,
     this.onSystemHide,
   });
 
-  /// The [Rect] that the context menu should point to.
-  final Rect anchor;
+  /// A [LeaderLink] attached to the widget that determines the position
+  /// of the system context menu.
+  final LeaderLink leaderLink;
 
   /// Called when the system hides this context menu.
   ///
@@ -62,21 +65,39 @@ class _IOSSystemContextMenuState extends State<IOSSystemContextMenu> {
     _systemContextMenuController = SystemContextMenuController(
       onSystemHide: widget.onSystemHide,
     );
-    _systemContextMenuController.show(widget.anchor);
+    widget.leaderLink.addListener(_onLeaderChanged);
+    onNextFrame((_) => _showSystemMenu());
   }
 
   @override
   void didUpdateWidget(IOSSystemContextMenu oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (widget.anchor != oldWidget.anchor) {
-      _systemContextMenuController.show(widget.anchor);
+    if (widget.leaderLink != oldWidget.leaderLink) {
+      oldWidget.leaderLink.removeListener(_onLeaderChanged);
+      widget.leaderLink.addListener(_onLeaderChanged);
+      onNextFrame((_) => _showSystemMenu());
     }
   }
 
   @override
   void dispose() {
+    widget.leaderLink.removeListener(_onLeaderChanged);
     _systemContextMenuController.dispose();
     super.dispose();
+  }
+
+  void _onLeaderChanged() {
+    if (widget.leaderLink.offset == null || widget.leaderLink.leaderSize == null) {
+      return;
+    }
+
+    onNextFrame((_) {
+      _showSystemMenu();
+    });
+  }
+
+  void _showSystemMenu() {
+    _systemContextMenuController.show(widget.leaderLink.offset! & widget.leaderLink.leaderSize!);
   }
 
   @override
