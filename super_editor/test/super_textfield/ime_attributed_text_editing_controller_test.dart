@@ -116,7 +116,7 @@ void main() {
           )
         ]);
 
-      expect(controller.text.text, equals('Hello World'));
+      expect(controller.text.toPlainText(), equals('Hello World'));
       ExpectedSpans([
         '______bbbbb',
       ]).expectSpans(controller.text.spans);
@@ -203,7 +203,7 @@ void main() {
           )
         ]);
 
-      expect(controller.text.text, equals('before [b] after'));
+      expect(controller.text.toPlainText(), equals('before [b] after'));
       expect(controller.selection, equals(const TextSelection.collapsed(offset: 9)));
       ExpectedSpans([
         '_______bbb______',
@@ -235,7 +235,7 @@ void main() {
           )
         ]);
 
-      expect(controller.text.text, equals('before [hello] after'));
+      expect(controller.text.toPlainText(), equals('before [hello] after'));
       expect(controller.selection, equals(const TextSelection.collapsed(offset: 13)));
       ExpectedSpans([
         '_______bbbbbbb______',
@@ -268,7 +268,7 @@ void main() {
           )
         ]);
 
-      expect(controller.text.text, equals('before [b] after'));
+      expect(controller.text.toPlainText(), equals('before [b] after'));
       ExpectedSpans([
         '_______b_b______',
       ]).expectSpans(controller.text.spans);
@@ -330,7 +330,7 @@ void main() {
           ),
         ]);
 
-      expect(controller.text.text, equals('[b]'));
+      expect(controller.text.toPlainText(), equals('[b]'));
       expect(controller.selection, equals(const TextSelection.collapsed(offset: 2)));
     });
 
@@ -353,7 +353,7 @@ void main() {
           ),
         ]);
 
-      expect(controller.text.text, equals('[new]'));
+      expect(controller.text.toPlainText(), equals('[new]'));
       expect(controller.selection, equals(const TextSelection.collapsed(offset: 4)));
     });
 
@@ -375,7 +375,7 @@ void main() {
           )
         ]);
 
-      expect(controller.text.text, equals('ome text'));
+      expect(controller.text.toPlainText(), equals('ome text'));
       expect(controller.selection, equals(const TextSelection.collapsed(offset: 0)));
     });
 
@@ -397,7 +397,7 @@ void main() {
           )
         ]);
 
-      expect(controller.text.text, equals('some tex'));
+      expect(controller.text.toPlainText(), equals('some tex'));
       expect(controller.selection, equals(const TextSelection.collapsed(offset: 8)));
     });
   });

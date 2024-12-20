@@ -138,8 +138,9 @@ class TypeTextCommand implements RobotCommand {
 
     focusNode!.requestFocus();
 
-    for (int i = 0; i < textToType.text.length; ++i) {
-      _typeCharacter(textController, i);
+    final plainText = textToType.toPlainText();
+    for (int i = 0; i < plainText.length; ++i) {
+      _typeCharacter(textController, i, plainText[i]);
 
       await _waitForCharacterDelay();
 
@@ -149,9 +150,9 @@ class TypeTextCommand implements RobotCommand {
     }
   }
 
-  void _typeCharacter(AttributedTextEditingController textController, int offset) {
+  void _typeCharacter(AttributedTextEditingController textController, int offset, String character) {
     textController.text = textController.text.insertString(
-      textToInsert: textToType.text[offset], // TODO: support insertion of attributed text
+      textToInsert: character,
       startOffset: textController.selection.extentOffset,
     );
 
@@ -246,12 +247,12 @@ class DeleteCharactersCommand implements RobotCommand {
     if (direction == TextAffinity.downstream) {
       // Delete the character after the offset
       deleteStartIndex = offset;
-      deleteEndIndex = getCharacterEndBounds(textController.text.text, offset);
+      deleteEndIndex = getCharacterEndBounds(textController.text.toPlainText(), offset);
       deletedCodePointCount = deleteEndIndex - deleteStartIndex;
       newSelectionIndex = deleteStartIndex;
     } else {
       // Delete the character before the offset
-      deleteStartIndex = getCharacterStartBounds(textController.text.text, offset);
+      deleteStartIndex = getCharacterStartBounds(textController.text.toPlainText(), offset);
       deleteEndIndex = offset + 1;
       deletedCodePointCount = offset - deleteStartIndex;
       newSelectionIndex = deleteStartIndex;

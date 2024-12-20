@@ -390,7 +390,7 @@ class _EditorToolbarState extends State<EditorToolbar> {
   /// Takes the text from the [urlController] and applies it as a link
   /// attribution to the currently selected text.
   void _applyLink() {
-    final url = _urlController!.text.text;
+    final url = _urlController!.text.toPlainText(includePlaceholders: false);
 
     final selection = widget.composer.selection!;
     final baseOffset = (selection.base.nodePosition as TextPosition).offset;
@@ -438,10 +438,11 @@ class _EditorToolbarState extends State<EditorToolbar> {
     int startOffset = range.start;
     int endOffset = range.end;
 
-    while (startOffset < range.end && text.text[startOffset] == ' ') {
+    final plainText = text.toPlainText();
+    while (startOffset < range.end && plainText[startOffset] == ' ') {
       startOffset += 1;
     }
-    while (endOffset > startOffset && text.text[endOffset] == ' ') {
+    while (endOffset > startOffset && plainText[endOffset] == ' ') {
       endOffset -= 1;
     }
 

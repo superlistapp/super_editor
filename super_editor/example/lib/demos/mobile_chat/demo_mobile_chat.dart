@@ -1,3 +1,4 @@
+import 'package:example/demos/mobile_chat/giphy_keyboard_panel.dart';
 import 'package:flutter/material.dart';
 import 'package:super_editor/super_editor.dart';
 
@@ -157,7 +158,7 @@ class _MobileChatDemoState extends State<MobileChatDemo> {
 
   Widget _buildCommentEditor() {
     return Opacity(
-      opacity: 0.75,
+      opacity: 1.0,
       // ^ opacity is for testing, so we can see the chat behind it.
       child: KeyboardPanelScaffold(
         controller: _keyboardPanelController,
@@ -175,6 +176,10 @@ class _MobileChatDemoState extends State<MobileChatDemo> {
               return Container(
                 color: Colors.red,
                 height: double.infinity,
+              );
+            case _Panel.giphy:
+              return GiphyKeyboardPanel(
+                editor: _editor,
               );
             default:
               return const SizedBox();
@@ -267,6 +272,11 @@ class _MobileChatDemoState extends State<MobileChatDemo> {
                   icon: Icons.account_circle,
                   onPressed: () => _showBottomSheetWithOptions(context),
                 ),
+                const SizedBox(width: 16),
+                _PanelButton(
+                  icon: Icons.gif_box_outlined,
+                  onPressed: () => _togglePanel(_Panel.giphy),
+                ),
                 const Spacer(),
                 GestureDetector(
                   onTap: _keyboardPanelController.closeKeyboardAndPanel,
@@ -293,7 +303,8 @@ class _MobileChatDemoState extends State<MobileChatDemo> {
 
 enum _Panel {
   panel1,
-  panel2;
+  panel2,
+  giphy;
 }
 
 class _PanelButton extends StatelessWidget {
@@ -325,37 +336,47 @@ class _PanelButton extends StatelessWidget {
   }
 }
 
-final _chatStylesheet = defaultStylesheet.copyWith(
-  addRulesBefore: [
-    StyleRule(
-      BlockSelector.all,
-      (doc, docNode) {
-        return {
-          Styles.maxWidth: double.infinity,
-          Styles.padding: const CascadingPadding.symmetric(horizontal: 24),
-        };
-      },
-    ),
-  ],
-  addRulesAfter: [
-    StyleRule(
-      BlockSelector.all.first(),
-      (doc, docNode) {
-        return {
-          Styles.padding: const CascadingPadding.only(top: 12),
-        };
-      },
-    ),
-    StyleRule(
-      BlockSelector.all.last(),
-      (doc, docNode) {
-        return {
-          Styles.padding: const CascadingPadding.only(bottom: 12),
-        };
-      },
-    ),
-  ],
-);
+Stylesheet get _chatStylesheet => defaultStylesheet.copyWith(
+      addRulesBefore: [
+        StyleRule(
+          BlockSelector.all,
+          (doc, docNode) {
+            return {
+              Styles.maxWidth: double.infinity,
+              Styles.padding: const CascadingPadding.symmetric(horizontal: 24),
+            };
+          },
+        ),
+      ],
+      addRulesAfter: [
+        StyleRule(
+          BlockSelector.all,
+          (doc, docNode) {
+            return {
+              Styles.textStyle: TextStyle(
+                fontSize: 18,
+              ),
+            };
+          },
+        ),
+        StyleRule(
+          BlockSelector.all.first(),
+          (doc, docNode) {
+            return {
+              Styles.padding: const CascadingPadding.only(top: 12),
+            };
+          },
+        ),
+        StyleRule(
+          BlockSelector.all.last(),
+          (doc, docNode) {
+            return {
+              Styles.padding: const CascadingPadding.only(bottom: 12),
+            };
+          },
+        ),
+      ],
+    );
 
 Future<void> _showBottomSheetWithOptions(BuildContext context) async {
   return showModalBottomSheet(

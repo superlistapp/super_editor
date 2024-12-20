@@ -866,6 +866,7 @@ final readOnlyDefaultStylesheet = Stylesheet(
     ),
   ],
   inlineTextStyler: readOnlyDefaultInlineTextStyler,
+  inlineWidgetBuilders: defaultInlineWidgetBuilderChain,
 );
 
 TextStyle readOnlyDefaultInlineTextStyler(Set<Attribution> attributions, TextStyle existingStyle) {

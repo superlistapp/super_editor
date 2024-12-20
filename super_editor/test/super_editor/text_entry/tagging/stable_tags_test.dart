@@ -22,7 +22,7 @@ void main() {
 
         // Ensure that the tag has a composing attribution.
         final text = SuperEditorInspector.findTextInComponent("1");
-        expect(text.text, "@");
+        expect(text.toPlainText(), "@");
         expect(
           text.getAttributedRange({stableTagComposingAttribution}, 0),
           const SpanRange(0, 0),
@@ -41,7 +41,7 @@ void main() {
 
         // Ensure that the tag has a composing attribution.
         final text = SuperEditorInspector.findTextInComponent("1");
-        expect(text.text, "@john");
+        expect(text.toPlainText(), "@john");
         expect(
           text.getAttributedRange({stableTagComposingAttribution}, 0),
           const SpanRange(0, 4),
@@ -69,7 +69,7 @@ void main() {
 
         // Ensure that the tag has a composing attribution.
         final text = SuperEditorInspector.findTextInComponent("1");
-        expect(text.text, "before @john after");
+        expect(text.toPlainText(), "before @john after");
         expect(
           text.getAttributedRange({stableTagComposingAttribution}, 7),
           const SpanRange(7, 11),
@@ -98,7 +98,7 @@ void main() {
         // Ensure that there's no more composing attribution because the tag
         // should have been committed.
         final text = SuperEditorInspector.findTextInComponent("1");
-        expect(text.text, "before @john after");
+        expect(text.toPlainText(), "before @john after");
         expect(
           text.getAttributionSpansInRange(
             attributionFilter: (attribution) => attribution == stableTagComposingAttribution,
@@ -129,7 +129,7 @@ void main() {
 
         // Ensure that we started composing a tag before adding a space.
         var text = SuperEditorInspector.findTextInComponent("1");
-        expect(text.text, "before @john");
+        expect(text.toPlainText(), "before @john");
         expect(
           text.getAttributedRange({stableTagComposingAttribution}, 7),
           const SpanRange(7, 11),
@@ -139,7 +139,7 @@ void main() {
 
         // Ensure that the composing attribution continues after the space.
         text = SuperEditorInspector.findTextInComponent("1");
-        expect(text.text, "before @john after");
+        expect(text.toPlainText(), "before @john after");
         expect(
           text.getAttributionSpansByFilter((a) => a == stableTagComposingAttribution),
           {
@@ -329,7 +329,7 @@ void main() {
 
         // Ensure that we didn't start composing again.
         text = SuperEditorInspector.findTextInComponent("1");
-        expect(text.text, "before @j");
+        expect(text.toPlainText(), "before @j");
         expect(
           text.getAttributionSpansInRange(
             attributionFilter: (attribution) => attribution == stableTagComposingAttribution,
@@ -347,7 +347,7 @@ void main() {
 
         // Ensure that the cancelled tag wasn't committed, and didn't start composing again.
         text = SuperEditorInspector.findTextInComponent("1");
-        expect(text.text, "before @j ");
+        expect(text.toPlainText(), "before @j ");
         expect(
           text.getAttributionSpansInRange(
             attributionFilter: (attribution) => attribution == stableTagComposingAttribution,
@@ -432,7 +432,7 @@ void main() {
 
         // Ensure that only the stable tag is attributed as a stable tag.
         final text = SuperEditorInspector.findTextInComponent("1");
-        expect(text.text, "@john after");
+        expect(text.toPlainText(), "@john after");
         expect(
           text.getAttributedRange({const CommittedStableTagAttribution("john")}, 0),
           const SpanRange(0, 4),
@@ -460,7 +460,7 @@ void main() {
 
         // Ensure that only the stable tag is attributed as a stable tag.
         final text = SuperEditorInspector.findTextInComponent("1");
-        expect(text.text, "before @john after");
+        expect(text.toPlainText(), "before @john after");
         expect(
           text.getAttributedRange({const CommittedStableTagAttribution("john")}, 7),
           const SpanRange(7, 11),
@@ -502,7 +502,7 @@ void main() {
 
         // Ensure that the tag was submitted.
         final text = SuperEditorInspector.findTextInComponent("1");
-        expect(text.text, "before @john");
+        expect(text.toPlainText(), "before @john");
         expect(
           text.getAttributedRange({const CommittedStableTagAttribution("john")}, 7),
           const SpanRange(7, 11),
@@ -546,7 +546,7 @@ void main() {
 
         // Ensure that the stable tag was submitted.
         final text = SuperEditorInspector.findTextInComponent("1");
-        expect(text.text, "before @john");
+        expect(text.toPlainText(), "before @john");
         expect(
           text.getAttributedRange({const CommittedStableTagAttribution("john")}, 7),
           const SpanRange(7, 11),
@@ -595,7 +595,7 @@ void main() {
 
         // Ensure that the stable tag was submitted.
         final text = SuperEditorInspector.findTextInComponent("1");
-        expect(text.text, "before @john after");
+        expect(text.toPlainText(), "before @john after");
         expect(
           text.getAttributedRange({const CommittedStableTagAttribution("john")}, 7),
           const SpanRange(7, 11),
@@ -880,7 +880,7 @@ void main() {
         await tester.pressBackspace();
 
         // Ensure that the entire user tag was deleted.
-        expect(SuperEditorInspector.findTextInComponent("1").text, "before  after");
+        expect(SuperEditorInspector.findTextInComponent("1").toPlainText(), "before  after");
         expect(
           SuperEditorInspector.findDocumentSelection(),
           const DocumentSelection.collapsed(
@@ -918,7 +918,7 @@ void main() {
         await tester.pressDelete();
 
         // Ensure that the entire user tag was deleted.
-        expect(SuperEditorInspector.findTextInComponent("1").text, "before  after");
+        expect(SuperEditorInspector.findTextInComponent("1").toPlainText(), "before  after");
         expect(
           SuperEditorInspector.findDocumentSelection(),
           const DocumentSelection.collapsed(
@@ -948,7 +948,7 @@ void main() {
         await tester.pressBackspace();
 
         // Ensure the 2nd tag was deleted, and the 1st tag remains.
-        expect(SuperEditorInspector.findTextInComponent("1").text, "one @john two  three");
+        expect(SuperEditorInspector.findTextInComponent("1").toPlainText(), "one @john two  three");
         expect(
           SuperEditorInspector.findDocumentSelection(),
           const DocumentSelection.collapsed(
@@ -998,7 +998,7 @@ void main() {
         await tester.pressBackspace();
 
         // Ensure that both user tags were completely deleted.
-        expect(SuperEditorInspector.findTextInComponent("1").text, "one  three");
+        expect(SuperEditorInspector.findTextInComponent("1").toPlainText(), "one  three");
         expect(
           SuperEditorInspector.findDocumentSelection(),
           const DocumentSelection.collapsed(
@@ -1054,7 +1054,7 @@ void main() {
         await tester.pressBackspace();
 
         // Ensure that both user tags were completely deleted.
-        expect(SuperEditorInspector.findTextInComponent("1").text, "one  four");
+        expect(SuperEditorInspector.findTextInComponent("1").toPlainText(), "one  four");
         expect(
           SuperEditorInspector.findDocumentSelection(),
           const DocumentSelection.collapsed(
@@ -1094,7 +1094,7 @@ void main() {
         );
 
         final text = SuperEditorInspector.findTextInComponent("1");
-        expect(text.text, "💙");
+        expect(text.toPlainText(), "💙");
       });
 
       testWidgetsOnAllPlatforms("caret can move around emoji without breaking editor", (tester) async {
@@ -1142,7 +1142,7 @@ void main() {
 
         // Ensure the paragraph string is well formed: 💙
         final text = SuperEditorInspector.findTextInComponent("1");
-        expect(text.text, "💙");
+        expect(text.toPlainText(), "💙");
       });
 
       testWidgetsOnAllPlatforms("can be captured with trigger", (tester) async {
@@ -1159,7 +1159,7 @@ void main() {
 
         // Ensure the emoji is in the tag, and nothing went wrong with string formation.
         final text = SuperEditorInspector.findTextInComponent("1");
-        expect(text.text, "@💙");
+        expect(text.toPlainText(), "@💙");
 
         // Ensure the composing tag includes the emoji.
         expect(
@@ -1212,7 +1212,7 @@ void main() {
 
         // Ensure nothing went wrong with the string construction.
         final text = SuperEditorInspector.findTextInComponent("1");
-        expect(text.text, "💙@");
+        expect(text.toPlainText(), "💙@");
 
         // Ensure the tag was committed with the emoji.
         expect(

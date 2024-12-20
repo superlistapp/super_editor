@@ -71,7 +71,7 @@ void main() {
 
         expect(changeLogCount, 5);
         expect(changeEventCount, 10); // 2 events per character insertion
-        expect((editorPieces.document.getNodeAt(0) as ParagraphNode).text.text, "Hello");
+        expect((editorPieces.document.getNodeAt(0) as ParagraphNode).text.toPlainText(), "Hello");
       });
 
       test('executes multiple expanding commands', () {
@@ -121,7 +121,7 @@ void main() {
         // traversal.
         final paragraph = document.getNodeAt(0) as ParagraphNode;
         expect(
-          paragraph.text.text,
+          paragraph.text.toPlainText(),
           '''(0.0)
   (1.0)
     (2.0)
@@ -214,7 +214,7 @@ void main() {
                   continue;
                 }
 
-                insertEEvent = change.text.text.endsWith("e") ? change : null;
+                insertEEvent = change.text.toPlainText().endsWith("e") ? change : null;
               }
 
               if (insertEEvent == null) {
@@ -269,7 +269,7 @@ void main() {
           ]);
 
         // Ensure that our reaction ran in the middle of the requests.
-        expect((document.first as TextNode).text.text, "Hello");
+        expect((document.first as TextNode).text.toPlainText(), "Hello");
       });
 
       test('reactions receive a change list with events from earlier reactions', () {
@@ -303,7 +303,7 @@ void main() {
                   continue;
                 }
 
-                insertHEvent = change.text.text == "H" ? change : null;
+                insertHEvent = change.text.toPlainText() == "H" ? change : null;
               }
 
               if (insertHEvent == null) {
@@ -334,7 +334,7 @@ void main() {
                   continue;
                 }
 
-                insertEEvent = change.text.text == "e" ? change : null;
+                insertEEvent = change.text.toPlainText() == "e" ? change : null;
               }
 
               expect(insertEEvent, isNotNull, reason: "Reaction 2 didn't receive the change from reaction 1");
@@ -457,7 +457,7 @@ void main() {
           ]);
 
         // Ensure the character was inserted, and the caret moved forward.
-        expect((editorPieces.document.getNodeAt(0) as TextNode).text.text, "H");
+        expect((editorPieces.document.getNodeAt(0) as TextNode).text.toPlainText(), "H");
         expect(editorPieces.composer.selection, isNotNull);
         expect(
           editorPieces.composer.selection,
