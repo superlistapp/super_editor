@@ -1,6 +1,7 @@
 import 'package:example/demos/mobile_chat/giphy_keyboard_panel.dart';
 import 'package:flutter/material.dart';
 import 'package:super_editor/super_editor.dart';
+import 'package:super_keyboard/super_keyboard.dart';
 
 /// A UI with a chat message editor at the bottom, and a fake chat conversation
 /// behind it.
@@ -33,16 +34,16 @@ class _MobileChatDemoState extends State<MobileChatDemo> {
   final FocusNode _editorFocusNode = FocusNode();
   late final Editor _editor;
 
-  late final KeyboardPanelController _keyboardPanelController;
+  late final KeyboardPanelController<_Panel> _keyboardPanelController;
   final SoftwareKeyboardController _softwareKeyboardController = SoftwareKeyboardController();
 
   final _imeConnectionNotifier = ValueNotifier<bool>(false);
 
-  _Panel? _visiblePanel;
-
   @override
   void initState() {
     super.initState();
+
+    SuperKeyboard.initLogs();
 
     final document = MutableDocument.empty();
     final composer = MutableDocumentComposer();
@@ -53,6 +54,8 @@ class _MobileChatDemoState extends State<MobileChatDemo> {
     // Initially focus the overall screen so that the software keyboard isn't immediately
     // visible.
     _screenFocusNode.requestFocus();
+
+    SuperKeyboard.initLogs();
   }
 
   @override
@@ -64,16 +67,37 @@ class _MobileChatDemoState extends State<MobileChatDemo> {
     super.dispose();
   }
 
+  void _openPanelFromAppBar() {
+    // Focus the editor so that we switch from the editor
+    // preview to the real editor.
+    _editorFocusNode.requestFocus();
+
+    // Place the caret in the focused editor so that there's a
+    // basis for the panel's commands.
+    final document = _editor.context.document;
+    _editor.execute([
+      ChangeSelectionRequest(
+        DocumentSelection.collapsed(
+          position: DocumentPosition(
+            nodeId: document.last.id,
+            nodePosition: document.last.endPosition,
+          ),
+        ),
+        SelectionChangeType.placeCaret,
+        SelectionReason.userInteraction,
+      ),
+    ]);
+
+    // Open a panel
+    _keyboardPanelController.showKeyboardPanel(_Panel.panel1);
+  }
+
   void _togglePanel(_Panel panel) {
-    setState(() {
-      if (_visiblePanel == panel) {
-        _visiblePanel = null;
-        _keyboardPanelController.showSoftwareKeyboard();
-      } else {
-        _visiblePanel = panel;
-        _keyboardPanelController.showKeyboardPanel();
-      }
-    });
+    if (_keyboardPanelController.openPanel == panel) {
+      _keyboardPanelController.showSoftwareKeyboard();
+    } else {
+      _keyboardPanelController.showKeyboardPanel(panel);
+    }
   }
 
   @override
@@ -95,6 +119,18 @@ class _MobileChatDemoState extends State<MobileChatDemo> {
 
   PreferredSizeWidget _buildAppBar() {
     return AppBar(
+      actions: [
+        IconButton(
+          icon: Icon(Icons.open_in_new),
+          onPressed: _openPanelFromAppBar,
+        ),
+        IconButton(
+          icon: Icon(Icons.settings),
+          onPressed: () {
+            Navigator.of(context).pushNamed("/second");
+          },
+        ),
+      ],
       bottom: const TabBar(
         tabs: [
           Tab(icon: Icon(Icons.chat)),
@@ -111,6 +147,7 @@ class _MobileChatDemoState extends State<MobileChatDemo> {
           child: GestureDetector(
             onTap: () {
               _screenFocusNode.requestFocus();
+              _keyboardPanelController.closeKeyboardAndPanel();
             },
             child: Focus(
               focusNode: _screenFocusNode,
@@ -158,39 +195,44 @@ class _MobileChatDemoState extends State<MobileChatDemo> {
 
   Widget _buildCommentEditor() {
     return Opacity(
-      opacity: 1.0,
-      // ^ opacity is for testing, so we can see the chat behind it.
-      child: KeyboardPanelScaffold(
+      opacity: 0.75,
+      child: KeyboardPanelScaffold<_Panel>(
         controller: _keyboardPanelController,
         isImeConnected: _imeConnectionNotifier,
         toolbarBuilder: _buildKeyboardToolbar,
         fallbackPanelHeight: MediaQuery.sizeOf(context).height / 3,
-        keyboardPanelBuilder: (context) {
-          switch (_visiblePanel) {
-            case _Panel.panel1:
-              return Container(
-                color: Colors.blue,
-                height: double.infinity,
-              );
-            case _Panel.panel2:
-              return Container(
-                color: Colors.red,
-                height: double.infinity,
-              );
-            case _Panel.giphy:
-              return GiphyKeyboardPanel(
-                editor: _editor,
-              );
-            default:
-              return const SizedBox();
-          }
+        keyboardPanelBuilder: (context, panel) {
+          print("Building panel. Visible panel: $panel");
+          return LayoutBuilder(
+            builder: (context, constraints) {
+              switch (panel) {
+                case _Panel.panel1:
+                  return Container(
+                    color: Colors.blue.withOpacity(0.5),
+                    height: double.infinity,
+                  );
+                case _Panel.panel2:
+                  return Container(
+                    color: Colors.red,
+                    height: double.infinity,
+                  );
+                case _Panel.giphy:
+                  return GiphyKeyboardPanel(
+                    editor: _editor,
+                  );
+                default:
+                  return const SizedBox();
+              }
+            },
+          );
         },
         contentBuilder: (context, isKeyboardVisible) {
           return ConstrainedBox(
             constraints: BoxConstraints(maxHeight: 250),
             child: Container(
               decoration: BoxDecoration(
-                color: Colors.white,
+                // color: Colors.white,
+                color: Colors.yellow,
                 borderRadius: BorderRadius.only(
                   topLeft: Radius.circular(24),
                   topRight: Radius.circular(24),
@@ -224,10 +266,20 @@ class _MobileChatDemoState extends State<MobileChatDemo> {
                       shrinkWrap: true,
                       stylesheet: _chatStylesheet,
                       selectionPolicies: const SuperEditorSelectionPolicies(
+                        openKeyboardWhenTappingExistingSelection: false,
                         clearSelectionWhenEditorLosesFocus: true,
                         clearSelectionWhenImeConnectionCloses: false,
                       ),
+                      imePolicies: SuperEditorImePolicies(
+                        openKeyboardOnGainPrimaryFocus: false,
+                        openKeyboardOnSelectionChange: false,
+                        closeKeyboardOnSelectionLost: false,
+                      ),
                       isImeConnected: _imeConnectionNotifier,
+                      contentTapDelegateFactories: [
+                        superEditorLaunchLinkTapHandlerFactory,
+                        _tapToFocusEditor,
+                      ],
                     ),
                   ),
                 ],
@@ -239,11 +291,14 @@ class _MobileChatDemoState extends State<MobileChatDemo> {
     );
   }
 
-  Widget _buildKeyboardToolbar(BuildContext context, bool isKeyboardPanelVisible) {
-    if (!isKeyboardPanelVisible) {
-      _visiblePanel = null;
-    }
+  ContentTapDelegate _tapToFocusEditor(SuperEditorContext editContext) {
+    return _TapToFocusEditor(
+      _editorFocusNode,
+      _keyboardPanelController,
+    );
+  }
 
+  Widget _buildKeyboardToolbar(BuildContext context, _Panel? openPanel) {
     return Row(
       children: [
         Expanded(
@@ -258,13 +313,13 @@ class _MobileChatDemoState extends State<MobileChatDemo> {
                 const Spacer(),
                 _PanelButton(
                   icon: Icons.text_fields,
-                  isActive: _visiblePanel == _Panel.panel1,
+                  isActive: _keyboardPanelController.openPanel == _Panel.panel1,
                   onPressed: () => _togglePanel(_Panel.panel1),
                 ),
                 const SizedBox(width: 16),
                 _PanelButton(
                   icon: Icons.align_horizontal_left,
-                  isActive: _visiblePanel == _Panel.panel2,
+                  isActive: _keyboardPanelController.openPanel == _Panel.panel2,
                   onPressed: () => _togglePanel(_Panel.panel2),
                 ),
                 const SizedBox(width: 16),
@@ -298,6 +353,32 @@ class _MobileChatDemoState extends State<MobileChatDemo> {
         child: Icon(Icons.account_circle),
       ),
     );
+  }
+}
+
+class _TapToFocusEditor extends ContentTapDelegate {
+  _TapToFocusEditor(
+    this.editorFocusNode,
+    this.keyboardPanelController,
+  );
+
+  final FocusNode editorFocusNode;
+  final KeyboardPanelController keyboardPanelController;
+
+  @override
+  TapHandlingInstruction onTap(DocumentTapDetails details) {
+    print(
+        "Tap on editor - existing focus: ${editorFocusNode.hasFocus}, is panel open? ${keyboardPanelController.isKeyboardPanelOpen}, is keyboard open? ${keyboardPanelController.isSoftwareKeyboardOpen}");
+
+    if (!keyboardPanelController.isSoftwareKeyboardOpen && !keyboardPanelController.isKeyboardPanelOpen) {
+      // The user tapped on the editor and the software keyboard isn't up, nor is a panel.
+      // Open the software keyboard.
+      print("Giving focus to editor");
+      editorFocusNode.requestFocus();
+      keyboardPanelController.showSoftwareKeyboard();
+    }
+
+    return TapHandlingInstruction.continueHandling;
   }
 }
 

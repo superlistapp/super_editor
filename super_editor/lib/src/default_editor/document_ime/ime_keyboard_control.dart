@@ -68,8 +68,11 @@ class _SoftwareKeyboardOpenerState extends State<SoftwareKeyboardOpener> impleme
 
   @override
   void open() {
+    print("ime_keyboard_control.dart - Calling show() on IME connection");
     editorImeLog.info("[SoftwareKeyboard] - showing keyboard");
+    print("open()'ing an IME connection");
     widget.imeConnection.value ??= TextInput.attach(widget.createImeClient(), widget.createImeConfiguration());
+    print("Connection: ${widget.imeConnection.value}");
     widget.imeConnection.value!.show();
   }
 

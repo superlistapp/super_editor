@@ -405,6 +405,7 @@ class AndroidDocumentTouchInteractor extends StatefulWidget {
     required this.document,
     required this.getDocumentLayout,
     required this.selection,
+    this.openKeyboardWhenTappingExistingSelection = true,
     required this.openSoftwareKeyboard,
     required this.scrollController,
     required this.fillViewport,
@@ -421,6 +422,9 @@ class AndroidDocumentTouchInteractor extends StatefulWidget {
   final Document document;
   final DocumentLayout Function() getDocumentLayout;
   final ValueListenable<DocumentSelection?> selection;
+
+  /// {@macro openKeyboardWhenTappingExistingSelection}
+  final bool openKeyboardWhenTappingExistingSelection;
 
   /// A callback that should open the software keyboard when invoked.
   final VoidCallback openSoftwareKeyboard;
@@ -673,6 +677,7 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
   }
 
   void _onTapDown(TapDownDetails details) {
+    print("Android - _onTapDown()");
     final position = scrollPosition;
     if (position is ScrollPositionWithSingleContext) {
       position.goIdle();
@@ -717,6 +722,7 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
   }
 
   void _onTapUp(TapUpDetails details) {
+    print("Android - _onTapUp()");
     // Stop waiting for a long-press to start.
     _tapDownLongPressTimer?.cancel();
 
@@ -733,7 +739,9 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
     editorGesturesLog.fine(" - document offset: $docOffset");
 
     if (widget.contentTapHandlers != null) {
+      print("Running handlers: ${widget.contentTapHandlers}");
       for (final handler in widget.contentTapHandlers!) {
+        print("Running handler: $handler");
         final result = handler.onTap(
           DocumentTapDetails(
             documentLayout: _docLayout,
@@ -744,9 +752,11 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
         if (result == TapHandlingInstruction.halt) {
           // The custom tap handler doesn't want us to react at all
           // to the tap.
+          print("Halting handlers");
           return;
         }
       }
+      print("Done with handlers");
     }
 
     final docPosition = _docLayout.getDocumentPositionNearestToOffset(docOffset);
@@ -783,7 +793,7 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
 
     _showAndHideEditingControlsAfterTapSelection(didTapOnExistingSelection: didTapOnExistingSelection);
 
-    if (didTapOnExistingSelection) {
+    if (didTapOnExistingSelection && widget.openKeyboardWhenTappingExistingSelection) {
       // The user tapped on the existing selection. Show the software keyboard.
       //
       // If the user didn't tap on an existing selection, the software keyboard will
