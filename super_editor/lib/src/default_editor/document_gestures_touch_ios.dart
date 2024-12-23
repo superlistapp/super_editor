@@ -130,6 +130,7 @@ class SuperEditorIosControlsController {
     _shouldShowToolbar.dispose();
   }
 
+  /// {@template ios_use_selection_heuristics}
   /// Whether to adjust the user's selection similar to the way iOS does.
   ///
   /// For example: iOS doesn't let users tap directly on a text offset. Instead,
@@ -139,6 +140,7 @@ class SuperEditorIosControlsController {
   /// When this property is `true`, iOS-style heuristics should be used. When
   /// this value is `false`, the user's gestures should directly impact the
   /// area they touched.
+  /// {@endtemplate}
   final bool useIosSelectionHeuristics;
 
   /// Color of the text selection drag handles on iOS.
@@ -935,7 +937,7 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
     }
 
     final extentRect = _docLayout.getRectForPosition(collapsedPosition)!;
-    final caretRect = Rect.fromLTRB(
+    final caretHitArea = Rect.fromLTRB(
       extentRect.left - 24,
       extentRect.top,
       extentRect.right + 24,
@@ -943,7 +945,7 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
     );
 
     final docOffset = _interactorOffsetToDocumentOffset(interactorOffset);
-    return caretRect.contains(docOffset);
+    return caretHitArea.contains(docOffset);
   }
 
   bool _isOverBaseHandle(Offset interactorOffset) {

@@ -37,6 +37,10 @@ final _log = iosTextFieldLog;
 ///
 /// Selection changes are made via the given [textController].
 class IOSTextFieldTouchInteractor extends StatefulWidget {
+  /// {@macro ios_use_selection_heuristics}
+  @visibleForTesting
+  static bool useIosSelectionHeuristics = true;
+
   const IOSTextFieldTouchInteractor({
     Key? key,
     required this.focusNode,
@@ -51,9 +55,6 @@ class IOSTextFieldTouchInteractor extends StatefulWidget {
     this.showDebugPaint = false,
     required this.child,
   }) : super(key: key);
-
-  @visibleForTesting
-  static bool useIosSelectionHeuristics = true;
 
   /// [FocusNode] for the text field that contains this [IOSTextFieldInteractor].
   ///

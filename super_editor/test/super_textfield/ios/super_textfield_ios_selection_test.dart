@@ -72,7 +72,8 @@ void main() {
         const TextSelection.collapsed(offset: -1),
       );
 
-      // Tap at "ips|um" to place the caret at the end of the word.
+      // Tap at "ips|um" to place the caret at the end of the word,
+      // because on iOS the caret is always placed at word boundaries.
       await tester.placeCaretInSuperTextField(9);
       await tester.pump(kDoubleTapTimeout);
 

@@ -256,7 +256,7 @@ void main() {
         )),
       );
 
-      // Tap at the caret.
+      // Tap on the caret.
       await tester.tapInParagraph("1", 32);
 
       // Ensure the selection was kept at "con|sectetur".

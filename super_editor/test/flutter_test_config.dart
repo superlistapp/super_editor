@@ -8,7 +8,8 @@ Future<void> testExecutable(FutureOr<void> Function() testMain) async {
   // Disable indeterminate animations
   BlinkController.indeterminateAnimationsEnabled = false;
 
-  // Disable iOS selection heuristics.
+  // Disable iOS selection heuristics, i.e, place the caret at the exact
+  // tapped position instead of placing it at word boundaries.
   IOSTextFieldTouchInteractor.useIosSelectionHeuristics = false;
 
   Testing.isInTest = true;
