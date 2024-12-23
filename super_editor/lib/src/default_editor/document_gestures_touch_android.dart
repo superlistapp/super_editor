@@ -405,6 +405,7 @@ class AndroidDocumentTouchInteractor extends StatefulWidget {
     required this.document,
     required this.getDocumentLayout,
     required this.selection,
+    this.openKeyboardWhenTappingExistingSelection = true,
     required this.openSoftwareKeyboard,
     required this.scrollController,
     required this.fillViewport,
@@ -421,6 +422,9 @@ class AndroidDocumentTouchInteractor extends StatefulWidget {
   final Document document;
   final DocumentLayout Function() getDocumentLayout;
   final ValueListenable<DocumentSelection?> selection;
+
+  /// {@macro openKeyboardWhenTappingExistingSelection}
+  final bool openKeyboardWhenTappingExistingSelection;
 
   /// A callback that should open the software keyboard when invoked.
   final VoidCallback openSoftwareKeyboard;
@@ -783,7 +787,7 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
 
     _showAndHideEditingControlsAfterTapSelection(didTapOnExistingSelection: didTapOnExistingSelection);
 
-    if (didTapOnExistingSelection) {
+    if (didTapOnExistingSelection && widget.openKeyboardWhenTappingExistingSelection) {
       // The user tapped on the existing selection. Show the software keyboard.
       //
       // If the user didn't tap on an existing selection, the software keyboard will

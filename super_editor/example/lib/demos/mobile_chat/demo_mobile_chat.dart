@@ -1,6 +1,8 @@
 import 'package:example/demos/mobile_chat/giphy_keyboard_panel.dart';
 import 'package:flutter/material.dart';
+import 'package:logging/logging.dart';
 import 'package:super_editor/super_editor.dart';
+import 'package:super_keyboard/super_keyboard.dart';
 
 /// A UI with a chat message editor at the bottom, and a fake chat conversation
 /// behind it.
@@ -33,16 +35,17 @@ class _MobileChatDemoState extends State<MobileChatDemo> {
   final FocusNode _editorFocusNode = FocusNode();
   late final Editor _editor;
 
-  late final KeyboardPanelController _keyboardPanelController;
+  late final KeyboardPanelController<_Panel> _keyboardPanelController;
   final SoftwareKeyboardController _softwareKeyboardController = SoftwareKeyboardController();
 
   final _imeConnectionNotifier = ValueNotifier<bool>(false);
 
-  _Panel? _visiblePanel;
-
   @override
   void initState() {
     super.initState();
+
+    SuperKeyboard.initLogs();
+    initLoggers(Level.ALL, {keyboardPanelLog});
 
     final document = MutableDocument.empty();
     final composer = MutableDocumentComposer();
@@ -64,16 +67,36 @@ class _MobileChatDemoState extends State<MobileChatDemo> {
     super.dispose();
   }
 
+  void _openPanelFromAppBar() {
+    // This action is here to verify that we can open keyboard panels
+    // before opening the keyboard.
+
+    // Focus the editor and place the caret.
+    _editorFocusNode.requestFocus();
+    final document = _editor.context.document;
+    _editor.execute([
+      ChangeSelectionRequest(
+        DocumentSelection.collapsed(
+          position: DocumentPosition(
+            nodeId: document.last.id,
+            nodePosition: document.last.endPosition,
+          ),
+        ),
+        SelectionChangeType.placeCaret,
+        SelectionReason.userInteraction,
+      ),
+    ]);
+
+    // Open a panel.
+    _keyboardPanelController.showKeyboardPanel(_Panel.panel1);
+  }
+
   void _togglePanel(_Panel panel) {
-    setState(() {
-      if (_visiblePanel == panel) {
-        _visiblePanel = null;
-        _keyboardPanelController.showSoftwareKeyboard();
-      } else {
-        _visiblePanel = panel;
-        _keyboardPanelController.showKeyboardPanel();
-      }
-    });
+    if (_keyboardPanelController.openPanel == panel) {
+      _keyboardPanelController.showSoftwareKeyboard();
+    } else {
+      _keyboardPanelController.showKeyboardPanel(panel);
+    }
   }
 
   @override
@@ -95,6 +118,18 @@ class _MobileChatDemoState extends State<MobileChatDemo> {
 
   PreferredSizeWidget _buildAppBar() {
     return AppBar(
+      actions: [
+        IconButton(
+          icon: Icon(Icons.open_in_new),
+          onPressed: _openPanelFromAppBar,
+        ),
+        IconButton(
+          icon: Icon(Icons.settings),
+          onPressed: () {
+            Navigator.of(context).pushNamed("/second");
+          },
+        ),
+      ],
       bottom: const TabBar(
         tabs: [
           Tab(icon: Icon(Icons.chat)),
@@ -111,6 +146,7 @@ class _MobileChatDemoState extends State<MobileChatDemo> {
           child: GestureDetector(
             onTap: () {
               _screenFocusNode.requestFocus();
+              _keyboardPanelController.closeKeyboardAndPanel();
             },
             child: Focus(
               focusNode: _screenFocusNode,
@@ -158,15 +194,15 @@ class _MobileChatDemoState extends State<MobileChatDemo> {
 
   Widget _buildCommentEditor() {
     return Opacity(
+      // Opacity is here so we can easily check what's behind it.
       opacity: 1.0,
-      // ^ opacity is for testing, so we can see the chat behind it.
-      child: KeyboardPanelScaffold(
+      child: KeyboardPanelScaffold<_Panel>(
         controller: _keyboardPanelController,
         isImeConnected: _imeConnectionNotifier,
         toolbarBuilder: _buildKeyboardToolbar,
         fallbackPanelHeight: MediaQuery.sizeOf(context).height / 3,
-        keyboardPanelBuilder: (context) {
-          switch (_visiblePanel) {
+        keyboardPanelBuilder: (context, panel) {
+          switch (panel) {
             case _Panel.panel1:
               return Container(
                 color: Colors.blue,
@@ -224,10 +260,20 @@ class _MobileChatDemoState extends State<MobileChatDemo> {
                       shrinkWrap: true,
                       stylesheet: _chatStylesheet,
                       selectionPolicies: const SuperEditorSelectionPolicies(
+                        openKeyboardWhenTappingExistingSelection: false,
                         clearSelectionWhenEditorLosesFocus: true,
                         clearSelectionWhenImeConnectionCloses: false,
                       ),
+                      imePolicies: SuperEditorImePolicies(
+                        openKeyboardOnGainPrimaryFocus: false,
+                        openKeyboardOnSelectionChange: false,
+                        closeKeyboardOnSelectionLost: false,
+                      ),
                       isImeConnected: _imeConnectionNotifier,
+                      contentTapDelegateFactories: [
+                        superEditorLaunchLinkTapHandlerFactory,
+                        _tapToFocusEditor,
+                      ],
                     ),
                   ),
                 ],
@@ -239,11 +285,14 @@ class _MobileChatDemoState extends State<MobileChatDemo> {
     );
   }
 
-  Widget _buildKeyboardToolbar(BuildContext context, bool isKeyboardPanelVisible) {
-    if (!isKeyboardPanelVisible) {
-      _visiblePanel = null;
-    }
+  ContentTapDelegate _tapToFocusEditor(SuperEditorContext editContext) {
+    return _TapToFocusEditor(
+      _editorFocusNode,
+      _keyboardPanelController,
+    );
+  }
 
+  Widget _buildKeyboardToolbar(BuildContext context, _Panel? openPanel) {
     return Row(
       children: [
         Expanded(
@@ -258,13 +307,13 @@ class _MobileChatDemoState extends State<MobileChatDemo> {
                 const Spacer(),
                 _PanelButton(
                   icon: Icons.text_fields,
-                  isActive: _visiblePanel == _Panel.panel1,
+                  isActive: _keyboardPanelController.openPanel == _Panel.panel1,
                   onPressed: () => _togglePanel(_Panel.panel1),
                 ),
                 const SizedBox(width: 16),
                 _PanelButton(
                   icon: Icons.align_horizontal_left,
-                  isActive: _visiblePanel == _Panel.panel2,
+                  isActive: _keyboardPanelController.openPanel == _Panel.panel2,
                   onPressed: () => _togglePanel(_Panel.panel2),
                 ),
                 const SizedBox(width: 16),
@@ -279,7 +328,13 @@ class _MobileChatDemoState extends State<MobileChatDemo> {
                 ),
                 const Spacer(),
                 GestureDetector(
-                  onTap: _keyboardPanelController.closeKeyboardAndPanel,
+                  onTap: () {
+                    _keyboardPanelController.closeKeyboardAndPanel();
+
+                    // We need to explicitly unfocus so that the caret doesn't
+                    // keep blinking in the editor.
+                    _editorFocusNode.unfocus();
+                  },
                   child: Icon(Icons.keyboard_hide),
                 ),
                 const SizedBox(width: 24),
@@ -298,6 +353,28 @@ class _MobileChatDemoState extends State<MobileChatDemo> {
         child: Icon(Icons.account_circle),
       ),
     );
+  }
+}
+
+class _TapToFocusEditor extends ContentTapDelegate {
+  _TapToFocusEditor(
+    this.editorFocusNode,
+    this.keyboardPanelController,
+  );
+
+  final FocusNode editorFocusNode;
+  final KeyboardPanelController keyboardPanelController;
+
+  @override
+  TapHandlingInstruction onTap(DocumentTapDetails details) {
+    if (!keyboardPanelController.isSoftwareKeyboardOpen && !keyboardPanelController.isKeyboardPanelOpen) {
+      // The user tapped on the editor and the software keyboard isn't up, nor is a panel.
+      // Open the software keyboard.
+      editorFocusNode.requestFocus();
+      keyboardPanelController.showSoftwareKeyboard();
+    }
+
+    return TapHandlingInstruction.continueHandling;
   }
 }
 

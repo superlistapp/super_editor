@@ -27,16 +27,6 @@ void main() {
     MaterialApp(
       routes: {
         "/": (context) => Scaffold(
-              appBar: AppBar(
-                actions: [
-                  IconButton(
-                    onPressed: () {
-                      Navigator.of(context).pushNamed("/second");
-                    },
-                    icon: Icon(Icons.settings),
-                  ),
-                ],
-              ),
               resizeToAvoidBottomInset: false,
               body: MobileChatDemo(),
             ),
