@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_test_runners/flutter_test_runners.dart';
-import 'package:golden_toolkit/golden_toolkit.dart';
 import 'package:super_editor/src/test/super_editor_test/supereditor_robot.dart';
 import 'package:super_editor/super_editor.dart';
 
@@ -82,7 +81,7 @@ void main() {
           await tester.placeCaretInParagraph('1', 0);
 
           // Request to show the keyboard panel.
-          controller.showKeyboardPanel();
+          controller.showKeyboardPanel(_Panel.panel1);
           await tester.pumpAndSettle();
 
           // Hide both the keyboard panel and the software keyboard.
@@ -124,7 +123,7 @@ void main() {
         await tester.placeCaretInParagraph('1', 0);
 
         // Request to show the keyboard panel.
-        controller.showKeyboardPanel();
+        controller.showKeyboardPanel(_Panel.panel1);
         await tester.pumpAndSettle();
 
         // Ensure the keyboard panel is visible.
@@ -149,7 +148,7 @@ void main() {
         await tester.placeCaretInParagraph('1', 0);
 
         // Request to show the keyboard panel and let the entrance animation run.
-        controller.showKeyboardPanel();
+        controller.showKeyboardPanel(_Panel.panel1);
         await tester.pumpAndSettle();
 
         // Ensure the keyboard panel has the same size as the software keyboard.
@@ -165,7 +164,7 @@ void main() {
         );
       });
 
-      testWidgetsOnMobilePhone('hides the panel when toggling the keyboard', (tester) async {
+      testWidgetsOnMobilePhone('hides the panel when showing the keyboard', (tester) async {
         final softwareKeyboardController = SoftwareKeyboardController();
         final controller = KeyboardPanelController(softwareKeyboardController);
 
@@ -175,7 +174,7 @@ void main() {
           softwareKeyboardController: softwareKeyboardController,
         );
 
-        // Request to show the above-keyboard panel.
+        // Request to show the toolbar.
         controller.showToolbar();
         await tester.pump();
 
@@ -183,20 +182,20 @@ void main() {
         await tester.placeCaretInParagraph('1', 0);
 
         // Request to show the keyboard panel and let the entrance animation run.
-        controller.showKeyboardPanel();
+        controller.showKeyboardPanel(_Panel.panel1);
         await tester.pumpAndSettle();
 
         // Ensure the keyboard panel is visible.
         expect(find.byKey(_keyboardPanelKey), findsOneWidget);
 
         // Hide the keyboard panel and show the software keyboard.
-        controller.toggleSoftwareKeyboardWithPanel();
+        controller.showSoftwareKeyboard();
         await tester.pumpAndSettle();
 
         // Ensure the keyboard panel is not visible.
         expect(find.byKey(_keyboardPanelKey), findsNothing);
 
-        // Ensure the above-keyboard panel sits immediately above the keyboard.
+        // Ensure the toolbar sits immediately above the keyboard.
         expect(
           tester.getBottomLeft(find.byKey(_aboveKeyboardToolbarKey)).dy,
           equals(tester.getSize(find.byType(MaterialApp)).height - _expandedPhoneKeyboardHeight),
@@ -221,7 +220,7 @@ void main() {
         await tester.placeCaretInParagraph('1', 0);
 
         // Request to show the keyboard panel and let the entrance animation run.
-        controller.showKeyboardPanel();
+        controller.showKeyboardPanel(_Panel.panel1);
         await tester.pumpAndSettle();
 
         // Ensure the keyboard panel is visible.
@@ -258,7 +257,7 @@ void main() {
         await tester.placeCaretInParagraph('1', 0);
 
         // Request to show the keyboard panel and let the entrance animation run.
-        controller.showKeyboardPanel();
+        controller.showKeyboardPanel(_Panel.panel1);
         await tester.pumpAndSettle();
 
         // Ensure the keyboard panel is visible.
@@ -290,7 +289,7 @@ void main() {
         await tester.placeCaretInParagraph('1', 0);
 
         // Request to show the keyboard panel and let the entrance animation run.
-        controller.showKeyboardPanel();
+        controller.showKeyboardPanel(_Panel.panel1);
         await tester.pumpAndSettle();
 
         // Ensure the keyboard panel is visible.
@@ -327,7 +326,7 @@ void main() {
         await tester.placeCaretInParagraph('1', 0);
 
         // Request to show the keyboard panel and let the entrance animation run.
-        controller.showKeyboardPanel();
+        controller.showKeyboardPanel(_Panel.panel1);
         await tester.pumpAndSettle();
 
         // Ensure the keyboard panel is visible.
@@ -359,7 +358,7 @@ void main() {
         );
 
         // Request to show the keyboard panel and let the entrance animation run.
-        controller.showKeyboardPanel();
+        controller.showKeyboardPanel(_Panel.panel1);
         await tester.pumpAndSettle();
 
         // Ensure the keyboard panel is visible and positioned at the bottom of the screen.
@@ -410,7 +409,7 @@ void main() {
         await tester.placeCaretInParagraph('1', 0);
 
         // Request to show the keyboard panel and let the entrance animation run.
-        controller.showKeyboardPanel();
+        controller.showKeyboardPanel(_Panel.panel1);
         await tester.pumpAndSettle();
 
         // Ensure the keyboard panel is visible.
@@ -442,7 +441,7 @@ void main() {
         );
 
         // Request to show the keyboard panel and let the entrance animation run.
-        controller.showKeyboardPanel();
+        controller.showKeyboardPanel(_Panel.panel1);
         await tester.pumpAndSettle();
 
         // Ensure the keyboard panel is visible and positioned at the bottom of the screen.
@@ -493,14 +492,14 @@ void main() {
         final contentHeightWithNoKeyboard = tester.getSize(find.byKey(_chatPageKey)).height;
 
         // Show a keyboard panel (not the keyboard).
-        controller.showKeyboardPanel();
+        controller.showKeyboardPanel(_Panel.panel1);
         await tester.pumpAndSettle();
 
         // Record the height of the content now that a keyboard panel is open.
         final contentHeightWithKeyboardPanelOpen = tester.getSize(find.byKey(_chatPageKey)).height;
 
         // Ensure that the content is pushed up above the keyboard panel.
-        expect(contentHeightWithNoKeyboard - contentHeightWithKeyboardPanelOpen, _keyboardPanelHeight);
+        expect(contentHeightWithNoKeyboard - contentHeightWithKeyboardPanelOpen, _toolbarHeight + _keyboardPanelHeight);
       });
 
       testWidgetsOnMobilePhone('removes bottom insets when focus leaves editor', (tester) async {
@@ -518,14 +517,14 @@ void main() {
         final contentHeightWithNoKeyboard = tester.getSize(find.byKey(_chatPageKey)).height;
 
         // Show a keyboard panel (not the keyboard).
-        controller.showKeyboardPanel();
+        controller.showKeyboardPanel(_Panel.panel1);
         await tester.pumpAndSettle();
 
         // Record the height of the content now that a keyboard panel is open.
         final contentHeightWithKeyboardPanelOpen = tester.getSize(find.byKey(_chatPageKey)).height;
 
         // Ensure that the content is pushed up above the keyboard panel.
-        expect(contentHeightWithNoKeyboard - contentHeightWithKeyboardPanelOpen, _keyboardPanelHeight);
+        expect(contentHeightWithNoKeyboard - contentHeightWithKeyboardPanelOpen, _toolbarHeight + _keyboardPanelHeight);
 
         // Switch to other tab.
         await tester.tap(find.byKey(_accountTabKey));
@@ -693,10 +692,10 @@ Widget _buildChatPage(
             toolbarBuilder: (context, isKeyboardPanelVisible) => Container(
               key: _aboveKeyboardToolbarKey,
               height: 54,
-              color: Colors.blue,
+              color: Colors.green,
             ),
             fallbackPanelHeight: _keyboardPanelHeight,
-            keyboardPanelBuilder: (context) => const SizedBox.expand(
+            keyboardPanelBuilder: (context, panel) => const SizedBox.expand(
               child: ColoredBox(
                 key: _keyboardPanelKey,
                 color: Colors.red,
@@ -904,6 +903,9 @@ void testWidgetsOnAndroidTablet(
   );
 }
 
+// Height of the toolbar that sits above the keyboard/panel.
+const _toolbarHeight = 54.0;
+
 // Simulated height of a fully visible phone keyboard. We specify this because
 // there's no real window in a widget test, and therefore no real keyboard.
 const _expandedPhoneKeyboardHeight = 300.0;
@@ -931,3 +933,8 @@ const _minimizedAndroidTabletKeyboardHeight = 62.0;
 
 const _aboveKeyboardToolbarKey = ValueKey('toolbar');
 const _keyboardPanelKey = ValueKey('keyboardPanel');
+
+enum _Panel {
+  panel1,
+  panel2;
+}

@@ -7,6 +7,7 @@ import 'package:mockito/mockito.dart';
 import 'package:super_editor/super_editor.dart';
 import 'package:super_editor/super_editor_test.dart';
 import 'package:super_editor_markdown/super_editor_markdown.dart';
+import 'package:super_keyboard/super_keyboard_test.dart';
 import 'package:text_table/text_table.dart';
 
 import '../test_tools_user_input.dart';

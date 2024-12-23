@@ -243,6 +243,7 @@ class IosDocumentTouchInteractor extends StatefulWidget {
     required this.document,
     required this.getDocumentLayout,
     required this.selection,
+    this.openKeyboardWhenTappingExistingSelection = true,
     required this.openSoftwareKeyboard,
     required this.scrollController,
     required this.dragHandleAutoScroller,
@@ -259,6 +260,9 @@ class IosDocumentTouchInteractor extends StatefulWidget {
   final Document document;
   final DocumentLayout Function() getDocumentLayout;
   final ValueListenable<DocumentSelection?> selection;
+
+  /// {@macro openKeyboardWhenTappingExistingSelection}
+  final bool openKeyboardWhenTappingExistingSelection;
 
   /// A callback that should open the software keyboard when invoked.
   final VoidCallback openSoftwareKeyboard;
@@ -607,7 +611,11 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
       // The user tapped on an expanded selection. Toggle the toolbar and show
       // the software keyboard.
       _controlsController!.toggleToolbar();
-      widget.openSoftwareKeyboard();
+
+      if (widget.openKeyboardWhenTappingExistingSelection) {
+        widget.openSoftwareKeyboard();
+      }
+
       return;
     }
 
@@ -659,7 +667,7 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
         _selectPosition(adjustedSelectionPosition);
       }
 
-      if (didTapOnExistingSelection) {
+      if (didTapOnExistingSelection && widget.openKeyboardWhenTappingExistingSelection) {
         // The user tapped on the existing selection. Show the software keyboard.
         //
         // If the user didn't tap on an existing selection, the software keyboard will
