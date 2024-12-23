@@ -76,6 +76,34 @@ void main() {
         );
       });
 
+      testWidgetsOnAllPlatforms("can start at the beginning of an existing word", (tester) async {
+        await _pumpTestEditor(
+          tester,
+          MutableDocument(
+            nodes: [
+              ParagraphNode(
+                id: "1",
+                text: AttributedText("before flutter after"),
+              ),
+            ],
+          ),
+        );
+
+        // Place the caret at "before |flutter".
+        await tester.placeCaretInParagraph("1", 7);
+
+        // Type the trigger to start composing a tag.
+        await tester.typeImeText("#");
+
+        // Ensure that the tag has a composing attribution.
+        final text = SuperEditorInspector.findTextInComponent("1");
+        expect(text.text, "before #flutter after");
+        expect(
+          text.getAttributedRange({const PatternTagAttribution()}, 7),
+          const SpanRange(7, 14),
+        );
+      });
+
       testWidgetsOnAllPlatforms("removes tag when deleting back to the #", (tester) async {
         await _pumpTestEditor(
           tester,
