@@ -677,7 +677,6 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
   }
 
   void _onTapDown(TapDownDetails details) {
-    print("Android - _onTapDown()");
     final position = scrollPosition;
     if (position is ScrollPositionWithSingleContext) {
       position.goIdle();
@@ -722,7 +721,6 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
   }
 
   void _onTapUp(TapUpDetails details) {
-    print("Android - _onTapUp()");
     // Stop waiting for a long-press to start.
     _tapDownLongPressTimer?.cancel();
 
@@ -739,9 +737,7 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
     editorGesturesLog.fine(" - document offset: $docOffset");
 
     if (widget.contentTapHandlers != null) {
-      print("Running handlers: ${widget.contentTapHandlers}");
       for (final handler in widget.contentTapHandlers!) {
-        print("Running handler: $handler");
         final result = handler.onTap(
           DocumentTapDetails(
             documentLayout: _docLayout,
@@ -752,11 +748,9 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
         if (result == TapHandlingInstruction.halt) {
           // The custom tap handler doesn't want us to react at all
           // to the tap.
-          print("Halting handlers");
           return;
         }
       }
-      print("Done with handlers");
     }
 
     final docPosition = _docLayout.getDocumentPositionNearestToOffset(docOffset);

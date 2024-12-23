@@ -88,6 +88,11 @@ class _KeyboardPanelScaffoldState<PanelType> extends State<KeyboardPanelScaffold
   ///
   /// The OS doesn't report this info. We observe the bottom insets and retain
   /// the tallest value that we see.
+  ///
+  /// Note: There may be situations in which an "open" keyboard corresponds to
+  /// multiple possible heights. For example, on an iPad, iOS reports an "open"
+  /// keyboard when the software keyboard is up, as well as when the small "minimized"
+  /// keyboard toolbar is visible. The minimized version is only 69 pixels tall.
   double _bestGuessMaxKeyboardHeight = 0.0;
 
   /// The current visual state of the keyboard, e.g., closed, opening, open, closing.
@@ -99,8 +104,9 @@ class _KeyboardPanelScaffoldState<PanelType> extends State<KeyboardPanelScaffold
   /// The height of the visible panel at this moment.
   late final AnimationController _panelHeightController;
   late Animation<double> _panelHeight;
+
+  /// The currently visible panel.
   PanelType? _activePanel;
-  PanelType? _previousPanel;
 
   /// The current bottom spacing, which might be equal to a panel height, or the
   /// current keyboard height, or it might be an intermediate spacing as we switch
@@ -145,7 +151,6 @@ class _KeyboardPanelScaffoldState<PanelType> extends State<KeyboardPanelScaffold
 
     widget.isImeConnected.addListener(_onImeConnectionChange);
 
-    print("ATTACHING FROM SuperKeyboard: ${SuperKeyboard.instance.hashCode}");
     SuperKeyboard.instance.state.addListener(_onKeyboardStateChange);
 
     _overlayPortalController.show();
@@ -225,7 +230,6 @@ class _KeyboardPanelScaffoldState<PanelType> extends State<KeyboardPanelScaffold
 
   void _onKeyboardStateChange() {
     _keyboardState = SuperKeyboard.instance.state.value;
-    print("_onKeyboardStateChange() - $_keyboardState");
 
     // Note: The following post frame callback shouldn't be necessary.
     // We should be able to look up our ancestor MediaQuery immediately.
@@ -250,18 +254,11 @@ class _KeyboardPanelScaffoldState<PanelType> extends State<KeyboardPanelScaffold
     ) //
         .chain(CurveTween(curve: Curves.easeInOut))
         .animate(_panelHeightController);
-    print(
-        "UPDATED PANEL HEIGHT TWEEN - END: ${_bestGuessMaxKeyboardHeight > 100 ? _bestGuessMaxKeyboardHeight : widget.fallbackPanelHeight}");
   }
 
   void _onPanelHeightChange() {
-    print(
-        "Panel height changed: Controller: ${_panelHeightController.value}, Tween: ${_panelHeight.value}, Status: ${_panelHeightController.status}");
     _updateSafeArea();
-
     _currentBottomSpacing.value = max(_panelHeight.value, _currentKeyboardHeight);
-    print(
-        " - panel height: ${_panelHeight.value}, keyboard height: $_currentKeyboardHeight, chosen bottom spacing: ${_currentBottomSpacing.value}");
   }
 
   @override
@@ -286,7 +283,6 @@ class _KeyboardPanelScaffoldState<PanelType> extends State<KeyboardPanelScaffold
     }
 
     // The IME isn't connected. Ensure the panel is closed.
-    print("IME is no longer connected. Closing keyboard and panel.");
     widget.controller.closeKeyboardAndPanel();
   }
 
@@ -353,7 +349,6 @@ class _KeyboardPanelScaffoldState<PanelType> extends State<KeyboardPanelScaffold
   /// Shows the software keyboard, if it's hidden.
   @override
   void showSoftwareKeyboard() {
-    print("showSoftwareKeyboard()");
     setState(() {
       _wantsToShowKeyboardPanel = false;
       _wantsToShowSoftwareKeyboard = true;
@@ -367,7 +362,6 @@ class _KeyboardPanelScaffoldState<PanelType> extends State<KeyboardPanelScaffold
   /// Hides (doesn't close) the software keyboard, if it's open.
   @override
   void hideSoftwareKeyboard() {
-    print("hideSoftwareKeyboard()");
     setState(() {
       _wantsToShowSoftwareKeyboard = false;
       _softwareKeyboardController!.hide();
@@ -393,24 +387,18 @@ class _KeyboardPanelScaffoldState<PanelType> extends State<KeyboardPanelScaffold
   /// software keyboard, if it's open.
   @override
   void showKeyboardPanel(PanelType panel) {
-    print("showKeyboardPanel() - keyboard state: $_keyboardState");
-    print(
-        " - panel controller, value: ${_panelHeightController.value}, is animating? ${_panelHeightController.isAnimating}, is completed? ${_panelHeightController.isCompleted}");
     setState(() {
       _wantsToShowKeyboardPanel = true;
       _wantsToShowSoftwareKeyboard = false;
       _activePanel = panel;
-      _previousPanel = panel;
 
       if (_keyboardState == KeyboardState.open) {
         // The keyboard is fully open. We'd like for the panel to immediately
         // appear behind the keyboard as it closes, so that we don't have a
         // bunch of jumping around for the widgets mounted to the top of the
         // keyboard.
-        print("IMMEDIATELY EXPANDING PANEL");
         _panelHeightController.value = 1.0;
       } else {
-        print("ANIMATING PANEL HEIGHT FORWARD");
         _panelHeightController.forward();
       }
 
@@ -424,7 +412,6 @@ class _KeyboardPanelScaffoldState<PanelType> extends State<KeyboardPanelScaffold
   /// Hides the keyboard panel, if it's open.
   @override
   void hideKeyboardPanel() {
-    print("hideKeyboardPanel()");
     setState(() {
       // Close panel.
       _wantsToShowKeyboardPanel = false;
@@ -443,7 +430,6 @@ class _KeyboardPanelScaffoldState<PanelType> extends State<KeyboardPanelScaffold
   /// it's open, and fully closes the keyboard (IME) connection.
   @override
   void closeKeyboardAndPanel() {
-    print("closeKeyboardAndPanel()");
     setState(() {
       _wantsToShowKeyboardPanel = false;
       _wantsToShowSoftwareKeyboard = false;
@@ -454,7 +440,6 @@ class _KeyboardPanelScaffoldState<PanelType> extends State<KeyboardPanelScaffold
       notifyListeners();
     });
 
-    print("REVERSING PANEL ANIMATION");
     _panelHeightController.reverse();
   }
 
@@ -466,22 +451,17 @@ class _KeyboardPanelScaffoldState<PanelType> extends State<KeyboardPanelScaffold
     // The user wants to close both the software keyboard and the keyboard panel,
     // but the software keyboard is already closed. Animate the keyboard panel height
     // down to zero.
-    print("REVERSING PANEL ANIMATION FROM _maybeAnimatePanelClosed");
     _panelHeightController.reverse(from: 1.0);
   }
 
   /// Updates our local cache of the current bottom window insets, which we assume reflects
   /// the current software keyboard height.
   void _updateKeyboardHeightForCurrentViewInsets() {
-    print("ABOUT TO QUERY ANCESTOR VIEW INSETS");
     final newBottomInset = MediaQuery.viewInsetsOf(context).bottom;
     _currentKeyboardHeight = newBottomInset;
-    print(
-        "_updateKeyboardHeightForCurrentViewInsets() - new insets: $newBottomInset, previous insets: $_currentKeyboardHeight, keyboard state: $_keyboardState");
 
     switch (_keyboardState) {
       case KeyboardState.open:
-        print("KEYBOARD IS OPEN - bottom inset: $newBottomInset");
         if (newBottomInset >= _bestGuessMaxKeyboardHeight) {
           // Note: On iOS "open" doesn't necessarily mean fully open. I've found
           // that rapidly opening and closing the keyboard results in an "open"
@@ -496,7 +476,6 @@ class _KeyboardPanelScaffoldState<PanelType> extends State<KeyboardPanelScaffold
           // this if the keyboard fully opens. Otherwise, this state probably
           // represents a rapid toggle between the keyboard and a panel. In that case,
           // leave the panel alone.
-          print("SETTING PANEL HEIGHT TO ZERO");
           _panelHeightController.value = 0;
           _wantsToShowKeyboardPanel = false;
           _activePanel = null;
@@ -509,7 +488,6 @@ class _KeyboardPanelScaffoldState<PanelType> extends State<KeyboardPanelScaffold
 
         break;
       case KeyboardState.closed:
-        print("KEYBOARD CLOSED");
         // It was found on the iPad simulator that it was possible to close the minimized keyboard,
         // receive a message that the keyboard was closed, but still have bottom insets that reported
         // the height of the minimized keyboard. To hack around that, we explicitly set the keyboard
@@ -520,12 +498,10 @@ class _KeyboardPanelScaffoldState<PanelType> extends State<KeyboardPanelScaffold
         }
         break;
       case KeyboardState.opening:
-        print("KEYBOARD OPENING");
         // The keyboard is changing size. Update our safe area.
         onNextFrame((_) => _updateSafeArea());
         break;
       case KeyboardState.closing:
-        print("KEYBOARD CLOSING");
         if (!wantsToShowKeyboardPanel) {
           // The keyboard is collapsing and we don't want the keyboard panel to be visible.
           // Follow the keyboard back down.
@@ -540,8 +516,6 @@ class _KeyboardPanelScaffoldState<PanelType> extends State<KeyboardPanelScaffold
     }
 
     _currentBottomSpacing.value = max(_panelHeight.value, _currentKeyboardHeight);
-    print(
-        " - panel height: ${_panelHeight.value}, keyboard height: $_currentKeyboardHeight, chosen bottom spacing: ${_currentBottomSpacing.value}");
 
     setState(() {
       // Re-build with the various property changes we made above.
@@ -589,12 +563,12 @@ class _KeyboardPanelScaffoldState<PanelType> extends State<KeyboardPanelScaffold
 
   @override
   Widget build(BuildContext context) {
-    print("Building keyboard scaffold");
     final shouldShowKeyboardPanel = wantsToShowKeyboardPanel ||
         // The keyboard panel should be kept visible while the software keyboard is expanding
         // and the keyboard panel was previously visible. Otherwise, there will be an empty
         // region between the top of the software keyboard and the bottom of the above-keyboard panel.
         (wantsToShowSoftwareKeyboard && _keyboardState != KeyboardState.open);
+    print("Building keyboard scaffold");
     print(" - keyboard state: $_keyboardState");
     print(" - wants toolbar? $_wantsToShowToolbar");
     print(" - wants to show software keyboard? $wantsToShowSoftwareKeyboard");
@@ -643,7 +617,6 @@ class _KeyboardPanelScaffoldState<PanelType> extends State<KeyboardPanelScaffold
                   AnimatedBuilder(
                     animation: _currentBottomSpacing,
                     builder: (context, child) {
-                      print("Building bottom spacer with height: ${_currentBottomSpacing.value}");
                       return SizedBox(
                         height: _currentBottomSpacing.value,
                         child: child,
@@ -958,7 +931,6 @@ class _KeyboardScaffoldSafeAreaState extends State<KeyboardScaffoldSafeArea>
       return widget.child;
     }
 
-    print("Building keyboard scaffold safe area bottom insets: ${_keyboardSafeAreaData!.bottomInsets}");
     return _InheritedKeyboardScaffoldSafeArea(
       keyboardSafeAreaData: _keyboardSafeAreaData!,
       child: Padding(

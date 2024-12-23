@@ -54,8 +54,6 @@ class _MobileChatDemoState extends State<MobileChatDemo> {
     // Initially focus the overall screen so that the software keyboard isn't immediately
     // visible.
     _screenFocusNode.requestFocus();
-
-    SuperKeyboard.initLogs();
   }
 
   @override
@@ -68,12 +66,11 @@ class _MobileChatDemoState extends State<MobileChatDemo> {
   }
 
   void _openPanelFromAppBar() {
-    // Focus the editor so that we switch from the editor
-    // preview to the real editor.
-    _editorFocusNode.requestFocus();
+    // This action is here to verify that we can open keyboard panels
+    // before opening the keyboard.
 
-    // Place the caret in the focused editor so that there's a
-    // basis for the panel's commands.
+    // Focus the editor and place the caret.
+    _editorFocusNode.requestFocus();
     final document = _editor.context.document;
     _editor.execute([
       ChangeSelectionRequest(
@@ -88,7 +85,7 @@ class _MobileChatDemoState extends State<MobileChatDemo> {
       ),
     ]);
 
-    // Open a panel
+    // Open a panel.
     _keyboardPanelController.showKeyboardPanel(_Panel.panel1);
   }
 
@@ -195,14 +192,14 @@ class _MobileChatDemoState extends State<MobileChatDemo> {
 
   Widget _buildCommentEditor() {
     return Opacity(
-      opacity: 0.75,
+      // Opacity is here so we can easily check what's behind it.
+      opacity: 1.0,
       child: KeyboardPanelScaffold<_Panel>(
         controller: _keyboardPanelController,
         isImeConnected: _imeConnectionNotifier,
         toolbarBuilder: _buildKeyboardToolbar,
         fallbackPanelHeight: MediaQuery.sizeOf(context).height / 3,
         keyboardPanelBuilder: (context, panel) {
-          print("Building panel. Visible panel: $panel");
           return LayoutBuilder(
             builder: (context, constraints) {
               switch (panel) {
@@ -367,13 +364,9 @@ class _TapToFocusEditor extends ContentTapDelegate {
 
   @override
   TapHandlingInstruction onTap(DocumentTapDetails details) {
-    print(
-        "Tap on editor - existing focus: ${editorFocusNode.hasFocus}, is panel open? ${keyboardPanelController.isKeyboardPanelOpen}, is keyboard open? ${keyboardPanelController.isSoftwareKeyboardOpen}");
-
     if (!keyboardPanelController.isSoftwareKeyboardOpen && !keyboardPanelController.isKeyboardPanelOpen) {
       // The user tapped on the editor and the software keyboard isn't up, nor is a panel.
       // Open the software keyboard.
-      print("Giving focus to editor");
       editorFocusNode.requestFocus();
       keyboardPanelController.showSoftwareKeyboard();
     }
