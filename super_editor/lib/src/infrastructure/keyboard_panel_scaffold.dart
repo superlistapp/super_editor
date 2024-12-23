@@ -568,18 +568,23 @@ class _KeyboardPanelScaffoldState<PanelType> extends State<KeyboardPanelScaffold
         // and the keyboard panel was previously visible. Otherwise, there will be an empty
         // region between the top of the software keyboard and the bottom of the above-keyboard panel.
         (wantsToShowSoftwareKeyboard && _keyboardState != KeyboardState.open);
-    print("Building keyboard scaffold");
-    print(" - keyboard state: $_keyboardState");
-    print(" - wants toolbar? $_wantsToShowToolbar");
-    print(" - wants to show software keyboard? $wantsToShowSoftwareKeyboard");
-    print(" - wants to show keyboard panel? $wantsToShowKeyboardPanel");
-    print(" - should show keyboard panel? $shouldShowKeyboardPanel");
-    print(" - active panel: $_activePanel");
-    print(" - best-guess keyboard height: $_bestGuessMaxKeyboardHeight");
-    print(" - current keyboard height: $_currentKeyboardHeight");
-    print(
-        " - current panel animation progress: ${_panelHeightController.value}, animation height: ${_panelHeight.value}");
-    print(" - current bottom spacing: ${_currentBottomSpacing.value}");
+
+    assert(() {
+      keyboardPanelLog.fine('''
+Building keyboard scaffold
+ - keyboard state: $_keyboardState
+ - wants to show toolbar? $_wantsToShowToolbar
+ - wants to show software keyboard? $wantsToShowSoftwareKeyboard
+ - best-guess keyboard height: $_bestGuessMaxKeyboardHeight
+ - current keyboard height: $_currentKeyboardHeight
+ - wants to show keyboard panel? $wantsToShowKeyboardPanel
+ - should show keyboard panel? $shouldShowKeyboardPanel
+ - active panel: $_activePanel
+ - current panel animation progress: ${_panelHeightController.value}, animation height: ${_panelHeight.value}
+ - current bottom spacing: ${_currentBottomSpacing.value}''');
+
+      return true;
+    }());
 
     return OverlayPortal(
       controller: _overlayPortalController,

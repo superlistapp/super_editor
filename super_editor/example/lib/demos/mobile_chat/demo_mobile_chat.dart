@@ -1,5 +1,6 @@
 import 'package:example/demos/mobile_chat/giphy_keyboard_panel.dart';
 import 'package:flutter/material.dart';
+import 'package:logging/logging.dart';
 import 'package:super_editor/super_editor.dart';
 import 'package:super_keyboard/super_keyboard.dart';
 
@@ -44,6 +45,7 @@ class _MobileChatDemoState extends State<MobileChatDemo> {
     super.initState();
 
     SuperKeyboard.initLogs();
+    initLoggers(Level.ALL, {keyboardPanelLog});
 
     final document = MutableDocument.empty();
     final composer = MutableDocumentComposer();
@@ -200,36 +202,31 @@ class _MobileChatDemoState extends State<MobileChatDemo> {
         toolbarBuilder: _buildKeyboardToolbar,
         fallbackPanelHeight: MediaQuery.sizeOf(context).height / 3,
         keyboardPanelBuilder: (context, panel) {
-          return LayoutBuilder(
-            builder: (context, constraints) {
-              switch (panel) {
-                case _Panel.panel1:
-                  return Container(
-                    color: Colors.blue.withOpacity(0.5),
-                    height: double.infinity,
-                  );
-                case _Panel.panel2:
-                  return Container(
-                    color: Colors.red,
-                    height: double.infinity,
-                  );
-                case _Panel.giphy:
-                  return GiphyKeyboardPanel(
-                    editor: _editor,
-                  );
-                default:
-                  return const SizedBox();
-              }
-            },
-          );
+          switch (panel) {
+            case _Panel.panel1:
+              return Container(
+                color: Colors.blue,
+                height: double.infinity,
+              );
+            case _Panel.panel2:
+              return Container(
+                color: Colors.red,
+                height: double.infinity,
+              );
+            case _Panel.giphy:
+              return GiphyKeyboardPanel(
+                editor: _editor,
+              );
+            default:
+              return const SizedBox();
+          }
         },
         contentBuilder: (context, isKeyboardVisible) {
           return ConstrainedBox(
             constraints: BoxConstraints(maxHeight: 250),
             child: Container(
               decoration: BoxDecoration(
-                // color: Colors.white,
-                color: Colors.yellow,
+                color: Colors.white,
                 borderRadius: BorderRadius.only(
                   topLeft: Radius.circular(24),
                   topRight: Radius.circular(24),
@@ -331,7 +328,13 @@ class _MobileChatDemoState extends State<MobileChatDemo> {
                 ),
                 const Spacer(),
                 GestureDetector(
-                  onTap: _keyboardPanelController.closeKeyboardAndPanel,
+                  onTap: () {
+                    _keyboardPanelController.closeKeyboardAndPanel();
+
+                    // We need to explicitly unfocus so that the caret doesn't
+                    // keep blinking in the editor.
+                    _editorFocusNode.unfocus();
+                  },
                   child: Icon(Icons.keyboard_hide),
                 ),
                 const SizedBox(width: 24),
