@@ -76,6 +76,34 @@ void main() {
         );
       });
 
+      testWidgetsOnAllPlatforms("can start at the beginning of an existing word", (tester) async {
+        await _pumpTestEditor(
+          tester,
+          MutableDocument(
+            nodes: [
+              ParagraphNode(
+                id: "1",
+                text: AttributedText("before john after"),
+              ),
+            ],
+          ),
+        );
+
+        // Place the caret at "before |john"
+        await tester.placeCaretInParagraph("1", 7);
+
+        // Type the trigger to start composing a tag.
+        await tester.typeImeText("@");
+
+        // Ensure that "@john" was attributed.
+        final text = SuperEditorInspector.findTextInComponent("1");
+        expect(text.text, "before @john after");
+        expect(
+          text.getAttributedRange({stableTagComposingAttribution}, 7),
+          const SpanRange(7, 11),
+        );
+      });
+
       testWidgetsOnAllPlatforms("by default does not continue after a space", (tester) async {
         await _pumpTestEditor(
           tester,
@@ -436,6 +464,37 @@ void main() {
         expect(
           text.getAttributedRange({const CommittedStableTagAttribution("john")}, 0),
           const SpanRange(0, 4),
+        );
+      });
+
+      testWidgetsOnAllPlatforms("at the beginning of an existing word", (tester) async {
+        await _pumpTestEditor(
+          tester,
+          MutableDocument(
+            nodes: [
+              ParagraphNode(
+                id: "1",
+                text: AttributedText("before john after"),
+              ),
+            ],
+          ),
+        );
+
+        // Place the caret at "before |john"
+        await tester.placeCaretInParagraph("1", 7);
+
+        // Type the trigger to start composing a tag.
+        await tester.typeImeText("@");
+
+        // Press left arrow to move away and commit the tag.
+        await tester.pressLeftArrow();
+
+        // Ensure that "@john" was attributed.
+        final text = SuperEditorInspector.findTextInComponent("1");
+        expect(text.text, "before @john after");
+        expect(
+          text.getAttributedRange({const CommittedStableTagAttribution("john")}, 7),
+          const SpanRange(7, 11),
         );
       });
 

@@ -283,6 +283,9 @@ class IndexedTag {
   /// The [DocumentRange] from [start] to [end].
   DocumentRange get range => DocumentRange(start: start, end: end);
 
+  /// The length of the [tag]'s text.
+  int get length => tag.raw.length;
+
   /// Collects and returns all attributions in this tag's [TextNode], between the
   /// [start] of the tag and the [end] of the tag.
   AttributedSpans computeTagSpans(Document document) =>

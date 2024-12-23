@@ -1562,9 +1562,12 @@ class RemoveTextAttributionsCommand extends EditCommand {
 
         startOffset = (normalizedRange.start.nodePosition as TextPosition).offset;
 
-        // -1 because TextPosition's offset indexes the character after the
-        // selection, not the final character in the selection.
-        endOffset = (normalizedRange.end.nodePosition as TextPosition).offset - 1;
+        endOffset = normalizedRange.start != normalizedRange.end
+            // -1 because TextPosition's offset indexes the character after the
+            // selection, not the final character in the selection.
+            ? (normalizedRange.end.nodePosition as TextPosition).offset - 1
+            // The selection is collapsed. Don't decrement the offset.
+            : startOffset;
       } else if (textNode == nodes.first) {
         // Handle partial node selection in first node.
         editorDocLog.info(' - selecting part of the first node: ${textNode.id}');
