@@ -247,6 +247,7 @@ class IosDocumentTouchInteractor extends StatefulWidget {
     required this.selection,
     this.openKeyboardWhenTappingExistingSelection = true,
     required this.openSoftwareKeyboard,
+    required this.isImeConnected,
     required this.scrollController,
     required this.dragHandleAutoScroller,
     required this.fillViewport,
@@ -268,6 +269,10 @@ class IosDocumentTouchInteractor extends StatefulWidget {
 
   /// A callback that should open the software keyboard when invoked.
   final VoidCallback openSoftwareKeyboard;
+
+  /// A [ValueListenable] that should notify this widget when the IME connects
+  /// and disconnects.
+  final ValueListenable<bool> isImeConnected;
 
   /// Optional list of handlers that respond to taps on content, e.g., opening
   /// a link when the user taps on text with a link attribution.
@@ -637,7 +642,7 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
           selection.extent.nodeId == docPosition.nodeId &&
           selection.extent.nodePosition.isEquivalentTo(docPosition.nodePosition);
 
-      if (didTapOnExistingSelection && _isKeyboardOpen) {
+      if (didTapOnExistingSelection && widget.isImeConnected.value) {
         // Toggle the toolbar display when the user taps on the collapsed caret,
         // or on top of an existing selection.
         //
@@ -650,31 +655,14 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
         _controlsController!.hideToolbar();
       }
 
-      final tappedComponent = _docLayout.getComponentByNodeId(adjustedSelectionPosition.nodeId)!;
-      if (!tappedComponent.isVisualSelectionSupported()) {
-        // The user tapped a non-selectable component.
-        // Place the document selection at the nearest selectable node
-        // to the tapped component.
-        moveSelectionToNearestSelectableNode(
-          editor: widget.editor,
-          document: widget.document,
-          documentLayoutResolver: widget.getDocumentLayout,
-          currentSelection: widget.selection.value,
-          startingNode: widget.document.getNodeById(adjustedSelectionPosition.nodeId)!,
-        );
-        return;
-      } else {
-        // Place the document selection at the location where the
-        // user tapped.
-        _selectPosition(adjustedSelectionPosition);
-      }
-
-      if (didTapOnExistingSelection && widget.openKeyboardWhenTappingExistingSelection) {
-        // The user tapped on the existing selection. Show the software keyboard.
-        //
-        // If the user didn't tap on an existing selection, the software keyboard will
-        // already be visible.
-        widget.openSoftwareKeyboard();
+      if (didTapOnExistingSelection) {
+        if (widget.openKeyboardWhenTappingExistingSelection) {
+          // The user tapped on the existing selection. Show the software keyboard.
+          //
+          // If the user didn't tap on an existing selection, the software keyboard will
+          // already be visible.
+          widget.openSoftwareKeyboard();
+        }
       } else {
         final tappedComponent = _docLayout.getComponentByNodeId(adjustedSelectionPosition.nodeId)!;
         if (!tappedComponent.isVisualSelectionSupported()) {
@@ -703,16 +691,6 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
     }
 
     widget.focusNode.requestFocus();
-  }
-
-  /// Returns `true` if we *think* the software keyboard is currently open, or
-  /// `false` otherwise.
-  ///
-  /// We say "think" because Flutter doesn't report this info to us. Instead, we
-  /// inspect the bottom insets on the window, and we assume any insets greater than
-  /// zero means a keyboard is visible.
-  bool get _isKeyboardOpen {
-    return MediaQuery.viewInsetsOf(context).bottom > 0;
   }
 
   DocumentPosition _moveTapPositionToWordBoundary(DocumentPosition docPosition) {
