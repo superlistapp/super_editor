@@ -123,11 +123,19 @@ class SubmitComposingActionTagCommand extends EditCommand {
   void execute(EditContext context, CommandExecutor executor) {
     final document = context.document;
     final composer = context.find<MutableDocumentComposer>(Editor.composerKey);
-    if (composer.selection == null) {
+    final selection = composer.selection;
+
+    if (selection == null) {
       return;
     }
 
-    final extent = composer.selection!.extent;
+    if (!selection.isCollapsed) {
+      // Action tags are composed while the user is typing. Since the
+      // selection is expanded, the user is not typing.
+      return;
+    }
+
+    final extent = selection.extent;
     final extentPosition = extent.nodePosition;
     if (extentPosition is! TextNodePosition) {
       return;
@@ -135,14 +143,12 @@ class SubmitComposingActionTagCommand extends EditCommand {
 
     final textNode = document.getNodeById(extent.nodeId) as TextNode;
 
-    final normalizedSelection = composer.selection!.normalize(document);
-    final tagAroundPosition = _findTag(
+    final tagAroundPosition = _findTagUpstream(
       // TODO: deal with these tag rules in requests and commands, should the user really pass them?
       tagRule: defaultActionTagRule,
       nodeId: composer.selection!.extent.nodeId,
       text: textNode.text,
-      expansionPosition: extentPosition,
-      endPosition: normalizedSelection.end.nodePosition,
+      caretPosition: extentPosition,
       isTokenCandidate: (attributions) => !attributions.contains(actionTagCancelledAttribution),
     );
 
@@ -213,32 +219,25 @@ class CancelComposingActionTagCommand extends EditCommand {
       return;
     }
 
-    // Look for a composing tag at the extent, or the base.
+    if (!selection.isCollapsed) {
+      // Action tags are composed while the user is typing. Since the
+      // selection is expanded, the user is not typing.
+      return;
+    }
+
+    // Look for a composing tag at the extent.
     final base = selection.base;
     final extent = selection.extent;
     TagAroundPosition? composingToken;
     TextNode? textNode;
 
-    final normalizedSelection = selection.normalize(document);
-    if (base.nodePosition is TextNodePosition) {
-      textNode = document.getNodeById(selection.base.nodeId) as TextNode;
-      composingToken = _findTag(
-        tagRule: _tagRule,
-        nodeId: textNode.id,
-        text: textNode.text,
-        expansionPosition: base.nodePosition as TextNodePosition,
-        endPosition: normalizedSelection.end.nodePosition,
-        isTokenCandidate: (tokenAttributions) => tokenAttributions.contains(actionTagComposingAttribution),
-      );
-    }
-    if (composingToken == null && extent.nodePosition is TextNodePosition) {
+    if (extent.nodePosition is TextNodePosition) {
       textNode = document.getNodeById(selection.extent.nodeId) as TextNode;
-      composingToken = _findTag(
+      composingToken = _findTagUpstream(
         tagRule: _tagRule,
         nodeId: textNode.id,
         text: textNode.text,
-        expansionPosition: base.nodePosition as TextNodePosition,
-        endPosition: normalizedSelection.end.nodePosition,
+        caretPosition: base.nodePosition as TextNodePosition,
         isTokenCandidate: (tokenAttributions) => tokenAttributions.contains(actionTagComposingAttribution),
       );
     }
@@ -293,7 +292,9 @@ class ActionTagComposingReaction extends EditReaction {
 
     _healCancelledTags(requestDispatcher, document, changeList);
 
-    if (composer.selection == null) {
+    if (composer.selection?.isCollapsed != true) {
+      // Action tags are composed while the user is typing. Since the
+      // selection is either null or expanded, the user is not typing.
       _cancelComposingTag(requestDispatcher);
       editorContext.composingActionTag.value = null;
       _onUpdateComposingActionTag(null);
@@ -302,33 +303,18 @@ class ActionTagComposingReaction extends EditReaction {
 
     final selection = composer.selection!;
 
-    // Look for a composing tag at the extent, or the base.
-    final base = selection.base;
+    // Look for a composing tag at the extent.
     final extent = selection.extent;
     TagAroundPosition? tagAroundPosition;
     TextNode? textNode;
 
-    final normalizedSelection = selection.normalize(document);
-
-    if (base.nodePosition is TextNodePosition) {
-      textNode = document.getNodeById(selection.base.nodeId) as TextNode;
-      tagAroundPosition = _findTag(
-        tagRule: _tagRule,
-        nodeId: textNode.id,
-        text: textNode.text,
-        expansionPosition: base.nodePosition as TextNodePosition,
-        endPosition: normalizedSelection.end.nodePosition,
-        isTokenCandidate: (attributions) => !attributions.contains(actionTagCancelledAttribution),
-      );
-    }
-    if (tagAroundPosition == null && extent.nodePosition is TextNodePosition) {
+    if (extent.nodePosition is TextNodePosition) {
       textNode = document.getNodeById(selection.extent.nodeId) as TextNode;
-      tagAroundPosition = _findTag(
+      tagAroundPosition = _findTagUpstream(
         tagRule: _tagRule,
         nodeId: textNode.id,
         text: textNode.text,
-        expansionPosition: extent.nodePosition as TextNodePosition,
-        endPosition: normalizedSelection.end.nodePosition,
+        caretPosition: extent.nodePosition as TextNodePosition,
         isTokenCandidate: (attributions) => !attributions.contains(actionTagCancelledAttribution),
       );
     }
@@ -467,36 +453,34 @@ class ActionTagComposingReaction extends EditReaction {
   }
 }
 
-/// Finds a tag that touches the given [expansionPosition], constaining it
-/// to not cross the [endPosition].
+/// Finds a tag that starts upstream to the [caretPosition] and ends
+/// at the [caretPosition].
 ///
-/// If [endPosition] is not a `TextNodePosition`, it will be ignored .
-TagAroundPosition? _findTag({
+/// For example, considering the following text, where '|' represents the caret:
+///
+///   "hello/wo|rld"
+///
+/// This method will extract "/wo" as the tag.
+TagAroundPosition? _findTagUpstream({
   required TagRule tagRule,
   required String nodeId,
   required AttributedText text,
-  required TextNodePosition expansionPosition,
-  required NodePosition endPosition,
+  required TextNodePosition caretPosition,
   required bool Function(Set<Attribution> tokenAttributions) isTokenCandidate,
 }) {
-  final rawText = text.text;
+  final rawText = text.toPlainText();
   if (rawText.isEmpty) {
     return null;
   }
 
-  int splitIndex = min(expansionPosition.offset, rawText.length);
+  int splitIndex = min(caretPosition.offset, rawText.length);
   splitIndex = max(splitIndex, 0);
 
-  final endOffset = endPosition is TextNodePosition ? endPosition.offset : null;
-
-  // Create 2 splits of characters to navigate upstream and downstream the caret position.
-  // ex: "this is a very|long string"
-  // -> split around the caret into charactersBefore="this is a very" and charactersAfter="long string"
+  // Extract the text upstream to the caret.
+  // For example: "hello/wor|ld"
+  // -> extracts the text "hello/wor"
   final charactersBefore = rawText.substring(0, splitIndex).characters;
   final iteratorUpstream = charactersBefore.iteratorAtEnd;
-
-  final charactersAfter = rawText.substring(splitIndex, endOffset).characters;
-  final iteratorDownstream = charactersAfter.iterator;
 
   if (charactersBefore.isNotEmpty && tagRule.excludedCharacters.contains(charactersBefore.last)) {
     // The character where we're supposed to begin our expansion is a
@@ -521,16 +505,8 @@ TagAroundPosition? _findTag({
     }
   }
 
-  // Move downstream the caret position until we find excluded character or reach the end of the text.
-  while (iteratorDownstream.moveNext()) {
-    final current = iteratorDownstream.current;
-    if (tagRule.excludedCharacters.contains(current)) {
-      break;
-    }
-  }
-
   final tokenStartOffset = splitIndex - iteratorUpstream.stringAfterLength;
-  final tokenRange = SpanRange(tokenStartOffset, splitIndex + iteratorDownstream.stringBeforeLength);
+  final tokenRange = SpanRange(tokenStartOffset, splitIndex);
 
   final tagText = text.substringInRange(tokenRange);
   if (!tagText.startsWith(tagRule.trigger)) {
@@ -548,7 +524,7 @@ TagAroundPosition? _findTag({
       nodeId,
       tokenStartOffset,
     ),
-    searchOffset: expansionPosition.offset,
+    searchOffset: caretPosition.offset,
   );
 }
 
