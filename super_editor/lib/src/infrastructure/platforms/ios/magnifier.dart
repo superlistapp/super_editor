@@ -116,30 +116,25 @@ class _IOSFollowingMagnifierState extends State<IOSFollowingMagnifier> with Sing
             // Animate the magnfier up on entrance and down on exit.
             widget.offsetFromFocalPoint.dy * devicePixelRatio * percentage,
           ),
-          // Translate the magnifier so it's displayed above the focal point
-          // when the animation ends.
-          child: FractionalTranslation(
-            translation: Offset(0.0, -0.5 * percentage),
-            child: widget.magnifierBuilder(
-              context,
-              IosMagnifierViewModel(
-                // In theory, the offsetFromFocalPoint should either be `widget.offsetFromFocalPoint.dy` to match
-                // the actual offset, or it should be `widget.offsetFromFocalPoint.dy / magnificationLevel`. Neither
-                // of those align the focal point correctly. The following offset was found empirically to give the
-                // desired results. These values seem to work even with different pixel densities.
-                offsetFromFocalPoint: Offset(
-                  -22 * percentage,
-                  (-defaultIosMagnifierSize.height + 14) * percentage,
-                ),
-                animationValue: _animationController.value,
-                animationDirection:
-                    const [AnimationStatus.forward, AnimationStatus.completed].contains(_animationController.status)
-                        ? AnimationDirection.forward
-                        : AnimationDirection.reverse,
-                borderColor: widget.handleColor ?? Theme.of(context).primaryColor,
+          boundary: ScreenFollowerBoundary(
+            screenSize: MediaQuery.sizeOf(context),
+            devicePixelRatio: MediaQuery.devicePixelRatioOf(context),
+          ),
+          child: widget.magnifierBuilder(
+            context,
+            IosMagnifierViewModel(
+              offsetFromFocalPoint: Offset(
+                widget.offsetFromFocalPoint.dx * percentage,
+                widget.offsetFromFocalPoint.dy * percentage,
               ),
-              widget.magnifierKey,
+              animationValue: _animationController.value,
+              animationDirection:
+                  const [AnimationStatus.forward, AnimationStatus.completed].contains(_animationController.status)
+                      ? AnimationDirection.forward
+                      : AnimationDirection.reverse,
+              borderColor: widget.handleColor ?? Theme.of(context).primaryColor,
             ),
+            widget.magnifierKey,
           ),
         );
       },
