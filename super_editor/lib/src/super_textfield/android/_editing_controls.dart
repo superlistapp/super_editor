@@ -4,6 +4,7 @@ import 'dart:math';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:follow_the_leader/follow_the_leader.dart';
 import 'package:super_editor/src/infrastructure/flutter/flutter_scheduler.dart';
 import 'package:super_editor/src/infrastructure/multi_listenable_builder.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
@@ -805,7 +806,7 @@ class _AndroidEditingOverlayControlsState extends State<AndroidEditingOverlayCon
     return Positioned(
       left: _localDragOffset!.dx,
       top: focalPointOffsetInMiddleOfLine.dy,
-      child: CompositedTransformTarget(
+      child: Leader(
         link: widget.editingController.magnifierFocalPoint,
         child: const SizedBox(width: 1, height: 1),
       ),
@@ -821,11 +822,9 @@ class _AndroidEditingOverlayControlsState extends State<AndroidEditingOverlayCon
     // When some other interaction wants to show the magnifier, then
     // that other area of the widget tree is responsible for
     // positioning the LayerLink target.
-    return Center(
-      child: AndroidFollowingMagnifier(
-        layerLink: widget.editingController.magnifierFocalPoint,
-        offsetFromFocalPoint: const Offset(0, -72),
-      ),
+    return AndroidFollowingMagnifier(
+      layerLink: widget.editingController.magnifierFocalPoint,
+      offsetFromFocalPoint: Offset(0, -54 * MediaQuery.devicePixelRatioOf(context)),
     );
   }
 
@@ -838,7 +837,7 @@ class AndroidEditingOverlayController with ChangeNotifier {
   AndroidEditingOverlayController({
     required this.textController,
     required this.caretBlinkController,
-    required LayerLink magnifierFocalPoint,
+    required LeaderLink magnifierFocalPoint,
   }) : _magnifierFocalPoint = magnifierFocalPoint;
 
   @override
@@ -894,8 +893,8 @@ class AndroidEditingOverlayController with ChangeNotifier {
     notifyListeners();
   }
 
-  final LayerLink _magnifierFocalPoint;
-  LayerLink get magnifierFocalPoint => _magnifierFocalPoint;
+  final LeaderLink _magnifierFocalPoint;
+  LeaderLink get magnifierFocalPoint => _magnifierFocalPoint;
 
   bool _isMagnifierVisible = false;
   bool get isMagnifierVisible => _isMagnifierVisible;
