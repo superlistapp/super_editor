@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:golden_bricks/golden_bricks.dart';
 import 'package:golden_toolkit/golden_toolkit.dart';
 import 'package:super_editor/super_editor.dart';
 import 'package:super_editor/super_editor_test.dart';
@@ -20,16 +21,18 @@ void main() {
       await tester //
           .createDocument()
           .withSingleParagraph()
-          .useStylesheet(Stylesheet(
-            rules: defaultStylesheet.rules,
-            inlineTextStyler: (attributions, style) => _textStyleBuilder(attributions),
-          ))
+          .useStylesheet(
+            Stylesheet(
+              rules: defaultStylesheet.rules,
+              inlineTextStyler: (attributions, style) => _textStyleBuilder(attributions),
+            ),
+          )
           .pump();
 
-      // Place the caret at "Duis aute|" (line 6).
-      await tester.tapInParagraph("1", 241);
+      // Place the caret at "ex ea co|mmodo consequat".
+      await tester.tapInParagraph("1", 215);
 
-      // // Press and drag the caret to the beginning of the line.
+      // Press and drag the caret to the beginning of the line.
       final gesture = await tester.pressDownOnCollapsedMobileHandle();
       for (int i = 1; i < 7; i++) {
         await gesture.moveBy(const Offset(-12, 0));
@@ -47,7 +50,7 @@ void main() {
 TextStyle _textStyleBuilder(Set<Attribution> attributions) {
   return const TextStyle(
     color: Colors.black,
-    fontFamily: 'Roboto',
+    fontFamily: goldenBricks,
     fontSize: 16,
     height: 1.4,
   );
