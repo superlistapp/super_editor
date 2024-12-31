@@ -1492,7 +1492,7 @@ class _AndroidDocumentTouchEditingControlsState extends State<AndroidDocumentTou
     // target. This magnifier follows that target.
     return AndroidFollowingMagnifier(
       layerLink: widget.editingController.magnifierFocalPointLink,
-      offsetFromFocalPoint: const Offset(0, -150),
+      offsetFromFocalPoint: Offset(0, -54 * MediaQuery.devicePixelRatioOf(context)),
     );
   }
 
