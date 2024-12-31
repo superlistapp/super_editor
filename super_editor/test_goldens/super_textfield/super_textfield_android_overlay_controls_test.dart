@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:golden_toolkit/golden_toolkit.dart';
 import 'package:super_editor/super_text_field.dart';
-import 'package:golden_bricks/golden_bricks.dart';
 
 import '../../test/super_textfield/super_textfield_robot.dart';
 import '../test_tools_goldens.dart';
@@ -33,7 +32,8 @@ void main() {
                   padding: const EdgeInsets.all(20),
                   textStyleBuilder: (_) => const TextStyle(
                     color: Colors.black,
-                    fontFamily: goldenBricks,
+                    // Use Roboto so that goldens show real text
+                    fontFamily: 'Roboto',
                   ),
                 ),
               ),
