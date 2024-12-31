@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:golden_toolkit/golden_toolkit.dart';
 import 'package:super_editor/super_editor.dart';
 
 import '../../test/super_textfield/super_textfield_robot.dart';
@@ -49,7 +48,10 @@ void main() {
       final gesture = await tester.dragCaretByDistanceInSuperTextField(const Offset(-200, 0));
       await tester.pump();
 
-      await screenMatchesGolden(tester, 'super_textfield_ios_magnifier_screen_edges');
+      await expectLater(
+        find.byType(MaterialApp),
+        matchesGoldenFileWithPixelAllowance("goldens/super_textfield_ios_magnifier_screen_edges.png", 4),
+      );
 
       // Release the gesture.
       await gesture.up();

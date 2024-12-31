@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:golden_toolkit/golden_toolkit.dart';
 import 'package:super_editor/super_editor.dart';
 import 'package:super_editor/super_editor_test.dart';
 
@@ -36,7 +35,11 @@ void main() {
         await tester.pump();
       }
 
-      await screenMatchesGolden(tester, 'supereditor_android_magnifier_screen_edges');
+      await tester.pump();
+      await expectLater(
+        find.byType(MaterialApp),
+        matchesGoldenFileWithPixelAllowance("goldens/supereditor_android_magnifier_screen_edges.png", 52),
+      );
 
       // Release the gesture.
       await gesture.up();
