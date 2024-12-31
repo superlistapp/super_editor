@@ -499,6 +499,7 @@ class IosHandlesDocumentLayer extends DocumentLayoutLayerStatefulWidget {
     required this.documentLayout,
     required this.selection,
     required this.changeSelection,
+    this.areSelectionHandlesAllowed,
     required this.handleColor,
     this.caretWidth = 2,
     this.handleBallDiameter = defaultIosHandleBallDiameter,
@@ -514,6 +515,9 @@ class IosHandlesDocumentLayer extends DocumentLayoutLayerStatefulWidget {
   final ValueListenable<DocumentSelection?> selection;
 
   final void Function(DocumentSelection?, SelectionChangeType, String selectionReason) changeSelection;
+
+  /// {@macro are_selection_handles_allowed}
+  final ValueListenable<bool>? areSelectionHandlesAllowed;
 
   /// Color the iOS-style text selection drag handles.
   final Color handleColor;
@@ -714,11 +718,16 @@ class IosControlsDocumentLayerState extends DocumentLayoutLayerState<IosHandlesD
     );
   }
 
-  @protected
+  @override
   DocumentSelectionLayout? computeLayoutDataWithDocumentLayout(
       BuildContext contentLayersContext, BuildContext documentContext, DocumentLayout documentLayout) {
     final selection = widget.selection.value;
     if (selection == null) {
+      return null;
+    }
+
+    if (widget.areSelectionHandlesAllowed?.value == false) {
+      /// We don't want to show any selection handles.
       return null;
     }
 

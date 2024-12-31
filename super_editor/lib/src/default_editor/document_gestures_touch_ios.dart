@@ -154,6 +154,20 @@ class SuperEditorIosControlsController {
   /// Tells the caret to stop blinking by setting [shouldCaretBlink] to `false`.
   void doNotBlinkCaret() => _shouldCaretBlink.value = false;
 
+  /// {@macro are_selection_handles_allowed}
+  ValueListenable<bool> get areSelectionHandlesAllowed => _areSelectionHandlesAllowed;
+  final _areSelectionHandlesAllowed = ValueNotifier<bool>(true);
+
+  /// Temporarily prevents any selection handles from being displayed.
+  ///
+  /// Call this when you want to select some content, but don't want to show the drag handles.
+  /// [allowSelectionHandles] must be called to allow the drag handles to be displayed again.
+  void allowSelectionHandles() => _areSelectionHandlesAllowed.value = true;
+
+  /// Allows the selection handles to be displayed after they have been temporarily
+  /// prevented by [preventSelectionHandles].
+  void preventSelectionHandles() => _areSelectionHandlesAllowed.value = false;
+
   /// Controls the iOS floating cursor.
   late final FloatingCursorController floatingCursorController;
 
@@ -573,14 +587,6 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
       ..hideMagnifier()
       ..blinkCaret();
 
-    final selection = widget.selection.value;
-    if (selection != null &&
-        !selection.isCollapsed &&
-        (_isOverBaseHandle(details.localPosition) || _isOverExtentHandle(details.localPosition))) {
-      _controlsController!.toggleToolbar();
-      return;
-    }
-
     editorGesturesLog.info("Tap down on document");
     final docOffset = _interactorOffsetToDocumentOffset(details.localPosition);
     editorGesturesLog.fine(" - document offset: $docOffset");
@@ -600,6 +606,14 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
           return;
         }
       }
+    }
+
+    final selection = widget.selection.value;
+    if (selection != null &&
+        !selection.isCollapsed &&
+        (_isOverBaseHandle(details.localPosition) || _isOverExtentHandle(details.localPosition))) {
+      _controlsController!.toggleToolbar();
+      return;
     }
 
     final docPosition = _docLayout.getDocumentPositionNearestToOffset(docOffset);
@@ -714,13 +728,6 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
   }
 
   void _onDoubleTapUp(TapUpDetails details) {
-    final selection = widget.selection.value;
-    if (selection != null &&
-        !selection.isCollapsed &&
-        (_isOverBaseHandle(details.localPosition) || _isOverExtentHandle(details.localPosition))) {
-      return;
-    }
-
     editorGesturesLog.info("Double tap down on document");
     final docOffset = _interactorOffsetToDocumentOffset(details.localPosition);
     editorGesturesLog.fine(" - document offset: $docOffset");
@@ -740,6 +747,13 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
           return;
         }
       }
+    }
+
+    final selection = widget.selection.value;
+    if (selection != null &&
+        !selection.isCollapsed &&
+        (_isOverBaseHandle(details.localPosition) || _isOverExtentHandle(details.localPosition))) {
+      return;
     }
 
     final docPosition = _docLayout.getDocumentPositionNearestToOffset(docOffset);
@@ -1885,6 +1899,8 @@ class SuperEditorIosHandlesDocumentLayerBuilder implements SuperEditorLayerBuild
       return const ContentLayerProxyWidget(child: SizedBox());
     }
 
+    final controlsController = SuperEditorIosControlsScope.rootOf(context);
+
     return IosHandlesDocumentLayer(
       document: editContext.document,
       documentLayout: editContext.documentLayout,
@@ -1895,13 +1911,12 @@ class SuperEditorIosHandlesDocumentLayerBuilder implements SuperEditorLayerBuild
           const ClearComposingRegionRequest(),
         ]);
       },
-      handleColor: handleColor ??
-          SuperEditorIosControlsScope.maybeRootOf(context)?.handleColor ??
-          Theme.of(context).primaryColor,
+      areSelectionHandlesAllowed: controlsController.areSelectionHandlesAllowed,
+      handleColor: handleColor ?? controlsController.handleColor ?? Theme.of(context).primaryColor,
       caretWidth: caretWidth ?? 2,
       handleBallDiameter: handleBallDiameter ?? defaultIosHandleBallDiameter,
-      shouldCaretBlink: SuperEditorIosControlsScope.rootOf(context).shouldCaretBlink,
-      floatingCursorController: SuperEditorIosControlsScope.rootOf(context).floatingCursorController,
+      shouldCaretBlink: controlsController.shouldCaretBlink,
+      floatingCursorController: controlsController.floatingCursorController,
     );
   }
 }
