@@ -18,23 +18,47 @@ void main() {
 
       addTearDown(() => tester.platformDispatcher.clearAllTestValues());
 
+      // Pump a widget tree with an empty space above the editor, so we can see the
+      // whole magnifier.
       await tester //
           .createDocument()
-          .withSingleParagraph()
+          .withCustomContent(
+            MutableDocument(
+              nodes: [
+                ParagraphNode(
+                  id: '1',
+                  text: AttributedText('Lorem ipsum dolor sit amet'),
+                ),
+              ],
+            ),
+          )
           .useStylesheet(
             Stylesheet(
               rules: defaultStylesheet.rules,
               inlineTextStyler: (attributions, style) => _textStyleBuilder(attributions),
             ),
           )
+          .withCustomWidgetTreeBuilder(
+            (superEditor) => MaterialApp(
+              debugShowCheckedModeBanner: false,
+              home: Scaffold(
+                body: Column(
+                  children: [
+                    const SizedBox(height: 200),
+                    Expanded(child: superEditor),
+                  ],
+                ),
+              ),
+            ),
+          )
           .pump();
 
-      // Place the caret at "ex ea co|mmodo consequat".
-      await tester.tapInParagraph("1", 215);
+      // Place the caret at the end of the paragraph.
+      await tester.tapInParagraph("1", 26);
 
       // Press and drag the caret to the beginning of the line.
       final gesture = await tester.pressDownOnCollapsedMobileHandle();
-      for (int i = 1; i < 7; i++) {
+      for (int i = 1; i <= 26; i++) {
         await gesture.moveBy(const Offset(-12, 0));
         await tester.pump();
       }
