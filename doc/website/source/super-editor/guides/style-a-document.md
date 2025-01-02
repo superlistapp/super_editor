@@ -45,8 +45,6 @@ class MyApp extends StatelessWidget {
 
 See the `Styles` class for the list of keys to the style metadata used by `SuperEditor`.
 
-[TODO: what is the meaning of "key" in this context?]
-
 ## Multiple matching rules
 
 Multiple `StyleRule`s can match a single node. When that happens, `SuperEditor` attempts to merge them, by looking at each key. For example, consider the following stylesheet:

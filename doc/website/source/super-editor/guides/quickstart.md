@@ -61,10 +61,4 @@ The `SuperEditor` widget creates a user interface for visualizing the `Document`
 
 That's all it takes to get started with your very own editor. Run your app, tap in the editor, and start typing!
 
-Continue your Super Editor journey with more beginner guides:
-
-- [Document](TODO)
-- [DocumentComposer](TODO)
-- [Editor](TODO)
-- [SuperEditor](TODO)
-- TODO: other useful next step guides.
+Check out the other guides for more help.

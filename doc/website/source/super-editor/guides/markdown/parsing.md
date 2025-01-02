@@ -19,11 +19,6 @@ dependencies:
 Parse a Markdown document by calling the provided global function:
 
 ```dart
-const markdownText = '''
-# Header
-This is a _Super_ Editor!
-''';
-
 final superEditorDocument = deserializeMarkdownToDocument(markdownText);
 ```
 
