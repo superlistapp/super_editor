@@ -629,17 +629,17 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField>
         return Stack(
           clipBehavior: Clip.none,
           children: [
-            if (widget.textController?.selection.isValid == true)
+            if (_textEditingController.selection.isValid == true)
               // Selection highlight beneath the text.
               TextLayoutSelectionHighlight(
                 textLayout: textLayout,
                 style: SelectionHighlightStyle(
                   color: widget.selectionColor,
                 ),
-                selection: widget.textController?.selection,
+                selection: _textEditingController.selection,
               ),
             // Underline beneath the composing region.
-            if (widget.textController?.composingRegion.isValid == true && widget.showComposingUnderline)
+            if (_textEditingController.composingRegion.isValid == true && widget.showComposingUnderline)
               TextUnderlineLayer(
                 textLayout: textLayout,
                 style: StraightUnderlineStyle(
@@ -648,7 +648,7 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField>
                 ),
                 underlines: [
                   TextLayoutUnderline(
-                    range: widget.textController!.composingRegion,
+                    range: _textEditingController.composingRegion,
                   ),
                 ],
               ),
