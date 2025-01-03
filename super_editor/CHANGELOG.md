@@ -1,3 +1,13 @@
+## [0.3.0-dev.12] - Dec 23, 2024
+ * FEATURE: Added support for inline widgets.
+ * FEATURE: Created a `ClearDocumentRequest`, which deletes all content and moves caret to the start.
+ * FIX: Web - option + arrow selection changes.
+ * FIX: `SuperTextField` (iOS) - native content menu focal point was wrong.
+ * FIX: Action tag not identified and triggered in expected situations.
+ * ADJUSTMENT: `KeyboardPanelScaffold` supports opening a panel before opening the software keyboard.
+ * ADJUSTMENT: `getDocumentPositionAfterExpandedDeletion` returns `null` for collapsed selections.
+ * ADJUSTMENT: `TaskNode` checkbox sets visual density based on `ThemeData.visualDensity`.
+
 ## [0.3.0-dev.11] - Nov 26, 2024
  * FEATURE: Add an (optional) tap handler that automatically inserts empty paragraph
    when user taps at the end of the document.
