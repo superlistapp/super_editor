@@ -42,7 +42,6 @@ void main() {
         final lineBreakOffset = SuperEditorInspector.findOffsetOfLineBreak('1');
 
         // Find the coordinates of the caret at the end of the first line (line break offset w/ upstream affinity).
-        await tester.pump(kTapTimeout * 2); // Simulate a pause to avoid a double tap.
         await tester.placeCaretInParagraph('1', lineBreakOffset, affinity: TextAffinity.upstream);
         final upstreamCaretOffset = SuperEditorInspector.findCaretOffsetInDocument();
 
@@ -50,8 +49,11 @@ void main() {
         expect(upstreamCaretOffset.dx, greaterThan(startOfFirstLineCaretOffset.dx + xExpectBuffer));
         expect(upstreamCaretOffset.dy, startOfFirstLineCaretOffset.dy);
 
+        // Tap on another character, because tapping on the same character shows the toolbar
+        // instead of changing the selection.
+        await tester.placeCaretInParagraph('1', 3);
+
         // Find the coordinates of the caret at the start of the second line (line break offset w/ downstream affinity).
-        await tester.pump(kTapTimeout * 2); // Simulate a pause to avoid a double tap.
         await tester.placeCaretInParagraph('1', lineBreakOffset, affinity: TextAffinity.downstream);
         final downstreamCaretOffset = SuperEditorInspector.findCaretOffsetInDocument();
 
@@ -77,8 +79,11 @@ void main() {
         final downstreamCaretOffset = SuperEditorInspector.findCaretOffsetInDocument();
         final downstreamSelection = SuperEditorInspector.findDocumentSelection();
 
+        // Tap on another character, because tapping on the same character shows the toolbar
+        // instead of changing the selection.
+        await tester.placeCaretInParagraph('1', 0);
+
         // Place the caret at the same offset but with an upstream affinity.
-        await tester.pump(kTapTimeout * 2); // Simulate a pause to avoid a double tap.
         await tester.placeCaretInParagraph('1', textOffset, affinity: TextAffinity.upstream);
         final upstreamCaretOffset = SuperEditorInspector.findCaretOffsetInDocument();
         final upstreamSelection = SuperEditorInspector.findDocumentSelection();
