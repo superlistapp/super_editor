@@ -632,49 +632,9 @@ class _SuperTextFieldGestureInteractorState extends State<SuperTextFieldGestureI
   SuperTextFieldScrollviewState get _textScroll => widget.textScrollKey.currentState!;
 
   final _mouseCursor = ValueNotifier<MouseCursor>(SystemMouseCursors.text);
-  Offset? _lastHoverOffset;
-
-  @override
-  void initState() {
-    super.initState();
-
-    for (final handler in widget.tapHandlers) {
-      handler.addListener(_updateMouseCursorAtLatestOffset);
-    }
-  }
-
-  @override
-  void didUpdateWidget(SuperTextFieldGestureInteractor oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (!const DeepCollectionEquality().equals(oldWidget.tapHandlers, widget.tapHandlers)) {
-      for (final handler in oldWidget.tapHandlers) {
-        handler.removeListener(_updateMouseCursorAtLatestOffset);
-      }
-
-      for (final handler in widget.tapHandlers) {
-        handler.addListener(_updateMouseCursorAtLatestOffset);
-      }
-    }
-  }
-
-  @override
-  void dispose() {
-    super.dispose();
-    for (final handler in widget.tapHandlers) {
-      handler.removeListener(_updateMouseCursorAtLatestOffset);
-    }
-  }
 
   void _onMouseMove(PointerHoverEvent event) {
     _updateMouseCursor(event.position);
-    _lastHoverOffset = event.position;
-  }
-
-  void _updateMouseCursorAtLatestOffset() {
-    if (_lastHoverOffset == null) {
-      return;
-    }
-    _updateMouseCursor(_lastHoverOffset!);
   }
 
   void _updateMouseCursor(Offset globalPosition) {
