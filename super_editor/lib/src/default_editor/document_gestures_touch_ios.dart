@@ -130,6 +130,7 @@ class SuperEditorIosControlsController {
     _shouldShowToolbar.dispose();
   }
 
+  /// {@template ios_use_selection_heuristics}
   /// Whether to adjust the user's selection similar to the way iOS does.
   ///
   /// For example: iOS doesn't let users tap directly on a text offset. Instead,
@@ -139,6 +140,7 @@ class SuperEditorIosControlsController {
   /// When this property is `true`, iOS-style heuristics should be used. When
   /// this value is `false`, the user's gestures should directly impact the
   /// area they touched.
+  /// {@endtemplate}
   final bool useIosSelectionHeuristics;
 
   /// Color of the text selection drag handles on iOS.
@@ -245,6 +247,7 @@ class IosDocumentTouchInteractor extends StatefulWidget {
     required this.selection,
     this.openKeyboardWhenTappingExistingSelection = true,
     required this.openSoftwareKeyboard,
+    required this.isImeConnected,
     required this.scrollController,
     required this.dragHandleAutoScroller,
     required this.fillViewport,
@@ -266,6 +269,10 @@ class IosDocumentTouchInteractor extends StatefulWidget {
 
   /// A callback that should open the software keyboard when invoked.
   final VoidCallback openSoftwareKeyboard;
+
+  /// A [ValueListenable] that should notify this widget when the IME connects
+  /// and disconnects.
+  final ValueListenable<bool> isImeConnected;
 
   /// Optional list of handlers that respond to taps on content, e.g., opening
   /// a link when the user taps on text with a link attribution.
@@ -632,10 +639,10 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
 
       final didTapOnExistingSelection = selection != null &&
           selection.isCollapsed &&
-          selection.extent.nodeId == adjustedSelectionPosition.nodeId &&
-          selection.extent.nodePosition.isEquivalentTo(adjustedSelectionPosition.nodePosition);
+          selection.extent.nodeId == docPosition.nodeId &&
+          selection.extent.nodePosition.isEquivalentTo(docPosition.nodePosition);
 
-      if (didTapOnExistingSelection && _isKeyboardOpen) {
+      if (didTapOnExistingSelection && widget.isImeConnected.value) {
         // Toggle the toolbar display when the user taps on the collapsed caret,
         // or on top of an existing selection.
         //
@@ -648,31 +655,33 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
         _controlsController!.hideToolbar();
       }
 
-      final tappedComponent = _docLayout.getComponentByNodeId(adjustedSelectionPosition.nodeId)!;
-      if (!tappedComponent.isVisualSelectionSupported()) {
-        // The user tapped a non-selectable component.
-        // Place the document selection at the nearest selectable node
-        // to the tapped component.
-        moveSelectionToNearestSelectableNode(
-          editor: widget.editor,
-          document: widget.document,
-          documentLayoutResolver: widget.getDocumentLayout,
-          currentSelection: widget.selection.value,
-          startingNode: widget.document.getNodeById(adjustedSelectionPosition.nodeId)!,
-        );
-        return;
+      if (didTapOnExistingSelection) {
+        if (widget.openKeyboardWhenTappingExistingSelection) {
+          // The user tapped on the existing selection. Show the software keyboard.
+          //
+          // If the user didn't tap on an existing selection, the software keyboard will
+          // already be visible.
+          widget.openSoftwareKeyboard();
+        }
       } else {
-        // Place the document selection at the location where the
-        // user tapped.
-        _selectPosition(adjustedSelectionPosition);
-      }
-
-      if (didTapOnExistingSelection && widget.openKeyboardWhenTappingExistingSelection) {
-        // The user tapped on the existing selection. Show the software keyboard.
-        //
-        // If the user didn't tap on an existing selection, the software keyboard will
-        // already be visible.
-        widget.openSoftwareKeyboard();
+        final tappedComponent = _docLayout.getComponentByNodeId(adjustedSelectionPosition.nodeId)!;
+        if (!tappedComponent.isVisualSelectionSupported()) {
+          // The user tapped a non-selectable component.
+          // Place the document selection at the nearest selectable node
+          // to the tapped component.
+          moveSelectionToNearestSelectableNode(
+            editor: widget.editor,
+            document: widget.document,
+            documentLayoutResolver: widget.getDocumentLayout,
+            currentSelection: widget.selection.value,
+            startingNode: widget.document.getNodeById(adjustedSelectionPosition.nodeId)!,
+          );
+          return;
+        } else {
+          // Place the document selection at the location where the
+          // user tapped.
+          _selectPosition(adjustedSelectionPosition);
+        }
       }
     } else {
       widget.editor.execute([
@@ -682,16 +691,6 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
     }
 
     widget.focusNode.requestFocus();
-  }
-
-  /// Returns `true` if we *think* the software keyboard is currently open, or
-  /// `false` otherwise.
-  ///
-  /// We say "think" because Flutter doesn't report this info to us. Instead, we
-  /// inspect the bottom insets on the window, and we assume any insets greater than
-  /// zero means a keyboard is visible.
-  bool get _isKeyboardOpen {
-    return MediaQuery.viewInsetsOf(context).bottom > 0;
   }
 
   DocumentPosition _moveTapPositionToWordBoundary(DocumentPosition docPosition) {
@@ -916,10 +915,15 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
     }
 
     final extentRect = _docLayout.getRectForPosition(collapsedPosition)!;
-    final caretRect = Rect.fromLTWH(extentRect.left - 1, extentRect.center.dy, 1, 1).inflate(24);
+    final caretHitArea = Rect.fromLTRB(
+      extentRect.left - 24,
+      extentRect.top,
+      extentRect.right + 24,
+      extentRect.bottom,
+    );
 
     final docOffset = _interactorOffsetToDocumentOffset(interactorOffset);
-    return caretRect.contains(docOffset);
+    return caretHitArea.contains(docOffset);
   }
 
   bool _isOverBaseHandle(Offset interactorOffset) {

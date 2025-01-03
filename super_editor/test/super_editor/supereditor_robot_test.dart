@@ -116,8 +116,11 @@ void main() {
         ),
       );
 
+      // Tap on another character, because tapping on the same character shows the toolbar
+      // instead of changing the selection.
+      await tester.placeCaretInParagraph("1", 5);
+
       // Place the caret at the same offset as before but with an upstream affinity.
-      await tester.pump(kTapTimeout * 2); // Pause to avoid double tap.
       await tester.placeCaretInParagraph("1", 1, affinity: TextAffinity.upstream);
       // Ensure the document has the correct selection, including affinity;
       expect(
