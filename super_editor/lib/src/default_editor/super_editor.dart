@@ -423,6 +423,8 @@ class SuperEditorState extends State<SuperEditor> {
 
   late SoftwareKeyboardController _softwareKeyboardController;
 
+  late ValueNotifier<bool> _isImeConnected;
+
   @override
   void initState() {
     super.initState();
@@ -448,6 +450,8 @@ class SuperEditorState extends State<SuperEditor> {
     _selectionLinks = widget.selectionLayerLinks ?? SelectionLayerLinks();
 
     _softwareKeyboardController = widget.softwareKeyboardController ?? SoftwareKeyboardController();
+
+    _isImeConnected = widget.isImeConnected ?? ValueNotifier(false);
 
     widget.editor.context.put(
       Editor.layoutKey,
@@ -511,6 +515,10 @@ class SuperEditorState extends State<SuperEditor> {
 
     if (widget.softwareKeyboardController != oldWidget.softwareKeyboardController) {
       _softwareKeyboardController = widget.softwareKeyboardController ?? SoftwareKeyboardController();
+    }
+
+    if (widget.isImeConnected != oldWidget.isImeConnected) {
+      _isImeConnected = widget.isImeConnected ?? ValueNotifier(false);
     }
 
     _recomputeIfLayoutShouldShowCaret();
@@ -797,7 +805,7 @@ class SuperEditorState extends State<SuperEditor> {
             ..._keyboardActions,
           ],
           selectorHandlers: widget.selectorHandlers ?? defaultEditorSelectorHandlers,
-          isImeConnected: widget.isImeConnected,
+          isImeConnected: _isImeConnected,
           child: child,
         );
     }
@@ -900,6 +908,7 @@ class SuperEditorState extends State<SuperEditor> {
           selection: editContext.composer.selectionNotifier,
           openKeyboardWhenTappingExistingSelection: widget.selectionPolicies.openKeyboardWhenTappingExistingSelection,
           openSoftwareKeyboard: _openSoftareKeyboard,
+          isImeConnected: _isImeConnected,
           contentTapHandlers: _contentTapHandlers,
           scrollController: _scrollController,
           dragHandleAutoScroller: _dragHandleAutoScroller,

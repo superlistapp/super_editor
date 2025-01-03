@@ -37,6 +37,10 @@ final _log = iosTextFieldLog;
 ///
 /// Selection changes are made via the given [textController].
 class IOSTextFieldTouchInteractor extends StatefulWidget {
+  /// {@macro ios_use_selection_heuristics}
+  @visibleForTesting
+  static bool useIosSelectionHeuristics = true;
+
   const IOSTextFieldTouchInteractor({
     Key? key,
     required this.focusNode,
@@ -201,15 +205,17 @@ class IOSTextFieldTouchInteractorState extends State<IOSTextFieldTouchInteractor
     final exactTapTextPosition = _getTextPositionNearestToOffset(details.localPosition);
     final adjustedTapTextPosition =
         exactTapTextPosition != null ? _moveTapPositionToWordBoundary(exactTapTextPosition) : null;
-    final didTapOnExistingSelection = adjustedTapTextPosition != null &&
+    final didTapOnExistingSelection = exactTapTextPosition != null &&
         _selectionBeforeTap != null &&
         (_selectionBeforeTap!.isCollapsed
-            ? adjustedTapTextPosition.offset == _selectionBeforeTap!.extent.offset
-            : adjustedTapTextPosition.offset >= _selectionBeforeTap!.start &&
-                adjustedTapTextPosition.offset <= _selectionBeforeTap!.end);
+            ? exactTapTextPosition.offset == _selectionBeforeTap!.extent.offset
+            : exactTapTextPosition.offset >= _selectionBeforeTap!.start &&
+                exactTapTextPosition.offset <= _selectionBeforeTap!.end);
 
-    // Select the text that's nearest to where the user tapped.
-    _selectPosition(adjustedTapTextPosition);
+    if (!didTapOnExistingSelection) {
+      // Select the text that's nearest to where the user tapped.
+      _selectPosition(adjustedTapTextPosition);
+    }
 
     final didCaretStayInSamePlace = _selectionBeforeTap != null &&
         _selectionBeforeTap?.hasSameBoundsAs(widget.textController.selection) == true &&
@@ -232,7 +238,7 @@ class IOSTextFieldTouchInteractorState extends State<IOSTextFieldTouchInteractor
   }
 
   TextPosition _moveTapPositionToWordBoundary(TextPosition textPosition) {
-    if (Testing.isInTest) {
+    if (!IOSTextFieldTouchInteractor.useIosSelectionHeuristics) {
       // Don't adjust the tap location in tests because we want tests to be
       // able to precisely position the caret at a given offset.
       // TODO: Make this decision configurable, similar to SuperEditor, so that
