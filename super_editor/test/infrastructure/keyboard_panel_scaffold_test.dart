@@ -61,6 +61,62 @@ void main() {
         );
       });
 
+      testWidgetsOnMobilePhone('shows content above the toolbar and keyboard when at bottom of screen', (tester) async {
+        final softwareKeyboardController = SoftwareKeyboardController();
+        final controller = KeyboardPanelController(softwareKeyboardController);
+
+        await _pumpTestAppWithTabs(
+          tester,
+          controller: controller,
+          softwareKeyboardController: softwareKeyboardController,
+        );
+
+        // Request to show the above-keyboard panel.
+        controller.showToolbar();
+        await tester.pump();
+
+        // Place the caret at the beginning of the document to show the software keyboard.
+        await tester.placeCaretInParagraph('1', 0);
+
+        // Ensure the editor sits just above the keyboard + toolbar.
+        expect(
+          tester.getBottomLeft(find.byType(SuperEditor)).dy,
+          equals(tester.getSize(find.byType(MaterialApp)).height - _expandedPhoneKeyboardHeight - _toolbarHeight),
+        );
+      });
+
+      testWidgetsOnMobilePhone('shows content above the toolbar and keyboard when above bottom of screen',
+          (tester) async {
+        final softwareKeyboardController = SoftwareKeyboardController();
+        final controller = KeyboardPanelController(softwareKeyboardController);
+
+        await _pumpTestAppWithTabs(
+          tester,
+          controller: controller,
+          softwareKeyboardController: softwareKeyboardController,
+          // Push the editor up a bit.
+          widgetBelowEditor: Container(
+            width: double.infinity,
+            height: 100,
+            color: Colors.red,
+          ),
+        );
+
+        // Request to show the above-keyboard panel.
+        controller.showToolbar();
+        await tester.pump();
+
+        // Place the caret at the beginning of the document to show the software keyboard.
+        await tester.placeCaretInParagraph('1', 0);
+
+        // Ensure the editor sits just above the keyboard + toolbar, and there's
+        // no extra space caused by the widget below the editor.
+        expect(
+          tester.getBottomLeft(find.byType(SuperEditor)).dy,
+          equals(tester.getSize(find.byType(MaterialApp)).height - _expandedPhoneKeyboardHeight - _toolbarHeight),
+        );
+      });
+
       testWidgetsOnMobilePhone(
         'shows keyboard toolbar above the keyboard when toggling panels and showing the keyboard',
         (tester) async {
@@ -554,9 +610,12 @@ void main() {
         final contentHeightWithNoKeyboard = tester.getSize(find.byKey(_chatPageKey)).height;
 
         // Show the keyboard. Don't show the toolbar because it's irrelevant for this test.
+        print("---- STARTING TO OPEN KEYBOARD -----");
         controller.toolbarVisibility = KeyboardToolbarVisibility.hidden;
         controller.showSoftwareKeyboard();
         await tester.pumpAndSettle();
+
+        print("---- DONE OPENING KEYBOARD -----");
 
         // Record the height of the content now that the keyboard is open.
         final contentHeightWithKeyboardPanelOpen = tester.getSize(find.byKey(_chatPageKey)).height;
@@ -600,6 +659,9 @@ Future<void> _pumpTestAppWithTabs(
   SoftwareKeyboardController? softwareKeyboardController,
   ValueNotifier<bool>? isImeConnected,
   double simulatedKeyboardHeight = _expandedPhoneKeyboardHeight,
+  // (Optional) widget that's positioned below the chat editor, which pushes
+  // the chat editor up from the bottom of the screen.
+  Widget? widgetBelowEditor,
 }) async {
   final keyboardController = softwareKeyboardController ?? SoftwareKeyboardController();
   final keyboardPanelController = controller ?? KeyboardPanelController(keyboardController);
@@ -615,80 +677,168 @@ Future<void> _pumpTestAppWithTabs(
         simulatedKeyboardHeight: simulatedKeyboardHeight,
       )
       .withCustomWidgetTreeBuilder(
-        (superEditor) => MaterialApp(
-          home: DefaultTabController(
-            length: 2,
-            child: Scaffold(
-              appBar: AppBar(
-                bottom: const TabBar(
-                  tabs: [
-                    Tab(
-                      key: _chatTabKey,
-                      icon: Icon(Icons.chat),
-                    ),
-                    Tab(
-                      key: _accountTabKey,
-                      icon: Icon(Icons.account_circle),
-                    ),
-                  ],
-                ),
-              ),
-              resizeToAvoidBottomInset: false,
-              body: KeyboardScaffoldSafeArea(
-                // ^ This safe area is needed to receive the bottom insets from the
-                //   bottom mounted editor, and then make it available to the subtree
-                //   with the content behind the chat.
-                //
-                //   Also, by including 2 of these safe areas in the same tree, we implicitly
-                //   verify that multiple safe areas in the same tree work together.
-                child: TabBarView(children: [
-                  // ^ We build a tab view so that we can test what happens when the editor
-                  //   has focus and a keyboard panel is up, and then the user navigates to
-                  //   another tab, which should remove the bottom safe area when it happens.
-                  _buildChatPage(
-                    keyboardPanelController,
-                    imeConnectionNotifier,
-                    superEditor,
-                  ),
-                  _buildAccountPage(),
-                ]),
-              ),
-            ),
-          ),
+        (superEditor) => _TestAppScaffold(
+          superEditor: superEditor,
+          keyboardPanelController: keyboardPanelController,
+          imeConnectionNotifier: imeConnectionNotifier,
+          widgetBelowEditor: widgetBelowEditor,
         ),
       )
       .pump();
 }
 
-Widget _buildChatPage(
-  KeyboardPanelController keyboardPanelController,
-  ValueNotifier<bool> imeConnectionNotifier,
-  Widget superEditor,
-) {
-  return Stack(
-    children: [
-      // An area that simulates content that sits underneath
-      // a bottom mounted chat editor.
-      Positioned.fill(
-        child: KeyboardScaffoldSafeArea(
-          child: Container(
-            key: _chatPageKey,
-            color: Colors.blue,
+/// An app scaffold with the following structure:
+///
+/// MaterialApp
+///   |-- Column
+///     |-- App bar with tabs
+///     |-- Page (chat page or profile page)
+class _TestAppScaffold extends StatelessWidget {
+  const _TestAppScaffold({
+    required this.superEditor,
+    required this.keyboardPanelController,
+    required this.imeConnectionNotifier,
+    this.widgetBelowEditor,
+  });
+
+  final Widget superEditor;
+
+  final KeyboardPanelController keyboardPanelController;
+  final ValueNotifier<bool> imeConnectionNotifier;
+  final Widget? widgetBelowEditor;
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      home: DefaultTabController(
+        length: 2,
+        child: Scaffold(
+          appBar: AppBar(
+            bottom: const TabBar(
+              tabs: [
+                Tab(
+                  key: _chatTabKey,
+                  icon: Icon(Icons.chat),
+                ),
+                Tab(
+                  key: _accountTabKey,
+                  icon: Icon(Icons.account_circle),
+                ),
+              ],
+            ),
           ),
+          resizeToAvoidBottomInset: false,
+          // body: KeyboardScaffoldSafeArea(
+          //   // ^ This safe area is needed to receive the bottom insets from the
+          //   //   bottom mounted editor, and then make it available to the subtree
+          //   //   with the content behind the chat.
+          //   //
+          //   //   Also, by including 2 of these safe areas in the same tree, we implicitly
+          //   //   verify that multiple safe areas in the same tree work together.
+          //   child: TabBarView(children: [
+          //     // ^ We build a tab view so that we can test what happens when the editor
+          //     //   has focus and a keyboard panel is up, and then the user navigates to
+          //     //   another tab, which should remove the bottom safe area when it happens.
+          //     _buildChatPage(
+          //       keyboardPanelController,
+          //       imeConnectionNotifier,
+          //       superEditor,
+          //       widgetBelowEditor,
+          //     ),
+          //     _buildAccountPage(),
+          //   ]),
+          // ),
+          body: TabBarView(children: [
+            // ^ We build a tab view so that we can test what happens when the editor
+            //   has focus and a keyboard panel is up, and then the user navigates to
+            //   another tab, which should remove the bottom safe area when it happens.
+            _ChatPage(
+              keyboardPanelController: keyboardPanelController,
+              imeConnectionNotifier: imeConnectionNotifier,
+              superEditor: superEditor,
+              widgetBelowEditor: widgetBelowEditor,
+            ),
+            const _AccountPage(),
+          ]),
         ),
       ),
+    );
+  }
+}
 
-      // An area that simulates a bottom mounted chat editor.
-      Positioned(
-        left: 0,
-        right: 0,
-        bottom: 0,
-        height: 200,
+class _ChatPage extends StatelessWidget {
+  const _ChatPage({
+    required this.superEditor,
+    required this.keyboardPanelController,
+    required this.imeConnectionNotifier,
+    this.widgetBelowEditor,
+  });
+
+  final Widget superEditor;
+  final KeyboardPanelController keyboardPanelController;
+  final ValueNotifier<bool> imeConnectionNotifier;
+  final Widget? widgetBelowEditor;
+
+  @override
+  Widget build(BuildContext context) {
+    return KeyboardScaffoldSafeAreaScope(
+      child: Column(
+        children: [
+          Expanded(
+            child: Stack(
+              children: [
+                _buildPageContent(),
+                _buildChatEditor(),
+              ],
+            ),
+          ),
+          // Arbitrary widget below the page and editor content. Simulates, e.g.,
+          // persistent bottom tabs, chat status, etc.
+          if (widgetBelowEditor != null) //
+            widgetBelowEditor!,
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPageContent() {
+    // An area that simulates content that sits underneath
+    // a bottom mounted chat editor.
+    return Positioned.fill(
+      child: KeyboardScaffoldSafeArea(
+        child: Builder(builder: (context) {
+          // TODO: delete this builder
+
+          print("Building the chat page");
+          print(" - keyboard safe area insets: ${KeyboardScaffoldSafeAreaScope.of(context).geometry.bottomInsets}");
+
+          return Container(
+            key: _chatPageKey,
+            color: Colors.blue,
+          );
+        }),
+      ),
+    );
+  }
+
+  Widget _buildChatEditor() {
+    // An area that simulates a bottom mounted chat editor.
+    return Positioned(
+      left: 0,
+      right: 0,
+      bottom: 0,
+      child: KeyboardScaffoldSafeArea(
         child: Builder(builder: (context) {
           return KeyboardPanelScaffold(
             controller: keyboardPanelController,
             isImeConnected: imeConnectionNotifier,
-            contentBuilder: (context, isKeyboardPanelVisible) => superEditor,
+            contentBuilder: (context, isKeyboardPanelVisible) => ConstrainedBox(
+              constraints: const BoxConstraints(maxHeight: 250),
+              child: ColoredBox(
+                color: Colors.yellow,
+                child: superEditor,
+              ),
+            ),
             toolbarBuilder: (context, isKeyboardPanelVisible) => Container(
               key: _aboveKeyboardToolbarKey,
               height: 54,
@@ -704,18 +854,23 @@ Widget _buildChatPage(
           );
         }),
       ),
-    ],
-  );
+    );
+  }
 }
 
-Widget _buildAccountPage() {
-  return ColoredBox(
-    key: _accountPageKey,
-    color: Colors.grey.shade100,
-    child: const Center(
-      child: Icon(Icons.account_circle),
-    ),
-  );
+class _AccountPage extends StatelessWidget {
+  const _AccountPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return ColoredBox(
+      key: _accountPageKey,
+      color: Colors.grey.shade100,
+      child: const Center(
+        child: Icon(Icons.account_circle),
+      ),
+    );
+  }
 }
 
 const _chatTabKey = ValueKey("chat_tab_button");
@@ -740,6 +895,9 @@ Future<void> _pumpTestAppWithNavigationScreens(
   SoftwareKeyboardController? softwareKeyboardController,
   ValueNotifier<bool>? isImeConnected,
   double simulatedKeyboardHeight = _expandedPhoneKeyboardHeight,
+  // (Optional) widget that's positioned below the chat editor, which pushes
+  // the chat editor up from the bottom of the screen.
+  Widget? widgetBelowEditor,
 }) async {
   final keyboardController = softwareKeyboardController ?? SoftwareKeyboardController();
   final keyboardPanelController = controller ?? KeyboardPanelController(keyboardController);
@@ -763,6 +921,7 @@ Future<void> _pumpTestAppWithNavigationScreens(
                 keyboardPanelController: keyboardPanelController,
                 imeConnectionNotifier: imeConnectionNotifier,
                 superEditor: superEditor,
+                widgetBelowEditor: widgetBelowEditor,
               );
             },
             '/second': (context) {
@@ -779,24 +938,27 @@ class _Screen1 extends StatelessWidget {
     required this.keyboardPanelController,
     required this.imeConnectionNotifier,
     required this.superEditor,
+    this.widgetBelowEditor,
   });
 
   final KeyboardPanelController keyboardPanelController;
   final ValueNotifier<bool> imeConnectionNotifier;
   final Widget superEditor;
+  final Widget? widgetBelowEditor;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       resizeToAvoidBottomInset: false,
-      body: KeyboardScaffoldSafeArea(
+      body: KeyboardScaffoldSafeAreaScope(
         // ^ This safe area is needed to receive the bottom insets from the
         //   bottom mounted editor, and then make it available to the subtree
         //   with the content behind the chat.
-        child: _buildChatPage(
-          keyboardPanelController,
-          imeConnectionNotifier,
-          superEditor,
+        child: _ChatPage(
+          keyboardPanelController: keyboardPanelController,
+          imeConnectionNotifier: imeConnectionNotifier,
+          superEditor: superEditor,
+          widgetBelowEditor: widgetBelowEditor,
         ),
       ),
     );
