@@ -1,6 +1,7 @@
 import 'dart:math';
 import 'dart:ui' as ui;
 
+import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart' hide SelectableText;
@@ -10,6 +11,7 @@ import 'package:super_editor/src/core/document_layout.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/actions.dart';
 import 'package:super_editor/src/infrastructure/attributed_text_styles.dart';
+import 'package:super_editor/src/infrastructure/document_gestures_interaction_overrides.dart';
 import 'package:super_editor/src/infrastructure/flutter/build_context.dart';
 import 'package:super_editor/src/infrastructure/flutter/flutter_scheduler.dart';
 import 'package:super_editor/src/infrastructure/flutter/material_scrollbar.dart';
@@ -21,6 +23,7 @@ import 'package:super_editor/src/infrastructure/multi_tap_gesture.dart';
 import 'package:super_editor/src/infrastructure/platforms/mac/mac_ime.dart';
 import 'package:super_editor/src/infrastructure/platforms/platform.dart';
 import 'package:super_editor/src/infrastructure/text_input.dart';
+import 'package:super_editor/src/super_textfield/infrastructure/text_field_gestures_interaction_overrides.dart';
 import 'package:super_editor/src/super_textfield/infrastructure/text_field_scroller.dart';
 import 'package:super_editor/src/super_textfield/super_textfield.dart';
 import 'package:super_text_layout/super_text_layout.dart';
@@ -71,6 +74,7 @@ class SuperDesktopTextField extends StatefulWidget {
     this.imeConfiguration,
     this.showComposingUnderline,
     this.selectorHandlers,
+    this.tapHandlers = const [],
     List<TextFieldKeyboardHandler>? keyboardHandlers,
   })  : keyboardHandlers = keyboardHandlers ??
             (inputSource == TextInputSource.keyboard
@@ -118,6 +122,7 @@ class SuperDesktopTextField extends StatefulWidget {
 
   final DecorationBuilder? decorationBuilder;
 
+  @Deprecated('Use tapHandlers instead')
   final RightClickListener? onRightClick;
 
   /// The [SuperDesktopTextField] input source, e.g., keyboard or Input Method Engine.
@@ -136,6 +141,9 @@ class SuperDesktopTextField extends StatefulWidget {
   /// The IME reports selectors as unique `String`s, therefore selector handlers are
   /// defined as a mapping from selector names to handler functions.
   final Map<String, SuperTextFieldSelectorHandler>? selectorHandlers;
+
+  /// {@macro super_text_field_tap_handlers}
+  final List<SuperTextFieldTapHandler> tapHandlers;
 
   /// The type of action associated with ENTER key.
   ///
@@ -413,6 +421,7 @@ class SuperDesktopTextFieldState extends State<SuperDesktopTextField> implements
             textScrollKey: _textScrollKey,
             isMultiline: isMultiline,
             onRightClick: widget.onRightClick,
+            tapHandlers: widget.tapHandlers,
             child: MultiListenableBuilder(
               listenables: {
                 _focusNode,
@@ -568,6 +577,7 @@ class SuperTextFieldGestureInteractor extends StatefulWidget {
     required this.textScrollKey,
     required this.isMultiline,
     this.onRightClick,
+    this.tapHandlers = const [],
     required this.child,
   }) : super(key: key);
 
@@ -590,7 +600,11 @@ class SuperTextFieldGestureInteractor extends StatefulWidget {
   final bool isMultiline;
 
   /// Callback invoked when the user right clicks on this text field.
+  @Deprecated('Use tapHandlers instead')
   final RightClickListener? onRightClick;
+
+  /// {@macro super_text_field_tap_handlers}
+  final List<SuperTextFieldTapHandler> tapHandlers;
 
   /// The rest of the subtree for this text field.
   final Widget child;
@@ -617,11 +631,58 @@ class _SuperTextFieldGestureInteractorState extends State<SuperTextFieldGestureI
 
   SuperTextFieldScrollviewState get _textScroll => widget.textScrollKey.currentState!;
 
+  final _mouseCursor = ValueNotifier<MouseCursor>(SystemMouseCursors.text);
+
+  void _onMouseMove(PointerHoverEvent event) {
+    _updateMouseCursor(event.position);
+  }
+
+  void _updateMouseCursor(Offset globalPosition) {
+    final localPosition = (context.findRenderObject() as RenderBox).globalToLocal(globalPosition);
+    final textOffset = _getTextOffset(localPosition);
+
+    for (final handler in widget.tapHandlers) {
+      final cursorForContent = handler.mouseCursorForContentHover(
+        SuperTextFieldGestureDetails(
+          textController: widget.textController,
+          textLayout: _textLayout,
+          globalOffset: globalPosition,
+          layoutOffset: localPosition,
+          textOffset: textOffset,
+        ),
+      );
+      if (cursorForContent != null) {
+        _mouseCursor.value = cursorForContent;
+        return;
+      }
+    }
+
+    _mouseCursor.value = SystemMouseCursors.text;
+  }
+
   void _onTapDown(TapDownDetails details) {
     _log.fine('Tap down on SuperTextField');
-    _selectionType = _SelectionType.position;
 
     final textOffset = _getTextOffset(details.localPosition);
+
+    for (final handler in widget.tapHandlers) {
+      final result = handler.onTapDown(
+        SuperTextFieldGestureDetails(
+          textLayout: _textLayout,
+          textController: widget.textController,
+          globalOffset: details.globalPosition,
+          layoutOffset: details.localPosition,
+          textOffset: textOffset,
+        ),
+      );
+
+      if (result == TapHandlingInstruction.halt) {
+        return;
+      }
+    }
+
+    _selectionType = _SelectionType.position;
+
     final tapTextPosition = _getPositionNearestToTextOffset(textOffset);
     _log.finer("Tap text position: $tapTextPosition");
 
@@ -644,10 +705,57 @@ class _SuperTextFieldGestureInteractorState extends State<SuperTextFieldGestureI
     widget.focusNode.requestFocus();
   }
 
-  void _onDoubleTapDown(TapDownDetails details) {
-    _selectionType = _SelectionType.word;
+  void _onTapUp(TapUpDetails details) {
+    final textOffset = _getTextOffset(details.localPosition);
+    for (final handler in widget.tapHandlers) {
+      final result = handler.onTapUp(
+        SuperTextFieldGestureDetails(
+          textLayout: _textLayout,
+          textController: widget.textController,
+          globalOffset: details.globalPosition,
+          layoutOffset: details.localPosition,
+          textOffset: textOffset,
+        ),
+      );
 
+      if (result == TapHandlingInstruction.halt) {
+        return;
+      }
+    }
+  }
+
+  void _onTapCancel() {
+    for (final handler in widget.tapHandlers) {
+      final result = handler.onTapCancel();
+
+      if (result == TapHandlingInstruction.halt) {
+        return;
+      }
+    }
+  }
+
+  void _onDoubleTapDown(TapDownDetails details) {
     _log.finer('_onDoubleTapDown - EditableDocument: onDoubleTap()');
+
+    final textOffset = _getTextOffset(details.localPosition);
+
+    for (final handler in widget.tapHandlers) {
+      final result = handler.onDoubleTapDown(
+        SuperTextFieldGestureDetails(
+          textLayout: _textLayout,
+          textController: widget.textController,
+          globalOffset: details.globalPosition,
+          layoutOffset: details.localPosition,
+          textOffset: textOffset,
+        ),
+      );
+
+      if (result == TapHandlingInstruction.halt) {
+        return;
+      }
+    }
+
+    _selectionType = _SelectionType.word;
 
     final tapTextPosition = _getPositionAtOffset(details.localPosition);
 
@@ -662,14 +770,61 @@ class _SuperTextFieldGestureInteractorState extends State<SuperTextFieldGestureI
     widget.focusNode.requestFocus();
   }
 
+  void _onDoubleTapUp(TapUpDetails details) {
+    final textOffset = _getTextOffset(details.localPosition);
+    for (final handler in widget.tapHandlers) {
+      final result = handler.onDoubleTapUp(
+        SuperTextFieldGestureDetails(
+          textLayout: _textLayout,
+          textController: widget.textController,
+          globalOffset: details.globalPosition,
+          layoutOffset: details.localPosition,
+          textOffset: textOffset,
+        ),
+      );
+
+      if (result == TapHandlingInstruction.halt) {
+        return;
+      }
+    }
+  }
+
   void _onDoubleTap() {
     _selectionType = _SelectionType.position;
   }
 
-  void _onTripleTapDown(TapDownDetails details) {
-    _selectionType = _SelectionType.paragraph;
+  void _onDoubleTapCancel() {
+    for (final handler in widget.tapHandlers) {
+      final result = handler.onDoubleTapCancel();
 
+      if (result == TapHandlingInstruction.halt) {
+        return;
+      }
+    }
+  }
+
+  void _onTripleTapDown(TapDownDetails details) {
     _log.finer('_onTripleTapDown - EditableDocument: onTripleTapDown()');
+
+    final textOffset = _getTextOffset(details.localPosition);
+
+    for (final handler in widget.tapHandlers) {
+      final result = handler.onTripleTapDown(
+        SuperTextFieldGestureDetails(
+          textLayout: _textLayout,
+          textController: widget.textController,
+          globalOffset: details.globalPosition,
+          layoutOffset: details.localPosition,
+          textOffset: textOffset,
+        ),
+      );
+
+      if (result == TapHandlingInstruction.halt) {
+        return;
+      }
+    }
+
+    _selectionType = _SelectionType.paragraph;
 
     final tapTextPosition = _getPositionAtOffset(details.localPosition);
 
@@ -684,12 +839,89 @@ class _SuperTextFieldGestureInteractorState extends State<SuperTextFieldGestureI
     widget.focusNode.requestFocus();
   }
 
+  void _onTripleTapUp(TapUpDetails details) {
+    final textOffset = _getTextOffset(details.localPosition);
+
+    for (final handler in widget.tapHandlers) {
+      final result = handler.onTripleTapUp(
+        SuperTextFieldGestureDetails(
+          textLayout: _textLayout,
+          textController: widget.textController,
+          globalOffset: details.globalPosition,
+          layoutOffset: details.localPosition,
+          textOffset: textOffset,
+        ),
+      );
+
+      if (result == TapHandlingInstruction.halt) {
+        return;
+      }
+    }
+  }
+
   void _onTripleTap() {
     _selectionType = _SelectionType.position;
   }
 
-  void _onRightClick(TapUpDetails details) {
+  void _onTripleTapCancel() {
+    for (final handler in widget.tapHandlers) {
+      final result = handler.onTripleTapCancel();
+
+      if (result == TapHandlingInstruction.halt) {
+        return;
+      }
+    }
+  }
+
+  void _onRightClickDown(TapDownDetails details) {
+    final textOffset = _getTextOffset(details.localPosition);
+
+    for (final handler in widget.tapHandlers) {
+      final result = handler.onSecondaryTapDown(
+        SuperTextFieldGestureDetails(
+          textLayout: _textLayout,
+          textController: widget.textController,
+          globalOffset: details.globalPosition,
+          layoutOffset: details.localPosition,
+          textOffset: textOffset,
+        ),
+      );
+
+      if (result == TapHandlingInstruction.halt) {
+        return;
+      }
+    }
+  }
+
+  void _onRightClickUp(TapUpDetails details) {
+    final textOffset = _getTextOffset(details.localPosition);
+
+    for (final handler in widget.tapHandlers) {
+      final result = handler.onSecondaryTapUp(
+        SuperTextFieldGestureDetails(
+          textLayout: _textLayout,
+          textController: widget.textController,
+          globalOffset: details.globalPosition,
+          layoutOffset: details.localPosition,
+          textOffset: textOffset,
+        ),
+      );
+
+      if (result == TapHandlingInstruction.halt) {
+        return;
+      }
+    }
     widget.onRightClick?.call(context, widget.textController, details.localPosition);
+  }
+
+  void _onRightClickCancel() {
+    for (final handler in widget.tapHandlers) {
+      final result = handler.onSecondaryTapCancel();
+
+      if (result == TapHandlingInstruction.halt) {
+        return;
+      }
+    }
   }
 
   void _onPanStart(DragStartDetails details) {
@@ -963,7 +1195,9 @@ class _SuperTextFieldGestureInteractorState extends State<SuperTextFieldGestureI
       onPointerSignal: _onPointerSignal,
       onPointerHover: (event) => _cancelScrollMomentum(),
       child: GestureDetector(
-        onSecondaryTapUp: _onRightClick,
+        onSecondaryTapDown: _onRightClickDown,
+        onSecondaryTapUp: _onRightClickUp,
+        onSecondaryTapCancel: _onRightClickCancel,
         child: RawGestureDetector(
           behavior: HitTestBehavior.translucent,
           gestures: <Type, GestureRecognizerFactory>{
@@ -972,9 +1206,15 @@ class _SuperTextFieldGestureInteractorState extends State<SuperTextFieldGestureI
               (TapSequenceGestureRecognizer recognizer) {
                 recognizer
                   ..onTapDown = _onTapDown
+                  ..onTapUp = _onTapUp
+                  ..onTapCancel = _onTapCancel
                   ..onDoubleTapDown = _onDoubleTapDown
+                  ..onDoubleTapUp = _onDoubleTapUp
                   ..onDoubleTap = _onDoubleTap
+                  ..onDoubleTapCancel = _onDoubleTapCancel
                   ..onTripleTapDown = _onTripleTapDown
+                  ..onTripleTapUp = _onTripleTapUp
+                  ..onTripleTapCancel = _onTripleTapCancel
                   ..onTripleTap = _onTripleTap
                   ..gestureSettings = gestureSettings;
               },
@@ -991,9 +1231,18 @@ class _SuperTextFieldGestureInteractorState extends State<SuperTextFieldGestureI
               },
             ),
           },
-          child: MouseRegion(
-            cursor: SystemMouseCursors.text,
-            child: widget.child,
+          child: Listener(
+            onPointerHover: _onMouseMove,
+            child: ValueListenableBuilder(
+              valueListenable: _mouseCursor,
+              builder: (context, mouseCursor, child) {
+                return MouseRegion(
+                  cursor: mouseCursor,
+                  child: child,
+                );
+              },
+              child: widget.child,
+            ),
           ),
         ),
       ),
