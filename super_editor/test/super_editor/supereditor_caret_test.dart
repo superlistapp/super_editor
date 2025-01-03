@@ -42,7 +42,6 @@ void main() {
         final lineBreakOffset = SuperEditorInspector.findOffsetOfLineBreak('1');
 
         // Find the coordinates of the caret at the end of the first line (line break offset w/ upstream affinity).
-        await tester.pump(kTapTimeout * 2); // Simulate a pause to avoid a double tap.
         await tester.placeCaretInParagraph('1', lineBreakOffset, affinity: TextAffinity.upstream);
         final upstreamCaretOffset = SuperEditorInspector.findCaretOffsetInDocument();
 
@@ -55,7 +54,6 @@ void main() {
         await tester.placeCaretInParagraph('1', 3);
 
         // Find the coordinates of the caret at the start of the second line (line break offset w/ downstream affinity).
-        await tester.pump(); // Simulate a pause to avoid a double tap.
         await tester.placeCaretInParagraph('1', lineBreakOffset, affinity: TextAffinity.downstream);
         final downstreamCaretOffset = SuperEditorInspector.findCaretOffsetInDocument();
 

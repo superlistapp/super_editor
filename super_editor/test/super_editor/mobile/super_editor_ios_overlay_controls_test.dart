@@ -220,8 +220,8 @@ void main() {
     testWidgetsOnIos("keeps current selection when tapping on caret", (tester) async {
       await _pumpSingleParagraphApp(tester, useIosSelectionHeuristics: true);
 
-      // Tap at "con|sectetur" to place the caret at the end of the word.
-      await tester.tapInParagraph("1", 32);
+      // Tap at "consectetur|" to place the caret.
+      await tester.tapInParagraph("1", 39);
 
       // Ensure that the selection was placed at the end of the word.
       expect(
@@ -234,7 +234,8 @@ void main() {
         )),
       );
 
-      // Press and drag the caret to "con|sectetur".
+      // Press and drag the caret to "con|sectetur" because dragging is the only way
+      // we can place the caret at the middle of a word when caret snapping is enabled.
       final gesture = await tester.tapDownInParagraph("1", 39);
       for (int i = 0; i < 7; i += 1) {
         await gesture.moveBy(const Offset(-19, 0));
@@ -255,6 +256,9 @@ void main() {
           ),
         )),
       );
+
+      // Ensure the toolbar is not visible.
+      expect(SuperEditorInspector.isMobileToolbarVisible(), isFalse);
 
       // Tap on the caret.
       await tester.tapInParagraph("1", 32);

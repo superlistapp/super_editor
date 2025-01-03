@@ -121,7 +121,6 @@ void main() {
       await tester.placeCaretInParagraph("1", 5);
 
       // Place the caret at the same offset as before but with an upstream affinity.
-      await tester.pump();
       await tester.placeCaretInParagraph("1", 1, affinity: TextAffinity.upstream);
       // Ensure the document has the correct selection, including affinity;
       expect(

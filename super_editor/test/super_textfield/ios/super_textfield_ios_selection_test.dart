@@ -72,9 +72,8 @@ void main() {
         const TextSelection.collapsed(offset: -1),
       );
 
-      // Tap at "ips|um" to place the caret at the end of the word,
-      // because on iOS the caret is always placed at word boundaries.
-      await tester.placeCaretInSuperTextField(9);
+      // Tap at "ipsum|" to place the caret.
+      await tester.placeCaretInSuperTextField(11);
       await tester.pump(kDoubleTapTimeout);
 
       // Ensure the selection was placed at the end of the word.
@@ -83,7 +82,8 @@ void main() {
         const TextSelection.collapsed(offset: 11),
       );
 
-      // Press and drag the caret to "ips|um".
+      // Press and drag the caret to "ips|um", because dragging is the only way
+      // we can place the caret at the middle of a word when caret snapping is enabled.
       final dragGesture = await tester.dragCaretByDistanceInSuperTextField(const Offset(-32, 0));
       await dragGesture.up();
 
@@ -92,6 +92,9 @@ void main() {
         SuperTextFieldInspector.findSelection(),
         const TextSelection.collapsed(offset: 9),
       );
+
+      // Ensure that the text field toolbar is not visible.
+      expect(find.byType(IOSTextEditingFloatingToolbar), findsNothing);
 
       // Tap at the caret to show the toolbar.
       await tester.placeCaretInSuperTextField(9);
