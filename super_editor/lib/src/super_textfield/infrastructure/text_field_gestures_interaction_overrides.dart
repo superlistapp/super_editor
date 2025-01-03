@@ -5,10 +5,7 @@ import 'package:super_text_layout/super_text_layout.dart';
 
 /// Tap handler that can (optionally) respond to single, double, and triple taps, as well as dictate the cursor
 /// appearance on desktop.
-///
-/// Listeners are notified when any time that the desired mouse cursor
-/// may have changed.
-abstract class SuperTextFieldTapHandler with ChangeNotifier {
+abstract class SuperTextFieldTapHandler {
   MouseCursor? mouseCursorForContentHover(SuperTextFieldGestureDetails details) => null;
 
   TapHandlingInstruction onTapDown(SuperTextFieldGestureDetails details) => TapHandlingInstruction.continueHandling;

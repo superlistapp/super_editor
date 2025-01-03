@@ -6,8 +6,15 @@ import 'package:super_editor/src/core/document_layout.dart';
 /// Delegate for mouse status and clicking on special types of content,
 /// e.g., tapping on a link open the URL.
 ///
-/// Listeners are notified when any time that the desired mouse cursor
-/// may have changed.
+/// Each [ContentTapDelegate] notifies its listeners whenever an
+/// internal policy changes, which might impact the mouse cursor
+/// style. For example, a handler in a desktop app, when hovering
+/// over a link, might initially show a text cursor, but when the
+/// user pressed CMD (or CTL), the mouse cursor would change to a
+/// click cursor. Only the individual handlers know when or if such
+/// a change should occur. When such a change does occur, the
+/// handler notifies its listeners, and the handler expects that
+/// someone will ask it for the desired mouse cursor style.
 abstract class ContentTapDelegate with ChangeNotifier {
   MouseCursor? mouseCursorForContentHover(DocumentPosition hoverPosition) {
     return null;
