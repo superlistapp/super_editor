@@ -1948,23 +1948,20 @@ class SuperEditorAndroidControlsOverlayManagerState extends State<SuperEditorAnd
       return const SizedBox();
     }
 
+    final devicePixelRatio = MediaQuery.devicePixelRatioOf(context);
     return Follower.withOffset(
       link: _controlsController!.magnifierFocalPoint,
-      offset: const Offset(0, -150),
+      offset: Offset(0, -54 * devicePixelRatio),
       leaderAnchor: Alignment.center,
-      followerAnchor: Alignment.topLeft,
-      // Theoretically, we should be able to use a leaderAnchor and followerAnchor of "center"
-      // and avoid the following FractionalTranslation. However, when centering the follower,
-      // we don't get the expect focal point within the magnified area. It's off-center. I'm not
-      // sure why that happens, but using a followerAnchor of "topLeft" and then pulling back
-      // by 50% solve the problem.
-      child: FractionalTranslation(
-        translation: const Offset(-0.5, -0.5),
-        child: AndroidMagnifyingGlass(
-          key: magnifierKey,
-          magnificationScale: 1.5,
-          offsetFromFocalPoint: Offset(0, -150 / MediaQuery.devicePixelRatioOf(context)),
-        ),
+      followerAnchor: Alignment.center,
+      boundary: ScreenFollowerBoundary(
+        screenSize: MediaQuery.sizeOf(context),
+        devicePixelRatio: MediaQuery.devicePixelRatioOf(context),
+      ),
+      child: AndroidMagnifyingGlass(
+        key: magnifierKey,
+        magnificationScale: 1.5,
+        offsetFromFocalPoint: const Offset(0, -54),
       ),
     );
   }

@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
+import 'package:follow_the_leader/follow_the_leader.dart';
 import 'package:super_editor/src/super_textfield/infrastructure/magnifier.dart';
 import 'package:super_editor/src/super_textfield/infrastructure/outer_box_shadow.dart';
 
-/// An Android magnifying glass that follows a [LayerLink].
+/// An Android magnifying glass that follows a [LeaderLink].
 class AndroidFollowingMagnifier extends StatelessWidget {
   const AndroidFollowingMagnifier({
     Key? key,
@@ -11,18 +12,27 @@ class AndroidFollowingMagnifier extends StatelessWidget {
     this.offsetFromFocalPoint = Offset.zero,
   }) : super(key: key);
 
-  final LayerLink layerLink;
+  final LeaderLink layerLink;
   final Offset offsetFromFocalPoint;
 
   @override
   Widget build(BuildContext context) {
-    return CompositedTransformFollower(
+    final devicePixelRatio = MediaQuery.devicePixelRatioOf(context);
+
+    return Follower.withOffset(
       link: layerLink,
       offset: offsetFromFocalPoint,
-      child: FractionalTranslation(
-        translation: const Offset(-0.5, -0.5),
-        child: AndroidMagnifyingGlass(
-          offsetFromFocalPoint: offsetFromFocalPoint,
+      leaderAnchor: Alignment.center,
+      followerAnchor: Alignment.center,
+      boundary: ScreenFollowerBoundary(
+        screenSize: MediaQuery.sizeOf(context),
+        devicePixelRatio: devicePixelRatio,
+      ),
+      child: AndroidMagnifyingGlass(
+        magnificationScale: 1.5,
+        offsetFromFocalPoint: Offset(
+          offsetFromFocalPoint.dx / devicePixelRatio,
+          offsetFromFocalPoint.dy / devicePixelRatio,
         ),
       ),
     );

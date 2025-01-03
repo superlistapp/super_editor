@@ -1537,10 +1537,10 @@ class SuperEditorIosMagnifierOverlayManagerState extends State<SuperEditorIosMag
       magnifierKey: magnifierKey,
       leaderLink: magnifierFocalPoint,
       show: isVisible,
-      // The bottom of the magnifier sits above the focal point.
-      // Leave a few pixels between the bottom of the magnifier and the focal point. This
-      // value was chosen empirically.
-      offsetFromFocalPoint: const Offset(0, -20),
+      // The magnifier is centered with the focal point. Translate it so that it sits
+      // above the focal point and leave a few pixels between the bottom of the magnifier
+      // and the focal point. This value was chosen empirically.
+      offsetFromFocalPoint: Offset(0, (-defaultIosMagnifierSize.height / 2) - 20),
       handleColor: _controlsController!.handleColor,
     );
   }

@@ -132,7 +132,7 @@ class _ReadOnlyAndroidDocumentTouchInteractorState extends State<ReadOnlyAndroid
       GroupedOverlayPortalController(displayPriority: OverlayGroupPriority.editingControls);
   final _overlayPortalRebuildSignal = SignalNotifier();
   late AndroidDocumentGestureEditingController _editingController;
-  final _magnifierFocalPointLink = LayerLink();
+  final _magnifierFocalPointLink = LeaderLink();
 
   late DragHandleAutoScroller _handleAutoScrolling;
   Offset? _globalStartDragOffset;
@@ -1478,7 +1478,7 @@ class _AndroidDocumentTouchEditingControlsState extends State<AndroidDocumentTou
       left: magnifierOffset.dx,
       // TODO: select focal position based on type of content
       top: magnifierOffset.dy,
-      child: CompositedTransformTarget(
+      child: Leader(
         link: widget.editingController.magnifierFocalPointLink,
         child: const SizedBox(width: 1, height: 1),
       ),
@@ -1490,11 +1490,9 @@ class _AndroidDocumentTouchEditingControlsState extends State<AndroidDocumentTou
     //
     // When the user is dragging an overlay handle, we place a LayerLink
     // target. This magnifier follows that target.
-    return Center(
-      child: AndroidFollowingMagnifier(
-        layerLink: widget.editingController.magnifierFocalPointLink,
-        offsetFromFocalPoint: const Offset(0, -72),
-      ),
+    return AndroidFollowingMagnifier(
+      layerLink: widget.editingController.magnifierFocalPointLink,
+      offsetFromFocalPoint: Offset(0, -54 * MediaQuery.devicePixelRatioOf(context)),
     );
   }
 

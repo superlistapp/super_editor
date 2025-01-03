@@ -58,8 +58,18 @@ class MagnifyingGlass extends StatelessWidget {
 
   ImageFilter _createMagnificationFilter() {
     final magnifierMatrix = Matrix4.identity()
-      ..translate(offsetFromFocalPoint.dx * magnificationScale, offsetFromFocalPoint.dy * magnificationScale)
-      ..scale(magnificationScale, magnificationScale);
+      // Scaling causes the center of the content to shift away from the center
+      // of the magnifier. To counteract this, shift the content back before
+      // applying the scaling, so it remains centered after scaling.
+      ..translate(
+        -size.width * (magnificationScale - 1) / 2,
+        -size.height * (magnificationScale - 1) / 2,
+      )
+      // Apply the scaling to magnify the content.
+      ..scale(magnificationScale, magnificationScale)
+      // Apply the app-defined offset to position the content
+      // relative to the focal point.
+      ..translate(offsetFromFocalPoint.dx, offsetFromFocalPoint.dy);
 
     return ImageFilter.matrix(magnifierMatrix.storage);
   }

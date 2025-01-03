@@ -370,7 +370,7 @@ class GestureEditingController with ChangeNotifier {
   GestureEditingController({
     required this.selectionLinks,
     required MagnifierAndToolbarController overlayController,
-    required LayerLink magnifierFocalPointLink,
+    required LeaderLink magnifierFocalPointLink,
   })  : _magnifierFocalPointLink = magnifierFocalPointLink,
         _overlayController = overlayController {
     _overlayController.addListener(_toolbarChanged);
@@ -386,8 +386,8 @@ class GestureEditingController with ChangeNotifier {
 
   /// A `LayerLink` whose top-left corner sits at the location where the
   /// magnifier should magnify.
-  LayerLink get magnifierFocalPointLink => _magnifierFocalPointLink;
-  final LayerLink _magnifierFocalPointLink;
+  LeaderLink get magnifierFocalPointLink => _magnifierFocalPointLink;
+  final LeaderLink _magnifierFocalPointLink;
 
   /// Controls the magnifier and the toolbar.
   MagnifierAndToolbarController get overlayController => _overlayController;
