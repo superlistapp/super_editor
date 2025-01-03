@@ -111,8 +111,11 @@ void main() {
       expect(find.byType(IOSTextEditingFloatingToolbar), findsOneWidget);
     });
 
-    testWidgetsOnIos('displays selection highlight for expanded selection', (tester) async {
-      // Pump a tree with a SuperIOSTextField without providing it a controller.
+    testWidgetsOnIos('displays selection highlight when controller is not provided', (tester) async {
+      // Pump a tree with a SuperIOSTextField without providing it a controller to make sure
+      // SuperIOSTextField does not rely on the provided controller to show the selection highlight.
+      //
+      // See https://github.com/superlistapp/super_editor/issues/2346 for details.
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
