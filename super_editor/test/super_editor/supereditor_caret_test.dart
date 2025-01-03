@@ -84,7 +84,6 @@ void main() {
         await tester.placeCaretInParagraph('1', 0);
 
         // Place the caret at the same offset but with an upstream affinity.
-        await tester.pump();
         await tester.placeCaretInParagraph('1', textOffset, affinity: TextAffinity.upstream);
         final upstreamCaretOffset = SuperEditorInspector.findCaretOffsetInDocument();
         final upstreamSelection = SuperEditorInspector.findDocumentSelection();
