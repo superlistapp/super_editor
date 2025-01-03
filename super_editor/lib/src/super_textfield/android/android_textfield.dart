@@ -12,6 +12,7 @@ import 'package:super_editor/src/super_textfield/android/_editing_controls.dart'
 import 'package:super_editor/src/super_textfield/android/_user_interaction.dart';
 import 'package:super_editor/src/super_textfield/infrastructure/fill_width_if_constrained.dart';
 import 'package:super_editor/src/super_textfield/infrastructure/hint_text.dart';
+import 'package:super_editor/src/super_textfield/infrastructure/text_field_gestures_interaction_overrides.dart';
 import 'package:super_editor/src/super_textfield/infrastructure/text_scrollview.dart';
 import 'package:super_editor/src/super_textfield/input_method_engine/_ime_text_editing_controller.dart';
 import 'package:super_text_layout/super_text_layout.dart';
@@ -44,6 +45,7 @@ class SuperAndroidTextField extends StatefulWidget {
     this.textInputAction,
     this.imeConfiguration,
     this.showComposingUnderline = true,
+    this.tapHandlers = const [],
     this.popoverToolbarBuilder = _defaultAndroidToolbarBuilder,
     this.showDebugPaint = false,
     this.padding,
@@ -138,6 +140,9 @@ class SuperAndroidTextField extends StatefulWidget {
 
   /// Whether to show an underline beneath the text in the composing region.
   final bool showComposingUnderline;
+
+  /// {@macro super_text_field_tap_handlers}
+  final List<SuperTextFieldTapHandler> tapHandlers;
 
   /// Whether to paint debug guides.
   final bool showDebugPaint;
@@ -555,6 +560,7 @@ class SuperAndroidTextFieldState extends State<SuperAndroidTextField>
           link: _textFieldLayerLink,
           child: AndroidTextFieldTouchInteractor(
             focusNode: _focusNode,
+            tapHandlers: widget.tapHandlers,
             textKey: _textContentKey,
             getGlobalCaretRect: _getGlobalCaretRect,
             textFieldLayerLink: _textFieldLayerLink,
