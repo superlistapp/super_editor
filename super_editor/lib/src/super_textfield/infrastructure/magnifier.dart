@@ -57,20 +57,57 @@ class MagnifyingGlass extends StatelessWidget {
   }
 
   ImageFilter _createMagnificationFilter() {
+    // When displayed without scaling, the content inside the magnifier looks
+    // like this:
+    //    ________________
+    //   |                |
+    //   |     center     |
+    //   |________________|
+    //
+    // Applying scaling causes the content to grow outward shifting the center
+    // away from the magnifier's center, like this:
+    //    ________________
+    //   |                |
+    //   |                |
+    //   |_________c e n t|e r
+    //
+    // To correct this, we shift the content in the opposite direction before scaling,
+    // so it appears like this before scaling:
+    //    ________________
+    //   |center          |
+    //   |                |
+    //   |________________|
+    //
+    // After scaling, the content shifts again due to the scaling effect. However,
+    // the pre-shift ensures that the center of the content aligns correctly within
+    // the magnifier, like this:
+    //    ________________
+    //   |                |
+    //   |   c e n t e r  |
+    //   |________________|
+    //
     final magnifierMatrix = Matrix4.identity()
-      // Scaling causes the center of the content to shift away from the center
-      // of the magnifier. To counteract this, shift the content back before
-      // applying the scaling, so it remains centered after scaling.
+      // Calculate the extra size introduced by scaling and move the content
+      // back by half of that amount.
+      //
+      // For example:
+      //
+      // If the magnifier is 133px wide with a magnification scale of 1.5,
+      // the scaled width will be:
+      //    133px * 1.5 = 199.5px.
+      //
+      // The width increases by 66.5px in total. Since the growth is symmetric,
+      // we shift the content left by half the increase (66.5px / 2 = 33.25px)
+      // to re-center it under the magnifier after the scaling.
       ..translate(
-        -size.width * (magnificationScale - 1) / 2,
-        -size.height * (magnificationScale - 1) / 2,
+        -(size.width * magnificationScale - size.width) / 2,
+        -(size.height * magnificationScale - size.height) / 2,
       )
-      // Apply the scaling to magnify the content.
+      // Apply the scaling transformation to magnify the content.
       ..scale(magnificationScale, magnificationScale)
-      // Apply the app-defined offset to position the content
-      // relative to the focal point.
+      // Move the content to the center of where the app wants to
+      // display the magnifier.
       ..translate(offsetFromFocalPoint.dx, offsetFromFocalPoint.dy);
-
     return ImageFilter.matrix(magnifierMatrix.storage);
   }
 }
