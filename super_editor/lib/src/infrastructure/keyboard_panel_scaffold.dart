@@ -2,7 +2,6 @@ import 'dart:math';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:super_editor/src/default_editor/document_ime/document_input_ime.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/flutter/flutter_scheduler.dart';
@@ -165,7 +164,7 @@ class _KeyboardPanelScaffoldState<PanelType> extends State<KeyboardPanelScaffold
   void didChangeDependencies() {
     super.didChangeDependencies();
 
-    _ancestorSafeArea = KeyboardScaffoldSafeArea.maybeOf(context);
+    _ancestorSafeArea = KeyboardScaffoldSafeAreaScope.maybeOf(context);
     if (!_didInitializeViewInsets) {
       _didInitializeViewInsets = true;
       _bestGuessMaxKeyboardHeight = MediaQuery.viewInsetsOf(context).bottom;
@@ -810,49 +809,98 @@ enum KeyboardToolbarVisibility {
   auto,
 }
 
-/// Applies padding to the bottom of the child to avoid the software keyboard and
-/// the above-keyboard toolbar.
+/// Stores and provides keyboard scaffold safe area info to its subtree, which can
+/// coordinate safe areas between different branches of the subtree.
 ///
-/// [KeyboardScaffoldSafeArea] is separate from [KeyboardPanelScaffold] because any
-/// widget might want to wrap itself with a [KeyboardPanelScaffold], but the
-/// [KeyboardScaffoldSafeArea] needs to be added somewhere in the widget tree that
-/// controls the size of the whole screen.
+/// You can think of this widget like a [KeyboardScaffoldSafeArea] that doesn't
+/// apply any insets - this widget only stores insets and publishes them to descendants.
 ///
-/// For example, imagine a social app, like Twitter, that has a text field at the
-/// top of the screen to write a post, followed by a social feed below it. The
-/// text field would wrap itself with a [KeyboardPanelScaffold] to add a toolbar
-/// to the keyboard, but the [KeyboardScaffoldSafeArea] would need to go higher
-/// up the widget tree to surround the whole screen.
+/// ### Example
+/// A screen with bottom mounted navigation tabs, a conversation list, and a
+/// bottom mounted message editor.
 ///
-/// The padding in [KeyboardScaffoldSafeArea] is set by a descendant [KeyboardPanelScaffold]
-/// in the widget tree.
-class KeyboardScaffoldSafeArea extends StatefulWidget {
+/// ```
+/// App
+///   |-- Column
+///     |-- Stack
+///       |-- Chat message list
+///       |-- Bottom mounted message editor
+///     |-- Bottom nav tabs
+/// ```
+///
+/// When the message editor opens a panel, e.g., emoji panel, the chat message list
+/// needs to add space equal to the height of the panel. This is done by wrapping the
+/// chat message list with a [KeyboardScaffoldSafeArea]. However, the safe area is set
+/// by the bottom mounted message editor, which sits in a different subtree.
+///
+/// One might try to solve this problem as follows:
+///
+/// ```
+/// (DON'T DO THIS)
+/// App
+///   |-- KeyboardScaffoldSafeArea
+///     |-- Column
+///       |-- Stack
+///         |-- KeyboardScaffoldSafeArea
+///           |-- Chat message list
+///         |-- KeyboardScaffoldSafeArea
+///           |-- Bottom mounted message editor
+///       |-- Bottom name tabs
+/// ```
+///
+/// This approach successfully shares safe area knowledge between the bottom
+/// mounted editor, and the chat message list. HOWEVER, it also pushes the bottom
+/// name tabs up above the keyboard, too. But this isn't desired. The tabs should
+/// stay at the bottom of the screen.
+///
+/// Instead, use a [KeyboardScaffoldSafeAreaScope] to share the inset information
+/// without applying it.
+///
+/// ```
+/// (CORRECT)
+/// App
+///   |-- KeyboardScaffoldSafeAreaScope
+///     |-- Column
+///       |-- Stack
+///         |-- KeyboardScaffoldSafeArea
+///           |-- Chat message list
+///         |-- KeyboardScaffoldSafeArea
+///           |-- Bottom mounted message editor
+///       |-- Bottom name tabs
+/// ```
+class KeyboardScaffoldSafeAreaScope extends StatefulWidget {
   static KeyboardScaffoldSafeAreaMutator of(BuildContext context) {
     return maybeOf(context)!;
   }
 
   static KeyboardScaffoldSafeAreaMutator? maybeOf(BuildContext context) {
     context.dependOnInheritedWidgetOfExactType<_InheritedKeyboardScaffoldSafeArea>();
-    return context.findAncestorStateOfType<_KeyboardScaffoldSafeAreaState>();
+    return context.findAncestorStateOfType<_KeyboardScaffoldSafeAreaScopeState>();
   }
 
-  const KeyboardScaffoldSafeArea({
+  const KeyboardScaffoldSafeAreaScope({
     super.key,
+    this.debugLabel = "UNNAMED",
     required this.child,
   });
+
+  /// A label associated with this widget that can be helpful when debugging
+  /// unexpected safe areas throughout a scope.
+  final String debugLabel;
 
   final Widget child;
 
   @override
-  State<KeyboardScaffoldSafeArea> createState() => _KeyboardScaffoldSafeAreaState();
+  State<KeyboardScaffoldSafeAreaScope> createState() => _KeyboardScaffoldSafeAreaScopeState();
 }
 
-class _KeyboardScaffoldSafeAreaState extends State<KeyboardScaffoldSafeArea>
+class _KeyboardScaffoldSafeAreaScopeState extends State<KeyboardScaffoldSafeAreaScope>
     implements KeyboardScaffoldSafeAreaMutator {
   KeyboardSafeAreaGeometry? _keyboardSafeAreaData;
 
   KeyboardScaffoldSafeAreaMutator? _ancestorSafeArea;
   bool _isSafeAreaFromMediaQuery = false;
+  bool _isSafeAreaFromAncestor = false;
 
   @override
   void didChangeDependencies() {
@@ -860,26 +908,15 @@ class _KeyboardScaffoldSafeAreaState extends State<KeyboardScaffoldSafeArea>
 
     // Initialize the keyboard insets and padding.
     //
-    // First, it's possible that this safe area sits beneath another safe area. In that
+    // First, it's possible that this safe area scope sits beneath another safe area. In that
     // case, we defer to the ancestor safe area. This makes it possible to create a keyboard
     // safe area in one subtree, and communicate that safe area to another subtree, by
-    // sharing an ancestor. For example, consider a widget tree where a chat editor sits in
-    // a Stack, and the content sits behind that editor, in the same Stack. In that case,
-    // we want to apply a keyboard safe area to the content, but that content is a cousin
-    // of the editor, not a direct ancestor or descendant. So we need to be able to coordinate
-    // the safe area across independent trees by sharing an ancestor.
-    //
-    // Example:
-    //   KeyboardScaffoldSafeArea
-    //    |- Stack
-    //       |- KeyboardScaffoldSafeArea
-    //          |- Content
-    //       |- SuperEditor
+    // sharing an ancestor.
     //
     // Second, if there's no existing ancestor KeyboardScaffoldSafeArea, then defer to whatever
     // MediaQuery reports. We only do this for the very first frame because we don't yet
     // know what our values should be (because that's reported by descendants in the tree).
-    _ancestorSafeArea = KeyboardScaffoldSafeArea.maybeOf(context);
+    _ancestorSafeArea = KeyboardScaffoldSafeAreaScope.maybeOf(context);
 
     if (_keyboardSafeAreaData == null) {
       // This is the first call to didChangeDependencies. Initialize our safe area.
@@ -899,6 +936,7 @@ class _KeyboardScaffoldSafeAreaState extends State<KeyboardScaffoldSafeArea>
       // By tracking when our safe area comes from MediaQuery, we can continue to honor changing
       // MediaQuery values until a descendant explicitly sets our `geometry`.
       _isSafeAreaFromMediaQuery = _ancestorSafeArea == null;
+      _isSafeAreaFromAncestor = _ancestorSafeArea != null;
     }
 
     if (_isSafeAreaFromMediaQuery) {
@@ -908,6 +946,21 @@ class _KeyboardScaffoldSafeAreaState extends State<KeyboardScaffoldSafeArea>
         bottomInsets: MediaQuery.viewInsetsOf(context).bottom,
         bottomPadding: MediaQuery.paddingOf(context).bottom,
       );
+    } else if (_isSafeAreaFromAncestor) {
+      if (_ancestorSafeArea != null) {
+        // Our previous safe area was inherited from an ancestor scope. Those insets
+        // may have changed. Update our records.
+        _keyboardSafeAreaData = _ancestorSafeArea!.geometry;
+      } else {
+        // Our previous safe area was inherited from an ancestor scope, but now that
+        // scope is gone. Reset back to the regular MediaQuery safe area.
+        _keyboardSafeAreaData = KeyboardSafeAreaGeometry(
+          bottomInsets: MediaQuery.viewInsetsOf(context).bottom,
+          bottomPadding: MediaQuery.paddingOf(context).bottom,
+        );
+        _isSafeAreaFromMediaQuery = true;
+        _isSafeAreaFromAncestor = false;
+      }
     }
   }
 
@@ -930,6 +983,16 @@ class _KeyboardScaffoldSafeAreaState extends State<KeyboardScaffoldSafeArea>
   }
 
   @override
+  String get debugLabel => widget.debugLabel;
+
+  @override
+  List<String> get debugLabelPath => [
+        if (_ancestorSafeArea != null) //
+          ..._ancestorSafeArea!.debugLabelPath,
+        debugLabel,
+      ];
+
+  @override
   Widget build(BuildContext context) {
     if (_ancestorSafeArea != null) {
       // An ancestor safe area was already applied to our subtree.
@@ -938,17 +1001,139 @@ class _KeyboardScaffoldSafeAreaState extends State<KeyboardScaffoldSafeArea>
 
     return _InheritedKeyboardScaffoldSafeArea(
       keyboardSafeAreaData: _keyboardSafeAreaData!,
-      child: Padding(
-        padding: EdgeInsets.only(bottom: _keyboardSafeAreaData!.bottomInsets),
-        // ^ We inject bottom insets to push content above the keyboard. However, we don't
-        //   inject the `bottomPadding` because that would take away styling opportunities
-        //   from the user. Consider a chat message editor at the bottom of the screen. That
-        //   chat editor should push its content up above the bottom notch, but the chat editor
-        //   itself should still extend its background to the bottom of the screen. If we
-        //   enforce bottom padding here, then the whole chat editor would get pushed up and
-        //   and leave an ugly visual gap between the editor and the bottom of the screen.
-        child: widget.child,
-      ),
+      child: widget.child,
+    );
+  }
+}
+
+/// Applies padding to the bottom of the child to avoid the software keyboard and
+/// the above-keyboard toolbar.
+///
+/// [KeyboardScaffoldSafeArea] is separate from [KeyboardPanelScaffold] because any
+/// widget might want to wrap itself with a [KeyboardPanelScaffold], but the
+/// [KeyboardScaffoldSafeArea] needs to be added somewhere in the widget tree that
+/// controls the size of the whole screen.
+///
+/// For example, imagine a social app, like Twitter, that has a text field at the
+/// top of the screen to write a post, followed by a social feed below it. The
+/// text field would wrap itself with a [KeyboardPanelScaffold] to add a toolbar
+/// to the keyboard, but the [KeyboardScaffoldSafeArea] would need to go higher
+/// up the widget tree to surround the whole screen.
+///
+/// The padding in [KeyboardScaffoldSafeArea] is set by a descendant [KeyboardPanelScaffold]
+/// in the widget tree.
+class KeyboardScaffoldSafeArea extends StatefulWidget {
+  static _KeyboardScaffoldSafeAreaState? _maybeOf(BuildContext context) {
+    context.dependOnInheritedWidgetOfExactType<_InheritedKeyboardScaffoldSafeArea>();
+    return context.findAncestorStateOfType<_KeyboardScaffoldSafeAreaState>();
+  }
+
+  const KeyboardScaffoldSafeArea({
+    super.key,
+    this.debugLabel = "UNNAMED",
+    required this.child,
+  });
+
+  /// A label associated with this widget that can be helpful when debugging
+  /// unexpected safe areas throughout a scope.
+  final String debugLabel;
+
+  final Widget child;
+
+  @override
+  State<KeyboardScaffoldSafeArea> createState() => _KeyboardScaffoldSafeAreaState();
+}
+
+class _KeyboardScaffoldSafeAreaState extends State<KeyboardScaffoldSafeArea> {
+  final _myBoxKey = GlobalKey();
+
+  KeyboardScaffoldSafeAreaMutator? _ancestorSafeAreaScope;
+  _KeyboardScaffoldSafeAreaState? _ancestorSafeArea;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+
+    // We don't care about the MediaQuery, but if there are widgets below
+    // us that change with the MediaQuery, e.g., a SafeArea with bottom
+    // padding, then those changes will effect us. We need to re-run our
+    // build() to re-calculate our bottom spacing. Without adding this
+    // dependency on MediaQuery, our content can end up ~20px above or
+    // below where it should be.
+    MediaQuery.maybeOf(context);
+
+    _ancestorSafeAreaScope = KeyboardScaffoldSafeAreaScope.maybeOf(context);
+    _ancestorSafeArea = KeyboardScaffoldSafeArea._maybeOf(context);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return KeyboardScaffoldSafeAreaScope(
+      key: _myBoxKey,
+      debugLabel: "internal scope",
+      child: Builder(builder: (safeAreaContext) {
+        if (_ancestorSafeArea != null) {
+          // An ancestor safe area was already applied to our subtree.
+          return widget.child;
+        }
+
+        // There's no ancestor KeyboardScaffoldSafeArea, but there might be an ancestor
+        // KeyboardScaffoldSafeAreaScope, whose insets we should use.
+        final inheritedGeometry = _ancestorSafeAreaScope?.geometry;
+        final keyboardSafeArea = inheritedGeometry ??
+            KeyboardSafeAreaGeometry(
+              bottomInsets: MediaQuery.viewInsetsOf(context).bottom,
+              bottomPadding: MediaQuery.paddingOf(context).bottom,
+            );
+
+        // Get the current keyboard safe area bottom insets, and then adjust that
+        // value based on our global bottom y-value. When this widget appears at
+        // the very bottom of the screen, this adjustment will be zero (no change),
+        // but when this widget sits somewhere above the bottom of the screen, we
+        // need to account for that extra space between us and the keyboard that's
+        // coming up from the bottom of the screen.
+        var bottomInsets = keyboardSafeArea.bottomInsets;
+        if (_myBoxKey.currentContext != null && _myBoxKey.currentContext!.findRenderObject() != null) {
+          final myBox = _myBoxKey.currentContext!.findRenderObject() as RenderBox;
+          final myGlobalBottom = myBox.localToGlobal(Offset(0, myBox.size.height)).dy;
+          final spaceBelowMe = MediaQuery.sizeOf(safeAreaContext).height - myGlobalBottom;
+
+          // The bottom insets are measured from the bottom of the screen. But we might not
+          // be sitting at the bottom of the screen. There might be some space beneath us.
+          // In that case, we don't need to push as far up. Remove the space below us from
+          // the bottom insets.
+          bottomInsets = max(bottomInsets - spaceBelowMe, 0);
+        } else {
+          // This is our first widget build and we need to adjust our insets
+          // after initial layout.
+          //
+          // Note: We have a frame of lag because our inset spacing is based on other
+          //       layout results. As a result, if the content below us animates a height
+          //       change, such as a widget in a `SafeArea` where bottom `padding` animates
+          //       up/down, our content will jitter as it plays catchup one frame behind.
+          //
+          //       The only solution I can think of that might truly solve this is to use
+          //       a Leader and Follower in some way. That way positioning occurs as late
+          //       as possible.
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            setState(() {
+              // Re-run build.
+            });
+          });
+        }
+
+        return Padding(
+          padding: EdgeInsets.only(bottom: bottomInsets),
+          // ^ We inject `bottomInsets` to push content above the keyboard. However, we don't
+          //   inject the `bottomPadding` because that would take away styling opportunities
+          //   from the user. Consider a chat message editor at the bottom of the screen. That
+          //   chat editor should push its content up above the bottom notch, but the chat editor
+          //   itself should still extend its background to the bottom of the screen. If we
+          //   enforce bottom padding here, then the whole chat editor would get pushed up and
+          //   and leave an ugly visual gap between the editor and the bottom of the screen.
+          child: widget.child,
+        );
+      }),
     );
   }
 }
@@ -956,6 +1141,16 @@ class _KeyboardScaffoldSafeAreaState extends State<KeyboardScaffoldSafeArea>
 abstract interface class KeyboardScaffoldSafeAreaMutator {
   KeyboardSafeAreaGeometry get geometry;
   set geometry(KeyboardSafeAreaGeometry geometry);
+
+  /// A label for this [KeyboardScaffoldSafeAreaMutator], which might be
+  /// useful for debugging multiple mutators within a scope.
+  String get debugLabel;
+
+  /// A path of [debugLabel]s, beginning with the highest level ancestor,
+  /// and ending with this mutator's [debugLabel].
+  ///
+  /// This path is useful when debugging a scope with multiple safe areas.
+  List<String> get debugLabelPath;
 }
 
 class _InheritedKeyboardScaffoldSafeArea extends InheritedWidget {
@@ -1025,6 +1220,9 @@ class KeyboardSafeAreaGeometry {
   /// By blindly applying this padding to your content, you will get the desired
   /// bottom padding at the relevant time.
   final double bottomPadding;
+
+  @override
+  String toString() => "[KeyboardSafeAreaGeometry] - bottom insets: $bottomInsets, bottom padding: $bottomPadding";
 
   KeyboardSafeAreaGeometry copyWith({
     double? bottomInsets,
