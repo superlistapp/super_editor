@@ -610,12 +610,9 @@ void main() {
         final contentHeightWithNoKeyboard = tester.getSize(find.byKey(_chatPageKey)).height;
 
         // Show the keyboard. Don't show the toolbar because it's irrelevant for this test.
-        print("---- STARTING TO OPEN KEYBOARD -----");
         controller.toolbarVisibility = KeyboardToolbarVisibility.hidden;
         controller.showSoftwareKeyboard();
         await tester.pumpAndSettle();
-
-        print("---- DONE OPENING KEYBOARD -----");
 
         // Record the height of the content now that the keyboard is open.
         final contentHeightWithKeyboardPanelOpen = tester.getSize(find.byKey(_chatPageKey)).height;
@@ -782,6 +779,7 @@ class _ChatPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return KeyboardScaffoldSafeAreaScope(
+      debugLabel: "Root",
       child: Column(
         children: [
           Expanded(
@@ -806,17 +804,11 @@ class _ChatPage extends StatelessWidget {
     // a bottom mounted chat editor.
     return Positioned.fill(
       child: KeyboardScaffoldSafeArea(
-        child: Builder(builder: (context) {
-          // TODO: delete this builder
-
-          print("Building the chat page");
-          print(" - keyboard safe area insets: ${KeyboardScaffoldSafeAreaScope.of(context).geometry.bottomInsets}");
-
-          return Container(
-            key: _chatPageKey,
-            color: Colors.blue,
-          );
-        }),
+        debugLabel: "content",
+        child: Container(
+          key: _chatPageKey,
+          color: Colors.blue,
+        ),
       ),
     );
   }
@@ -828,6 +820,7 @@ class _ChatPage extends StatelessWidget {
       right: 0,
       bottom: 0,
       child: KeyboardScaffoldSafeArea(
+        debugLabel: "editor",
         child: Builder(builder: (context) {
           return KeyboardPanelScaffold(
             controller: keyboardPanelController,
@@ -859,7 +852,7 @@ class _ChatPage extends StatelessWidget {
 }
 
 class _AccountPage extends StatelessWidget {
-  const _AccountPage({super.key});
+  const _AccountPage();
 
   @override
   Widget build(BuildContext context) {
@@ -954,6 +947,7 @@ class _Screen1 extends StatelessWidget {
         // ^ This safe area is needed to receive the bottom insets from the
         //   bottom mounted editor, and then make it available to the subtree
         //   with the content behind the chat.
+        debugLabel: "_Screen1",
         child: _ChatPage(
           keyboardPanelController: keyboardPanelController,
           imeConnectionNotifier: imeConnectionNotifier,
@@ -973,6 +967,7 @@ class _Screen2 extends StatelessWidget {
     return Scaffold(
       resizeToAvoidBottomInset: false,
       body: KeyboardScaffoldSafeArea(
+        debugLabel: "_Screen2",
         child: Builder(builder: (context) {
           return ListView.builder(
             key: _screen2BodyKey,
