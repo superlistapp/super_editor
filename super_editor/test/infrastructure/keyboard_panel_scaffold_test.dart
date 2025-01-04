@@ -725,26 +725,6 @@ class _TestAppScaffold extends StatelessWidget {
             ),
           ),
           resizeToAvoidBottomInset: false,
-          // body: KeyboardScaffoldSafeArea(
-          //   // ^ This safe area is needed to receive the bottom insets from the
-          //   //   bottom mounted editor, and then make it available to the subtree
-          //   //   with the content behind the chat.
-          //   //
-          //   //   Also, by including 2 of these safe areas in the same tree, we implicitly
-          //   //   verify that multiple safe areas in the same tree work together.
-          //   child: TabBarView(children: [
-          //     // ^ We build a tab view so that we can test what happens when the editor
-          //     //   has focus and a keyboard panel is up, and then the user navigates to
-          //     //   another tab, which should remove the bottom safe area when it happens.
-          //     _buildChatPage(
-          //       keyboardPanelController,
-          //       imeConnectionNotifier,
-          //       superEditor,
-          //       widgetBelowEditor,
-          //     ),
-          //     _buildAccountPage(),
-          //   ]),
-          // ),
           body: TabBarView(children: [
             // ^ We build a tab view so that we can test what happens when the editor
             //   has focus and a keyboard panel is up, and then the user navigates to
