@@ -101,7 +101,10 @@ class _MobileChatDemoState extends State<MobileChatDemo> {
 
   @override
   Widget build(BuildContext context) {
-    return KeyboardScaffoldSafeArea(
+    return KeyboardScaffoldSafeAreaScope(
+      // ^ Share keyboard inset info throughout all subtrees. The insets will
+      //   be reported by the subtree with the editor. Those insets might then
+      //   be used by the subtree with page content, etc.
       child: DefaultTabController(
         length: 2,
         child: Scaffold(
@@ -140,54 +143,67 @@ class _MobileChatDemoState extends State<MobileChatDemo> {
   }
 
   Widget _buildChatPage() {
-    return Stack(
+    return Column(
       children: [
-        Positioned.fill(
-          child: GestureDetector(
-            onTap: () {
-              _screenFocusNode.requestFocus();
-              _keyboardPanelController.closeKeyboardAndPanel();
-            },
-            child: Focus(
-              focusNode: _screenFocusNode,
-              child: ColoredBox(
-                color: Colors.white,
-                child: KeyboardScaffoldSafeArea(
-                  child: ListView.builder(
-                    // TODO: we need a solution to ensure this chat list has bottom
-                    //       padding large enough to account for the (dynamic) height
-                    //       of the editor.
-                    itemCount: 10,
-                    itemBuilder: (context, index) {
-                      return Container(
-                        height: 150,
-                        margin: EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: Colors.grey.shade200),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.2),
-                              blurRadius: 16,
-                              offset: Offset(0, 8),
-                            ),
-                          ],
+        Expanded(
+          child: Stack(
+            children: [
+              Positioned.fill(
+                child: GestureDetector(
+                  onTap: () {
+                    _screenFocusNode.requestFocus();
+                    _keyboardPanelController.closeKeyboardAndPanel();
+                  },
+                  child: Focus(
+                    focusNode: _screenFocusNode,
+                    child: ColoredBox(
+                      color: Colors.white,
+                      child: KeyboardScaffoldSafeArea(
+                        child: ListView.builder(
+                          // TODO: we need a solution to ensure this chat list has bottom
+                          //       padding large enough to account for the (dynamic) height
+                          //       of the editor.
+                          itemCount: 10,
+                          itemBuilder: (context, index) {
+                            return Container(
+                              height: 150,
+                              margin: EdgeInsets.all(16),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(color: Colors.grey.shade200),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withValues(alpha: 0.2),
+                                    blurRadius: 16,
+                                    offset: Offset(0, 8),
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
                         ),
-                      );
-                    },
+                      ),
+                    ),
                   ),
                 ),
               ),
-            ),
+              Positioned(
+                left: 0,
+                right: 0,
+                bottom: 0,
+                child: KeyboardScaffoldSafeArea(
+                  child: _buildCommentEditor(),
+                ),
+              ),
+            ],
           ),
         ),
-        Positioned(
-          left: 0,
-          right: 0,
-          bottom: 0,
-          child: _buildCommentEditor(),
-        ),
+        // We build a small status area to ensure that things work correctly
+        // when the chat editor isn't at the absolute bottom of the screen.
+        // Our earlier bottom inset logic didn't account for this, and broke
+        // in a client app, where that app had persistent bottom tabs.
+        _buildChatStatus(context),
       ],
     );
   }
@@ -250,7 +266,7 @@ class _MobileChatDemoState extends State<MobileChatDemo> {
                 slivers: [
                   SliverPadding(
                     padding: EdgeInsets.only(
-                      bottom: KeyboardScaffoldSafeArea.of(context).geometry.bottomPadding,
+                      bottom: KeyboardScaffoldSafeAreaScope.of(context).geometry.bottomPadding,
                       // ^ Push the editor up above the OS bottom notch.
                     ),
                     sliver: SuperEditor(
@@ -343,6 +359,32 @@ class _MobileChatDemoState extends State<MobileChatDemo> {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildChatStatus(BuildContext context) {
+    return DefaultTextStyle(
+      style: DefaultTextStyle.of(context).style.copyWith(
+            color: Colors.white.withValues(alpha: 0.5),
+          ),
+      child: Container(
+        width: double.infinity,
+        color: const Color(0xFF222222),
+        child: SafeArea(
+          top: false,
+          left: false,
+          right: false,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+            child: Text(
+              "There are 3 people online in this chat.",
+              textAlign: TextAlign.center,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ),
+      ),
     );
   }
 
