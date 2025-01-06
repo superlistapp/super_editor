@@ -1105,7 +1105,7 @@ void main() {
         );
       });
 
-      testWidgetsOnAllPlatforms('inserts email scheme if it is missing', (tester) async {
+      testWidgetsOnAllPlatforms('recognizes an email URL', (tester) async {
         await tester //
             .createDocument()
             .withSingleEmptyParagraph()
@@ -1133,6 +1133,39 @@ void main() {
               attribution: LinkAttribution.fromUri(Uri.parse("me@gmail.com")),
               start: 0,
               end: 11,
+            ),
+          },
+        );
+      });
+
+      testWidgetsOnAllPlatforms('recognizes an app URL', (tester) async {
+        await tester //
+            .createDocument()
+            .withSingleEmptyParagraph()
+            .withInputSource(TextInputSource.ime)
+            .pump();
+
+        // Place the caret at the beginning of the empty document.
+        await tester.placeCaretInParagraph("1", 0);
+
+        // Type an app URL.
+        await tester.typeImeText("obsidian://open?vault=MyVault");
+
+        // Type a space, to cause a linkify reaction.
+        await tester.typeImeText(" ");
+
+        // Ensure it's linkified with a URL schema.
+        var text = SuperEditorInspector.findTextInComponent("1");
+        text = SuperEditorInspector.findTextInComponent("1");
+
+        expect(text.text, "obsidian://open?vault=MyVault ");
+        expect(
+          text.getAttributionSpansByFilter((a) => a is LinkAttribution),
+          {
+            AttributionSpan(
+              attribution: LinkAttribution.fromUri(Uri.parse("obsidian://open?vault=MyVault")),
+              start: 0,
+              end: 28,
             ),
           },
         );

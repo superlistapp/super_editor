@@ -651,8 +651,6 @@ class LinkifyReaction extends EditReaction {
     final wordStartOffset = _moveOffsetByWord(text.toPlainText(), endOffset, true) ?? 0;
     final word = text.substring(wordStartOffset, endOffset);
 
-    print("Inspecting word for URL: '$word'");
-
     // Ensure that the preceding word doesn't already contain a full or partial
     // link attribution.
     if (text
@@ -698,25 +696,34 @@ class LinkifyReaction extends EditReaction {
       ],
     );
     final int linkCount = extractedLinks.fold(0, (value, element) => element is UrlElement ? value + 1 : value);
-    if (linkCount != 1) {
-      // There's either zero links, or more than one link. Either way we fizzle.
-      print(" - link count: $linkCount");
-      return;
+    if (linkCount > 1) {
+      // Found exactly 1 URL. Attribute it and return it.
+      try {
+        // Try to parse the word as a link.
+        final uri = parseLink(word);
+
+        text.addAttribution(
+          LinkAttribution.fromUri(uri),
+          SpanRange(wordStartOffset, endOffset - 1),
+        );
+        return;
+      } catch (exception) {
+        // Something went wrong parsing the link. Fizzle.
+        return;
+      }
     }
 
-    // The word is a single URL. Linkify it.
-    try {
-      // Try to parse the word as a link.
-      final uri = parseLink(word);
-
+    // Third, try directly parsing a URI.
+    final uri = Uri.tryParse(word);
+    if (uri != null) {
+      // Successfully parsed a URI from the upstream word. Attribute it.
       text.addAttribution(
         LinkAttribution.fromUri(uri),
         SpanRange(wordStartOffset, endOffset - 1),
       );
-    } catch (exception) {
-      // Something went wrong parsing the link. Fizzle.
-      return;
     }
+
+    // Failed to parse the upstream word as a URL or URI. Don't linkify anything.
   }
 
   int? _moveOffsetByWord(String text, int textOffset, bool upstream) {
