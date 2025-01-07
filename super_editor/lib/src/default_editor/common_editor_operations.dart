@@ -2504,7 +2504,7 @@ class PasteEditorCommand extends EditCommand {
       attributedLines.add(
         AttributedText(
           line,
-          _findUrlSpansInText(pastedText: lines.first),
+          _findUrlSpansInText(pastedText: line),
         ),
       );
     }
@@ -2521,39 +2521,24 @@ class PasteEditorCommand extends EditCommand {
     for (final wordBoundary in wordBoundaries) {
       final word = wordBoundary.textInside(pastedText);
 
-      final extractedLinks = linkify(
-        word,
-        options: const LinkifyOptions(
-          humanize: false,
-          looseUrl: true,
-        ),
-      );
-
-      final int linkCount = extractedLinks.fold(0, (value, element) => element is UrlElement ? value + 1 : value);
-      if (linkCount == 1) {
-        // The word is a single URL. Linkify it.
-        late final Uri uri;
-        try {
-          uri = parseLink(word);
-        } catch (exception) {
-          // Something went wrong when trying to parse links. This can happen, for example,
-          // due to Markdown syntax around a link, e.g., [My Link](www.something.com). I'm
-          // not sure why that case throws, but it does. We ignore any URL that throws.
-          continue;
-        }
-
-        final startOffset = wordBoundary.start;
-        // -1 because TextPosition's offset indexes the character after the
-        // selection, not the final character in the selection.
-        final endOffset = wordBoundary.end - 1;
-
-        // Add link attribution.
-        linkAttributionSpans.addAttribution(
-          newAttribution: LinkAttribution.fromUri(uri),
-          start: startOffset,
-          end: endOffset,
-        );
+      // The word is a single URL. Linkify it.
+      final uri = tryToParseUrl(word);
+      if (uri == null) {
+        // This word isn't a URI.
+        continue;
       }
+
+      final startOffset = wordBoundary.start;
+      // -1 because TextPosition's offset indexes the character after the
+      // selection, not the final character in the selection.
+      final endOffset = wordBoundary.end - 1;
+
+      // Add link attribution.
+      linkAttributionSpans.addAttribution(
+        newAttribution: LinkAttribution.fromUri(uri),
+        start: startOffset,
+        end: endOffset,
+      );
     }
 
     return linkAttributionSpans;

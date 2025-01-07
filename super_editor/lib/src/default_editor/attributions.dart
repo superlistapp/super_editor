@@ -207,6 +207,11 @@ class FontFamilyAttribution implements Attribution {
 /// Attribution to be used within [AttributedText] to
 /// represent a link.
 ///
+/// A link might be a URL or a URI. URLs are a subset of URIs.
+/// A URL begins with a scheme and "://", e.g., "https://" or
+/// "obsidian://". A URI begins with a scheme and a ":", e.g.,
+/// "mailto:" or "spotify:".
+///
 /// Every [LinkAttribution] is considered equivalent so
 /// that [AttributedText] prevents multiple [LinkAttribution]s
 /// from overlapping.
@@ -216,38 +221,89 @@ class FontFamilyAttribution implements Attribution {
 /// within [AttributedText]. This class doesn't have a special
 /// relationship with [AttributedText].
 class LinkAttribution implements Attribution {
+  /// Creates a [LinkAttribution] from a structured [URI] (instead of plain text).
+  ///
+  /// The [plainTextUri] for the returned [LinkAttribution] is set to
+  /// the [uri]'s `toString()` value.
   factory LinkAttribution.fromUri(Uri uri) {
-    return LinkAttribution(uri.toString(), LinkType.url);
+    if (!uri.hasScheme) {
+      // Without a scheme, a URI is fairly useless. We can't be sure
+      // that any other part of the URI was parsed correctly if it
+      // didn't begin with a scheme. Fallback to a plain text-only
+      // attribution.
+      return LinkAttribution(uri.toString());
+    }
+
+    return LinkAttribution(uri.toString(), uri);
   }
 
+  /// Create a [LinkAttribution] based on a given [email] address.
+  ///
+  /// This factory is equivalent to calling [LinkAttribution.fromUri]
+  /// with a [Uri] whose `scheme` is "mailto" and whose `path` is [email].
   factory LinkAttribution.fromEmail(String email) {
-    return LinkAttribution(email, LinkType.email);
+    return LinkAttribution.fromUri(
+      Uri(
+        scheme: "mailto",
+        path: email,
+      ),
+    );
   }
 
-  // The default [type] is set to a URL so that we could introduce a [type]
-  // property without breaking existing uses.
-  const LinkAttribution(this.url, [this.type = LinkType.url]);
+  /// Creates a [LinkAttribution] whose plain-text URI is [plainTextUri], and
+  /// which (optionally) includes a structured [Uri] version of the
+  /// same URI.
+  ///
+  /// [LinkAttribution] allows for text only creation because there may
+  /// be situations where apps must apply link attributions to invalid
+  /// URIs, such as when loading documents created elsewhere.
+  const LinkAttribution(this.plainTextUri, [this.uri]);
 
   @override
   String get id => 'link';
 
-  /// The type of link in this attribution, e.g., URL, link.
-  final LinkType type;
+  @Deprecated("Use plainTextUri instead. The term 'url' was a lie - it could always have been a URI.")
+  String get url => plainTextUri;
 
-  /// The URL associated with the attributed text, as a `String`.
-  final String url;
+  /// The URI associated with the attributed text, as a `String`.
+  final String plainTextUri;
 
-  /// Attempts to parse the [url] as a [Uri], and returns `true` if the [url]
-  /// is successfully parsed, or `false` if parsing fails, such as due to the [url]
-  /// including an invalid scheme, separator syntax, extra segments, etc.
-  bool get hasValidUri => Uri.tryParse(url) != null;
+  /// Returns `true` if this [LinkAttribution] has [uri], which is
+  /// a structured representation of the associated URI.
+  bool get hasStructuredUri => uri != null;
 
-  /// The URL associated with the attributed text, as a `Uri`.
+  /// The structured [Uri] associated with this attribution's [plainTextUri].
   ///
-  /// Accessing the [uri] throws an exception if the [url] isn't valid.
-  /// To access a URL that might not be valid, consider accessing the [url],
-  /// instead.
-  Uri get uri => Uri.parse(url);
+  /// In the nominal case, this [uri] has the same value as the [plainTextUri].
+  /// However, in some cases, linkified text may have a [plainTextUri] that isn't
+  /// a valid [Uri]. This can happen when an app creates or loads documents from
+  /// other sources - one wants to retain link attributions, even if they're invalid.
+  final Uri? uri;
+
+  /// Returns a best-guess version of this URI that an operating system can launch.
+  ///
+  /// In the nominal case, this value is the same as [uri] and [plainTextUri].
+  ///
+  /// When no [uri] is available, this property either returns [plainTextUri] as-is,
+  /// or inserts a best-guess scheme.
+  Uri get launchableUri {
+    if (hasStructuredUri) {
+      return uri!;
+    }
+
+    if (plainTextUri.contains("://")) {
+      // It looks like the plain text URI has URL scheme. Return it as-is.
+      return Uri.parse(plainTextUri);
+    }
+
+    if (plainTextUri.contains("@")) {
+      // Our best guess is that this is a URL.
+      return Uri.parse("mailto:$plainTextUri");
+    }
+
+    // Our best guess is that this is a web URL.
+    return Uri.parse("https://$plainTextUri");
+  }
 
   @override
   bool canMergeWith(Attribution other) {
@@ -256,14 +312,15 @@ class LinkAttribution implements Attribution {
 
   @override
   bool operator ==(Object other) =>
-      identical(this, other) || other is LinkAttribution && runtimeType == other.runtimeType && url == other.url;
+      identical(this, other) ||
+      other is LinkAttribution && runtimeType == other.runtimeType && plainTextUri == other.plainTextUri;
 
   @override
-  int get hashCode => url.hashCode;
+  int get hashCode => plainTextUri.hashCode;
 
   @override
   String toString() {
-    return '[LinkAttribution]: $url';
+    return '[LinkAttribution]: $plainTextUri${hasStructuredUri ? ' ($uri)' : ''}';
   }
 }
 

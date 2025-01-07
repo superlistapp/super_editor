@@ -397,6 +397,7 @@ extension Words on String {
 
       offset += textSelection.end - textSelection.start + 1;
     }
+
     return textSelections;
   }
 }
