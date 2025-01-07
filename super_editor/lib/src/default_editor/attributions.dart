@@ -323,8 +323,3 @@ class LinkAttribution implements Attribution {
     return '[LinkAttribution]: $plainTextUri${hasStructuredUri ? ' ($uri)' : ''}';
   }
 }
-
-enum LinkType {
-  url,
-  email;
-}
