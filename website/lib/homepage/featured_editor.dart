@@ -91,7 +91,16 @@ class _FeaturedEditorState extends State<FeaturedEditor> {
     // I tried explicitly unfocus()'ing the URL textfield
     // in the toolbar but it didn't return focus to the
     // editor. I'm not sure why.
-    _editorFocusNode.requestFocus();
+    //
+    // Only do that if the primary focus is not at the root focus scope because
+    // this might signify that the app is going to the background. Removing
+    // the focus from the root focus scope in that situation prevents the editor
+    // from re-gaining focus when the app is brought back to the foreground.
+    //
+    // See https://github.com/superlistapp/super_editor/issues/2279 for details.
+    if (FocusManager.instance.primaryFocus != FocusManager.instance.rootScope) {
+      _editorFocusNode.requestFocus();
+    }
   }
 
   void _onDocumentChange(_) {
