@@ -410,7 +410,7 @@ class InsertNodeAtCaretCommand extends EditCommand {
     final endOfParagraph = selectedNode.endPosition;
 
     DocumentSelection newSelection;
-    if (selectedNode.text.text.isEmpty) {
+    if (selectedNode.text.isEmpty) {
       // Insert new block node above selected paragraph.
       document.insertNodeBefore(existingNodeId: selectedNode.id, newNode: newNode);
       executor.logChanges([
@@ -746,7 +746,10 @@ class DeleteContentCommand extends EditCommand {
     if (endNode == null) {
       throw Exception('Could not locate end node for DeleteSelectionCommand: ${normalizedRange.end}');
     }
-    final endNodeIndex = document.getNodeIndexById(endNode.id);
+
+    // We expect that this command will only be called when the delete range
+    // contains at least one deletable node.
+    final firstDeletableNodeId = nodes.firstWhere((node) => node.isDeletable).id;
 
     executor.logChanges(
       _deleteNodesBetweenFirstAndLast(
@@ -779,19 +782,40 @@ class DeleteContentCommand extends EditCommand {
       );
     }
 
+    final wereAllDeletableNodesInRangeDeleted = nodes.every(
+      (node) => document.getNodeById(node.id) == null || !node.isDeletable,
+    );
+    final hasNonDeletableNodesInRange = nodes.any((node) => !node.isDeletable);
+
     // If all selected nodes were deleted, e.g., the user selected from
     // the beginning of the first node to the end of the last node, then
     // we need insert an empty paragraph node so that there's a place
     // to position the caret.
-    if (document.getNodeById(startNode.id) == null && document.getNodeById(endNode.id) == null) {
-      final insertIndex = min(startNodeIndex, endNodeIndex);
+    if (wereAllDeletableNodesInRangeDeleted) {
+      // If there are any non-deletable nodes in the range, insert the new node
+      // after the last non-deletable node. Otherwise, insert the new node at
+      // the position where the first selected node was.
+      final insertIndex = hasNonDeletableNodesInRange //
+          ? document.getNodeIndexById(nodes.lastWhere((node) => !node.isDeletable).id) + 1
+          : startNodeIndex;
+
+      // If one of the edge nodes is deletable, we can use it as the ID for the
+      // new empty paragraph. Otherwise, use the ID of the first deletable node in the range.
+      // We expect that this method is never called when there are no deletable nodes
+      // in the range.
+      final emptyParagraphId = startNode.isDeletable
+          ? startNode.id
+          : endNode.isDeletable
+              ? endNode.id
+              : firstDeletableNodeId;
+
       document.insertNodeAt(
         insertIndex,
-        ParagraphNode(id: startNode.id, text: AttributedText()),
+        ParagraphNode(id: emptyParagraphId, text: AttributedText()),
       );
       executor.logChanges([
         DocumentEdit(
-          NodeChangeEvent(startNode.id),
+          NodeChangeEvent(emptyParagraphId),
         )
       ]);
     }
@@ -903,28 +927,39 @@ class DeleteContentCommand extends EditCommand {
     required DocumentNode startNode,
     required DocumentNode endNode,
   }) {
-    // Delete all nodes between the first node and the last node.
-    final startIndex = document.getNodeIndexById(startNode.id);
-    final endIndex = document.getNodeIndexById(endNode.id);
+    if (startNode.id == endNode.id) {
+      // The start and end nodes are the same. Nothing to delete.
+      return [];
+    }
 
-    _log.log('_deleteNodesBetweenFirstAndLast', ' - start node index: $startIndex');
-    _log.log('_deleteNodesBetweenFirstAndLast', ' - end node index: $endIndex');
+    // Delete all nodes between the first node and the last node.
+    if (document.getAffinityBetweenNodes(startNode, endNode) != TextAffinity.downstream) {
+      throw Exception(
+        "Tried to delete the nodes between a start and end node, but the start node doesn't appear before the end node. Start: ${startNode.id}, End: ${endNode.id}.",
+      );
+    }
+
+    _log.log('_deleteNodesBetweenFirstAndLast', ' - start node: ${startNode.id}');
+    _log.log('_deleteNodesBetweenFirstAndLast', ' - end node: ${endNode.id}');
     _log.log('_deleteNodesBetweenFirstAndLast', ' - initially ${document.nodeCount} nodes');
 
     // Remove nodes from last to first so that indices don't get
     // screwed up during removal.
     final changes = <EditEvent>[];
-    for (int i = endIndex - 1; i > startIndex; --i) {
-      _log.log('_deleteNodesBetweenFirstAndLast', ' - deleting node $i: ${document.getNodeAt(i)?.id}');
-      final removedNode = document.getNodeAt(i)!;
-      if (!removedNode.isDeletable) {
-        // This node is not deletable. Ignore it.
-        continue;
+    var nodeToDelete = document.getNodeAfter(startNode);
+    while (nodeToDelete != null && nodeToDelete != endNode) {
+      _log.log('_deleteNodesBetweenFirstAndLast', ' - deleting node: ${nodeToDelete.id}');
+      final nextNode = document.getNodeAfter(nodeToDelete);
+      if (nodeToDelete.isDeletable) {
+        // This node is deletable, so delete it.
+        changes.add(DocumentEdit(
+          NodeRemovedEvent(nodeToDelete.id, nodeToDelete),
+        ));
+        document.deleteNode(nodeToDelete.id);
       }
-      changes.add(DocumentEdit(
-        NodeRemovedEvent(removedNode.id, removedNode),
-      ));
-      document.deleteNodeAt(i);
+
+      // Move to the next node.
+      nodeToDelete = nextNode;
     }
     return changes;
   }
@@ -1158,12 +1193,12 @@ class DeleteSelectionCommand extends EditCommand {
       }
     }
 
-    final newSelectionPosition = CommonEditorOperations.getDocumentPositionAfterExpandedDeletion(
-      document: document,
-      selection: selection,
-    );
-
     final nodes = document.getNodesInside(selection.start, selection.end);
+    if (nodes.every((node) => !node.isDeletable)) {
+      // All selected nodes are non-deletable. Do nothing.
+      return;
+    }
+
     if (nodes.length == 2) {
       final normalizedSelection = selection.normalize(document);
       final nodeAbove = document.getNode(normalizedSelection.start)!;
@@ -1211,19 +1246,26 @@ class DeleteSelectionCommand extends EditCommand {
       }
     }
 
-    executor
-      ..executeCommand(
-        DeleteContentCommand(
-          documentRange: selection,
-        ),
-      )
-      ..executeCommand(
+    final newSelectionPosition = CommonEditorOperations.getDocumentPositionAfterExpandedDeletion(
+      document: document,
+      selection: selection,
+    );
+
+    executor.executeCommand(
+      DeleteContentCommand(
+        documentRange: selection,
+      ),
+    );
+
+    if (newSelectionPosition != null) {
+      executor.executeCommand(
         ChangeSelectionCommand(
           DocumentSelection.collapsed(position: newSelectionPosition),
           SelectionChangeType.deleteContent,
           SelectionReason.userInteraction,
         ),
       );
+    }
   }
 }
 
@@ -1282,5 +1324,59 @@ class DeleteNodeCommand extends EditCommand {
         NodeRemovedEvent(node.id, node),
       )
     ]);
+  }
+}
+
+/// An [EditRequest] to clear the document's content.
+///
+/// This request:
+///
+/// - Removes all nodes from the document.
+/// - Adds a new empty paragraph.
+/// - Places the caret at the beginning of the new paragraph.
+/// - Clears the composing region.
+class ClearDocumentRequest implements EditRequest {
+  const ClearDocumentRequest();
+}
+
+class ClearDocumentCommand extends EditCommand {
+  @override
+  void execute(EditContext context, CommandExecutor executor) {
+    final document = context.document;
+
+    for (final node in document) {
+      executor.logChanges([
+        DocumentEdit(
+          NodeRemovedEvent(node.id, node),
+        )
+      ]);
+    }
+
+    document.clear();
+
+    final newNodeId = Editor.createNodeId();
+    executor
+      ..executeCommand(
+        InsertNodeAtIndexCommand(
+          nodeIndex: 0,
+          newNode: ParagraphNode(
+            id: newNodeId,
+            text: AttributedText(),
+          ),
+        ),
+      )
+      ..executeCommand(
+        ChangeSelectionCommand(
+          DocumentSelection.collapsed(
+            position: DocumentPosition(
+              nodeId: newNodeId,
+              nodePosition: const TextNodePosition(offset: 0),
+            ),
+          ),
+          SelectionChangeType.insertContent,
+          SelectionReason.userInteraction,
+        ),
+      )
+      ..executeCommand(ChangeComposingRegionCommand(null));
   }
 }

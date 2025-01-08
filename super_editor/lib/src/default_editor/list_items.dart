@@ -228,6 +228,7 @@ abstract class ListItemComponentViewModel extends SingleColumnLayoutComponentVie
     required this.indent,
     required this.text,
     required this.textStyleBuilder,
+    this.inlineWidgetBuilders = const [],
     this.textDirection = TextDirection.ltr,
     this.textAlignment = TextAlign.left,
     this.selection,
@@ -256,6 +257,8 @@ abstract class ListItemComponentViewModel extends SingleColumnLayoutComponentVie
   AttributedText text;
   @override
   AttributionStyleBuilder textStyleBuilder;
+  @override
+  InlineWidgetBuilderChain inlineWidgetBuilders;
   @override
   TextDirection textDirection;
   @override
@@ -313,6 +316,7 @@ class UnorderedListItemComponentViewModel extends ListItemComponentViewModel {
     required super.indent,
     required super.text,
     required super.textStyleBuilder,
+    super.inlineWidgetBuilders = const [],
     this.dotStyle = const ListItemDotStyle(),
     super.textDirection = TextDirection.ltr,
     super.textAlignment = TextAlign.left,
@@ -383,6 +387,7 @@ class OrderedListItemComponentViewModel extends ListItemComponentViewModel {
     this.numeralStyle = OrderedListNumeralStyle.arabic,
     required super.text,
     required super.textStyleBuilder,
+    super.inlineWidgetBuilders = const [],
     super.textDirection = TextDirection.ltr,
     super.textAlignment = TextAlign.left,
     super.selection,
@@ -488,6 +493,7 @@ class UnorderedListItemComponent extends StatefulWidget {
     required this.componentKey,
     required this.text,
     required this.styleBuilder,
+    this.inlineWidgetBuilders = const [],
     this.dotBuilder = _defaultUnorderedListItemDotBuilder,
     this.dotStyle,
     this.indent = 0,
@@ -504,6 +510,7 @@ class UnorderedListItemComponent extends StatefulWidget {
   final GlobalKey componentKey;
   final AttributedText text;
   final AttributionStyleBuilder styleBuilder;
+  final InlineWidgetBuilderChain inlineWidgetBuilders;
   final UnorderedListItemDotBuilder dotBuilder;
   final ListItemDotStyle? dotStyle;
   final int indent;
@@ -568,6 +575,7 @@ class _UnorderedListItemComponentState extends State<UnorderedListItemComponent>
               key: _innerTextComponentKey,
               text: widget.text,
               textStyleBuilder: widget.styleBuilder,
+              inlineWidgetBuilders: widget.inlineWidgetBuilders,
               textSelection: widget.textSelection,
               textScaler: textScaler,
               selectionColor: widget.selectionColor,
@@ -651,6 +659,7 @@ class OrderedListItemComponent extends StatefulWidget {
     required this.listIndex,
     required this.text,
     required this.styleBuilder,
+    this.inlineWidgetBuilders = const [],
     this.numeralBuilder = _defaultOrderedListItemNumeralBuilder,
     this.numeralStyle = OrderedListNumeralStyle.arabic,
     this.indent = 0,
@@ -668,6 +677,7 @@ class OrderedListItemComponent extends StatefulWidget {
   final int listIndex;
   final AttributedText text;
   final AttributionStyleBuilder styleBuilder;
+  final InlineWidgetBuilderChain inlineWidgetBuilders;
   final OrderedListItemNumeralBuilder numeralBuilder;
   final OrderedListNumeralStyle numeralStyle;
   final int indent;
@@ -733,6 +743,7 @@ class _OrderedListItemComponentState extends State<OrderedListItemComponent> {
               key: _innerTextComponentKey,
               text: widget.text,
               textStyleBuilder: widget.styleBuilder,
+              inlineWidgetBuilders: widget.inlineWidgetBuilders,
               textSelection: widget.textSelection,
               textScaler: textScaler,
               selectionColor: widget.selectionColor,

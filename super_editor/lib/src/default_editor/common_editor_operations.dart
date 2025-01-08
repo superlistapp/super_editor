@@ -2,6 +2,7 @@ import 'dart:math';
 import 'dart:ui';
 
 import 'package:attributed_text/attributed_text.dart';
+import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:linkify/linkify.dart';
@@ -178,7 +179,7 @@ class CommonEditorOperations {
       baseOffset: (docSelection.base.nodePosition as TextNodePosition).offset,
       extentOffset: (docSelection.extent.nodePosition as TextNodePosition).offset,
     );
-    final selectedText = currentSelection.textInside(selectedNode.text.text);
+    final selectedText = currentSelection.textInside(selectedNode.text.toPlainText());
 
     if (selectedText.contains(' ')) {
       // The selection already spans multiple paragraphs. Nothing to do.
@@ -186,7 +187,7 @@ class CommonEditorOperations {
     }
 
     final wordTextSelection = expandPositionToWord(
-      text: selectedNode.text.text,
+      text: selectedNode.text.toPlainText(),
       textPosition: TextPosition(offset: (docSelection.extent.nodePosition as TextNodePosition).offset),
     );
     final wordNodeSelection = TextNodeSelection.fromTextSelection(wordTextSelection);
@@ -907,7 +908,7 @@ class CommonEditorOperations {
 
     if (composer.selection!.extent.nodePosition is TextNodePosition) {
       final textPosition = composer.selection!.extent.nodePosition as TextNodePosition;
-      final text = (document.getNodeById(composer.selection!.extent.nodeId) as TextNode).text.text;
+      final text = (document.getNodeById(composer.selection!.extent.nodeId) as TextNode).text;
       if (textPosition.offset == text.length) {
         final node = document.getNodeById(composer.selection!.extent.nodeId)!;
         final nodeAfter = document.getNodeAfterById(node.id);
@@ -1036,7 +1037,7 @@ class CommonEditorOperations {
       return false;
     }
 
-    final nextCharacterOffset = getCharacterEndBounds(text.text, currentTextOffset);
+    final nextCharacterOffset = getCharacterEndBounds(text.toPlainText(), currentTextOffset);
 
     // Delete the selected content.
     editor.execute([
@@ -1110,7 +1111,7 @@ class CommonEditorOperations {
 
         final componentBefore = documentLayoutResolver().getComponentByNodeId(nodeBefore.id)!;
 
-        if (nodeBefore is TextNode && nodeBefore.text.text.isEmpty) {
+        if (nodeBefore is TextNode && nodeBefore.text.isEmpty) {
           editor.execute([
             DeleteNodeRequest(nodeId: nodeBefore.id),
           ]);
@@ -1147,7 +1148,7 @@ class CommonEditorOperations {
           // The node/component above is not selectable. Delete it.
           deleteNonSelectedNode(nodeBefore);
           return true;
-        } else if ((node as TextNode).text.text.isEmpty) {
+        } else if ((node as TextNode).text.isEmpty) {
           // The caret is at the beginning of an empty TextNode and the preceding
           // node is not a TextNode. Delete the current TextNode and move the
           // selection up to the preceding node if exist.
@@ -1311,7 +1312,7 @@ class CommonEditorOperations {
     final textNode = document.getNode(composer.selection!.extent) as TextNode;
     final currentTextOffset = (composer.selection!.extent.nodePosition as TextNodePosition).offset;
 
-    final previousCharacterOffset = getCharacterStartBounds(textNode.text.text, currentTextOffset);
+    final previousCharacterOffset = getCharacterStartBounds(textNode.text.toPlainText(), currentTextOffset);
 
     final newSelectionPosition = DocumentPosition(
       nodeId: textNode.id,
@@ -1381,18 +1382,27 @@ class CommonEditorOperations {
   /// Returns the [DocumentPosition] where the caret should sit after deleting
   /// the given [selection] from the given [document].
   ///
+  /// Returns `null` if there are no deletable nodes within the [selection].
+  ///
   /// This method doesn't delete any content. Instead, it determines what would
   /// be deleted if a delete operation was run for the given [selection]. Based
   /// on the shared understanding of content deletion rules, the resulting caret
   /// position is returned.
   // TODO: Move this method to an appropriate place. It was made public and static
   //       because document_keyboard_actions.dart also uses this behavior.
-  static DocumentPosition getDocumentPositionAfterExpandedDeletion({
+  static DocumentPosition? getDocumentPositionAfterExpandedDeletion({
     required Document document,
     required DocumentSelection selection,
   }) {
     // Figure out where the caret should appear after the
     // deletion.
+
+    if (selection.isCollapsed) {
+      // There is no expanded deletion when the selection is collapsed. Therefore,
+      // no selection change is expected.
+      return null;
+    }
+
     // TODO: This calculation depends upon the first
     //       selected node still existing after the deletion. This
     //       is a fragile expectation and should be revisited.
@@ -1401,33 +1411,52 @@ class CommonEditorOperations {
     if (baseNode == null) {
       throw Exception('Failed to _getDocumentPositionAfterDeletion because the base node no longer exists.');
     }
-    final baseNodeIndex = document.getNodeIndexById(baseNode.id);
 
     final extentPosition = selection.extent;
     final extentNode = document.getNode(extentPosition);
     if (extentNode == null) {
       throw Exception('Failed to _getDocumentPositionAfterDeletion because the extent node no longer exists.');
     }
-    final extentNodeIndex = document.getNodeIndexById(extentNode.id);
 
-    final topNodeIndex = min(baseNodeIndex, extentNodeIndex);
-    final topNode = document.getNodeAt(topNodeIndex)!;
-    final topNodePosition = baseNodeIndex < extentNodeIndex ? basePosition.nodePosition : extentPosition.nodePosition;
+    final selectionAffinity = document.getAffinityForSelection(selection);
+    final topPosition = selectionAffinity == TextAffinity.downstream //
+        ? selection.base
+        : selection.extent;
+    final topNodePosition = topPosition.nodePosition;
+    final topNode = document.getNodeById(topPosition.nodeId)!;
 
-    final bottomNodeIndex = max(baseNodeIndex, extentNodeIndex);
-    final bottomNode = document.getNodeAt(bottomNodeIndex)!;
-    final bottomNodePosition =
-        baseNodeIndex < extentNodeIndex ? extentPosition.nodePosition : basePosition.nodePosition;
+    final bottomPosition = selectionAffinity == TextAffinity.downstream //
+        ? selection.extent
+        : selection.base;
+    final bottomNodePosition = bottomPosition.nodePosition;
+    final bottomNode = document.getNodeById(bottomPosition.nodeId)!;
+
+    final normalizedRange = selection.normalize(document);
+    final nodes = document.getNodesInside(normalizedRange.start, normalizedRange.end);
+    final firstDeletableNodeId = nodes.firstWhereOrNull((node) => node.isDeletable)?.id;
 
     DocumentPosition newSelectionPosition;
 
-    if (baseNodeIndex != extentNodeIndex) {
+    if (topPosition.nodeId != bottomPosition.nodeId) {
       if (topNodePosition == topNode.beginningPosition && bottomNodePosition == bottomNode.endPosition) {
-        // All nodes in the selection will be deleted. Assume that the start
-        // node will be retained and converted into a paragraph, if it's not
+        // All deletable nodes in the selection will be deleted. Assume that one of the
+        // nodes will be retained and converted into a paragraph, if it's not
         // already a paragraph.
+
+        final emptyParagraphId = topNode.isDeletable
+            ? topNode.id
+            : bottomNode.isDeletable
+                ? bottomNode.id
+                : firstDeletableNodeId;
+
+        if (emptyParagraphId == null) {
+          // There are no deletable nodes in the selection. Fizzle.
+          // We don't expect this method to be called if there are no deletable nodes.
+          return null;
+        }
+
         newSelectionPosition = DocumentPosition(
-          nodeId: topNode.id,
+          nodeId: emptyParagraphId,
           nodePosition: const TextNodePosition(offset: 0),
         );
       } else if (topNodePosition == topNode.beginningPosition) {
@@ -1449,7 +1478,7 @@ class CommonEditorOperations {
         // those nodes will remain.
 
         // The caret should end up at the base position
-        newSelectionPosition = baseNodeIndex <= extentNodeIndex ? selection.base : selection.extent;
+        newSelectionPosition = selectionAffinity == TextAffinity.downstream ? selection.base : selection.extent;
       }
     } else {
       // Selection is within a single node.
@@ -1775,7 +1804,7 @@ class CommonEditorOperations {
     final newNodeId = Editor.createNodeId();
 
     if (extentNode is ListItemNode) {
-      if (extentNode.text.text.isEmpty) {
+      if (extentNode.text.isEmpty) {
         // The list item is empty. Convert it to a paragraph.
         editorOpsLog.finer(
             "The current node is an empty list item. Converting it to a paragraph instead of inserting block-level newline.");
@@ -1880,7 +1909,7 @@ class CommonEditorOperations {
         ]);
       }
     } else if (extentNode is TaskNode) {
-      if (extentNode.text.text.isEmpty) {
+      if (extentNode.text.isEmpty) {
         // The task is empty. Convert it to a paragraph.
         return convertToParagraph();
       }
@@ -2277,7 +2306,7 @@ class CommonEditorOperations {
   /// moves the caret, it's possible that the clipboard content will be pasted
   /// at the wrong spot.
   void paste() {
-    DocumentPosition pastePosition = composer.selection!.extent;
+    DocumentPosition? pastePosition = composer.selection!.extent;
 
     // Start a transaction so that we can capture both the initial deletion behavior,
     // and the clipboard content insertion, all as one transaction.
@@ -2289,6 +2318,11 @@ class CommonEditorOperations {
         document: document,
         selection: composer.selection!,
       );
+
+      if (pastePosition == null) {
+        // There are no deletable nodes in the selection. Do nothing.
+        return;
+      }
 
       // Delete the selected content.
       editor.execute([
@@ -2570,7 +2604,7 @@ class DeleteUpstreamCharacterCommand extends EditCommand {
     final textNode = document.getNode(selection.extent) as TextNode;
     final currentTextOffset = (selection.extent.nodePosition as TextNodePosition).offset;
 
-    final previousCharacterOffset = getCharacterStartBounds(textNode.text.text, currentTextOffset);
+    final previousCharacterOffset = getCharacterStartBounds(textNode.text.toPlainText(), currentTextOffset);
 
     // Delete the selected content.
     executor
@@ -2625,7 +2659,7 @@ class DeleteDownstreamCharacterCommand extends EditCommand {
       throw Exception("Tried to delete downstream character but the caret is sitting at the end of the text.");
     }
 
-    final nextCharacterOffset = getCharacterEndBounds(text.text, currentTextPositionOffset);
+    final nextCharacterOffset = getCharacterEndBounds(text.toPlainText(), currentTextPositionOffset);
 
     // Delete the selected content.
     executor.executeCommand(

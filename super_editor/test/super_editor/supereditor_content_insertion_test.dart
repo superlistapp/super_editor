@@ -38,7 +38,7 @@ void main() {
 
         // Ensure that the paragraph node content remains unchanged, but is moved down.
         expect(doc.getNodeAt(1)!, isA<ParagraphNode>());
-        expect((doc.getNodeAt(1)! as ParagraphNode).text.text, 'First paragraph');
+        expect((doc.getNodeAt(1)! as ParagraphNode).text.toPlainText(), 'First paragraph');
 
         // Ensure the selection was placed at the beginning of the paragraph.
         expect(
@@ -74,14 +74,14 @@ void main() {
 
         // Ensure that the first node has the text from before the caret.
         expect(doc.getNodeAt(0)!, isA<ParagraphNode>());
-        expect((doc.getNodeAt(0)! as ParagraphNode).text.text, 'Before the image');
+        expect((doc.getNodeAt(0)! as ParagraphNode).text.toPlainText(), 'Before the image');
 
         // Ensure that the image was added.
         expect(doc.getNodeAt(1)!, isA<ImageNode>());
 
         // Ensure that the last node has the text from after the caret.
         expect(doc.getNodeAt(2)!, isA<ParagraphNode>());
-        expect((doc.getNodeAt(2)! as ParagraphNode).text.text, ' after the image');
+        expect((doc.getNodeAt(2)! as ParagraphNode).text.toPlainText(), ' after the image');
 
         // Ensure the selection was placed at the beginning of the last paragraph.
         expect(
@@ -118,14 +118,14 @@ void main() {
 
         // Ensure that the first node remains unchanged.
         expect(doc.getNodeAt(0)!, isA<ParagraphNode>());
-        expect((doc.getNodeAt(0)! as ParagraphNode).text.text, 'First paragraph');
+        expect((doc.getNodeAt(0)! as ParagraphNode).text.toPlainText(), 'First paragraph');
 
         // Ensure that the image was added.
         expect(doc.getNodeAt(1)!, isA<ImageNode>());
 
         // Ensure that an empty node was added after the image.
         expect(doc.getNodeAt(2)!, isA<ParagraphNode>());
-        expect((doc.getNodeAt(2)! as ParagraphNode).text.text, '');
+        expect((doc.getNodeAt(2)! as ParagraphNode).text.toPlainText(), '');
 
         // Ensure the selection was placed at the beginning of the last paragraph.
         expect(
@@ -167,14 +167,14 @@ Second paragraph"""). //
 
         // Ensure that the first node remains unchanged.
         expect(doc.getNodeAt(0)!, isA<ParagraphNode>());
-        expect((doc.getNodeAt(0)! as ParagraphNode).text.text, 'First paragraph');
+        expect((doc.getNodeAt(0)! as ParagraphNode).text.toPlainText(), 'First paragraph');
 
         // Ensure that the image was added.
         expect(doc.getNodeAt(1)!, isA<ImageNode>());
 
         // Ensure that an empty node was added after the image.
         expect(doc.getNodeAt(2)!, isA<ParagraphNode>());
-        expect((doc.getNodeAt(2)! as ParagraphNode).text.text, '');
+        expect((doc.getNodeAt(2)! as ParagraphNode).text.toPlainText(), '');
 
         // Ensure the selection was placed at the beginning of the newly created paragraph.
         expect(
@@ -214,7 +214,7 @@ Second paragraph"""). //
 
         // Ensure that an empty node was added after the image.
         expect(doc.getNodeAt(1)!, isA<ParagraphNode>());
-        expect((doc.getNodeAt(1)! as ParagraphNode).text.text, '');
+        expect((doc.getNodeAt(1)! as ParagraphNode).text.toPlainText(), '');
 
         // Ensure the selection was placed at the empty paragraph.
         expect(
@@ -253,7 +253,7 @@ Second paragraph"""). //
 
         // Ensure that the paragraph node content remains unchanged, but is moved down.
         expect(doc.getNodeAt(1)!, isA<ParagraphNode>());
-        expect((doc.getNodeAt(1)! as ParagraphNode).text.text, 'First paragraph');
+        expect((doc.getNodeAt(1)! as ParagraphNode).text.toPlainText(), 'First paragraph');
 
         // Ensure the selection was placed at the beginning of the paragraph.
         expect(
@@ -286,14 +286,14 @@ Second paragraph"""). //
 
         // Ensure that the first node has the text from before the caret.
         expect(doc.getNodeAt(0)!, isA<ParagraphNode>());
-        expect((doc.getNodeAt(0)! as ParagraphNode).text.text, 'Before the hr');
+        expect((doc.getNodeAt(0)! as ParagraphNode).text.toPlainText(), 'Before the hr');
 
         // Ensure that the horizontal rule was added.
         expect(doc.getNodeAt(1)!, isA<HorizontalRuleNode>());
 
         // Ensure that the last node has the text from after the caret.
         expect(doc.getNodeAt(2)!, isA<ParagraphNode>());
-        expect((doc.getNodeAt(2)! as ParagraphNode).text.text, ' after the hr');
+        expect((doc.getNodeAt(2)! as ParagraphNode).text.toPlainText(), ' after the hr');
 
         // Ensure the selection was placed at the beginning of the last paragraph.
         expect(
@@ -327,14 +327,14 @@ Second paragraph"""). //
 
         // Ensure that the first node remains unchanged.
         expect(doc.getNodeAt(0)!, isA<ParagraphNode>());
-        expect((doc.getNodeAt(0)! as ParagraphNode).text.text, 'First paragraph');
+        expect((doc.getNodeAt(0)! as ParagraphNode).text.toPlainText(), 'First paragraph');
 
         // Ensure that the horizontal rule was added.
         expect(doc.getNodeAt(1)!, isA<HorizontalRuleNode>());
 
         // Ensure that an empty node was added at the end.
         expect(doc.getNodeAt(2)!, isA<ParagraphNode>());
-        expect((doc.getNodeAt(2)! as ParagraphNode).text.text, '');
+        expect((doc.getNodeAt(2)! as ParagraphNode).text.toPlainText(), '');
 
         // Ensure the selection was placed at the beginning of the last paragraph.
         expect(
@@ -373,14 +373,14 @@ Second paragraph"""). //
 
         // Ensure that the first node remains unchanged.
         expect(doc.getNodeAt(0)!, isA<ParagraphNode>());
-        expect((doc.getNodeAt(0)! as ParagraphNode).text.text, 'First paragraph');
+        expect((doc.getNodeAt(0)! as ParagraphNode).text.toPlainText(), 'First paragraph');
 
         // Ensure that the horizontal rule was added.
         expect(doc.getNodeAt(1)!, isA<HorizontalRuleNode>());
 
         // Ensure that an empty node was added at the end.
         expect(doc.getNodeAt(2)!, isA<ParagraphNode>());
-        expect((doc.getNodeAt(2)! as ParagraphNode).text.text, '');
+        expect((doc.getNodeAt(2)! as ParagraphNode).text.toPlainText(), '');
 
         // Ensure the selection was placed at the beginning of the newly created paragraph.
         expect(
@@ -417,7 +417,7 @@ Second paragraph"""). //
 
         // Ensure that an empty node was added after the horizontal rule.
         expect(doc.getNodeAt(1)!, isA<ParagraphNode>());
-        expect((doc.getNodeAt(1)! as ParagraphNode).text.text, '');
+        expect((doc.getNodeAt(1)! as ParagraphNode).text.toPlainText(), '');
 
         // Ensure that the selection was placed at the empty paragraph.
         expect(
@@ -479,7 +479,7 @@ Second paragraph"""). //
         final doc = testContext.findEditContext().document;
         expect(doc.nodeCount, 3);
         expect(doc.getNodeAt(1)!, isA<ParagraphNode>());
-        expect((doc.getNodeAt(1)! as ParagraphNode).text.text, '');
+        expect((doc.getNodeAt(1)! as ParagraphNode).text.toPlainText(), '');
         expect(
           SuperEditorInspector.findDocumentSelection(),
           DocumentSelection.collapsed(
@@ -538,7 +538,7 @@ Second paragraph"""). //
         final doc = testContext.findEditContext().document;
         expect(doc.nodeCount, 3);
         expect(doc.getNodeAt(1)!, isA<ParagraphNode>());
-        expect((doc.getNodeAt(1)! as ParagraphNode).text.text, '');
+        expect((doc.getNodeAt(1)! as ParagraphNode).text.toPlainText(), '');
         expect(
           SuperEditorInspector.findDocumentSelection(),
           DocumentSelection.collapsed(
@@ -597,7 +597,7 @@ Second paragraph"""). //
         final doc = testContext.findEditContext().document;
         expect(doc.nodeCount, 3);
         expect(doc.getNodeAt(1)!, isA<ParagraphNode>());
-        expect((doc.getNodeAt(1)! as ParagraphNode).text.text, '');
+        expect((doc.getNodeAt(1)! as ParagraphNode).text.toPlainText(), '');
         expect(
           SuperEditorInspector.findDocumentSelection(),
           DocumentSelection.collapsed(

@@ -1,3 +1,36 @@
+## [0.3.0-dev.12] - Dec 23, 2024
+ * FEATURE: Added support for inline widgets.
+ * FEATURE: Created a `ClearDocumentRequest`, which deletes all content and moves caret to the start.
+ * FIX: Web - option + arrow selection changes.
+ * FIX: `SuperTextField` (iOS) - native content menu focal point was wrong.
+ * FIX: Action tag not identified and triggered in expected situations.
+ * ADJUSTMENT: `KeyboardPanelScaffold` supports opening a panel before opening the software keyboard.
+ * ADJUSTMENT: `getDocumentPositionAfterExpandedDeletion` returns `null` for collapsed selections.
+ * ADJUSTMENT: `TaskNode` checkbox sets visual density based on `ThemeData.visualDensity`.
+
+## [0.3.0-dev.11] - Nov 26, 2024
+ * FEATURE: Add an (optional) tap handler that automatically inserts empty paragraph
+   when user taps at the end of the document.
+ * FIX: `KeyboardScaffoldSafeArea` now initializes its insets in a way that works with
+   certain navigation use-cases that previously thought the keyboard was up when it's down.
+ * FIX: Honor the Android handle builders in the Android controls controller.
+ * ADJUSTMENT: Upgraded versions for a number of dependencies.
+
+## [0.3.0-dev.10] - Nov 18, 2024
+ * FEATURE: Created `KeyboardPanelScaffold` and `KeyboardScaffoldSafeArea` to aid with
+   implementing mobile phone messaging and chat experiences.
+ * FEATURE: Added ability to show the iOS native context popover toolbar when
+   editing a document. See `iOSSystemPopoverEditorToolbarWithFallbackBuilder`
+   and `IOSSystemContextMenu`.
+ * FEATURE: Plugins can now provide their own `ComponentBuilder`s.
+ * FEATURE: Can configure block nodes as "non-deletable".
+ * FIX: CMD + RIGHT caret movement on Web.
+ * FIX: Don't restore editor selection on refocus if document changed in way that
+   invalidates the previous selection.
+ * FIX: `shrinkWrap` as `true` no longer breaks `SuperEditor`.
+ * ADJUSTMENT: Remove custom gesture handlers in `SuperEditor` and `SuperReader`
+   and utilize Flutter's built-in behaviors.
+
 ## [0.3.0-dev.9] - Sept 26, 2024
  * FEATURE: Indent for blockquotes.
 

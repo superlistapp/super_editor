@@ -186,6 +186,29 @@ void main() {
         );
       });
     });
+
+    group('getDocumentPositionAfterExpandedDeletion', () {
+      test('returns null for collapsed selection', () {
+        final node = HorizontalRuleNode(
+          id: "1",
+        );
+
+        expect(
+          CommonEditorOperations.getDocumentPositionAfterExpandedDeletion(
+            document: MutableDocument(nodes: [
+              node,
+            ]),
+            selection: DocumentSelection.collapsed(
+              position: DocumentPosition(
+                nodeId: node.id,
+                nodePosition: node.endPosition,
+              ),
+            ),
+          ),
+          isNull,
+        );
+      });
+    });
   });
 }
 

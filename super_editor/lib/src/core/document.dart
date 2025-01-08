@@ -371,6 +371,11 @@ abstract class DocumentNode {
   /// For example, a [ParagraphNode] would return [TextNodePosition(offset: text.length)].
   NodePosition get endPosition;
 
+  /// Returns `true` if this [DocumentNode] contains the given [position], or `false`
+  /// if the [position] doesn't sit within this node, or if the [position] type doesn't
+  /// apply to this [DocumentNode].
+  bool containsPosition(Object position);
+
   /// Inspects [position1] and [position2] and returns the one that's
   /// positioned further upstream in this [DocumentNode].
   ///

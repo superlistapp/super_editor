@@ -331,7 +331,7 @@ class TextDeltasDocumentEditor {
     }
 
     editorOpsLog.fine("Executing text insertion command.");
-    editorOpsLog.finer("Text before insertion: '${insertionNode.text.text}'");
+    editorOpsLog.finer("Text before insertion: '${insertionNode.text.toPlainText()}'");
     editor.execute([
       if (selection.value != DocumentSelection.collapsed(position: insertionPosition))
         ChangeSelectionRequest(
@@ -345,7 +345,7 @@ class TextDeltasDocumentEditor {
         attributions: composerPreferences.currentAttributions,
       ),
     ]);
-    editorOpsLog.finer("Text after insertion: '${insertionNode.text.text}'");
+    editorOpsLog.finer("Text after insertion: '${insertionNode.text.toPlainText()}'");
 
     return true;
   }
@@ -388,9 +388,6 @@ class TextDeltasDocumentEditor {
     editorImeLog.fine("Doc selection to delete: $docSelectionToDelete");
 
     if (docSelectionToDelete == null) {
-      final selectedNodeIndex = document.getNodeIndexById(
-        selection.value!.extent.nodeId,
-      );
       // The user is trying to delete upstream at the start of a node.
       // This action requires intervention because the IME doesn't know
       // that there's more content before this node. Instruct the editor
@@ -398,7 +395,7 @@ class TextDeltasDocumentEditor {
       // "backspace" behavior at the start of this node.
       editor.execute([
         DeleteUpstreamAtBeginningOfNodeRequest(
-          document.getNodeAt(selectedNodeIndex)!,
+          document.getNodeById(selection.value!.extent.nodeId)!,
         ),
       ]);
       return;
@@ -434,7 +431,7 @@ class TextDeltasDocumentEditor {
     final newNodeId = Editor.createNodeId();
 
     if (extentNode is ListItemNode) {
-      if (extentNode.text.text.isEmpty) {
+      if (extentNode.text.isEmpty) {
         // The list item is empty. Convert it to a paragraph.
         editorOpsLog.finer(
             "The current node is an empty list item. Converting it to a paragraph instead of inserting block-level newline.");
@@ -537,7 +534,7 @@ class TextDeltasDocumentEditor {
         ]);
       }
     } else if (extentNode is TaskNode) {
-      if (extentNode.text.text.isEmpty) {
+      if (extentNode.text.isEmpty) {
         // The task is empty. Convert it to a paragraph.
         editor.execute([
           ConvertTextNodeToParagraphRequest(nodeId: extentNode.id),

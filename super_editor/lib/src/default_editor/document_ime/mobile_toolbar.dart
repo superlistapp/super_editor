@@ -159,7 +159,8 @@ class _KeyboardEditingToolbarState extends State<KeyboardEditingToolbar> with Wi
     return Theme(
       data: Theme.of(context).copyWith(
         brightness: brightness,
-        disabledColor: brightness == Brightness.light ? Colors.black.withOpacity(0.5) : Colors.white.withOpacity(0.5),
+        disabledColor:
+            brightness == Brightness.light ? Colors.black.withValues(alpha: 0.5) : Colors.white.withValues(alpha: 0.5),
       ),
       child: IconTheme(
         data: IconThemeData(
@@ -266,11 +267,10 @@ class _KeyboardEditingToolbarState extends State<KeyboardEditingToolbar> with Wi
                               icon: const Icon(Icons.format_quote),
                             ),
                             IconButton(
-                              onPressed: isSingleNodeSelected &&
-                                      selectedNode is ParagraphNode &&
-                                      selectedNode.text.text.isEmpty
-                                  ? _toolbarOps.convertToHr
-                                  : null,
+                              onPressed:
+                                  isSingleNodeSelected && selectedNode is ParagraphNode && selectedNode.text.isEmpty
+                                      ? _toolbarOps.convertToHr
+                                      : null,
                               icon: const Icon(Icons.horizontal_rule),
                             ),
                           ],

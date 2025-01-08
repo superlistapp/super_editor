@@ -33,7 +33,7 @@ void main() {
 
       // Ensure that the text was pasted into the paragraph.
       final nodeId = doc.first.id;
-      expect(SuperEditorInspector.findTextInComponent(nodeId).text, "Pasted text: This was pasted here");
+      expect(SuperEditorInspector.findTextInComponent(nodeId).toPlainText(), "Pasted text: This was pasted here");
     });
 
     testWidgetsOnApple('pastes within a list item', (tester) async {
@@ -57,7 +57,7 @@ void main() {
 
       // Ensure that the text was pasted into the paragraph.
       final nodeId = doc.first.id;
-      expect(SuperEditorInspector.findTextInComponent(nodeId).text, "Pasted text: This was pasted here");
+      expect(SuperEditorInspector.findTextInComponent(nodeId).toPlainText(), "Pasted text: This was pasted here");
     });
 
     testAllInputsOnDesktop('pastes multiple paragraphs', (
@@ -88,9 +88,9 @@ This is the third paragraph''');
       // Ensure three paragraphs were created.
       final doc = testContext.document;
       expect(doc.nodeCount, 3);
-      expect((doc.getNodeAt(0)! as ParagraphNode).text.text, 'This is a paragraph');
-      expect((doc.getNodeAt(1)! as ParagraphNode).text.text, 'This is a second paragraph');
-      expect((doc.getNodeAt(2)! as ParagraphNode).text.text, 'This is the third paragraph');
+      expect((doc.getNodeAt(0)! as ParagraphNode).text.toPlainText(), 'This is a paragraph');
+      expect((doc.getNodeAt(1)! as ParagraphNode).text.toPlainText(), 'This is a second paragraph');
+      expect((doc.getNodeAt(2)! as ParagraphNode).text.toPlainText(), 'This is the third paragraph');
     });
 
     testAllInputsOnAllPlatforms("paste retains node IDs when replayed during undo", (
@@ -169,7 +169,7 @@ This is the third paragraph''');
 
       // Ensure that the "a" was inserted at the end of the final pasted paragraph.
       expect(
-        (testContext.document.last as TextNode).text.text,
+        (testContext.document.last as TextNode).text.toPlainText(),
         "This is the third paragrapha",
       );
 
@@ -183,7 +183,7 @@ This is the third paragraph''');
       // that the paste command's internal content wasn't mutated when we inserted the "a"
       // into the document. Such mutation was part of bug https://github.com/superlistapp/super_editor/issues/2173
       expect(
-        (testContext.document.last as TextNode).text.text,
+        (testContext.document.last as TextNode).text.toPlainText(),
         "This is the third paragraph",
       );
     });

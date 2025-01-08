@@ -28,6 +28,9 @@ abstract class BlockNode extends DocumentNode {
   UpstreamDownstreamNodePosition get endPosition => const UpstreamDownstreamNodePosition.downstream();
 
   @override
+  bool containsPosition(Object position) => position is UpstreamDownstreamNodePosition;
+
+  @override
   UpstreamDownstreamNodePosition selectUpstreamPosition(NodePosition position1, NodePosition position2) {
     if (position1 is! UpstreamDownstreamNodePosition) {
       throw Exception(
@@ -305,7 +308,7 @@ class SelectableBox extends StatelessWidget {
       child: IgnorePointer(
         child: DecoratedBox(
           decoration: BoxDecoration(
-            color: isSelected ? selectionColor.withOpacity(0.5) : Colors.transparent,
+            color: isSelected ? selectionColor.withValues(alpha: 0.5) : Colors.transparent,
           ),
           position: DecorationPosition.foreground,
           child: child,
@@ -351,7 +354,7 @@ class DeleteUpstreamAtBeginningOfBlockNodeCommand extends EditCommand {
       return;
     }
 
-    if (nodeBefore is TextNode && nodeBefore.text.text.isEmpty) {
+    if (nodeBefore is TextNode && nodeBefore.text.isEmpty) {
       executor.executeCommand(
         DeleteNodeCommand(nodeId: nodeBefore.id),
       );

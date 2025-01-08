@@ -393,8 +393,8 @@ void main() {
 
       // Ensure the document doesn't change.
       expect(
-        SuperEditorInspector.findTextInComponent('1').text,
-        (singleParagraphDoc().first as TextNode).text.text,
+        SuperEditorInspector.findTextInComponent('1').toPlainText(),
+        (singleParagraphDoc().first as TextNode).text.toPlainText(),
       );
       expect(
         SuperEditorInspector.findDocumentSelection(),
@@ -837,7 +837,7 @@ void main() {
       );
 
       // Ensure the content of the list item didn't change.
-      expect(document.first.asListItem.text.text, 'list item 1');
+      expect(document.first.asListItem.text.toPlainText(), 'list item 1');
     });
   });
 

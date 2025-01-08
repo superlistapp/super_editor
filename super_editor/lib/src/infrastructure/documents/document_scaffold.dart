@@ -40,7 +40,7 @@ class DocumentScaffold<ContextType> extends StatefulWidget {
 
   /// Builder that creates a gesture interaction widget, which is displayed
   /// beneath the document, at the same size as the viewport.
-  final WidgetBuilder gestureBuilder;
+  final Widget Function(BuildContext context, {required Widget child}) gestureBuilder;
 
   /// Builds the text input widget, if applicable. The text input system is placed
   /// above the gesture system and beneath viewport decoration.
@@ -130,24 +130,7 @@ class _DocumentScaffoldState extends State<DocumentScaffold> {
   Widget _buildGestureSystem({
     required Widget child,
   }) {
-    final ancestorScrollable = context.findAncestorScrollableWithVerticalScroll;
-    return SliverHybridStack(
-      // Ensure that gesture object fill entire viewport when not being
-      // in user specified scrollable.
-      fillViewport: ancestorScrollable == null,
-      children: [
-        // A layer that sits beneath the document and handles gestures.
-        // It's beneath the document so that components that include
-        // interactive UI, like a Checkbox, can intercept their own
-        // touch events.
-        //
-        // This layer is placed outside of `ContentLayers` because this
-        // layer needs to be wider than the document, to fill all available
-        // space.
-        widget.gestureBuilder(context),
-        child,
-      ],
-    );
+    return widget.gestureBuilder(context, child: child);
   }
 
   Widget _buildDocumentLayout() {

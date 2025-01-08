@@ -127,20 +127,31 @@ class AndroidTextFieldDragHandleSelectionStrategy {
     }
 
     final nearestPositionTextOffset = (nearestPosition.nodePosition as TextNodePosition).offset;
-    final nearestPositionNodeIndex = _document.getNodeIndexById(nearestPosition.nodeId);
-
     final previousNearestPositionTextOffset = (_lastFocalPosition!.nodePosition as TextNodePosition).offset;
-    final previousNearestPositionNodeIndex = _document.getNodeIndexById(_lastFocalPosition!.nodeId);
 
-    final didFocalPointMoveToDownstreamNode = nearestPositionNodeIndex > previousNearestPositionNodeIndex;
-    final didFocalPointMoveToUpstreamNode = nearestPositionNodeIndex < previousNearestPositionNodeIndex;
-    final didFocalPointStayInSameNode = nearestPositionNodeIndex == previousNearestPositionNodeIndex;
+    final didFocalPointStayInSameNode = _lastFocalPosition!.nodeId == nearestPosition.nodeId;
+
+    final didFocalPointMoveToDownstreamNode = _document.getAffinityBetween(
+              base: _lastFocalPosition!,
+              extent: nearestPosition,
+            ) ==
+            TextAffinity.downstream &&
+        !didFocalPointStayInSameNode;
+
+    final didFocalPointMoveToUpstreamNode = _document.getAffinityBetween(
+              base: _lastFocalPosition!,
+              extent: nearestPosition,
+            ) ==
+            TextAffinity.upstream &&
+        !didFocalPointStayInSameNode;
 
     final didFocalPointMoveDownstream = didFocalPointMoveToDownstreamNode ||
-        (didFocalPointStayInSameNode && nearestPositionTextOffset > previousNearestPositionTextOffset);
+        (didFocalPointStayInSameNode && nearestPositionTextOffset > previousNearestPositionTextOffset) ||
+        (didFocalPointStayInSameNode && details.delta.dx > 0);
 
     final didFocalPointMoveUpstream = didFocalPointMoveToUpstreamNode ||
-        (didFocalPointStayInSameNode && nearestPositionTextOffset < previousNearestPositionTextOffset);
+        (didFocalPointStayInSameNode && nearestPositionTextOffset < previousNearestPositionTextOffset) ||
+        (didFocalPointStayInSameNode && details.delta.dx < 0);
 
     _lastFocalPosition = nearestPosition;
 

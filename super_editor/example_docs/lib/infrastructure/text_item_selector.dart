@@ -145,7 +145,7 @@ class _TextItemSelectorState extends State<TextItemSelector> {
               overflow: TextOverflow.ellipsis,
               textAlign: TextAlign.left,
               style: TextStyle(
-                color: Colors.black.withOpacity(0.7),
+                color: Colors.black.withValues(alpha: 0.7),
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
               ),
@@ -185,7 +185,7 @@ class _TextItemSelectorState extends State<TextItemSelector> {
 Widget defaultPopoverListItemBuilder(BuildContext context, TextItem item, bool isActive, VoidCallback onTap) {
   return DecoratedBox(
     decoration: BoxDecoration(
-      color: isActive ? Colors.grey.withOpacity(0.2) : Colors.transparent,
+      color: isActive ? Colors.grey.withValues(alpha: 0.2) : Colors.transparent,
     ),
     child: InkWell(
       onTap: onTap,

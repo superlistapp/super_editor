@@ -43,6 +43,7 @@ class LogNames {
   static const iosTextField = 'textfield.ios';
 
   static const infrastructure = 'infrastructure';
+  static const keyboardPanel = 'infrastructure.keyboardPanel';
   static const longPressSelection = 'infrastructure.gestures.longPress';
   static const scheduler = 'infrastructure.scheduler';
   static const contentLayers = 'infrastructure.content_layers';
@@ -88,6 +89,7 @@ final iosTextFieldLog = logging.Logger(LogNames.iosTextField);
 
 final docGesturesLog = logging.Logger(LogNames.documentGestures);
 final infrastructureLog = logging.Logger(LogNames.infrastructure);
+final keyboardPanelLog = logging.Logger(LogNames.keyboardPanel);
 final longPressSelectionLog = logging.Logger(LogNames.longPressSelection);
 final schedulerLog = logging.Logger(LogNames.scheduler);
 final contentLayersLog = logging.Logger(LogNames.contentLayers);

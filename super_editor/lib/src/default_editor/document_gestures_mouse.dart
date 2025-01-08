@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/services.dart';
@@ -17,6 +18,7 @@ import 'package:super_editor/src/document_operations/selection_operations.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/flutter/flutter_scheduler.dart';
 import 'package:super_editor/src/infrastructure/multi_tap_gesture.dart';
+import 'package:super_editor/src/infrastructure/sliver_hybrid_stack.dart';
 
 import '../infrastructure/document_gestures_interaction_overrides.dart';
 
@@ -48,10 +50,11 @@ class DocumentMouseInteractor extends StatefulWidget {
     required this.getDocumentLayout,
     required this.selectionNotifier,
     required this.selectionChanges,
-    this.contentTapHandler,
+    this.contentTapHandlers,
     required this.autoScroller,
+    required this.fillViewport,
     this.showDebugPaint = false,
-    this.child,
+    required this.child,
   }) : super(key: key);
 
   final FocusNode? focusNode;
@@ -62,19 +65,26 @@ class DocumentMouseInteractor extends StatefulWidget {
   final Stream<DocumentSelectionChange> selectionChanges;
   final ValueListenable<DocumentSelection?> selectionNotifier;
 
-  /// Optional handler that responds to taps on content, e.g., opening
+  /// Optional list of handlers that respond to taps on content, e.g., opening
   /// a link when the user taps on text with a link attribution.
-  final ContentTapDelegate? contentTapHandler;
+  ///
+  /// If a handler returns [TapHandlingInstruction.halt], no subsequent handlers
+  /// nor the default tap behavior will be executed.
+  final List<ContentTapDelegate>? contentTapHandlers;
 
   /// Auto-scrolling delegate.
   final AutoScrollController autoScroller;
+
+  /// Whether the document gesture detector should fill the entire viewport
+  /// even if the actual content is smaller.
+  final bool fillViewport;
 
   /// Paints some extra visual ornamentation to help with
   /// debugging, when `true`.
   final bool showDebugPaint;
 
   /// The document to display within this [DocumentMouseInteractor].
-  final Widget? child;
+  final Widget child;
 
   @override
   State createState() => _DocumentMouseInteractorState();
@@ -118,7 +128,12 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor> with 
     widget.autoScroller
       ..addListener(_updateDragSelection)
       ..addListener(_updateMouseCursorAtLatestOffset);
-    widget.contentTapHandler?.addListener(_updateMouseCursorAtLatestOffset);
+
+    if (widget.contentTapHandlers != null) {
+      for (final handler in widget.contentTapHandlers!) {
+        handler.addListener(_updateMouseCursorAtLatestOffset);
+      }
+    }
   }
 
   @override
@@ -142,15 +157,28 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor> with 
         ..addListener(_updateDragSelection)
         ..addListener(_updateMouseCursorAtLatestOffset);
     }
-    if (widget.contentTapHandler != oldWidget.contentTapHandler) {
-      oldWidget.contentTapHandler?.removeListener(_updateMouseCursorAtLatestOffset);
-      widget.contentTapHandler?.addListener(_updateMouseCursorAtLatestOffset);
+    if (!const DeepCollectionEquality().equals(oldWidget.contentTapHandlers, widget.contentTapHandlers)) {
+      if (oldWidget.contentTapHandlers != null) {
+        for (final handler in oldWidget.contentTapHandlers!) {
+          handler.removeListener(_updateMouseCursorAtLatestOffset);
+        }
+      }
+
+      if (widget.contentTapHandlers != null) {
+        for (final handler in widget.contentTapHandlers!) {
+          handler.addListener(_updateMouseCursorAtLatestOffset);
+        }
+      }
     }
   }
 
   @override
   void dispose() {
-    widget.contentTapHandler?.removeListener(_updateMouseCursorAtLatestOffset);
+    if (widget.contentTapHandlers != null) {
+      for (final handler in widget.contentTapHandlers!) {
+        handler.removeListener(_updateMouseCursorAtLatestOffset);
+      }
+    }
     if (widget.focusNode == null) {
       _focusNode.dispose();
     }
@@ -244,24 +272,32 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor> with 
     editorGesturesLog.info("Tap up on document");
     final docOffset = _getDocOffsetFromGlobalOffset(details.globalPosition);
     editorGesturesLog.fine(" - document offset: $docOffset");
-    final docPosition = _docLayout.getDocumentPositionNearestToOffset(docOffset);
-    editorGesturesLog.fine(" - tapped document position: $docPosition");
 
     _focusNode.requestFocus();
 
+    if (widget.contentTapHandlers != null) {
+      for (final handler in widget.contentTapHandlers!) {
+        final result = handler.onTap(
+          DocumentTapDetails(
+            documentLayout: _docLayout,
+            layoutOffset: docOffset,
+            globalOffset: details.globalPosition,
+          ),
+        );
+        if (result == TapHandlingInstruction.halt) {
+          // The custom tap handler doesn't want us to react at all
+          // to the tap.
+          return;
+        }
+      }
+    }
+
+    final docPosition = _docLayout.getDocumentPositionNearestToOffset(docOffset);
+    editorGesturesLog.fine(" - tapped document position: $docPosition");
     if (docPosition == null) {
       editorGesturesLog.fine("No document content at ${details.globalPosition}.");
       _clearSelection();
       return;
-    }
-
-    if (widget.contentTapHandler != null) {
-      final result = widget.contentTapHandler!.onTap(docPosition);
-      if (result == TapHandlingInstruction.halt) {
-        // The custom tap handler doesn't want us to react at all
-        // to the tap.
-        return;
-      }
     }
 
     final tappedComponent = _docLayout.getComponentByNodeId(docPosition.nodeId)!;
@@ -301,18 +337,26 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor> with 
     editorGesturesLog.info("Double tap down on document");
     final docOffset = _getDocOffsetFromGlobalOffset(details.globalPosition);
     editorGesturesLog.fine(" - document offset: $docOffset");
-    final docPosition = _docLayout.getDocumentPositionNearestToOffset(docOffset);
-    editorGesturesLog.fine(" - tapped document position: $docPosition");
 
-    if (docPosition != null && widget.contentTapHandler != null) {
-      final result = widget.contentTapHandler!.onDoubleTap(docPosition);
-      if (result == TapHandlingInstruction.halt) {
-        // The custom tap handler doesn't want us to react at all
-        // to the tap.
-        return;
+    if (widget.contentTapHandlers != null) {
+      for (final handler in widget.contentTapHandlers!) {
+        final result = handler.onDoubleTap(
+          DocumentTapDetails(
+            documentLayout: _docLayout,
+            layoutOffset: docOffset,
+            globalOffset: details.globalPosition,
+          ),
+        );
+        if (result == TapHandlingInstruction.halt) {
+          // The custom tap handler doesn't want us to react at all
+          // to the tap.
+          return;
+        }
       }
     }
 
+    final docPosition = _docLayout.getDocumentPositionNearestToOffset(docOffset);
+    editorGesturesLog.fine(" - tapped document position: $docPosition");
     if (docPosition != null) {
       final tappedComponent = _docLayout.getComponentByNodeId(docPosition.nodeId)!;
       if (!tappedComponent.isVisualSelectionSupported()) {
@@ -402,18 +446,26 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor> with 
     editorGesturesLog.info("Triple down down on document");
     final docOffset = _getDocOffsetFromGlobalOffset(details.globalPosition);
     editorGesturesLog.fine(" - document offset: $docOffset");
-    final docPosition = _docLayout.getDocumentPositionNearestToOffset(docOffset);
-    editorGesturesLog.fine(" - tapped document position: $docPosition");
 
-    if (docPosition != null && widget.contentTapHandler != null) {
-      final result = widget.contentTapHandler!.onTripleTap(docPosition);
-      if (result == TapHandlingInstruction.halt) {
-        // The custom tap handler doesn't want us to react at all
-        // to the tap.
-        return;
+    if (widget.contentTapHandlers != null) {
+      for (final handler in widget.contentTapHandlers!) {
+        final result = handler.onTripleTap(
+          DocumentTapDetails(
+            documentLayout: _docLayout,
+            layoutOffset: docOffset,
+            globalOffset: details.globalPosition,
+          ),
+        );
+        if (result == TapHandlingInstruction.halt) {
+          // The custom tap handler doesn't want us to react at all
+          // to the tap.
+          return;
+        }
       }
     }
 
+    final docPosition = _docLayout.getDocumentPositionNearestToOffset(docOffset);
+    editorGesturesLog.fine(" - tapped document position: $docPosition");
     if (docPosition != null) {
       final tappedComponent = _docLayout.getComponentByNodeId(docPosition.nodeId)!;
       if (!tappedComponent.isVisualSelectionSupported()) {
@@ -510,16 +562,6 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor> with 
     editorGesturesLog
         .info("Pan update on document, global offset: ${details.globalPosition}, device: $_panGestureDevice");
 
-    if (_panGestureDevice == PointerDeviceKind.trackpad) {
-      // The user dragged using two fingers on a trackpad.
-      // Scroll the document and keep the selection unchanged.
-      // We multiply by -1 because the scroll should be in the opposite
-      // direction of the drag, e.g., dragging up on a trackpad scrolls
-      // the document to downstream direction.
-      _scrollVertically(details.delta.dy * -1);
-      return;
-    }
-
     setState(() {
       _dragEndGlobal = details.globalPosition;
 
@@ -533,13 +575,6 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor> with 
 
   void _onPanEnd(DragEndDetails details) {
     editorGesturesLog.info("Pan end on document, device: $_panGestureDevice");
-
-    if (_panGestureDevice == PointerDeviceKind.trackpad) {
-      // The user ended a pan gesture with two fingers on a trackpad.
-      // We already scrolled the document.
-      widget.autoScroller.goBallistic(-details.velocity.pixelsPerSecond.dy);
-      return;
-    }
     _onDragEnd();
   }
 
@@ -556,25 +591,10 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor> with 
       _expandSelectionDuringDrag = false;
       _wordSelectionUpstream = null;
       _wordSelectionDownstream = null;
+      _selectionType = SelectionType.position;
     });
 
     widget.autoScroller.disableAutoScrolling();
-  }
-
-  /// Scrolls the document vertically by [delta] pixels.
-  void _scrollVertically(double delta) {
-    widget.autoScroller.jumpBy(delta);
-    _updateDragSelection();
-  }
-
-  /// We prevent SingleChildScrollView from processing mouse events because
-  /// it scrolls by drag by default, which we don't want. However, we do
-  /// still want mouse scrolling. This method re-implements a primitive
-  /// form of mouse scrolling.
-  void _scrollOnMouseWheel(PointerSignalEvent event) {
-    if (event is PointerScrollEvent) {
-      _scrollVertically(event.scrollDelta.dy);
-    }
   }
 
   void _updateDragSelection() {
@@ -741,20 +761,34 @@ Updating drag selection:
       return;
     }
 
-    final cursorForContent = widget.contentTapHandler?.mouseCursorForContentHover(docPosition);
-    _mouseCursor.value = cursorForContent ?? SystemMouseCursors.text;
+    if (widget.contentTapHandlers != null) {
+      for (final handler in widget.contentTapHandlers!) {
+        final cursorForContent = handler.mouseCursorForContentHover(docPosition);
+        if (cursorForContent != null) {
+          _mouseCursor.value = cursorForContent;
+          return;
+        }
+      }
+    }
+
+    _mouseCursor.value = SystemMouseCursors.text;
   }
 
   @override
   Widget build(BuildContext context) {
-    return Listener(
-      onPointerSignal: _scrollOnMouseWheel,
-      onPointerHover: _onMouseMove,
-      child: _buildCursorStyle(
-        child: _buildGestureInput(
-          child: widget.child ?? const SizedBox(),
+    return SliverHybridStack(
+      fillViewport: widget.fillViewport,
+      children: [
+        Listener(
+          onPointerHover: _onMouseMove,
+          child: _buildCursorStyle(
+            child: _buildGestureInput(
+              child: const SizedBox(),
+            ),
+          ),
         ),
-      ),
+        widget.child,
+      ],
     );
   }
 
@@ -794,7 +828,10 @@ Updating drag selection:
           },
         ),
         PanGestureRecognizer: GestureRecognizerFactoryWithHandlers<PanGestureRecognizer>(
-          () => PanGestureRecognizer(),
+          () => PanGestureRecognizer(supportedDevices: {
+            PointerDeviceKind.mouse,
+            PointerDeviceKind.touch,
+          }),
           (PanGestureRecognizer recognizer) {
             recognizer
               ..onStart = _onPanStart

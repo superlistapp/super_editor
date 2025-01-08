@@ -213,6 +213,7 @@ class TaskComponentViewModel extends SingleColumnLayoutComponentViewModel with T
     required this.setComplete,
     required this.text,
     required this.textStyleBuilder,
+    this.inlineWidgetBuilders = const [],
     this.textDirection = TextDirection.ltr,
     this.textAlignment = TextAlign.left,
     this.selection,
@@ -246,6 +247,8 @@ class TaskComponentViewModel extends SingleColumnLayoutComponentViewModel with T
   @override
   AttributionStyleBuilder textStyleBuilder;
   @override
+  InlineWidgetBuilderChain inlineWidgetBuilders;
+  @override
   TextDirection textDirection;
   @override
   TextAlign textAlignment;
@@ -268,6 +271,7 @@ class TaskComponentViewModel extends SingleColumnLayoutComponentViewModel with T
       setComplete: setComplete,
       text: text,
       textStyleBuilder: textStyleBuilder,
+      inlineWidgetBuilders: inlineWidgetBuilders,
       textDirection: textDirection,
       selection: selection,
       selectionColor: selectionColor,
@@ -384,6 +388,7 @@ class _TaskComponentState extends State<TaskComponent> with ProxyDocumentCompone
         Padding(
           padding: const EdgeInsets.only(left: 16, right: 4),
           child: Checkbox(
+            visualDensity: Theme.of(context).visualDensity,
             value: widget.viewModel.isComplete,
             onChanged: (newValue) {
               widget.viewModel.setComplete(newValue!);
@@ -395,6 +400,7 @@ class _TaskComponentState extends State<TaskComponent> with ProxyDocumentCompone
             key: _textKey,
             text: widget.viewModel.text,
             textStyleBuilder: _computeStyles,
+            inlineWidgetBuilders: widget.viewModel.inlineWidgetBuilders,
             textSelection: widget.viewModel.selection,
             selectionColor: widget.viewModel.selectionColor,
             highlightWhenEmpty: widget.viewModel.highlightWhenEmpty,
@@ -432,7 +438,7 @@ ExecutionInstruction enterToInsertNewTask({
     return ExecutionInstruction.continueExecution;
   }
 
-  if (node.text.text.isEmpty) {
+  if (node.text.isEmpty) {
     // The task is empty. Convert it to a paragraph.
     editContext.editor.execute([
       ConvertTextNodeToParagraphRequest(nodeId: node.id),
@@ -521,12 +527,11 @@ ExecutionInstruction tabToIndentTask({
     return ExecutionInstruction.continueExecution;
   }
 
-  final nodeIndex = editContext.document.getNodeIndexById(node.id);
-  if (nodeIndex == 0) {
+  final taskAbove = editContext.document.getNodeBefore(node);
+  if (taskAbove == null) {
     // No task above us, so we can't indent.
     return ExecutionInstruction.continueExecution;
   }
-  final taskAbove = editContext.document.getNodeAt(nodeIndex - 1);
   if (taskAbove is! TaskNode) {
     // The node above isn't a task. We can't indent.
     return ExecutionInstruction.continueExecution;
@@ -916,12 +921,7 @@ class IndentTaskCommand extends EditCommand {
       return;
     }
 
-    final taskIndex = document.getNodeIndexById(task.id);
-    if (taskIndex == 0) {
-      // There's no task above this task, therefore it can't be indented.
-      return;
-    }
-    final taskAbove = document.getNodeAt(taskIndex - 1);
+    final taskAbove = document.getNodeBefore(task);
     if (taskAbove is! TaskNode) {
       // There's no task above this task, therefore it can't be indented.
       return;
@@ -974,9 +974,9 @@ class UnIndentTaskCommand extends EditCommand {
     }
 
     final subTasks = <TaskNode>[];
-    int index = document.getNodeIndexById(task.id) + 1;
-    while (index < document.nodeCount) {
-      final subTask = document.getNodeAt(index);
+    var nextNode = document.getNodeAfter(task);
+    while (nextNode != null) {
+      final subTask = nextNode;
       if (subTask is! TaskNode) {
         break;
       }
@@ -985,7 +985,7 @@ class UnIndentTaskCommand extends EditCommand {
       }
 
       subTasks.add(subTask);
-      index += 1;
+      nextNode = document.getNodeAfter(nextNode);
     }
 
     final changeLog = <DocumentEdit>[];
@@ -1080,8 +1080,7 @@ class UpdateSubTaskIndentAfterTaskDeletionReaction extends EditReaction {
     final document = editorContext.document;
     final changeIndentationRequests = <EditRequest>[];
     int maxIndentation = 0;
-    for (int i = 0; i < document.nodeCount; i += 1) {
-      final node = document.getNodeAt(i);
+    for (final node in document) {
       if (node is! TaskNode) {
         // This node isn't a task. The first task in a list of tasks
         // can't have an indent, so reset the max indent back to zero.

@@ -1,5 +1,6 @@
 import 'dart:ui' as ui;
 
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:super_editor/super_editor.dart';
@@ -378,6 +379,9 @@ void main() {
               const DocumentPosition(nodeId: "1", nodePosition: TextNodePosition(offset: 34)),
             );
             await tester.pumpAndSettle();
+            // Wait a bit to ensure that the interactor recognizer doesn't consider this a double
+            // tap.
+            await tester.pump(kDoubleTapTimeout + const Duration(milliseconds: 1));
 
             final dragDelta = SuperEditorInspector.findDeltaBetweenCharactersInTextNode("1", 34, 28);
             final handleRectGlobal = SuperEditorInspector.findMobileCaret().globalRect;
@@ -409,6 +413,9 @@ void main() {
               const DocumentPosition(nodeId: "1", nodePosition: TextNodePosition(offset: 34)),
             );
             await tester.pumpAndSettle();
+            // Wait a bit to ensure that the interactor recognizer doesn't consider this a double
+            // tap.
+            await tester.pump(kDoubleTapTimeout + const Duration(milliseconds: 1));
 
             final dragDelta = SuperEditorInspector.findDeltaBetweenCharactersInTextNode("1", 34, 39);
             final handleRectGlobal = SuperEditorInspector.findMobileCaret().globalRect;

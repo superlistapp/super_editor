@@ -248,7 +248,7 @@ class _DocsEditorToolbarState extends State<DocsEditorToolbar> {
   /// Applies the link entered on the URL textfield to the current
   /// selected range.
   void _applyLink() {
-    final url = _urlController!.text.text;
+    final url = _urlController!.text.toPlainText(includePlaceholders: false);
 
     final selection = widget.composer.selection!;
     final baseOffset = (selection.base.nodePosition as TextPosition).offset;
@@ -440,10 +440,11 @@ class _DocsEditorToolbarState extends State<DocsEditorToolbar> {
     int startOffset = range.start;
     int endOffset = range.end;
 
-    while (startOffset < range.end && text.text[startOffset] == ' ') {
+    final plainText = text.toPlainText();
+    while (startOffset < range.end && plainText[startOffset] == ' ') {
       startOffset += 1;
     }
-    while (endOffset > startOffset && text.text[endOffset] == ' ') {
+    while (endOffset > startOffset && plainText[endOffset] == ' ') {
       endOffset -= 1;
     }
 
@@ -865,7 +866,7 @@ class _DocsEditorToolbarState extends State<DocsEditorToolbar> {
               itemBuilder: (context, item, isActive, onTap) => SizedBox(
                 height: 40,
                 child: ColoredBox(
-                  color: isActive ? Colors.grey.withOpacity(0.2) : Colors.transparent,
+                  color: isActive ? Colors.grey.withValues(alpha: 0.2) : Colors.transparent,
                   child: Padding(
                     padding: const EdgeInsets.all(8.0),
                     child: Row(
@@ -936,7 +937,7 @@ class _DocsEditorToolbarState extends State<DocsEditorToolbar> {
         onSelected: _onChangeBlockTypeRequested,
         itemBuilder: (context, item, isActive, onTap) => DecoratedBox(
           decoration: BoxDecoration(
-            color: isActive ? Colors.grey.withOpacity(0.2) : Colors.transparent,
+            color: isActive ? Colors.grey.withValues(alpha: 0.2) : Colors.transparent,
           ),
           child: InkWell(
             onTap: onTap,
@@ -995,7 +996,7 @@ class _DocsEditorToolbarState extends State<DocsEditorToolbar> {
         ),
         itemBuilder: (context, item, isActive, onTap) => DecoratedBox(
           decoration: BoxDecoration(
-            color: isActive ? Colors.grey.withOpacity(0.2) : Colors.transparent,
+            color: isActive ? Colors.grey.withValues(alpha: 0.2) : Colors.transparent,
           ),
           child: InkWell(
             onTap: onTap,

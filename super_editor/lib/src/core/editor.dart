@@ -1259,6 +1259,12 @@ class MutableDocument with Iterable<DocumentNode> implements Document, Editable 
     return isRemoved;
   }
 
+  /// Deletes all nodes from the [Document].
+  void clear() {
+    _nodes.clear();
+    _refreshNodeIdCaches();
+  }
+
   /// Moves a [DocumentNode] matching the given [nodeId] from its current index
   /// in the [Document] to the given [targetIndex].
   ///
@@ -1321,11 +1327,21 @@ class MutableDocument with Iterable<DocumentNode> implements Document, Editable 
     if (_nodes.length != other.nodeCount) {
       return false;
     }
+    if (isEmpty) {
+      // Both documents are empty, and therefore are equivalent.
+      return true;
+    }
 
-    for (int i = 0; i < _nodes.length; ++i) {
-      if (!_nodes[i].hasEquivalentContent(other.getNodeAt(i)!)) {
+    DocumentNode? thisDocNode = first;
+    DocumentNode? otherDocNode = other.first;
+
+    while (thisDocNode != null && otherDocNode != null) {
+      if (!thisDocNode.hasEquivalentContent(otherDocNode)) {
         return false;
       }
+
+      thisDocNode = getNodeAfter(thisDocNode);
+      otherDocNode = other.getNodeAfter(otherDocNode);
     }
 
     return true;

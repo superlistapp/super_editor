@@ -326,7 +326,7 @@ class _TextScrollViewState extends State<TextScrollView>
     final textPositionAtRightEnd = _textLayout.getPositionNearestToOffset(
       Offset(viewportWidth + _scrollController.offset + textOffsetInViewport.dx, 5),
     );
-    final nextPosition = textPositionAtRightEnd.offset >= widget.textEditingController.text.text.length - 1
+    final nextPosition = textPositionAtRightEnd.offset >= widget.textEditingController.text.length - 1
         ? textPositionAtRightEnd
         : TextPosition(offset: textPositionAtRightEnd.offset + 1);
     return _textLayout.getOffsetAtPosition(nextPosition).dx + textOffsetInViewport.dx;
@@ -448,7 +448,7 @@ class _TextScrollViewState extends State<TextScrollView>
           child: IgnorePointer(
             child: Container(
               height: _mulitlineFieldAutoScrollGap,
-              color: Colors.purpleAccent.withOpacity(0.5),
+              color: Colors.purpleAccent.withValues(alpha: 0.5),
             ),
           ),
         ),
@@ -459,7 +459,7 @@ class _TextScrollViewState extends State<TextScrollView>
           child: IgnorePointer(
             child: Container(
               height: _mulitlineFieldAutoScrollGap,
-              color: Colors.purpleAccent.withOpacity(0.5),
+              color: Colors.purpleAccent.withValues(alpha: 0.5),
             ),
           ),
         ),
@@ -472,7 +472,7 @@ class _TextScrollViewState extends State<TextScrollView>
           bottom: 0,
           child: Container(
             width: _singleLineFieldAutoScrollGap,
-            color: Colors.purpleAccent.withOpacity(0.5),
+            color: Colors.purpleAccent.withValues(alpha: 0.5),
           ),
         ),
         Positioned(
@@ -481,7 +481,7 @@ class _TextScrollViewState extends State<TextScrollView>
           bottom: 0,
           child: Container(
             width: _singleLineFieldAutoScrollGap,
-            color: Colors.purpleAccent.withOpacity(0.5),
+            color: Colors.purpleAccent.withValues(alpha: 0.5),
           ),
         ),
       ];
@@ -856,7 +856,7 @@ class TextScrollController with ChangeNotifier {
       return;
     }
 
-    if (_textController.text.text.isEmpty) {
+    if (_textController.text.isEmpty) {
       // There is no text to make visible.
       return;
     }
@@ -880,7 +880,7 @@ class TextScrollController with ChangeNotifier {
       return;
     }
 
-    if (_textController.text.text.isEmpty) {
+    if (_textController.text.isEmpty) {
       // There is no text to make visible.
       return;
     }
@@ -915,7 +915,7 @@ class TextScrollController with ChangeNotifier {
       final extraSpacingAboveTop = (isAtFirstLine ? rectInContentSpace.height / 2 : 0);
 
       final lastCharRect =
-          _delegate!.getViewportCharacterRectAtPosition(TextPosition(offset: _textController.text.text.length - 1));
+          _delegate!.getViewportCharacterRectAtPosition(TextPosition(offset: _textController.text.length - 1));
       final isAtLastLine = rectInContentSpace.top == lastCharRect.top;
       final extraSpacingBelowBottom = (isAtLastLine ? rectInContentSpace.height / 2 : 0);
       if (rectInContentSpace.top - extraSpacingAboveTop - _scrollOffset < 0) {

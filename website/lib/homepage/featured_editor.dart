@@ -142,14 +142,16 @@ class _FeaturedEditorState extends State<FeaturedEditor> {
       overlayChildBuilder: _buildFloatingToolbar,
       child: KeyedSubtree(
         key: _viewportKey,
-        child: SuperEditor(
-          editor: _docEditor,
-          document: _doc,
-          composer: _composer,
-          documentLayoutKey: _docLayoutKey,
-          focusNode: _editorFocusNode,
-          stylesheet: _getEditorStyleSheet(),
-          selectionLayerLinks: _selectionLayerLinks,
+        child: CustomScrollView(
+          slivers: [
+            SuperEditor(
+              editor: _docEditor,
+              documentLayoutKey: _docLayoutKey,
+              focusNode: _editorFocusNode,
+              stylesheet: _getEditorStyleSheet(),
+              selectionLayerLinks: _selectionLayerLinks,
+            ),
+          ],
         ),
       ),
     );

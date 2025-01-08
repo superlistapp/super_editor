@@ -81,7 +81,7 @@ class HeaderConversionReaction extends ParagraphPrefixConversionReaction {
       ),
       extent: DocumentPosition(
         nodeId: paragraph.id,
-        nodePosition: TextNodePosition(offset: paragraph.text.text.indexOf(" ") + 1),
+        nodePosition: TextNodePosition(offset: paragraph.text.toPlainText().indexOf(" ") + 1),
       ),
     );
 
@@ -316,7 +316,7 @@ class HorizontalRuleConversionReaction extends EditReaction {
 
     final textInsertionEvent = edit.change as TextInsertionEvent;
     final paragraph = document.getNodeById(textInsertionEvent.nodeId) as TextNode;
-    final match = _hrPattern.firstMatch(paragraph.text.text)?.group(0);
+    final match = _hrPattern.firstMatch(paragraph.text.toPlainText())?.group(0);
     if (match == null) {
       return;
     }
@@ -377,7 +377,7 @@ abstract class ParagraphPrefixConversionReaction extends EditReaction {
     if (typedText == null) {
       return;
     }
-    if (_requireSpaceInsertion && !typedText.text.text.endsWith(" ")) {
+    if (_requireSpaceInsertion && !typedText.text.toPlainText().endsWith(" ")) {
       return;
     }
 
@@ -386,7 +386,7 @@ abstract class ParagraphPrefixConversionReaction extends EditReaction {
       return;
     }
 
-    final match = pattern.firstMatch(paragraph.text.text)?.group(0);
+    final match = pattern.firstMatch(paragraph.text.toPlainText())?.group(0);
     if (match == null) {
       return;
     }
@@ -447,7 +447,7 @@ class ImageUrlConversionReaction extends EditReaction {
 
     // Check if the submitted paragraph is comprised of a single URL.
     final extractedLinks = linkify(
-      previousNode.text.text,
+      previousNode.text.toPlainText(),
       options: const LinkifyOptions(
         humanize: false,
       ),
@@ -461,7 +461,7 @@ class ImageUrlConversionReaction extends EditReaction {
     }
 
     final url = extractedLinks.firstWhere((element) => element is UrlElement).text;
-    if (url != previousNode.text.text.trim()) {
+    if (url != previousNode.text.toPlainText().trim()) {
       // There's more in the paragraph than just a URL. This reaction
       // doesn't apply.
       editorOpsLog.finer("Paragraph had more than just a URL");
@@ -472,7 +472,7 @@ class ImageUrlConversionReaction extends EditReaction {
     // URL is an image. If it is, replace the submitted paragraph with
     // an image.
     // TODO: move the URL lookup into a behavior within the node. We don't want async reaction behaviors.
-    final originalText = previousNode.text.text;
+    final originalText = previousNode.text.toPlainText();
     _isImageUrl(url).then((isImage) {
       if (!isImage) {
         editorOpsLog.finer("Checked URL, but it's not an image");
@@ -486,7 +486,7 @@ class ImageUrlConversionReaction extends EditReaction {
         editorOpsLog.finer('The node has become something other than a ParagraphNode ($node). Can\'t convert node.');
         return;
       }
-      final currentText = node.text.text;
+      final currentText = node.text.toPlainText();
       if (currentText.trim() != originalText.trim()) {
         editorOpsLog.finer('The node content changed in a non-trivial way. Aborting node conversion.');
         return;
@@ -574,7 +574,7 @@ class LinkifyReaction extends EditReaction {
       final edit = edits[i];
       if (edit is DocumentEdit) {
         final change = edit.change;
-        if (change is TextInsertionEvent && change.text.text == " ") {
+        if (change is TextInsertionEvent && change.text.toPlainText() == " ") {
           // Every space insertion might appear after a URL.
           linkifyCandidate = change;
           didInsertSpace = true;
@@ -648,7 +648,7 @@ class LinkifyReaction extends EditReaction {
 
   /// Extracts a word ending at [endOffset] tries to linkify it.
   void _extractUpstreamWordAndLinkify(AttributedText text, int endOffset) {
-    final wordStartOffset = _moveOffsetByWord(text.text, endOffset, true) ?? 0;
+    final wordStartOffset = _moveOffsetByWord(text.toPlainText(), endOffset, true) ?? 0;
     final word = text.substring(wordStartOffset, endOffset);
 
     // Ensure that the preceding word doesn't already contain a full or partial
@@ -865,7 +865,7 @@ class LinkifyReaction extends EditReaction {
           documentRange: linkRange,
           attributions: {
             LinkAttribution.fromUri(
-              parseLink(changedNodeText.text.substring(rangeToUpdate.start, rangeToUpdate.end + 1)),
+              parseLink(changedNodeText.toPlainText().substring(rangeToUpdate.start, rangeToUpdate.end + 1)),
             )
           },
         ),
@@ -943,7 +943,7 @@ class DashConversionReaction extends EditReaction {
       if (change is! TextInsertionEvent) {
         continue;
       }
-      if (change.text.text != "-") {
+      if (change.text.toPlainText() != "-") {
         continue;
       }
 
@@ -962,7 +962,7 @@ class DashConversionReaction extends EditReaction {
     }
 
     final insertionNode = document.getNodeById(dashInsertionEvent.nodeId) as TextNode;
-    final upstreamCharacter = insertionNode.text.text[dashInsertionEvent.offset - 1];
+    final upstreamCharacter = insertionNode.text.toPlainText()[dashInsertionEvent.offset - 1];
     if (upstreamCharacter != '-') {
       return;
     }
@@ -1039,7 +1039,7 @@ class EditInspector {
     if (textInsertionEvent is! TextInsertionEvent) {
       return false;
     }
-    if (textInsertionEvent.text.text != " ") {
+    if (textInsertionEvent.text.toPlainText() != " ") {
       return false;
     }
 
@@ -1059,8 +1059,8 @@ class EditInspector {
   /// Finds and returns the last text the user typed within the given [edit]s, or `null` if
   /// no text was typed.
   static UserTypedText? findLastTextUserTyped(Document document, List<EditEvent> edits) {
-    final lastSpaceInsertion = edits.whereType<DocumentEdit>().lastWhereOrNull(
-        (edit) => edit.change is TextInsertionEvent && (edit.change as TextInsertionEvent).text.text.endsWith(" "));
+    final lastSpaceInsertion = edits.whereType<DocumentEdit>().lastWhereOrNull((edit) =>
+        edit.change is TextInsertionEvent && (edit.change as TextInsertionEvent).text.toPlainText().endsWith(" "));
     if (lastSpaceInsertion == null) {
       // The user didn't insert any text segment that ended with a space.
       return null;
