@@ -674,8 +674,6 @@ class LinkifyReaction extends EditReaction {
       LinkAttribution.fromUri(uri),
       SpanRange(wordStartOffset, endOffset - 1),
     );
-
-    // Failed to parse the upstream word as a URL or URI. Don't linkify anything.
   }
 
   int? _moveOffsetByWord(String text, int textOffset, bool upstream) {

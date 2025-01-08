@@ -1109,7 +1109,6 @@ void main() {
 
         // Ensure it's linkified with a URL schema.
         var text = SuperEditorInspector.findTextInComponent("1");
-        text = SuperEditorInspector.findTextInComponent("1");
 
         expect(text.toPlainText(), "www.google.com ");
         expect(
@@ -1142,7 +1141,6 @@ void main() {
 
         // Ensure it's linkified with a URL schema.
         var text = SuperEditorInspector.findTextInComponent("1");
-        text = SuperEditorInspector.findTextInComponent("1");
 
         expect(text.toPlainText(), "obsidian://open?vault=MyVault ");
         expect(
@@ -1258,7 +1256,6 @@ void main() {
 
         // Ensure it's linkified with a URL schema.
         var text = SuperEditorInspector.findTextInComponent("1");
-        text = SuperEditorInspector.findTextInComponent("1");
 
         expect(text.toPlainText(), "Hello www.google.com world");
         expect(
@@ -1389,7 +1386,6 @@ void main() {
 
         // Ensure it's linkified with a URL schema.
         var text = SuperEditorInspector.findTextInComponent("1");
-        text = SuperEditorInspector.findTextInComponent("1");
 
         expect(text.toPlainText(), "me@gmail.com ");
         expect(
