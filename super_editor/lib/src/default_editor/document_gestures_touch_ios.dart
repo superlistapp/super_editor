@@ -1506,23 +1506,25 @@ class SuperEditorIosMagnifierOverlayManagerState extends State<SuperEditorIosMag
     // When the user is dragging an overlay handle, SuperEditor
     // position a Leader with a LeaderLink. This magnifier follows that Leader
     // via the LeaderLink.
-    return ValueListenableBuilder(
-      valueListenable: _controlsController!.shouldShowMagnifier,
-      builder: (context, shouldShowMagnifier, child) {
-        return _controlsController!.magnifierBuilder != null //
-            ? _controlsController!.magnifierBuilder!(
-                context,
-                DocumentKeys.magnifier,
-                _controlsController!.magnifierFocalPoint,
-                shouldShowMagnifier,
-              )
-            : _buildDefaultMagnifier(
-                context,
-                DocumentKeys.magnifier,
-                _controlsController!.magnifierFocalPoint,
-                shouldShowMagnifier,
-              );
-      },
+    return IgnorePointer(
+      child: ValueListenableBuilder(
+        valueListenable: _controlsController!.shouldShowMagnifier,
+        builder: (context, shouldShowMagnifier, child) {
+          return _controlsController!.magnifierBuilder != null //
+              ? _controlsController!.magnifierBuilder!(
+                  context,
+                  DocumentKeys.magnifier,
+                  _controlsController!.magnifierFocalPoint,
+                  shouldShowMagnifier,
+                )
+              : _buildDefaultMagnifier(
+                  context,
+                  DocumentKeys.magnifier,
+                  _controlsController!.magnifierFocalPoint,
+                  shouldShowMagnifier,
+                );
+        },
+      ),
     );
   }
 

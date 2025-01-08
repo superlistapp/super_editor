@@ -244,8 +244,7 @@ void main() {
 
       // Resolve the gesture so that we don't have pending gesture timers.
       await gesture.up();
-      // Let the magnifier exit animation run.
-      await tester.pumpAndSettle();
+      await tester.pump(kDoubleTapTimeout);
 
       // Ensure that the selection moved to "con|sectetur".
       expect(
