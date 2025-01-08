@@ -36,50 +36,77 @@ import 'layout_single_column/layout_single_column.dart';
 /// [DocumentNode] that represents a task to complete.
 ///
 /// A task can either be complete, or incomplete.
+@immutable
 class TaskNode extends TextNode {
   TaskNode({
-    required String id,
-    required AttributedText text,
-    Map<String, dynamic>? metadata,
-    required bool isComplete,
-    int indent = 0,
-  })  : _isComplete = isComplete,
-        _indent = indent,
-        super(id: id, text: text, metadata: metadata) {
+    required super.id,
+    required super.text,
+    super.metadata,
+    required this.isComplete,
+    this.indent = 0,
+  }) {
     // Set a block type so that TaskNode's can be styled by
     // StyleRule's.
-    putMetadataValue("blockType", const NamedAttribution("task"));
+    initAddToMetadata({"blockType": const NamedAttribution("task")});
   }
 
   /// Whether this task is complete.
-  bool get isComplete => _isComplete;
-  bool _isComplete;
-  set isComplete(bool newValue) {
-    if (newValue == _isComplete) {
-      return;
-    }
-
-    _isComplete = newValue;
-    notifyListeners();
-  }
+  final bool isComplete;
 
   /// The indent level of this task - `0` is no indent.
   ///
   /// A task can only be indented one level beyond its parent task.
-  int get indent => _indent;
-  int _indent;
-  set indent(int newValue) {
-    if (newValue == _indent) {
-      return;
-    }
-
-    _indent = newValue;
-    notifyListeners();
-  }
+  final int indent;
 
   @override
   bool hasEquivalentContent(DocumentNode other) {
     return other is TaskNode && isComplete == other.isComplete && text == other.text;
+  }
+
+  TaskNode copyTaskWith({
+    String? id,
+    AttributedText? text,
+    Map<String, dynamic>? metadata,
+    bool? isComplete,
+    int? indent,
+  }) {
+    return TaskNode(
+      id: id ?? this.id,
+      text: text ?? this.text,
+      metadata: metadata ?? this.metadata,
+      isComplete: isComplete ?? this.isComplete,
+      indent: indent ?? this.indent,
+    );
+  }
+
+  @override
+  TaskNode copyTextNodeWith({
+    String? id,
+    AttributedText? text,
+    Map<String, dynamic>? metadata,
+  }) {
+    return copyTaskWith(
+      id: id,
+      text: text,
+      metadata: metadata,
+    );
+  }
+
+  @override
+  TaskNode copyAndReplaceMetadata(Map<String, dynamic> newMetadata) {
+    return copyTaskWith(
+      metadata: newMetadata,
+    );
+  }
+
+  @override
+  TaskNode copyWithAddedMetadata(Map<String, dynamic> newProperties) {
+    return copyTaskWith(
+      metadata: {
+        ...metadata,
+        ...newProperties,
+      },
+    );
   }
 
   @override
@@ -103,6 +130,10 @@ class TaskNode extends TextNode {
 
   @override
   int get hashCode => super.hashCode ^ isComplete.hashCode ^ indent.hashCode;
+}
+
+extension TaskNodeType on DocumentNode {
+  TaskNode get asTask => this as TaskNode;
 }
 
 /// Styles all task components to apply top padding
@@ -640,7 +671,10 @@ class ChangeTaskCompletionCommand extends EditCommand {
       return;
     }
 
-    taskNode.isComplete = isComplete;
+    context.document.replaceNodeById(
+      taskNode.id,
+      taskNode.copyTaskWith(isComplete: isComplete),
+    );
 
     executor.logChanges([
       DocumentEdit(
@@ -751,7 +785,7 @@ class ConvertTaskToParagraphCommand extends EditCommand {
       text: taskNode.text,
       metadata: newMetadata,
     );
-    document.replaceNode(oldNode: taskNode, newNode: newParagraphNode);
+    document.replaceNodeById(taskNode.id, newParagraphNode);
 
     executor.logChanges([
       DocumentEdit(
@@ -816,10 +850,13 @@ class SplitExistingTaskCommand extends EditCommand {
     );
 
     // Remove the text after the caret from the currently selected TaskNode.
-    node.text = node.text.removeRegion(startOffset: splitOffset, endOffset: node.text.length);
+    final updatedNode = node.copyTextNodeWith(
+      text: node.text.removeRegion(startOffset: splitOffset, endOffset: node.text.length),
+    );
+    document.replaceNodeById(node.id, updatedNode);
 
     // Insert a new TextNode after the currently selected TaskNode.
-    document.insertNodeAfter(existingNode: node, newNode: newTaskNode);
+    document.insertNodeAfter(existingNodeId: updatedNode.id, newNode: newTaskNode);
 
     // Move the caret to the beginning of the new TaskNode.
     final oldSelection = composer.selection;
@@ -897,7 +934,10 @@ class IndentTaskCommand extends EditCommand {
     }
 
     // Increase the task indentation.
-    task.indent += 1;
+    document.replaceNodeById(
+      task.id,
+      task.copyTaskWith(indent: task.indent + 1),
+    );
 
     executor.logChanges([
       DocumentEdit(
@@ -951,7 +991,11 @@ class UnIndentTaskCommand extends EditCommand {
     final changeLog = <DocumentEdit>[];
 
     // Decrease the task indentation of the desired task.
-    task.indent -= 1;
+    document.replaceNodeById(
+      task.id,
+      task.copyTaskWith(indent: task.indent - 1),
+    );
+
     changeLog.add(
       DocumentEdit(
         NodeChangeEvent(task.id),
@@ -960,7 +1004,11 @@ class UnIndentTaskCommand extends EditCommand {
 
     // Decrease the indentation of the sub-tasks.
     for (final subTask in subTasks) {
-      subTask.indent -= 1;
+      document.replaceNodeById(
+        subTask.id,
+        subTask.copyTaskWith(indent: subTask.indent - 1),
+      );
+
       changeLog.add(
         DocumentEdit(
           NodeChangeEvent(subTask.id),
@@ -1001,7 +1049,11 @@ class SetTaskIndentCommand extends EditCommand {
       return;
     }
 
-    task.indent = indent;
+    document.replaceNodeById(
+      task.id,
+      task.copyTaskWith(indent: indent),
+    );
+
     executor.logChanges([
       DocumentEdit(
         NodeChangeEvent(task.id),

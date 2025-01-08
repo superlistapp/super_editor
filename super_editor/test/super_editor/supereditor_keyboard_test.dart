@@ -811,34 +811,33 @@ void main() {
     });
 
     testWidgetsOnIos('tab indents list item', (tester) async {
-      await _pumpUnorderedList(tester);
-
-      final node = SuperEditorInspector.getNodeAt<ListItemNode>(0);
+      final context = await _pumpUnorderedList(tester);
+      final document = context.document;
 
       // Ensure we started with indentation level 0.
-      expect(node.indent, 0);
+      expect(document.first.asListItem.indent, 0);
 
-      await tester.placeCaretInParagraph(node.id, 0);
+      await tester.placeCaretInParagraph(document.first.id, 0);
 
       // Simulate the user pressing TAB on the software keyboard.
       await tester.typeImeText("\t");
 
       // Ensure we indented the list item.
-      expect(node.indent, 1);
+      expect(document.first.asListItem.indent, 1);
 
       // Ensure the selection didn't change.
       expect(
         SuperEditorInspector.findDocumentSelection(),
         DocumentSelection.collapsed(
           position: DocumentPosition(
-            nodeId: node.id,
+            nodeId: document.first.id,
             nodePosition: const TextNodePosition(offset: 0),
           ),
         ),
       );
 
       // Ensure the content of the list item didn't change.
-      expect(node.text.toPlainText(), 'list item 1');
+      expect(document.first.asListItem.text.toPlainText(), 'list item 1');
     });
   });
 

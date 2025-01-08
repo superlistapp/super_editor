@@ -25,33 +25,64 @@ import 'package:super_text_layout/super_text_layout.dart';
 import 'layout_single_column/layout_single_column.dart';
 import 'text_tools.dart';
 
+@immutable
 class ParagraphNode extends TextNode {
   ParagraphNode({
-    required String id,
-    required AttributedText text,
-    int indent = 0,
-    Map<String, dynamic>? metadata,
-  })  : _indent = indent,
-        super(
-          id: id,
-          text: text,
-          metadata: metadata,
-        ) {
+    required super.id,
+    required super.text,
+    this.indent = 0,
+    super.metadata,
+  }) {
     if (getMetadataValue("blockType") == null) {
-      putMetadataValue("blockType", paragraphAttribution);
+      initAddToMetadata({"blockType": paragraphAttribution});
     }
   }
 
   /// The indent level of this paragraph - `0` is no indent.
-  int get indent => _indent;
-  int _indent;
-  set indent(int newValue) {
-    if (newValue == _indent) {
-      return;
-    }
+  final int indent;
 
-    _indent = newValue;
-    notifyListeners();
+  ParagraphNode copyParagraphWith({
+    String? id,
+    AttributedText? text,
+    int? indent,
+    Map<String, dynamic>? metadata,
+  }) {
+    return ParagraphNode(
+      id: id ?? this.id,
+      text: text ?? this.text,
+      indent: indent ?? this.indent,
+      metadata: metadata ?? this.metadata,
+    );
+  }
+
+  @override
+  ParagraphNode copyTextNodeWith({
+    String? id,
+    AttributedText? text,
+    Map<String, dynamic>? metadata,
+  }) {
+    return copyParagraphWith(
+      id: id,
+      text: text,
+      metadata: metadata,
+    );
+  }
+
+  @override
+  ParagraphNode copyAndReplaceMetadata(Map<String, dynamic> newMetadata) {
+    return copyParagraphWith(
+      metadata: newMetadata,
+    );
+  }
+
+  @override
+  ParagraphNode copyWithAddedMetadata(Map<String, dynamic> newProperties) {
+    return copyParagraphWith(
+      metadata: {
+        ...metadata,
+        ...newProperties,
+      },
+    );
   }
 
   @override
@@ -62,10 +93,10 @@ class ParagraphNode extends TextNode {
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      super == other && other is ParagraphNode && runtimeType == other.runtimeType && _indent == other._indent;
+      super == other && other is ParagraphNode && runtimeType == other.runtimeType && indent == other.indent;
 
   @override
-  int get hashCode => super.hashCode ^ _indent.hashCode;
+  int get hashCode => super.hashCode ^ indent.hashCode;
 }
 
 class ParagraphComponentBuilder implements ComponentBuilder {
@@ -390,7 +421,16 @@ class ChangeParagraphAlignmentCommand extends EditCommand {
         alignmentName = 'justify';
         break;
     }
-    existingNode.putMetadataValue('textAlign', alignmentName);
+
+    document.replaceNodeById(
+      existingNode.id,
+      existingNode.copyParagraphWith(
+        metadata: {
+          ...existingNode.metadata,
+          "textAlign": alignmentName,
+        },
+      ),
+    );
 
     executor.logChanges([
       DocumentEdit(
@@ -438,7 +478,15 @@ class ChangeParagraphBlockTypeCommand extends EditCommand {
     final document = context.document;
 
     final existingNode = document.getNodeById(nodeId)! as ParagraphNode;
-    existingNode.putMetadataValue('blockType', blockType);
+    document.replaceNodeById(
+      existingNode.id,
+      existingNode.copyParagraphWith(
+        metadata: {
+          ...existingNode.metadata,
+          "blockType": blockType,
+        },
+      ),
+    );
 
     executor.logChanges([
       DocumentEdit(
@@ -523,7 +571,6 @@ class CombineParagraphsCommand extends EditCommand {
 
     // Combine the text and delete the currently selected node.
     final isTopNodeEmpty = nodeAbove.text.isEmpty;
-    nodeAbove.text = nodeAbove.text.copyAndAppend(secondNode.text);
 
     // Avoid overriding the metadata when the nodeAbove isn't a ParagraphNode.
     //
@@ -533,9 +580,23 @@ class CombineParagraphsCommand extends EditCommand {
     if (isTopNodeEmpty && nodeAbove is ParagraphNode) {
       // If the top node was empty, we want to retain everything in the
       // bottom node, including the block attribution and styles.
-      nodeAbove.metadata = secondNode.metadata;
+      document.replaceNodeById(
+        nodeAbove.id,
+        nodeAbove.copyTextNodeWith(
+          text: nodeAbove.text.copyAndAppend(secondNode.text),
+          metadata: secondNode.metadata,
+        ),
+      );
+    } else {
+      document.replaceNodeById(
+        nodeAbove.id,
+        nodeAbove.copyTextNodeWith(
+          text: nodeAbove.text.copyAndAppend(secondNode.text),
+        ),
+      );
     }
-    bool didRemove = document.deleteNode(secondNode);
+
+    bool didRemove = document.deleteNode(secondNode.id);
     if (!didRemove) {
       editorDocLog.info('ERROR: Failed to delete the currently selected node from the document.');
     }
@@ -652,7 +713,11 @@ class SplitParagraphCommand extends EditCommand {
 
     // Change the current nodes content to just the text before the caret.
     editorDocLog.info(' - changing the original paragraph text due to split');
-    node.text = startText;
+    final updatedNode = node.copyParagraphWith(text: startText);
+    document.replaceNodeById(
+      node.id,
+      updatedNode,
+    );
 
     // Create a new node that will follow the current node. Set its text
     // to the text that was removed from the current node. And create a
@@ -667,7 +732,7 @@ class SplitParagraphCommand extends EditCommand {
     // Insert the new node after the current node.
     editorDocLog.info(' - inserting new node in document');
     document.insertNodeAfter(
-      existingNode: node,
+      existingNodeId: updatedNode.id,
       newNode: newNode,
     );
 
@@ -964,7 +1029,7 @@ class DeleteParagraphCommand extends EditCommand {
       return;
     }
 
-    bool didRemove = document.deleteNode(node);
+    bool didRemove = document.deleteNode(node.id);
     if (!didRemove) {
       editorDocLog.shout('ERROR: Failed to delete node "$node" from the document.');
     }
@@ -1145,7 +1210,12 @@ class SetParagraphIndentCommand extends EditCommand {
     }
 
     // Decrease the paragraph indentation of the desired paragraph.
-    paragraph.indent = level;
+    document.replaceNodeById(
+      paragraph.id,
+      paragraph.copyParagraphWith(
+        indent: level,
+      ),
+    );
 
     // Log all changes.
     executor.logChanges([
@@ -1178,7 +1248,10 @@ class IndentParagraphCommand extends EditCommand {
     }
 
     // Increase the paragraph indentation.
-    paragraph.indent += 1;
+    document.replaceNodeById(
+      paragraph.id,
+      paragraph.copyParagraphWith(indent: paragraph.indent + 1),
+    );
 
     executor.logChanges([
       DocumentEdit(
@@ -1258,7 +1331,10 @@ class UnIndentParagraphCommand extends EditCommand {
     }
 
     // Decrease the paragraph indentation of the desired paragraph.
-    paragraph.indent -= 1;
+    document.replaceNodeById(
+      paragraph.id,
+      paragraph.copyParagraphWith(indent: paragraph.indent - 1),
+    );
 
     // Log all changes.
     executor.logChanges([
@@ -1336,7 +1412,7 @@ ExecutionInstruction moveParagraphSelectionUpWhenBackspaceIsPressed({
     return ExecutionInstruction.continueExecution;
   }
 
-  final nodeAbove = editContext.document.getNodeBefore(node);
+  final nodeAbove = editContext.document.getNodeBeforeById(node.id);
   if (nodeAbove == null) {
     return ExecutionInstruction.continueExecution;
   }
