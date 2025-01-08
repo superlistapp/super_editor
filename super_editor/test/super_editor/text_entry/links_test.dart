@@ -682,7 +682,6 @@ void main() {
         );
         final composer = MutableDocumentComposer();
         final editor = createDefaultDocumentEditor(document: document, composer: composer);
-        final task = document.getNodeAt(0) as TaskNode;
         await tester.pumpWidget(
           MaterialApp(
             home: Scaffold(
@@ -704,7 +703,7 @@ void main() {
         await tester.typeImeText("https://www.google.com");
 
         // Ensure it's not linkified yet.
-        var text = task.text;
+        var text = document.first.asTask.text;
 
         expect(text.toPlainText(), "This is a task https://www.google.com");
         expect(
@@ -719,7 +718,7 @@ void main() {
         await tester.pressEnter();
 
         // Ensure it's linkified.
-        text = task.text;
+        text = document.first.asTask.text;
 
         expect(text.toPlainText(), "This is a task https://www.google.com");
         expect(
@@ -746,7 +745,6 @@ void main() {
         );
         final composer = MutableDocumentComposer();
         final editor = createDefaultDocumentEditor(document: document, composer: composer);
-        final task = document.getNodeAt(0) as TaskNode;
         await tester.pumpWidget(
           MaterialApp(
             home: Scaffold(
@@ -768,7 +766,7 @@ void main() {
         await tester.typeImeText("https://www.google.com");
 
         // Ensure it's not linkified yet.
-        var text = task.text;
+        var text = document.first.asTask.text;
 
         expect(text.toPlainText(), "Before link https://www.google.comafter link");
         expect(
@@ -783,7 +781,7 @@ void main() {
         await tester.pressEnter();
 
         // Ensure it's linkified.
-        text = task.text;
+        text = document.first.asTask.text;
 
         expect(text.toPlainText(), "Before link https://www.google.com");
         expect(
@@ -812,7 +810,6 @@ void main() {
         );
         final composer = MutableDocumentComposer();
         final editor = createDefaultDocumentEditor(document: document, composer: composer);
-        final task = document.getNodeAt(0) as TaskNode;
         await tester.pumpWidget(
           MaterialApp(
             home: Scaffold(
@@ -834,7 +831,7 @@ void main() {
         await tester.typeImeText("https://www.google.com");
 
         // Ensure it's not linkified yet.
-        var text = task.text;
+        var text = document.first.asTask.text;
 
         expect(text.toPlainText(), "This is a task https://www.google.com");
         expect(
@@ -850,7 +847,7 @@ void main() {
         await tester.typeImeText('\n');
 
         // Ensure it's linkified.
-        text = task.text;
+        text = document.first.asTask.text;
 
         expect(text.toPlainText(), "This is a task https://www.google.com");
         expect(
@@ -879,7 +876,6 @@ void main() {
         );
         final composer = MutableDocumentComposer();
         final editor = createDefaultDocumentEditor(document: document, composer: composer);
-        final task = document.getNodeAt(0) as TaskNode;
         await tester.pumpWidget(
           MaterialApp(
             home: Scaffold(
@@ -901,7 +897,7 @@ void main() {
         await tester.typeImeText("https://www.google.com");
 
         // Ensure it's not linkified yet.
-        var text = task.text;
+        var text = document.first.asTask.text;
 
         expect(text.toPlainText(), "Before link https://www.google.comafter link");
         expect(
@@ -917,7 +913,7 @@ void main() {
         await tester.typeImeText('\n');
 
         // Ensure it's linkified.
-        text = task.text;
+        text = document.first.asTask.text;
 
         expect(text.toPlainText(), "Before link https://www.google.com");
         expect(
@@ -945,7 +941,6 @@ void main() {
         );
         final composer = MutableDocumentComposer();
         final editor = createDefaultDocumentEditor(document: document, composer: composer);
-        final task = document.getNodeAt(0) as TaskNode;
         await tester.pumpWidget(
           MaterialApp(
             home: Scaffold(
@@ -967,7 +962,7 @@ void main() {
         await tester.typeImeText("https://www.google.com");
 
         // Ensure it's not linkified yet.
-        var text = task.text;
+        var text = document.first.asTask.text;
 
         expect(text.toPlainText(), "This is a task https://www.google.com");
         expect(
@@ -984,7 +979,7 @@ void main() {
         await tester.pump();
 
         // Ensure it's linkified.
-        text = task.text;
+        text = document.first.asTask.text;
 
         expect(text.toPlainText(), "This is a task https://www.google.com");
         expect(
@@ -1012,7 +1007,6 @@ void main() {
         );
         final composer = MutableDocumentComposer();
         final editor = createDefaultDocumentEditor(document: document, composer: composer);
-        final task = document.getNodeAt(0) as TaskNode;
         await tester.pumpWidget(
           MaterialApp(
             home: Scaffold(
@@ -1034,7 +1028,7 @@ void main() {
         await tester.typeImeText("https://www.google.com");
 
         // Ensure it's not linkified yet.
-        var text = task.text;
+        var text = document.first.asTask.text;
 
         expect(text.toPlainText(), "Before link https://www.google.comafter link");
         expect(
@@ -1051,7 +1045,7 @@ void main() {
         await tester.pump();
 
         // Ensure it's linkified.
-        text = task.text;
+        text = document.first.asTask.text;
 
         expect(text.toPlainText(), "Before link https://www.google.com");
         expect(

@@ -409,9 +409,10 @@ class SplitBlockquoteCommand extends EditCommand {
     final endText = splitPosition.offset < text.length ? text.copyText(splitPosition.offset) : AttributedText();
 
     // Change the current node's content to just the text before the caret.
-    // TODO: figure out how node changes should work in terms of
-    //       a DocumentEditorTransaction (#67)
-    blockquote.text = startText;
+    document.replaceNodeById(
+      blockquote.id,
+      blockquote.copyParagraphWith(text: startText),
+    );
 
     // Create a new node that will follow the current node. Set its text
     // to the text that was removed from the current node.
@@ -424,7 +425,7 @@ class SplitBlockquoteCommand extends EditCommand {
 
     // Insert the new node after the current node.
     document.insertNodeAfter(
-      existingNode: node,
+      existingNodeId: node.id,
       newNode: newNode,
     );
 

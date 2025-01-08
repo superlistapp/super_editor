@@ -334,12 +334,12 @@ void main() {
             .fromMarkdown("# My Header")
             .withInputSource(TextInputSource.ime)
             .pump();
-        final headerNode = context.findEditContext().document.first;
+        final document = context.document;
 
-        await tester.placeCaretInParagraph(headerNode.id, 0);
+        await tester.placeCaretInParagraph(document.first.id, 0);
 
         // Ensure that we're starting with a header.
-        expect(headerNode.metadata["blockType"], header1Attribution);
+        expect(document.first.metadata["blockType"], header1Attribution);
 
         // Simulate a backspace deletion delta.
         await tester.ime.sendDeltas(
@@ -360,8 +360,8 @@ void main() {
         );
 
         // Ensure that the header became a paragraph.
-        expect(headerNode.metadata["blockType"], paragraphAttribution);
-        expect(SuperEditorInspector.findTextInComponent(headerNode.id).toPlainText(), "My Header");
+        expect(document.first.metadata["blockType"], paragraphAttribution);
+        expect(SuperEditorInspector.findTextInComponent(document.first.id).toPlainText(), "My Header");
       });
 
       testWidgetsOnAllPlatforms("blockquotes", (tester) async {
@@ -370,12 +370,12 @@ void main() {
             .fromMarkdown("> My Blockquote")
             .withInputSource(TextInputSource.ime)
             .pump();
-        final blockquoteNode = context.findEditContext().document.first;
+        final document = context.document;
 
-        await tester.placeCaretInParagraph(blockquoteNode.id, 0);
+        await tester.placeCaretInParagraph(document.first.id, 0);
 
         // Ensure that we're starting with a blockquote.
-        expect(blockquoteNode.metadata["blockType"], blockquoteAttribution);
+        expect(document.first.metadata["blockType"], blockquoteAttribution);
 
         // Simulate a backspace deletion delta.
         await tester.ime.sendDeltas(
@@ -396,8 +396,8 @@ void main() {
         );
 
         // Ensure that the blockquote became a paragraph.
-        expect(blockquoteNode.metadata["blockType"], paragraphAttribution);
-        expect(SuperEditorInspector.findTextInComponent(blockquoteNode.id).toPlainText(), "My Blockquote");
+        expect(document.first.metadata["blockType"], paragraphAttribution);
+        expect(SuperEditorInspector.findTextInComponent(document.first.id).toPlainText(), "My Blockquote");
       });
 
       testWidgetsOnAllPlatforms("ordered list items", (tester) async {
@@ -406,12 +406,12 @@ void main() {
             .fromMarkdown("1. My list item")
             .withInputSource(TextInputSource.ime)
             .pump();
-        final listItemNode = context.findEditContext().document.first;
+        final document = context.document;
 
-        await tester.placeCaretInParagraph(listItemNode.id, 0);
+        await tester.placeCaretInParagraph(document.first.id, 0);
 
         // Ensure that we're starting with list item.
-        expect(listItemNode, isA<ListItemNode>());
+        expect(document.first, isA<ListItemNode>());
 
         // Simulate a backspace deletion delta.
         await tester.ime.sendDeltas(
@@ -432,10 +432,10 @@ void main() {
         );
 
         // Ensure that the list item became a paragraph.
-        final newNode = context.findEditContext().document.first;
+        final newNode = document.first;
         expect(newNode, isA<ParagraphNode>());
         expect(newNode.metadata["blockType"], paragraphAttribution);
-        expect(SuperEditorInspector.findTextInComponent(listItemNode.id).toPlainText(), "My list item");
+        expect(SuperEditorInspector.findTextInComponent(document.first.id).toPlainText(), "My list item");
       });
     });
   });
