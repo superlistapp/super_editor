@@ -21,6 +21,7 @@ import 'package:example/demos/in_the_lab/feature_stable_tags.dart';
 import 'package:example/demos/in_the_lab/selected_text_colors_demo.dart';
 import 'package:example/demos/in_the_lab/spelling_error_decorations.dart';
 import 'package:example/demos/interaction_spot_checks/toolbar_following_content_in_layer.dart';
+import 'package:example/demos/interaction_spot_checks/url_launching_spot_checks.dart';
 import 'package:example/demos/mobile_chat/demo_mobile_chat.dart';
 import 'package:example/demos/scrolling/demo_task_and_chat_with_customscrollview.dart';
 import 'package:example/demos/sliver_example_editor.dart';
@@ -387,6 +388,13 @@ final _menu = <_MenuGroup>[
   _MenuGroup(
     title: 'Spot Checks',
     items: [
+      _MenuItem(
+        icon: Icons.link,
+        title: 'URL Parsing & Launching',
+        pageBuilder: (context) {
+          return UrlLauncherSpotChecks();
+        },
+      ),
       _MenuItem(
         icon: Icons.layers,
         title: 'Toolbar Following Content Layer',
