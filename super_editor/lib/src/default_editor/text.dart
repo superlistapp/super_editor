@@ -31,38 +31,19 @@ import 'paragraph.dart';
 import 'selection_upstream_downstream.dart';
 import 'text_tools.dart';
 
-class TextNode extends DocumentNode with ChangeNotifier {
+@immutable
+class TextNode extends DocumentNode {
   TextNode({
     required this.id,
-    required AttributedText text,
-    Map<String, dynamic>? metadata,
-  }) : _text = text {
-    this.metadata = metadata;
-    _text.addListener(notifyListeners);
-  }
-
-  @override
-  void dispose() {
-    _text.removeListener(notifyListeners);
-    super.dispose();
-  }
+    required this.text,
+    super.metadata,
+  });
 
   @override
   final String id;
 
-  AttributedText _text;
-
   /// The content text within this [TextNode].
-  AttributedText get text => _text;
-  set text(AttributedText newText) {
-    if (newText != _text) {
-      _text.removeListener(notifyListeners);
-      _text = newText;
-      _text.addListener(notifyListeners);
-
-      notifyListeners();
-    }
-  }
+  final AttributedText text;
 
   @override
   TextNodePosition get beginningPosition => const TextNodePosition(offset: 0);
@@ -178,6 +159,32 @@ class TextNode extends DocumentNode with ChangeNotifier {
     return other is TextNode && text == other.text && super.hasEquivalentContent(other);
   }
 
+  TextNode copyTextNodeWith({
+    String? id,
+    AttributedText? text,
+    Map<String, dynamic>? metadata,
+  }) {
+    return TextNode(
+      id: id ?? this.id,
+      text: text ?? this.text,
+      metadata: metadata ?? this.metadata,
+    );
+  }
+
+  @override
+  DocumentNode copyAndReplaceMetadata(Map<String, dynamic> newMetadata) {
+    return copyTextNodeWith(
+      metadata: newMetadata,
+    );
+  }
+
+  @override
+  DocumentNode copyWithAddedMetadata(Map<String, dynamic> newProperties) {
+    return copyTextNodeWith(
+      metadata: {...metadata, ...newProperties},
+    );
+  }
+
   @override
   TextNode copy() {
     return TextNode(id: id, text: text.copyText(0), metadata: Map.from(metadata));
@@ -189,10 +196,14 @@ class TextNode extends DocumentNode with ChangeNotifier {
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      super == other && other is TextNode && runtimeType == other.runtimeType && id == other.id && _text == other._text;
+      super == other && other is TextNode && runtimeType == other.runtimeType && id == other.id && text == other.text;
 
   @override
-  int get hashCode => super.hashCode ^ id.hashCode ^ _text.hashCode;
+  int get hashCode => super.hashCode ^ id.hashCode ^ text.hashCode;
+}
+
+extension TextNodeExtensions on DocumentNode {
+  TextNode get asTextNode => this as TextNode;
 }
 
 extension DocumentSelectionWithText on Document {
@@ -1478,16 +1489,21 @@ class AddTextAttributionsCommand extends EditCommand {
 
         // Create a new AttributedText with updated attribution spans, so that the presentation system can
         // see that we made a change, and re-renders the text in the document.
-        node.text = AttributedText(
-          node.text.toPlainText(),
-          node.text.spans.copy()
-            ..addAttribution(
-              newAttribution: attribution,
-              start: range.start,
-              end: range.end,
-              autoMerge: autoMerge,
+        document.replaceNodeById(
+          node.id,
+          node.copyTextNodeWith(
+            text: AttributedText(
+              node.text.toPlainText(),
+              node.text.spans.copy()
+                ..addAttribution(
+                  newAttribution: attribution,
+                  start: range.start,
+                  end: range.end,
+                  autoMerge: autoMerge,
+                ),
+              Map.from(node.text.placeholders),
             ),
-          Map.from(node.text.placeholders),
+          ),
         );
 
         executor.logChanges([
@@ -1595,20 +1611,24 @@ class RemoveTextAttributionsCommand extends EditCommand {
 
     // Remove attributions.
     for (final entry in nodesAndSelections.entries) {
+      var node = entry.key;
+      final range = entry.value.toSpanRange();
+
       for (Attribution attribution in attributions) {
-        final node = entry.key;
-        final range = entry.value.toSpanRange();
         editorDocLog.info(' - removing attribution: $attribution. Range: $range');
 
         // Create a new AttributedText with updated attribution spans, so that the presentation system can
         // see that we made a change, and re-renders the text in the document.
-        node.text = node.text.replaceAttributions(
-          node.text.spans.copy()
-            ..removeAttribution(
-              attributionToRemove: attribution,
-              start: range.start,
-              end: range.end,
-            ),
+        node = node.copyTextNodeWith(
+          text: AttributedText(
+            node.text.toPlainText(),
+            node.text.spans.copy()
+              ..removeAttribution(
+                attributionToRemove: attribution,
+                start: range.start,
+                end: range.end,
+              ),
+          ),
         );
 
         executor.logChanges([
@@ -1622,6 +1642,10 @@ class RemoveTextAttributionsCommand extends EditCommand {
           ),
         ]);
       }
+
+      // Now that attribution changes are done for the given node, replace
+      // the existing document node with the updated node.
+      document.replaceNodeById(node.id, node);
     }
 
     editorDocLog.info(' - done adding attributions');
@@ -1743,39 +1767,44 @@ class ToggleTextAttributionsCommand extends EditCommand {
     }
 
     for (final entry in nodesAndSelections.entries) {
-      for (Attribution attribution in attributions) {
-        final node = entry.key;
-        final range = entry.value;
+      var node = entry.key;
+      final range = entry.value;
 
+      for (Attribution attribution in attributions) {
         editorDocLog.info(' - toggling attribution: $attribution. Range: $range');
 
         if (alreadyHasAttributions) {
           // Attribution is present throughout the user selection. Remove attribution.
-
           editorDocLog.info(' - Removing attribution: $attribution. Range: $range');
 
           // Create a new AttributedText with updated attribution spans, so that the presentation system can
           // see that we made a change, and re-renders the text in the document.
-          node.text = node.text.copy()
-            ..removeAttribution(
-              attribution,
-              range,
-            );
+          node = node.copyTextNodeWith(
+            text: AttributedText(
+              node.text.toPlainText(),
+              node.text.spans.copy(),
+            )..removeAttribution(
+                attribution,
+                range,
+              ),
+          );
         } else {
           // Attribution isn't present throughout the user selection. Apply attribution.
-
           editorDocLog.info(' - Adding attribution: $attribution. Range: $range');
 
           // Create a new AttributedText with updated attribution spans, so that the presentation system can
           // see that we made a change, and re-renders the text in the document.
-          node.text = node.text.replaceAttributions(
-            node.text.spans.copy()
-              ..addAttribution(
-                newAttribution: attribution,
-                start: range.start,
-                end: range.end,
-                autoMerge: true,
-              ),
+          node = node.copyTextNodeWith(
+            text: AttributedText(
+              node.text.toPlainText(),
+              node.text.spans.copy()
+                ..addAttribution(
+                  newAttribution: attribution,
+                  start: range.start,
+                  end: range.end,
+                  autoMerge: true,
+                ),
+            ),
           );
         }
 
@@ -1791,6 +1820,10 @@ class ToggleTextAttributionsCommand extends EditCommand {
           ),
         ]);
       }
+
+      // Now that all attributions have been applied to the node, replace the
+      // old node in the Document with the updated node.
+      document.replaceNodeById(node.id, node);
     }
 
     editorDocLog.info(' - done toggling attributions');
@@ -1864,7 +1897,10 @@ class ChangeSingleColumnLayoutComponentStylesCommand extends EditCommand {
     final document = context.document;
     final node = document.getNodeById(nodeId)!;
 
-    styles.applyTo(node);
+    document.replaceNodeById(
+      nodeId,
+      node.copyWithAddedMetadata(styles.toMetadata()),
+    );
 
     executor.logChanges([
       DocumentEdit(
@@ -1908,7 +1944,7 @@ class InsertTextCommand extends EditCommand {
   void execute(EditContext context, CommandExecutor executor) {
     final document = context.document;
 
-    final textNode = document.getNodeById(documentPosition.nodeId);
+    var textNode = document.getNodeById(documentPosition.nodeId);
     if (textNode is! TextNode) {
       editorDocLog.shout('ERROR: can\'t insert text in a node that isn\'t a TextNode: $textNode');
       return;
@@ -1916,10 +1952,17 @@ class InsertTextCommand extends EditCommand {
 
     final textPosition = documentPosition.nodePosition as TextPosition;
     final textOffset = textPosition.offset;
-    textNode.text = textNode.text.insertString(
-      textToInsert: textToInsert,
-      startOffset: textOffset,
-      applyAttributions: attributions,
+
+    textNode = textNode.copyTextNodeWith(
+      text: textNode.text.insertString(
+        textToInsert: textToInsert,
+        startOffset: textOffset,
+        applyAttributions: attributions,
+      ),
+    );
+    document.replaceNodeById(
+      textNode.id,
+      textNode,
     );
 
     executor.logChanges([
@@ -2033,17 +2076,19 @@ class ConvertTextNodeToParagraphCommand extends EditCommand {
     final document = context.document;
 
     final extentNode = document.getNodeById(nodeId) as TextNode;
+    late ParagraphNode newParagraphNode;
     if (extentNode is ParagraphNode) {
-      extentNode.putMetadataValue('blockType', paragraphAttribution);
+      newParagraphNode = extentNode.copyWithAddedMetadata({
+        NodeMetadata.blockType: paragraphAttribution,
+      });
     } else {
-      final newParagraphNode = ParagraphNode(
+      newParagraphNode = ParagraphNode(
         id: extentNode.id,
         text: extentNode.text,
         metadata: newMetadata,
       );
-
-      document.replaceNode(oldNode: extentNode, newNode: newParagraphNode);
     }
+    document.replaceNode(oldNode: extentNode, newNode: newParagraphNode);
 
     executor.logChanges([
       DocumentEdit(
@@ -2083,9 +2128,14 @@ class InsertAttributedTextCommand extends EditCommand {
 
     final textOffset = (documentPosition.nodePosition as TextPosition).offset;
 
-    textNode.text = textNode.text.insert(
-      textToInsert: textToInsert,
-      startOffset: textOffset,
+    document.replaceNode(
+      oldNode: textNode,
+      newNode: textNode.copyTextNodeWith(
+        text: textNode.text.insert(
+          textToInsert: textToInsert,
+          startOffset: textOffset,
+        ),
+      ),
     );
 
     executor.logChanges([

@@ -106,13 +106,12 @@ void main() {
         await _pumpOrderedListWithTextField(tester);
 
         final doc = SuperEditorInspector.findDocument()!;
-        final listItemNode = doc.first as ListItemNode;
 
         // Place caret at the first list item, which has one level of indentation.
-        await tester.placeCaretInParagraph(listItemNode.id, 0);
+        await tester.placeCaretInParagraph(doc.first.id, 0);
 
         // Ensure the list item has first level of indentation.
-        expect(listItemNode.indent, 0);
+        expect(doc.first.asListItem.indent, 0);
 
         // Ensure the caret is initially positioned near the upstream edge of the first
         // character of the list item.
@@ -121,7 +120,7 @@ void main() {
         // exact caret positioning might change and we don't want that to break this test.
         final caretOffsetBeforeIndent = SuperEditorInspector.findCaretOffsetInDocument();
         final firstCharacterRectBeforeIndent = SuperEditorInspector.findDocumentLayout().getRectForPosition(
-          DocumentPosition(nodeId: listItemNode.id, nodePosition: const TextNodePosition(offset: 0)),
+          DocumentPosition(nodeId: doc.first.id, nodePosition: const TextNodePosition(offset: 0)),
         )!;
         expect(caretOffsetBeforeIndent.dx, moreOrLessEquals(firstCharacterRectBeforeIndent.left, epsilon: 5));
 
@@ -129,7 +128,7 @@ void main() {
         await tester.pressTab();
 
         // Ensure the list item has second level of indentation.
-        expect(listItemNode.indent, 1);
+        expect(doc.first.asListItem.indent, 1);
 
         // Ensure that the caret's current offset is downstream from the initial caret offset,
         // and also that the current caret offset is roughly positioned near the upstream edge
@@ -140,7 +139,7 @@ void main() {
         final caretOffsetAfterIndent = SuperEditorInspector.findCaretOffsetInDocument();
         expect(caretOffsetAfterIndent.dx, greaterThan(caretOffsetBeforeIndent.dx));
         final firstCharacterRectAfterIndent = SuperEditorInspector.findDocumentLayout().getRectForPosition(
-          DocumentPosition(nodeId: listItemNode.id, nodePosition: const TextNodePosition(offset: 0)),
+          DocumentPosition(nodeId: doc.first.id, nodePosition: const TextNodePosition(offset: 0)),
         )!;
         expect(caretOffsetAfterIndent.dx, moreOrLessEquals(firstCharacterRectAfterIndent.left, epsilon: 5));
       });
@@ -149,16 +148,15 @@ void main() {
         await _pumpUnorderedListWithTextField(tester);
 
         final doc = SuperEditorInspector.findDocument()!;
-        final listItemNode = doc.last as ListItemNode;
 
         // Place caret at the last list item, which has two levels of indentation.
         // For some reason, taping at the first character isn't displaying any caret,
         // so we put the caret at the second character and then go back one position.
-        await tester.placeCaretInParagraph(listItemNode.id, 1);
+        await tester.placeCaretInParagraph(doc.last.id, 1);
         await tester.pressLeftArrow();
 
         // Ensure the list item has second level of indentation.
-        expect(listItemNode.indent, 1);
+        expect(doc.last.asListItem.indent, 1);
 
         // Ensure the caret is initially positioned near the upstream edge of the first
         // character of the list item.
@@ -167,7 +165,7 @@ void main() {
         // exact caret positioning might change and we don't want that to break this test.
         final caretOffsetBeforeUnIndent = SuperEditorInspector.findCaretOffsetInDocument();
         final firstCharacterRectBeforeUnIndent = SuperEditorInspector.findDocumentLayout().getRectForPosition(
-          DocumentPosition(nodeId: listItemNode.id, nodePosition: const TextNodePosition(offset: 0)),
+          DocumentPosition(nodeId: doc.last.id, nodePosition: const TextNodePosition(offset: 0)),
         )!;
         expect(caretOffsetBeforeUnIndent.dx, moreOrLessEquals(firstCharacterRectBeforeUnIndent.left, epsilon: 5));
 
@@ -175,7 +173,7 @@ void main() {
         await tester.pressBackspace();
 
         // Ensure the list item has first level of indentation.
-        expect(listItemNode.indent, 0);
+        expect(doc.last.asListItem.indent, 0);
 
         // Ensure that the caret's current offset is upstream from the initial caret offset,
         // and also that the current caret offset is roughly positioned near the upstream edge
@@ -186,7 +184,7 @@ void main() {
         final caretOffsetAfterUnIndent = SuperEditorInspector.findCaretOffsetInDocument();
         expect(caretOffsetAfterUnIndent.dx, lessThan(caretOffsetBeforeUnIndent.dx));
         final firstCharacterRectAfterUnIndent = SuperEditorInspector.findDocumentLayout().getRectForPosition(
-          DocumentPosition(nodeId: listItemNode.id, nodePosition: const TextNodePosition(offset: 0)),
+          DocumentPosition(nodeId: doc.last.id, nodePosition: const TextNodePosition(offset: 0)),
         )!;
         expect(caretOffsetAfterUnIndent.dx, moreOrLessEquals(firstCharacterRectAfterUnIndent.left, epsilon: 5));
       });
@@ -195,22 +193,21 @@ void main() {
         await _pumpUnorderedListWithTextField(tester);
 
         final doc = SuperEditorInspector.findDocument()!;
-        final listItemNode = doc.last as ListItemNode;
 
         // Place caret at the last list item, which has two levels of indentation.
-        // For some reason, taping at the first character isn't displaying any caret,
+        // For some reason, tapping at the first character isn't displaying any caret,
         // so we put the caret at the second character and then go back one position.
-        await tester.placeCaretInParagraph(listItemNode.id, 1);
+        await tester.placeCaretInParagraph(doc.last.id, 1);
         await tester.pressLeftArrow();
 
         // Ensure the list item has second level of indentation.
-        expect(listItemNode.indent, 1);
+        expect(doc.last.asListItem.indent, 1);
 
         // Press SHIFT + TAB to trigger the list unindent command.
         await _pressShiftTab(tester);
 
         // Ensure the list item has first level of indentation.
-        expect(listItemNode.indent, 0);
+        expect(doc.last.asListItem.indent, 0);
       });
 
       testWidgetsOnAllPlatforms("inserts new item on ENTER at end of existing item", (tester) async {
@@ -627,13 +624,12 @@ A paragraph
         await _pumpOrderedListWithTextField(tester);
 
         final doc = SuperEditorInspector.findDocument()!;
-        final listItemNode = doc.first as ListItemNode;
 
         // Place caret at the first list item, which has one level of indentation.
-        await tester.placeCaretInParagraph(listItemNode.id, 0);
+        await tester.placeCaretInParagraph(doc.first.id, 0);
 
         // Ensure the list item has first level of indentation.
-        expect(listItemNode.indent, 0);
+        expect(doc.first.asListItem.indent, 0);
 
         // Ensure the caret is initially positioned near the upstream edge of the first
         // character of the list item.
@@ -642,7 +638,7 @@ A paragraph
         // exact caret positioning might change and we don't want that to break this test.
         final caretOffsetBeforeIndent = SuperEditorInspector.findCaretOffsetInDocument();
         final firstCharacterRectBeforeIndent = SuperEditorInspector.findDocumentLayout().getRectForPosition(
-          DocumentPosition(nodeId: listItemNode.id, nodePosition: const TextNodePosition(offset: 0)),
+          DocumentPosition(nodeId: doc.first.id, nodePosition: const TextNodePosition(offset: 0)),
         )!;
         expect(caretOffsetBeforeIndent.dx, moreOrLessEquals(firstCharacterRectBeforeIndent.left, epsilon: 5));
 
@@ -650,7 +646,7 @@ A paragraph
         await tester.pressTab();
 
         // Ensure the list item has second level of indentation.
-        expect(listItemNode.indent, 1);
+        expect(doc.first.asListItem.indent, 1);
 
         // Ensure that the caret's current offset is downstream from the initial caret offset,
         // and also that the current caret offset is roughly positioned near the upstream edge
@@ -661,7 +657,7 @@ A paragraph
         final caretOffsetAfterIndent = SuperEditorInspector.findCaretOffsetInDocument();
         expect(caretOffsetAfterIndent.dx, greaterThan(caretOffsetBeforeIndent.dx));
         final firstCharacterRectAfterIndent = SuperEditorInspector.findDocumentLayout().getRectForPosition(
-          DocumentPosition(nodeId: listItemNode.id, nodePosition: const TextNodePosition(offset: 0)),
+          DocumentPosition(nodeId: doc.first.id, nodePosition: const TextNodePosition(offset: 0)),
         )!;
         expect(caretOffsetAfterIndent.dx, moreOrLessEquals(firstCharacterRectAfterIndent.left, epsilon: 5));
       });
@@ -670,16 +666,15 @@ A paragraph
         await _pumpOrderedListWithTextField(tester);
 
         final doc = SuperEditorInspector.findDocument()!;
-        final listItemNode = doc.last as ListItemNode;
 
         // Place caret at the last list item, which has two levels of indentation.
         // For some reason, taping at the first character isn't displaying any caret,
         // so we put the caret at the second character and then go back one position.
-        await tester.placeCaretInParagraph(listItemNode.id, 1);
+        await tester.placeCaretInParagraph(doc.last.id, 1);
         await tester.pressLeftArrow();
 
         // Ensure the list item has second level of indentation.
-        expect(listItemNode.indent, 1);
+        expect(doc.last.asListItem.indent, 1);
 
         // Ensure the caret is initially positioned near the upstream edge of the first
         // character of the list item.
@@ -688,7 +683,7 @@ A paragraph
         // exact caret positioning might change and we don't want that to break this test.
         final caretOffsetBeforeUnIndent = SuperEditorInspector.findCaretOffsetInDocument();
         final firstCharacterRectBeforeUnIndent = SuperEditorInspector.findDocumentLayout().getRectForPosition(
-          DocumentPosition(nodeId: listItemNode.id, nodePosition: const TextNodePosition(offset: 0)),
+          DocumentPosition(nodeId: doc.last.id, nodePosition: const TextNodePosition(offset: 0)),
         )!;
         expect(caretOffsetBeforeUnIndent.dx, moreOrLessEquals(firstCharacterRectBeforeUnIndent.left, epsilon: 5));
 
@@ -696,7 +691,7 @@ A paragraph
         await tester.pressBackspace();
 
         // Ensure the list item has first level of indentation.
-        expect(listItemNode.indent, 0);
+        expect(doc.last.asListItem.indent, 0);
 
         // Ensure that the caret's current offset is upstream from the initial caret offset,
         // and also that the current caret offset is roughly positioned near the upstream edge
@@ -707,7 +702,7 @@ A paragraph
         final caretOffsetAfterUnIndent = SuperEditorInspector.findCaretOffsetInDocument();
         expect(caretOffsetAfterUnIndent.dx, lessThan(caretOffsetBeforeUnIndent.dx));
         final firstCharacterRectAfterUnIndent = SuperEditorInspector.findDocumentLayout().getRectForPosition(
-          DocumentPosition(nodeId: listItemNode.id, nodePosition: const TextNodePosition(offset: 0)),
+          DocumentPosition(nodeId: doc.last.id, nodePosition: const TextNodePosition(offset: 0)),
         )!;
         expect(caretOffsetAfterUnIndent.dx, moreOrLessEquals(firstCharacterRectAfterUnIndent.left, epsilon: 5));
       });
@@ -716,22 +711,21 @@ A paragraph
         await _pumpOrderedListWithTextField(tester);
 
         final doc = SuperEditorInspector.findDocument()!;
-        final listItemNode = doc.last as ListItemNode;
 
         // Place caret at the last list item, which has two levels of indentation.
         // For some reason, taping at the first character isn't displaying any caret,
         // so we put the caret at the second character and then go back one position.
-        await tester.placeCaretInParagraph(listItemNode.id, 1);
+        await tester.placeCaretInParagraph(doc.last.id, 1);
         await tester.pressLeftArrow();
 
         // Ensure the list item has second level of indentation.
-        expect(listItemNode.indent, 1);
+        expect(doc.last.asListItem.indent, 1);
 
         // Press SHIFT + TAB to trigger the list unindent command.
         await _pressShiftTab(tester);
 
         // Ensure the list item has first level of indentation.
-        expect(listItemNode.indent, 0);
+        expect(doc.last.asListItem.indent, 0);
       });
 
       testWidgetsOnAllPlatforms("inserts new item on ENTER at end of existing item", (tester) async {
