@@ -3,7 +3,6 @@ import 'dart:io';
 import 'package:attributed_text/attributed_text.dart';
 import 'package:characters/characters.dart';
 import 'package:collection/collection.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:linkify/linkify.dart';
@@ -663,32 +662,18 @@ class LinkifyReaction extends EditReaction {
       return;
     }
 
-    final extractedLinks = linkify(
-      word,
-      options: const LinkifyOptions(
-        humanize: false,
-        looseUrl: true,
-      ),
+    // Try to linkify.
+    final uri = tryToParseUrl(word);
+    if (uri == null) {
+      // No link in the word. Fizzle.
+      return;
+    }
+
+    // We found a link. Attribute it.
+    text.addAttribution(
+      LinkAttribution.fromUri(uri),
+      SpanRange(wordStartOffset, endOffset - 1),
     );
-    final int linkCount = extractedLinks.fold(0, (value, element) => element is UrlElement ? value + 1 : value);
-    if (linkCount != 1) {
-      // There's either zero links, or more than one link. Either way we fizzle.
-      return;
-    }
-
-    // The word is a single URL. Linkify it.
-    try {
-      // Try to parse the word as a link.
-      final uri = parseLink(word);
-
-      text.addAttribution(
-        LinkAttribution.fromUri(uri),
-        SpanRange(wordStartOffset, endOffset - 1),
-      );
-    } catch (exception) {
-      // Something went wrong parsing the link. Fizzle.
-      return;
-    }
   }
 
   int? _moveOffsetByWord(String text, int textOffset, bool upstream) {
@@ -859,17 +844,51 @@ class LinkifyReaction extends EditReaction {
     // If the policy is `LinkUpdatePolicy.update` then we need to add a new
     // link attribution that reflects the edited URL text. We do that below.
     if (updatePolicy == LinkUpdatePolicy.update) {
-      linkChangeRequests.add(
-        // Switch out the old link attribution for the new one.
-        AddTextAttributionsRequest(
-          documentRange: linkRange,
-          attributions: {
-            LinkAttribution.fromUri(
-              parseLink(changedNodeText.toPlainText().substring(rangeToUpdate.start, rangeToUpdate.end + 1)),
-            )
-          },
-        ),
+      final existingLinkAttribution =
+          changedNodeText.getAllAttributionsAt(rangeToUpdate.start).whereType<LinkAttribution>().firstOrNull;
+      assert(
+        existingLinkAttribution != null,
+        "Tried to update a LinkAttribution after the user added/deleted character, but we couldn't find the LinkAttribution. We searched at offset ${rangeToUpdate.start} in '${changedNodeText.toPlainText()}'",
       );
+
+      // We expect the link attribution to be non-null, but we can't know for
+      // sure until runtime. So only attempt an attribution update if we found
+      // the attribution.
+      if (existingLinkAttribution != null) {
+        final newLinkText = changedNodeText.toPlainText().substring(rangeToUpdate.start, rangeToUpdate.end + 1);
+        final newLinkUri = Uri.tryParse(newLinkText);
+        final newScheme = newLinkUri?.scheme;
+
+        late final LinkAttribution updatedAttribution;
+        if (newLinkUri != null && newScheme != null && newScheme.isNotEmpty) {
+          // The text includes a scheme - use that scheme.
+          updatedAttribution = LinkAttribution.fromUri(newLinkUri);
+        } else {
+          // The text doesn't include a scheme.
+          if (existingLinkAttribution.hasStructuredUri && existingLinkAttribution.uri!.scheme.isNotEmpty) {
+            // The existing link attribution has a structured URI, and that URI has a scheme.
+            // Retain the existing scheme.
+            final scheme = existingLinkAttribution.uri!.scheme;
+            updatedAttribution = LinkAttribution.fromUri(Uri.parse("$scheme://$newLinkText"));
+          } else {
+            // The existing link attribution doesn't have a structure URI,
+            // so we can't ask what scheme to use. Use the literal text as
+            // the full URL because that's the best we can do. It might even
+            // be an invalid URL or URI.
+            updatedAttribution = LinkAttribution(newLinkText);
+          }
+        }
+
+        linkChangeRequests.add(
+          // Switch out the old link attribution for the new one.
+          AddTextAttributionsRequest(
+            documentRange: linkRange,
+            attributions: {
+              updatedAttribution,
+            },
+          ),
+        );
+      }
     }
 
     linkChangeRequests.add(
@@ -891,11 +910,65 @@ class LinkifyReaction extends EditReaction {
 // TODO: Make this private again. It was private, but we have some split linkification between the reaction
 //       and the paste behavior in common_editor_operations. Once we create a way for reactions to identify
 //       paste behaviors, move the paste linkification into the linkify reaction and make this private again.
-Uri parseLink(String text) {
-  final uri = text.startsWith("http://") || text.startsWith("https://") //
-      ? Uri.parse(text)
-      : Uri.parse("https://$text");
-  return uri;
+Uri? tryToParseUrl(String word) {
+  // First, try extracting emails.
+  final extractedEmails = linkify(
+    word,
+    options: const LinkifyOptions(
+      humanize: false,
+      looseUrl: true,
+    ),
+    linkifiers: [
+      const EmailLinkifier(),
+    ],
+  );
+  final int emailCount = extractedEmails.fold(0, (value, element) => element is EmailElement ? value + 1 : value);
+  if (emailCount == 1) {
+    // Found exactly one email. Create and return a link attribution.
+    final emailElement = extractedEmails.first as EmailElement;
+    return Uri(
+      scheme: "mailto",
+      path: emailElement.emailAddress,
+    );
+  }
+
+  // Second, try extracting HTTP URLs.
+  final extractedLinks = linkify(
+    word,
+    options: const LinkifyOptions(
+      humanize: false,
+      looseUrl: true,
+    ),
+    linkifiers: [
+      const UrlLinkifier(),
+    ],
+  );
+  final int linkCount = extractedLinks.fold(0, (value, element) => element is UrlElement ? value + 1 : value);
+  if (linkCount == 1) {
+    // Found exactly 1 URL. Create and return an attribution.
+    try {
+      // Try to parse the word as a link.
+      final uri = Uri.parse(word);
+      if (uri.hasScheme) {
+        // URL is fully specified. Return it.
+        return uri;
+      }
+
+      // The URL is missing a scheme. Add "https:" and re-parse.
+      return Uri.parse("https://$word");
+    } catch (exception) {
+      // Something went wrong parsing the link. Fizzle.
+      return null;
+    }
+  }
+
+  // Third, try directly parsing a non-http URL.
+  if (word.contains("://")) {
+    return Uri.tryParse(word);
+  }
+
+  // Didn't find a URL in the given text.
+  return null;
 }
 
 /// Configuration for the action that should happen when a text containing

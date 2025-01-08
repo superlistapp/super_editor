@@ -22,13 +22,9 @@ class SuperTextFieldLaunchLinkTapHandler extends SuperTextFieldTapHandler {
       return TapHandlingInstruction.continueHandling;
     }
 
-    final uri = Uri.tryParse(linkAttribution.url);
-    if (uri == null) {
-      // The link is not a valid URI. We can't open it.
-      return TapHandlingInstruction.continueHandling;
-    }
-
-    UrlLauncher.instance.launchUrl(uri);
+    UrlLauncher.instance.launchUrl(
+      linkAttribution.launchableUri,
+    );
 
     return TapHandlingInstruction.halt;
   }
