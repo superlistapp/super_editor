@@ -84,6 +84,80 @@ void main() {
         expect(richText.getSpanForPosition(const TextPosition(offset: 5))!.style!.color, Colors.green);
         expect(richText.getSpanForPosition(const TextPosition(offset: 16))!.style!.color, Colors.green);
       });
+
+      testWidgetsOnArbitraryDesktop("can choose new selected text color based on the original text color",
+          (tester) async {
+        final stylesheet = defaultStylesheet.copyWith(
+          selectedTextColorStrategy: ({required Color originalTextColor, required Color selectionHighlightColor}) {
+            if (originalTextColor == Colors.green) {
+              return Colors.red;
+            }
+
+            if (originalTextColor == Colors.yellow) {
+              return Colors.blue;
+            }
+
+            return Colors.white;
+          },
+        );
+
+        // Pump an editor with a paragraph with the following colors:
+        // Lorem ipsum dolor
+        // gggggg-----------
+        // ------yyyyyy-----
+        // ------------bbbbb (black, the default color)
+        await tester //
+            .createDocument()
+            .withCustomContent(
+              MutableDocument(
+                nodes: [
+                  ParagraphNode(
+                    id: '1',
+                    text: AttributedText(
+                      'Lorem ipsum dolor',
+                      AttributedSpans(
+                        attributions: [
+                          SpanMarker(
+                              attribution: const ColorAttribution(Colors.green),
+                              offset: 0,
+                              markerType: SpanMarkerType.start),
+                          SpanMarker(
+                              attribution: const ColorAttribution(Colors.green),
+                              offset: 5,
+                              markerType: SpanMarkerType.end),
+                          SpanMarker(
+                              attribution: const ColorAttribution(Colors.yellow),
+                              offset: 6,
+                              markerType: SpanMarkerType.start),
+                          SpanMarker(
+                              attribution: const ColorAttribution(Colors.yellow),
+                              offset: 11,
+                              markerType: SpanMarkerType.end),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            )
+            .useStylesheet(stylesheet)
+            .pump();
+
+        // Triple tap to select the whole paragraph.
+        await tester.tripleTapInParagraph('1', 2);
+
+        // Ensure that all spans changed colors.
+        final richText = SuperEditorInspector.findRichTextInParagraph('1');
+
+        expect(richText.getSpanForPosition(const TextPosition(offset: 0))!.style!.color, Colors.red);
+        expect(richText.getSpanForPosition(const TextPosition(offset: 5))!.style!.color, Colors.red);
+
+        expect(richText.getSpanForPosition(const TextPosition(offset: 6))!.style!.color, Colors.blue);
+        expect(richText.getSpanForPosition(const TextPosition(offset: 11))!.style!.color, Colors.blue);
+
+        expect(richText.getSpanForPosition(const TextPosition(offset: 12))!.style!.color, Colors.white);
+        expect(richText.getSpanForPosition(const TextPosition(offset: 16))!.style!.color, Colors.white);
+      });
     });
 
     testWidgetsOnArbitraryDesktop("calculates upstream document selection within a single node", (tester) async {
