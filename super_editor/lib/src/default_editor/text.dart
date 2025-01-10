@@ -2594,6 +2594,15 @@ ExecutionInstruction anyCharacterToInsertInTextContent({
   return didInsertCharacter ? ExecutionInstruction.haltExecution : ExecutionInstruction.continueExecution;
 }
 
+/// Inserts the given [character] at the current caret position.
+///
+/// If [ignoreComposerAttributions] is `false`, the current composer styles are applied
+/// to the inserted character.
+///
+/// If the selection is expanded, the selection is deleted.
+///
+/// If the caret sits in a non-text node, a new paragraph is inserted below
+/// that node.
 class InsertCharacterAtCaretRequest implements EditRequest {
   InsertCharacterAtCaretRequest({
     required this.character,
@@ -2639,12 +2648,13 @@ class InsertCharacterAtCaretCommand extends EditCommand {
   void execute(EditContext context, CommandExecutor executor) {
     final document = context.document;
     final composer = context.find<MutableDocumentComposer>(Editor.composerKey);
+    final selection = composer.selection;
 
-    if (composer.selection == null) {
+    if (selection == null) {
       return;
     }
 
-    if (!composer.selection!.isCollapsed) {
+    if (!selection.isCollapsed) {
       _deleteExpandedSelection(
         context: context,
         executor: executor,
@@ -2656,12 +2666,8 @@ class InsertCharacterAtCaretCommand extends EditCommand {
     final extentNodePosition = composer.selection!.extent.nodePosition;
     if (extentNodePosition is UpstreamDownstreamNodePosition) {
       editorOpsLog.fine("The selected position is an UpstreamDownstreamPosition. Inserting new paragraph first.");
-      _insertBlockLevelNewline(
-        context: context,
-        executor: executor,
-        document: document,
-        composer: composer,
-        newNodeId: newNodeId,
+      executor.executeCommand(
+        DefaultInsertNewlineAtCaretCommand(newNodeId),
       );
     }
 
@@ -2672,14 +2678,17 @@ class InsertCharacterAtCaretCommand extends EditCommand {
       return;
     }
 
-    // Delegate the action to the standard insert-character behavior.
-    _insertCharacterInTextComposable(
-      character,
-      context: context,
-      document: document,
-      composer: composer,
-      ignoreComposerAttributions: ignoreComposerAttributions,
-      executor: executor,
+    // Insert the character.
+    if (!_isTextEntryNode(document: document, selection: selection)) {
+      return;
+    }
+
+    executor.executeCommand(
+      InsertTextCommand(
+        documentPosition: selection.extent,
+        textToInsert: character,
+        attributions: ignoreComposerAttributions ? {} : composer.preferences.currentAttributions,
+      ),
     );
   }
 }
@@ -2808,175 +2817,6 @@ DocumentPosition _getDocumentPositionAfterExpandedDeletion({
   }
 
   return newSelectionPosition;
-}
-
-void _insertBlockLevelNewline({
-  required EditContext context,
-  required CommandExecutor executor,
-  required Document document,
-  required DocumentComposer composer,
-  required String newNodeId,
-}) {
-  if (composer.selection == null) {
-    return;
-  }
-
-  // Ensure that the entire selection sits within the same node.
-  final baseNode = document.getNodeById(composer.selection!.base.nodeId)!;
-  final extentNode = document.getNodeById(composer.selection!.extent.nodeId)!;
-  if (baseNode.id != extentNode.id) {
-    return;
-  }
-
-  if (!composer.selection!.isCollapsed) {
-    // The selection is not collapsed. Delete the selected content first,
-    // then continue the process.
-    _deleteExpandedSelection(
-      context: context,
-      executor: executor,
-      document: document,
-      composer: composer,
-    );
-  }
-
-  if (extentNode is ListItemNode) {
-    if (extentNode.text.isEmpty) {
-      // The list item is empty. Convert it to a paragraph.
-      _convertToParagraph(
-        context: context,
-        executor: executor,
-        document: document,
-        composer: composer,
-      );
-      return;
-    }
-
-    // Split the list item into two.
-    executor.executeCommand(
-      SplitListItemCommand(
-        nodeId: extentNode.id,
-        splitPosition: composer.selection!.extent.nodePosition as TextNodePosition,
-        newNodeId: newNodeId,
-      ),
-    );
-  } else if (extentNode is ParagraphNode) {
-    // Split the paragraph into two. This includes headers, blockquotes, and
-    // any other block-level paragraph.
-    final currentExtentPosition = composer.selection!.extent.nodePosition as TextNodePosition;
-    final endOfParagraph = extentNode.endPosition;
-
-    executor.executeCommand(
-      SplitParagraphCommand(
-        nodeId: extentNode.id,
-        splitPosition: currentExtentPosition,
-        newNodeId: newNodeId,
-        replicateExistingMetadata: currentExtentPosition.offset != endOfParagraph.offset,
-      ),
-    );
-  } else if (composer.selection!.extent.nodePosition is UpstreamDownstreamNodePosition) {
-    final extentPosition = composer.selection!.extent.nodePosition as UpstreamDownstreamNodePosition;
-    if (extentPosition.affinity == TextAffinity.downstream) {
-      // The caret sits on the downstream edge of block-level content. Insert
-      // a new paragraph after this node.
-      executor.executeCommand(
-        InsertNodeAfterNodeCommand(
-          existingNodeId: extentNode.id,
-          newNode: ParagraphNode(
-            id: newNodeId,
-            text: AttributedText(''),
-          ),
-        ),
-      );
-    } else {
-      // The caret sits on the upstream edge of block-level content. Insert
-      // a new paragraph before this node.
-      executor.executeCommand(
-        InsertNodeAfterNodeCommand(
-          existingNodeId: extentNode.id,
-          newNode: ParagraphNode(
-            id: newNodeId,
-            text: AttributedText(''),
-          ),
-        ),
-      );
-    }
-  } else {
-    // We don't know how to handle this type of node position. Do nothing.
-    return;
-  }
-
-  // Place the caret at the beginning of the new node.
-  executor.executeCommand(
-    ChangeSelectionCommand(
-      DocumentSelection.collapsed(
-        position: DocumentPosition(
-          nodeId: newNodeId,
-          nodePosition: const TextNodePosition(offset: 0),
-        ),
-      ),
-      SelectionChangeType.insertContent,
-      SelectionReason.userInteraction,
-    ),
-  );
-}
-
-void _insertCharacterInTextComposable(
-  String character, {
-  required EditContext context,
-  required Document document,
-  required DocumentComposer composer,
-  bool ignoreComposerAttributions = false,
-  required CommandExecutor executor,
-}) {
-  if (composer.selection == null) {
-    return;
-  }
-  if (!composer.selection!.isCollapsed) {
-    return;
-  }
-  if (!_isTextEntryNode(document: document, selection: composer.selection!)) {
-    return;
-  }
-
-  executor.executeCommand(
-    InsertTextCommand(
-      documentPosition: composer.selection!.extent,
-      textToInsert: character,
-      attributions: ignoreComposerAttributions ? {} : composer.preferences.currentAttributions,
-    ),
-  );
-}
-
-/// Converts the [TextNode] with the current [DocumentComposer] selection
-/// extent to a [Paragraph], or does nothing if the current node is not
-/// a [TextNode], or if the current selection spans more than one node.
-void _convertToParagraph({
-  required EditContext context,
-  required CommandExecutor executor,
-  required Document document,
-  required DocumentComposer composer,
-  Map<String, Attribution>? newMetadata,
-}) {
-  if (composer.selection == null) {
-    return;
-  }
-
-  final baseNode = document.getNodeById(composer.selection!.base.nodeId)!;
-  final extentNode = document.getNodeById(composer.selection!.extent.nodeId)!;
-  if (baseNode.id != extentNode.id) {
-    return;
-  }
-  if (extentNode is! TextNode) {
-    return;
-  }
-  if (extentNode is ParagraphNode && extentNode.hasMetadataValue('blockType')) {
-    // This content is already a regular paragraph.
-    return;
-  }
-
-  executor.executeCommand(
-    ConvertTextNodeToParagraphCommand(nodeId: extentNode.id, newMetadata: newMetadata),
-  );
 }
 
 ExecutionInstruction deleteCharacterWhenBackspaceIsPressed({
