@@ -15,13 +15,12 @@ import 'package:super_editor/src/core/edit_context.dart';
 import 'package:super_editor/src/core/editor.dart';
 import 'package:super_editor/src/core/styles.dart';
 import 'package:super_editor/src/default_editor/attributions.dart';
-import 'package:super_editor/src/default_editor/tasks.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/attributed_text_styles.dart';
 import 'package:super_editor/src/infrastructure/composable_text.dart';
 import 'package:super_editor/src/infrastructure/flutter/geometry.dart';
-import 'package:super_editor/src/infrastructure/keyboard.dart';
 import 'package:super_editor/src/infrastructure/key_event_extensions.dart';
+import 'package:super_editor/src/infrastructure/keyboard.dart';
 import 'package:super_editor/src/infrastructure/strings.dart';
 import 'package:super_text_layout/super_text_layout.dart';
 
@@ -2104,6 +2103,13 @@ class TextDeletedEvent extends NodeChangeEvent {
   int get hashCode => super.hashCode ^ offset.hashCode ^ deletedText.hashCode;
 }
 
+/// A request to insert a newline at the current caret position.
+///
+/// The specific action taken depends on the type of content where the caret sits.
+/// This request might be routed to different [EditCommand]s based on that position.
+///
+/// Regardless of how the newline is handled, if the selection is expanded, that
+/// selection is deleted before inserting the newline.
 class InsertNewlineAtCaretRequest implements EditRequest {
   InsertNewlineAtCaretRequest([String? newNodeId]) {
     // We let callers avoid giving us a `newNodeId`, if desired, because
@@ -2123,107 +2129,17 @@ class InsertNewlineAtCaretRequest implements EditRequest {
   late final String newNodeId;
 }
 
-class InsertNewlineInListItemAtCaretCommand extends BaseInsertNewlineAtCaretCommand {
-  const InsertNewlineInListItemAtCaretCommand(this.newNodeId);
-
-  /// {@macro newNodeId}
-  final String newNodeId;
-
-  @override
-  void doInsertNewline(
-    EditContext context,
-    CommandExecutor executor,
-    DocumentPosition caretPosition,
-    NodePosition caretNodePosition,
-  ) {
-    final node = context.document.getNodeById(caretPosition.nodeId);
-    if (caretNodePosition is! TextNodePosition || node is! ListItemNode) {
-      // We don't know how to deal with this kind of node.
-      return;
-    }
-
-    if (node.text.isEmpty) {
-      // The list item is empty. Convert it to a paragraph.
-      executor.executeCommand(
-        ConvertListItemToParagraphCommand(nodeId: node.id),
-      );
-      return;
-    }
-
-    // Split the list item into two.
-    executor
-      ..executeCommand(
-        SplitListItemCommand(
-          nodeId: node.id,
-          splitPosition: caretNodePosition,
-          newNodeId: newNodeId,
-        ),
-      )
-      ..executeCommand(
-        ChangeSelectionCommand(
-          DocumentSelection.collapsed(
-            position: DocumentPosition(
-              nodeId: newNodeId,
-              nodePosition: const TextNodePosition(offset: 0),
-            ),
-          ),
-          SelectionChangeType.insertContent,
-          SelectionReason.userInteraction,
-        ),
-      );
-  }
-}
-
-class InsertNewlineInTaskAtCaretCommand extends BaseInsertNewlineAtCaretCommand {
-  const InsertNewlineInTaskAtCaretCommand(this.newNodeId);
-
-  /// {@macro newNodeId}
-  final String newNodeId;
-
-  @override
-  void doInsertNewline(
-    EditContext context,
-    CommandExecutor executor,
-    DocumentPosition caretPosition,
-    NodePosition caretNodePosition,
-  ) {
-    final node = context.document.getNodeById(caretPosition.nodeId);
-    if (caretNodePosition is! TextNodePosition || node is! TaskNode) {
-      // We don't know how to deal with this kind of node.
-      return;
-    }
-
-    if (node.text.isEmpty) {
-      // The task is empty. Convert it to a paragraph.
-      executor.executeCommand(
-        ConvertTaskToParagraphCommand(nodeId: node.id),
-      );
-      return;
-    }
-
-    executor
-      ..executeCommand(
-        SplitExistingTaskCommand(
-          nodeId: node.id,
-          splitOffset: caretNodePosition.offset,
-          newNodeId: newNodeId,
-        ),
-      )
-      ..executeCommand(
-        ChangeSelectionCommand(
-          DocumentSelection.collapsed(
-            position: DocumentPosition(
-              nodeId: newNodeId,
-              nodePosition: const TextNodePosition(offset: 0),
-            ),
-          ),
-          SelectionChangeType.insertContent,
-          SelectionReason.userInteraction,
-        ),
-      );
-  }
-}
-
+/// An [EditCommand] that inserts a newline when the caret sits within a code block.
+///
+/// This command adds the following behaviors beyond the usual:
+///  * When the caret is in the middle of a code block, a soft newline is inserted within
+///    the code block instead of splitting the node.
+///
+///  * When the caret is at the end of a code block without a soft newline, inserts
+///    a soft newline, so that users can keep writing more code in a code block.
+///
+///  * When the caret sits after an existing soft newline, deletes the soft newline
+///    and inserts a new empty paragraph below the code block.
 class InsertNewlineInCodeBlockAtCaretCommand extends BaseInsertNewlineAtCaretCommand {
   const InsertNewlineInCodeBlockAtCaretCommand(this.newNodeId);
 
@@ -2451,6 +2367,12 @@ class DefaultInsertNewlineAtCaretCommand extends BaseInsertNewlineAtCaretCommand
   }
 }
 
+/// An abstract [EditCommand] that does some common accounting that's useful for various
+/// implementations of commands that insert newlines.
+///
+/// Before delegating execution to subclasses, this base command fizzles if the selection
+/// is `null`. It also deletes selected content, if the selection is expanded. After that,
+/// subclasses receive the `non-null` caret position for easier processing.
 abstract class BaseInsertNewlineAtCaretCommand extends EditCommand {
   const BaseInsertNewlineAtCaretCommand();
 

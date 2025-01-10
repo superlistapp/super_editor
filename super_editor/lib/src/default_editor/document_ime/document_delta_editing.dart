@@ -372,8 +372,6 @@ class TextDeltasDocumentEditor {
       return;
     }
 
-    // commonOps.insertPlainText(replacementText);
-
     editor.execute([
       // This request automatically deletes the currently selected text.
       InsertPlainTextAtCaretRequest(replacementText),

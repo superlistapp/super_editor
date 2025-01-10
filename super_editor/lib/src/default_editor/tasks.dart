@@ -624,6 +624,66 @@ ExecutionInstruction backspaceToUnIndentTask({
   return ExecutionInstruction.haltExecution;
 }
 
+/// An [EditCommand] that inserts a newline when the caret sits within a [TaskNode].
+///
+/// This command adds the following behaviors beyond the usual:
+///  * When the caret is in the middle of a task, splits the task into two tasks.
+///
+///  * When the caret is at the end of a task, inserts a new empty task, instead of an
+///    empty paragraph.
+///
+///  * Inserting a newline into an empty task converts it into a paragraph instead of
+///    inserting a new task.
+class InsertNewlineInTaskAtCaretCommand extends BaseInsertNewlineAtCaretCommand {
+  const InsertNewlineInTaskAtCaretCommand(this.newNodeId);
+
+  /// {@macro newNodeId}
+  final String newNodeId;
+
+  @override
+  void doInsertNewline(
+    EditContext context,
+    CommandExecutor executor,
+    DocumentPosition caretPosition,
+    NodePosition caretNodePosition,
+  ) {
+    final node = context.document.getNodeById(caretPosition.nodeId);
+    if (caretNodePosition is! TextNodePosition || node is! TaskNode) {
+      // We don't know how to deal with this kind of node.
+      return;
+    }
+
+    if (node.text.isEmpty) {
+      // The task is empty. Convert it to a paragraph.
+      executor.executeCommand(
+        ConvertTaskToParagraphCommand(nodeId: node.id),
+      );
+      return;
+    }
+
+    executor
+      ..executeCommand(
+        SplitExistingTaskCommand(
+          nodeId: node.id,
+          splitOffset: caretNodePosition.offset,
+          newNodeId: newNodeId,
+        ),
+      )
+      ..executeCommand(
+        ChangeSelectionCommand(
+          DocumentSelection.collapsed(
+            position: DocumentPosition(
+              nodeId: newNodeId,
+              nodePosition: const TextNodePosition(offset: 0),
+            ),
+          ),
+          SelectionChangeType.insertContent,
+          SelectionReason.userInteraction,
+        ),
+      );
+  }
+}
+
 class ChangeTaskCompletionRequest implements EditRequest {
   ChangeTaskCompletionRequest({required this.nodeId, required this.isComplete});
 
