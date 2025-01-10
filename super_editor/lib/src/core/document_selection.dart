@@ -248,6 +248,10 @@ class DocumentRange {
   /// {@macro start_and_end}
   final DocumentPosition end;
 
+  /// Returns `true` if this range is collapsed, e.g., it starts and ends
+  /// at the sample place.
+  bool get isCollapsed => start == end;
+
   /// Returns `true` if [start] appears at, or before [end], or `false` otherwise.
   bool isNormalized(Document document) => document.getAffinityForRange(this) == TextAffinity.downstream;
 

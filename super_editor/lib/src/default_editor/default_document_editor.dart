@@ -74,8 +74,11 @@ final defaultRequestHandlers = List.unmodifiable(<EditRequestHandler>[
           textToInsert: request.textToInsert,
         )
       : null,
+  (editor, request) => request is InsertSoftNewlineAtCaretRequest //
+      ? const InsertSoftNewlineCommand()
+      : null,
   (editor, request) {
-    if (request is! InsertNewlineRequest) {
+    if (request is! InsertNewlineAtCaretRequest) {
       return null;
     }
 
@@ -89,10 +92,10 @@ final defaultRequestHandlers = List.unmodifiable(<EditRequestHandler>[
       return null;
     }
 
-    return const InsertNewlineInListItemCommand();
+    return InsertNewlineInListItemAtCaretCommand(request.newNodeId);
   },
   (editor, request) {
-    if (request is! InsertNewlineRequest) {
+    if (request is! InsertNewlineAtCaretRequest) {
       return null;
     }
 
@@ -110,10 +113,10 @@ final defaultRequestHandlers = List.unmodifiable(<EditRequestHandler>[
       return null;
     }
 
-    return const InsertNewlineInCodeBlockCommand();
+    return InsertNewlineInCodeBlockAtCaretCommand(request.newNodeId);
   },
   (editor, request) {
-    if (request is! InsertNewlineRequest) {
+    if (request is! InsertNewlineAtCaretRequest) {
       return null;
     }
 
@@ -127,10 +130,10 @@ final defaultRequestHandlers = List.unmodifiable(<EditRequestHandler>[
       return null;
     }
 
-    return const InsertNewlineInTaskCommand();
+    return InsertNewlineInTaskAtCaretCommand(request.newNodeId);
   },
-  (editor, request) => request is InsertNewlineRequest //
-      ? const DefaultInsertNewlineCommand()
+  (editor, request) => request is InsertNewlineAtCaretRequest //
+      ? DefaultInsertNewlineAtCaretCommand(request.newNodeId)
       : null,
   (editor, request) => request is PasteStructuredContentEditorRequest
       ? PasteStructuredContentEditorCommand(
@@ -189,17 +192,24 @@ final defaultRequestHandlers = List.unmodifiable(<EditRequestHandler>[
   (editor, request) => request is DeleteDownstreamCharacterRequest //
       ? const DeleteDownstreamCharacterCommand()
       : null,
+  (editor, request) => request is InsertCharacterAtCaretRequest
+      ? InsertCharacterAtCaretCommand(
+          character: request.character,
+          ignoreComposerAttributions: request.ignoreComposerAttributions,
+          newNodeId: request.newNodeId,
+        )
+      : null,
+  (editor, request) => request is InsertPlainTextAtCaretRequest //
+      ? InsertPlainTextAtCaretCommand(
+          request.plainText,
+          attributions: editor.composer.preferences.currentAttributions,
+        )
+      : null,
   (editor, request) => request is InsertTextRequest
       ? InsertTextCommand(
           documentPosition: request.documentPosition,
           textToInsert: request.textToInsert,
           attributions: request.attributions)
-      : null,
-  (editor, request) => request is InsertCharacterAtCaretRequest
-      ? InsertCharacterAtCaretCommand(
-          character: request.character,
-          ignoreComposerAttributions: request.ignoreComposerAttributions,
-        )
       : null,
   (editor, request) => request is ChangeParagraphAlignmentRequest
       ? ChangeParagraphAlignmentCommand(

@@ -1293,27 +1293,6 @@ ExecutionInstruction backspaceToUnIndentListItem({
   return wasIndented ? ExecutionInstruction.haltExecution : ExecutionInstruction.continueExecution;
 }
 
-ExecutionInstruction splitListItemWhenEnterPressed({
-  required SuperEditorContext editContext,
-  required KeyEvent keyEvent,
-}) {
-  if (keyEvent is! KeyDownEvent && keyEvent is! KeyRepeatEvent) {
-    return ExecutionInstruction.continueExecution;
-  }
-
-  if (keyEvent.logicalKey != LogicalKeyboardKey.enter) {
-    return ExecutionInstruction.continueExecution;
-  }
-
-  final node = editContext.document.getNodeById(editContext.composer.selection!.extent.nodeId);
-  if (node is! ListItemNode) {
-    return ExecutionInstruction.continueExecution;
-  }
-
-  final didSplitListItem = editContext.commonOps.insertBlockLevelNewline();
-  return didSplitListItem ? ExecutionInstruction.haltExecution : ExecutionInstruction.continueExecution;
-}
-
 /// Computes the ordinal value of an ordered list item.
 ///
 /// Walks backwards counting the number of ordered list items above the [listItem] with the same indentation level.

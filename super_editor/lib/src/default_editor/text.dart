@@ -1910,6 +1910,58 @@ class ChangeSingleColumnLayoutComponentStylesCommand extends EditCommand {
   }
 }
 
+/// A request to insert the given [plainText] at the current caret position.
+///
+/// If the base of the selection isn't a [TextNode], this request does nothing.
+///
+/// If the selection is expanded, the selected content is deleted.
+///
+/// If the [plainText] contains any newlines, those newlines will be inserted
+/// as characters. This request doesn't insert any new nodes.
+class InsertPlainTextAtCaretRequest implements EditRequest {
+  const InsertPlainTextAtCaretRequest(this.plainText);
+
+  final String plainText;
+}
+
+class InsertPlainTextAtCaretCommand extends EditCommand {
+  const InsertPlainTextAtCaretCommand(
+    this.plainText, {
+    this.attributions = const {},
+  });
+
+  final String plainText;
+  final Set<Attribution> attributions;
+
+  @override
+  void execute(EditContext context, CommandExecutor executor) {
+    final selection = context.composer.selection;
+    if (selection == null) {
+      // Can't insert at caret if there is no caret.
+      return;
+    }
+    final range = selection.normalize(context.document);
+    if (range.start.nodePosition is! TextNodePosition) {
+      // The effective insertion position isn't a TextNode. Fizzle.
+      return;
+    }
+
+    if (!range.isCollapsed) {
+      executor.executeCommand(
+        DeleteContentCommand(documentRange: range),
+      );
+    }
+
+    executor.executeCommand(
+      InsertTextCommand(
+        documentPosition: range.start,
+        textToInsert: plainText,
+        attributions: attributions,
+      ),
+    );
+  }
+}
+
 class InsertTextRequest implements EditRequest {
   InsertTextRequest({
     required this.documentPosition,
@@ -2052,12 +2104,30 @@ class TextDeletedEvent extends NodeChangeEvent {
   int get hashCode => super.hashCode ^ offset.hashCode ^ deletedText.hashCode;
 }
 
-class InsertNewlineRequest implements EditRequest {
-  InsertNewlineRequest();
+class InsertNewlineAtCaretRequest implements EditRequest {
+  InsertNewlineAtCaretRequest([String? newNodeId]) {
+    // We let callers avoid giving us a `newNodeId`, if desired, because
+    // callers may not understand that this ID is for undo/redo. Also,
+    // callers may not be sure what value they're supposed to provide.
+    // So if we don't get one, we create one.
+    this.newNodeId = newNodeId ?? Editor.createNodeId();
+  }
+
+  /// {@template newNodeId}
+  /// The ID to use for a new node, if a new node is created.
+  ///
+  /// This information is required so that undo/redo works. When requests
+  /// are re-run, they need to use the same node IDs, so that following
+  /// requests can repeat edits on those same nodes.
+  /// {@endtemplate}
+  late final String newNodeId;
 }
 
-class InsertNewlineInListItemCommand extends BaseInsertNewlineCommand {
-  const InsertNewlineInListItemCommand();
+class InsertNewlineInListItemAtCaretCommand extends BaseInsertNewlineAtCaretCommand {
+  const InsertNewlineInListItemAtCaretCommand(this.newNodeId);
+
+  /// {@macro newNodeId}
+  final String newNodeId;
 
   @override
   void doInsertNewline(
@@ -2081,7 +2151,6 @@ class InsertNewlineInListItemCommand extends BaseInsertNewlineCommand {
     }
 
     // Split the list item into two.
-    final newNodeId = Editor.createNodeId();
     executor
       ..executeCommand(
         SplitListItemCommand(
@@ -2105,8 +2174,11 @@ class InsertNewlineInListItemCommand extends BaseInsertNewlineCommand {
   }
 }
 
-class InsertNewlineInTaskCommand extends BaseInsertNewlineCommand {
-  const InsertNewlineInTaskCommand();
+class InsertNewlineInTaskAtCaretCommand extends BaseInsertNewlineAtCaretCommand {
+  const InsertNewlineInTaskAtCaretCommand(this.newNodeId);
+
+  /// {@macro newNodeId}
+  final String newNodeId;
 
   @override
   void doInsertNewline(
@@ -2129,7 +2201,6 @@ class InsertNewlineInTaskCommand extends BaseInsertNewlineCommand {
       return;
     }
 
-    final newNodeId = Editor.createNodeId();
     executor
       ..executeCommand(
         SplitExistingTaskCommand(
@@ -2153,8 +2224,11 @@ class InsertNewlineInTaskCommand extends BaseInsertNewlineCommand {
   }
 }
 
-class InsertNewlineInCodeBlockCommand extends BaseInsertNewlineCommand {
-  const InsertNewlineInCodeBlockCommand();
+class InsertNewlineInCodeBlockAtCaretCommand extends BaseInsertNewlineAtCaretCommand {
+  const InsertNewlineInCodeBlockAtCaretCommand(this.newNodeId);
+
+  /// {@macro newNodeId}
+  final String newNodeId;
 
   @override
   void doInsertNewline(
@@ -2184,33 +2258,50 @@ class InsertNewlineInCodeBlockCommand extends BaseInsertNewlineCommand {
     if (caretNodePosition.offset == node.text.length && node.text.last == "\n") {
       // The caret is at the end of a code block, following another newline.
       // Remove the existing newline.
-      context.document.replaceNodeById(
-        node.id,
-        node.copyTextNodeWith(
-          text: node.text.removeRegion(
-            startOffset: node.text.length - 1,
-            endOffset: node.text.length,
+      executor
+        ..executeCommand(
+          ReplaceNodeCommand(
+            existingNodeId: node.id,
+            newNode: node.copyTextNodeWith(
+              text: node.text.removeRegion(
+                startOffset: node.text.length - 1,
+                endOffset: node.text.length,
+              ),
+            ),
           ),
-        ),
-      );
-
-      // Insert a new empty paragraph after the code block.
-      context.document.insertNodeAfter(
-        existingNodeId: node.id,
-        newNode: ParagraphNode(
-          id: Editor.createNodeId(),
-          text: AttributedText(),
-        ),
-      );
+        )
+        // Insert a new empty paragraph after the code block.
+        ..executeCommand(
+          InsertNodeAfterNodeCommand(
+            existingNodeId: node.id,
+            newNode: ParagraphNode(
+              id: newNodeId,
+              text: AttributedText(),
+            ),
+          ),
+        )
+        ..executeCommand(
+          ChangeSelectionCommand(
+            DocumentSelection.collapsed(
+              position: DocumentPosition(
+                nodeId: newNodeId,
+                nodePosition: const TextNodePosition(offset: 0),
+              ),
+            ),
+            SelectionChangeType.insertContent,
+            SelectionReason.userInteraction,
+          ),
+        );
     } else {
       // Insert a newline within the code block.
-      context.document.replaceNodeById(
-        node.id,
-        node.copyTextNodeWith(
-          text: node.text.insertString(
-            textToInsert: "\n",
-            startOffset: caretNodePosition.offset,
+      executor.executeCommand(
+        InsertTextCommand(
+          documentPosition: DocumentPosition(
+            nodeId: node.id,
+            nodePosition: node.endPosition,
           ),
+          textToInsert: "\n",
+          attributions: {},
         ),
       );
     }
@@ -2235,8 +2326,11 @@ class InsertNewlineInCodeBlockCommand extends BaseInsertNewlineCommand {
 ///
 ///  * Caret on the trailing edge of a block node, an empty paragraph is inserted
 ///    after the block node.
-class DefaultInsertNewlineCommand extends BaseInsertNewlineCommand {
-  const DefaultInsertNewlineCommand();
+class DefaultInsertNewlineAtCaretCommand extends BaseInsertNewlineAtCaretCommand {
+  const DefaultInsertNewlineAtCaretCommand(this.newNodeId);
+
+  /// {@macro newNodeId}
+  final String newNodeId;
 
   @override
   void doInsertNewline(
@@ -2269,18 +2363,18 @@ class DefaultInsertNewlineCommand extends BaseInsertNewlineCommand {
     DocumentPosition caretPosition,
     UpstreamDownstreamNodePosition caretNodePosition,
   ) {
-    final newNodeId = Editor.createNodeId();
-
     if (caretNodePosition.affinity == TextAffinity.upstream) {
       // Insert an empty paragraph before the block node.
       executor
-        ..executeCommand(InsertNodeBeforeNodeCommand(
-          existingNodeId: caretPosition.nodeId,
-          newNode: ParagraphNode(
-            id: Editor.createNodeId(),
-            text: AttributedText(),
+        ..executeCommand(
+          InsertNodeBeforeNodeCommand(
+            existingNodeId: caretPosition.nodeId,
+            newNode: ParagraphNode(
+              id: newNodeId,
+              text: AttributedText(),
+            ),
           ),
-        ))
+        )
         ..executeCommand(
           ChangeSelectionCommand(
             DocumentSelection.collapsed(
@@ -2329,7 +2423,6 @@ class DefaultInsertNewlineCommand extends BaseInsertNewlineCommand {
   ) {
     // Split the paragraph into two. This includes headers, blockquotes, and
     // any other block-level paragraph.
-    final newNodeId = Editor.createNodeId();
     final endOfParagraph = textNode.endPosition;
 
     editorOpsLog.finer("Splitting paragraph in two.");
@@ -2358,8 +2451,8 @@ class DefaultInsertNewlineCommand extends BaseInsertNewlineCommand {
   }
 }
 
-abstract class BaseInsertNewlineCommand extends EditCommand {
-  const BaseInsertNewlineCommand();
+abstract class BaseInsertNewlineAtCaretCommand extends EditCommand {
+  const BaseInsertNewlineAtCaretCommand();
 
   @override
   void execute(EditContext context, CommandExecutor executor) {
@@ -2369,7 +2462,7 @@ abstract class BaseInsertNewlineCommand extends EditCommand {
     }
     if (!documentSelection.isCollapsed) {
       // The selection is expanded. Delete the selected content.
-      DeleteSelectionCommand(affinity: TextAffinity.downstream).execute(context, executor);
+      executor.executeCommand(DeleteSelectionCommand(affinity: TextAffinity.downstream));
     }
     assert(context.composer.selection!.isCollapsed);
 
@@ -2384,6 +2477,47 @@ abstract class BaseInsertNewlineCommand extends EditCommand {
     DocumentPosition caretPosition,
     NodePosition caretNodePosition,
   );
+}
+
+/// Inserts a newline character "\n" at the current caret position, within
+/// the current selected text node (doesn't insert a new node).
+///
+/// If a non-text node has the caret, nothing happens.
+///
+/// If the selection is expanded, the selected content is deleted before
+/// the insertion.
+class InsertSoftNewlineAtCaretRequest implements EditRequest {
+  const InsertSoftNewlineAtCaretRequest();
+}
+
+class InsertSoftNewlineCommand extends EditCommand {
+  const InsertSoftNewlineCommand();
+
+  @override
+  void execute(EditContext context, CommandExecutor executor) {
+    final documentSelection = context.composer.selection;
+    if (documentSelection == null) {
+      return;
+    }
+    if (documentSelection.base.nodePosition is! TextNodePosition) {
+      // The effective insertion position isn't within a text node. Fizzle.
+      return;
+    }
+    if (!documentSelection.isCollapsed) {
+      // The selection is expanded. Delete the selected content.
+      executor.executeCommand(DeleteSelectionCommand(affinity: TextAffinity.downstream));
+    }
+    assert(context.composer.selection!.isCollapsed);
+
+    final caretPosition = context.composer.selection!.extent;
+    executor.executeCommand(
+      InsertTextCommand(
+        documentPosition: caretPosition,
+        textToInsert: "\n",
+        attributions: {},
+      ),
+    );
+  }
 }
 
 class ConvertTextNodeToParagraphRequest implements EditRequest {
@@ -2539,23 +2673,45 @@ ExecutionInstruction anyCharacterToInsertInTextContent({
 }
 
 class InsertCharacterAtCaretRequest implements EditRequest {
-  const InsertCharacterAtCaretRequest({
+  InsertCharacterAtCaretRequest({
     required this.character,
     this.ignoreComposerAttributions = false,
-  });
+  }) {
+    // We generate a node ID just in case the caret sits in a binary
+    // node, and we need to insert a new paragraph.
+    // FIXME: Rework all uses of this request so that the caller ensures
+    //        that the caret is in a text node. Or, fizzle in the command
+    //        if we're not. It's probably not a good idea to hide the
+    //        paragraph insertion in this request/command pair.
+    newNodeId = Editor.createNodeId();
+  }
 
   final String character;
+  // FIXME: Document why we made this configurable, given that we're inserting
+  //        at the caret. Maybe this was for undo/redo? If so, we probably need
+  //        the composer styles to also activate/deactivate with history. It's
+  //        not clear that users will always be in a position to toggle this property
+  //        at the right times.
+  //
+  //        Another option is to require users to look up the styles from the composer
+  //        when they create the request.
   final bool ignoreComposerAttributions;
+
+  late final String newNodeId;
 }
 
 class InsertCharacterAtCaretCommand extends EditCommand {
   InsertCharacterAtCaretCommand({
     required this.character,
+    required this.newNodeId,
     this.ignoreComposerAttributions = false,
   });
 
   final String character;
   final bool ignoreComposerAttributions;
+
+  /// {@macro newNodeId}
+  final String newNodeId;
 
   @override
   void execute(EditContext context, CommandExecutor executor) {
@@ -2583,6 +2739,7 @@ class InsertCharacterAtCaretCommand extends EditCommand {
         executor: executor,
         document: document,
         composer: composer,
+        newNodeId: newNodeId,
       );
     }
 
@@ -2736,6 +2893,7 @@ void _insertBlockLevelNewline({
   required CommandExecutor executor,
   required Document document,
   required DocumentComposer composer,
+  required String newNodeId,
 }) {
   if (composer.selection == null) {
     return;
@@ -2758,8 +2916,6 @@ void _insertBlockLevelNewline({
       composer: composer,
     );
   }
-
-  final newNodeId = Editor.createNodeId();
 
   if (extentNode is ListItemNode) {
     if (extentNode.text.isEmpty) {
@@ -2961,9 +3117,11 @@ ExecutionInstruction shiftEnterToInsertNewlineInBlock({
     return ExecutionInstruction.continueExecution;
   }
 
-  final didInsertNewline = editContext.commonOps.insertPlainText('\n');
+  editContext.editor.execute([
+    const InsertSoftNewlineAtCaretRequest(),
+  ]);
 
-  return didInsertNewline ? ExecutionInstruction.haltExecution : ExecutionInstruction.continueExecution;
+  return ExecutionInstruction.haltExecution;
 }
 
 bool _isTextEntryNode({

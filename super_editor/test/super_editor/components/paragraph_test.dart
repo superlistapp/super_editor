@@ -1,7 +1,9 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_test_robots/flutter_test_robots.dart';
 import 'package:flutter_test_runners/flutter_test_runners.dart';
+import 'package:super_editor/src/default_editor/attributions.dart';
 import 'package:super_editor/src/default_editor/paragraph.dart';
 import 'package:super_editor/src/default_editor/text.dart';
 import 'package:super_editor/super_editor_test.dart';
@@ -43,6 +45,122 @@ void main() {
       // alignment of the paragraph. This check ensures that the caret overlay updated
       // itself in response to the paragraph layout changing.
       expect(SuperEditorInspector.findCaretOffsetInDocument() == leftAlignedCaretOffset, isFalse);
+    });
+
+    group("block newlines >", () {
+      testWidgetsOnAllPlatforms("inserts newline in middle and splits paragraph into two paragraphs",
+          (WidgetTester tester) async {
+        await tester
+            .createDocument() //
+            .withSingleShortParagraph()
+            .pump();
+
+        // Place the caret in the middle of the paragraph:
+        // "This is the first |node in a document."
+        await tester.placeCaretInParagraph("1", 18);
+
+        // Insert a newline.
+        switch (debugDefaultTargetPlatformOverride) {
+          case TargetPlatform.android:
+          case TargetPlatform.iOS:
+            // FIXME: pressEnterWithIme should work, but it seems to think there are no
+            //        connected IME clients, so it fizzles. For now, we use the implementation
+            //        directly.
+            // await tester.pressEnterWithIme();
+            await tester.testTextInput.receiveAction(TextInputAction.newline);
+          case TargetPlatform.macOS:
+          case TargetPlatform.windows:
+          case TargetPlatform.linux:
+          case TargetPlatform.fuchsia:
+          case null:
+            await tester.pressEnter();
+        }
+
+        // Ensure we have two paragraphs, each with part of the original text.
+        final document = SuperEditorInspector.findDocument()!;
+        expect(document.nodeCount, 2);
+
+        expect(document.first.metadata["blockType"], paragraphAttribution);
+        expect(document.first.asTextNode.text.toPlainText(), "This is the first ");
+
+        expect(document.last.metadata["blockType"], paragraphAttribution);
+        expect(document.last.asTextNode.text.toPlainText(), "node in a document.");
+      });
+
+      testWidgetsOnAllPlatforms("inserts newline at end of paragraph to create a new empty paragraph",
+          (WidgetTester tester) async {
+        await tester
+            .createDocument() //
+            .withSingleShortParagraph()
+            .pump();
+
+        // Place caret at the end of the paragraph.
+        await tester.placeCaretInParagraph("1", 37);
+
+        // Insert a newline.
+        switch (debugDefaultTargetPlatformOverride) {
+          case TargetPlatform.android:
+          case TargetPlatform.iOS:
+            // FIXME: pressEnterWithIme should work, but it seems to think there are no
+            //        connected IME clients, so it fizzles. For now, we use the implementation
+            //        directly.
+            // await tester.pressEnterWithIme();
+            await tester.testTextInput.receiveAction(TextInputAction.newline);
+          case TargetPlatform.macOS:
+          case TargetPlatform.windows:
+          case TargetPlatform.linux:
+          case TargetPlatform.fuchsia:
+          case null:
+            await tester.pressEnter();
+        }
+
+        // Ensure a new, empty paragraph was inserted after the blockquote.
+        final document = SuperEditorInspector.findDocument()!;
+        expect(document.nodeCount, 2);
+
+        expect(document.first.metadata["blockType"], paragraphAttribution);
+        expect(document.first.asTextNode.text.toPlainText(), "This is the first node in a document.");
+
+        expect(document.last.metadata["blockType"], paragraphAttribution);
+        expect(document.last.asTextNode.text.toPlainText(), "");
+      });
+    });
+
+    group("soft newlines >", () {
+      testWidgetsOnDesktop("SHIFT + ENTER inserts a soft newline in middle of paragraph", (tester) async {
+        final editorContext = await tester //
+            .createDocument()
+            .withSingleShortParagraph()
+            .pump();
+
+        // Place the caret in the middle of the paragraph:
+        // "This is the first |node in a document."
+        await tester.placeCaretInParagraph("1", 18);
+
+        // Hold shift and press enter.
+        await tester.pressShiftEnter();
+
+        // Ensure that we still have a single paragraph, but there's a newline in the middle.
+        expect(editorContext.document.nodeCount, 1);
+        expect(editorContext.document.first.asTextNode.text.toPlainText(), "This is the first \nnode in a document.");
+      });
+
+      testWidgetsOnDesktop("SHIFT + ENTER inserts a soft newline at end of paragraph", (tester) async {
+        final editorContext = await tester //
+            .createDocument()
+            .withSingleShortParagraph()
+            .pump();
+
+        // Place the caret at the end of the paragraph.
+        await tester.placeCaretInParagraph("1", 37);
+
+        // Hold shift and press enter.
+        await tester.pressShiftEnter();
+
+        // Ensure that we still have a single paragraph, but it ends with a newline.
+        expect(editorContext.document.nodeCount, 1);
+        expect(editorContext.document.first.asTextNode.text.last, "\n");
+      });
     });
 
     group("indentation >", () {

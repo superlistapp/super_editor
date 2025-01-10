@@ -1,4 +1,3 @@
-import 'package:attributed_text/attributed_text.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:super_editor/src/core/document.dart';
@@ -7,11 +6,8 @@ import 'package:super_editor/src/core/document_layout.dart';
 import 'package:super_editor/src/core/document_selection.dart';
 import 'package:super_editor/src/core/editor.dart';
 import 'package:super_editor/src/default_editor/common_editor_operations.dart';
-import 'package:super_editor/src/default_editor/list_items.dart';
 import 'package:super_editor/src/default_editor/multi_node_editing.dart';
-import 'package:super_editor/src/default_editor/paragraph.dart';
 import 'package:super_editor/src/default_editor/selection_upstream_downstream.dart';
-import 'package:super_editor/src/default_editor/tasks.dart';
 import 'package:super_editor/src/default_editor/text.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/platforms/platform.dart';
@@ -316,7 +312,7 @@ class TextDeltasDocumentEditor {
 
     if (insertionPosition.nodePosition is UpstreamDownstreamNodePosition) {
       editorOpsLog.fine("The selected position is an UpstreamDownstreamPosition. Inserting new paragraph first.");
-      commonOps.insertBlockLevelNewline();
+      editor.execute([InsertNewlineAtCaretRequest()]);
 
       // After inserting a block level new line, the selection changes to another node.
       // Therefore, we need to update the insertion position.
@@ -376,7 +372,12 @@ class TextDeltasDocumentEditor {
       return;
     }
 
-    commonOps.insertPlainText(replacementText);
+    // commonOps.insertPlainText(replacementText);
+
+    editor.execute([
+      // This request automatically deletes the currently selected text.
+      InsertPlainTextAtCaretRequest(replacementText),
+    ]);
   }
 
   void delete(TextRange deletedRange) {
@@ -416,7 +417,9 @@ class TextDeltasDocumentEditor {
     if (!_isCurrentlyApplyingDeltas) {
       // This newline came from a hardware key, or somewhere other than
       // IME deltas. We can safely run a regular newline insertion.
-      editor.execute([InsertNewlineRequest()]);
+      editor.execute([
+        InsertNewlineAtCaretRequest(Editor.createNodeId()),
+      ]);
       return;
     }
 
@@ -432,7 +435,9 @@ class TextDeltasDocumentEditor {
     final isSplittingText = selectedNode is TextNode;
 
     // Run the newline insertion.
-    editor.execute([InsertNewlineRequest()]);
+    editor.execute([
+      InsertNewlineAtCaretRequest(Editor.createNodeId()),
+    ]);
 
     // If the newline split a text node, find the newly insert node and update
     // the IME <-> Document mapping for those two nodes. This is the special

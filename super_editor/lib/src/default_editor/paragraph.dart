@@ -1135,9 +1135,11 @@ ExecutionInstruction enterToInsertBlockNewline({
     return ExecutionInstruction.continueExecution;
   }
 
-  final didInsertBlockNewline = editContext.commonOps.insertBlockLevelNewline();
+  editContext.editor.execute([
+    InsertNewlineAtCaretRequest(Editor.createNodeId()),
+  ]);
 
-  return didInsertBlockNewline ? ExecutionInstruction.haltExecution : ExecutionInstruction.continueExecution;
+  return ExecutionInstruction.haltExecution;
 }
 
 ExecutionInstruction tabToIndentParagraph({

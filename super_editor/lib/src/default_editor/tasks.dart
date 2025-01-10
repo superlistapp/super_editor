@@ -438,21 +438,8 @@ ExecutionInstruction enterToInsertNewTask({
     return ExecutionInstruction.continueExecution;
   }
 
-  if (node.text.isEmpty) {
-    // The task is empty. Convert it to a paragraph.
-    editContext.editor.execute([
-      ConvertTextNodeToParagraphRequest(nodeId: node.id),
-    ]);
-    return ExecutionInstruction.haltExecution;
-  }
-
-  final splitOffset = (selection.extent.nodePosition as TextNodePosition).offset;
-
   editContext.editor.execute([
-    SplitExistingTaskRequest(
-      existingNodeId: node.id,
-      splitOffset: splitOffset,
-    ),
+    InsertNewlineAtCaretRequest(Editor.createNodeId()),
   ]);
 
   return ExecutionInstruction.haltExecution;

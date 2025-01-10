@@ -19,7 +19,7 @@ void main() {
         );
 
         expectLater(() {
-          editor.execute([const InsertCharacterAtCaretRequest(character: "a")]);
+          editor.execute([InsertCharacterAtCaretRequest(character: "a")]);
         }, throwsException);
       });
 
@@ -37,7 +37,7 @@ void main() {
           changeLog = changeList;
         }));
 
-        editorPieces.editor.execute([const InsertCharacterAtCaretRequest(character: "a")]);
+        editorPieces.editor.execute([InsertCharacterAtCaretRequest(character: "a")]);
 
         expect(changeLog, isNotNull);
         expect(changeLog!.length, 2);
@@ -63,11 +63,11 @@ void main() {
         }));
 
         editorPieces.editor
-          ..execute([const InsertCharacterAtCaretRequest(character: "H")])
-          ..execute([const InsertCharacterAtCaretRequest(character: "e")])
-          ..execute([const InsertCharacterAtCaretRequest(character: "l")])
-          ..execute([const InsertCharacterAtCaretRequest(character: "l")])
-          ..execute([const InsertCharacterAtCaretRequest(character: "o")]);
+          ..execute([InsertCharacterAtCaretRequest(character: "H")])
+          ..execute([InsertCharacterAtCaretRequest(character: "e")])
+          ..execute([InsertCharacterAtCaretRequest(character: "l")])
+          ..execute([InsertCharacterAtCaretRequest(character: "l")])
+          ..execute([InsertCharacterAtCaretRequest(character: "o")]);
 
         expect(changeLogCount, 5);
         expect(changeEventCount, 10); // 2 events per character insertion

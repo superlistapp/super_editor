@@ -415,7 +415,7 @@ class DocumentEditingRobot {
     _actionQueue.add(
       _randomPauseBefore(
         () {
-          _editorOps.insertBlockLevelNewline();
+          _editor.execute([InsertNewlineAtCaretRequest()]);
         },
       ),
     );
@@ -445,7 +445,9 @@ class DocumentEditingRobot {
     _actionQueue.add(
       _randomPauseBefore(
         () {
-          _editorOps.insertPlainText(text);
+          _editor.execute([
+            InsertPlainTextAtCaretRequest(text),
+          ]);
         },
       ),
     );
