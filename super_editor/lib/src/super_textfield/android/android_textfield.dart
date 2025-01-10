@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:follow_the_leader/follow_the_leader.dart';
 import 'package:super_editor/src/infrastructure/attributed_text_styles.dart';
 import 'package:super_editor/src/infrastructure/flutter/build_context.dart';
 import 'package:super_editor/src/infrastructure/flutter/flutter_scheduler.dart';
@@ -174,7 +175,7 @@ class SuperAndroidTextFieldState extends State<SuperAndroidTextField>
 
   late ImeAttributedTextEditingController _textEditingController;
 
-  final _magnifierLayerLink = LayerLink();
+  final _magnifierLayerLink = LeaderLink();
   late AndroidEditingOverlayController _editingOverlayController;
 
   late TextScrollController _textScrollController;
