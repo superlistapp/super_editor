@@ -452,7 +452,7 @@ class SpellingAndGrammarReaction implements EditReaction {
 
     final suggestions = await _mobileSpellChecker.fetchSpellCheckSuggestions(
       PlatformDispatcher.instance.locale,
-      textNode.text.text,
+      textNode.text.toPlainText(),
     );
     if (suggestions == null) {
       return;
