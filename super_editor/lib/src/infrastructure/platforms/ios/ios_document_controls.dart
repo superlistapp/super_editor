@@ -500,6 +500,7 @@ class IosHandlesDocumentLayer extends DocumentLayoutLayerStatefulWidget {
     required this.selection,
     required this.changeSelection,
     this.areSelectionHandlesAllowed,
+    this.handleBeingDragged,
     required this.handleColor,
     this.caretWidth = 2,
     this.handleBallDiameter = defaultIosHandleBallDiameter,
@@ -518,6 +519,8 @@ class IosHandlesDocumentLayer extends DocumentLayoutLayerStatefulWidget {
 
   /// {@macro are_selection_handles_allowed}
   final ValueListenable<bool>? areSelectionHandlesAllowed;
+
+  final ValueListenable<HandleType?>? handleBeingDragged;
 
   /// Color the iOS-style text selection drag handles.
   final Color handleColor;
@@ -573,6 +576,7 @@ class IosControlsDocumentLayerState extends DocumentLayoutLayerState<IosHandlesD
     widget.selection.addListener(_onSelectionChange);
     widget.shouldCaretBlink.addListener(_onBlinkModeChange);
     widget.floatingCursorController?.isActive.addListener(_onFloatingCursorActivationChange);
+    widget.handleBeingDragged?.addListener(_onDragChanged);
 
     _onBlinkModeChange();
   }
@@ -595,6 +599,11 @@ class IosControlsDocumentLayerState extends DocumentLayoutLayerState<IosHandlesD
       oldWidget.floatingCursorController?.isActive.removeListener(_onFloatingCursorActivationChange);
       widget.floatingCursorController?.isActive.addListener(_onFloatingCursorActivationChange);
     }
+
+    if (widget.handleBeingDragged != oldWidget.handleBeingDragged) {
+      oldWidget.handleBeingDragged?.removeListener(_onDragChanged);
+      widget.handleBeingDragged?.addListener(_onDragChanged);
+    }
   }
 
   @override
@@ -602,6 +611,7 @@ class IosControlsDocumentLayerState extends DocumentLayoutLayerState<IosHandlesD
     widget.selection.removeListener(_onSelectionChange);
     widget.shouldCaretBlink.removeListener(_onBlinkModeChange);
     widget.floatingCursorController?.isActive.removeListener(_onFloatingCursorActivationChange);
+    widget.handleBeingDragged?.removeListener(_onDragChanged);
 
     _caretBlinkController.dispose();
     super.dispose();
@@ -632,6 +642,12 @@ class IosControlsDocumentLayerState extends DocumentLayoutLayerState<IosHandlesD
     _updateCaretFlash();
     setState(() {
       // Schedule a new layout computation because the caret and/or handles need to move.
+    });
+  }
+
+  void _onDragChanged() {
+    setState(() {
+      // Schedule a new layout computation because we might need to hide/show the handle ball.
     });
   }
 
@@ -856,13 +872,16 @@ class IosControlsDocumentLayerState extends DocumentLayoutLayerState<IosHandlesD
     required Rect upstream,
     required Color debugColor,
   }) {
-    final ballRadius = widget.handleBallDiameter / 2;
+    final shouldShowBall = widget.handleBeingDragged?.value != HandleType.upstream;
+    final ballRadius = shouldShowBall ? widget.handleBallDiameter / 2 : 0.0;
     return Positioned(
       key: _upstreamHandleKey,
       left: upstream.left,
       // Move the handle up so the ball is above the selected area and add half
       // of the radius to make the ball overlap the selected area.
-      top: upstream.top - selectionHighlightBoxVerticalExpansion - widget.handleBallDiameter + (ballRadius / 2),
+      top: upstream.top -
+          selectionHighlightBoxVerticalExpansion +
+          (shouldShowBall ? (ballRadius / 2) - widget.handleBallDiameter : 0.0),
       child: FractionalTranslation(
         translation: const Offset(-0.5, 0),
         child: IOSSelectionHandle.upstream(
@@ -881,7 +900,10 @@ class IosControlsDocumentLayerState extends DocumentLayoutLayerState<IosHandlesD
     required Rect downstream,
     required Color debugColor,
   }) {
-    final ballRadius = widget.handleBallDiameter / 2;
+    final ballRadius = widget.handleBeingDragged?.value == HandleType.downstream //
+        ? 0.0
+        : widget.handleBallDiameter / 2;
+
     return Positioned(
       key: _downstreamHandleKey,
       left: downstream.left,

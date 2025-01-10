@@ -88,11 +88,11 @@ class _SpellingErrorSuggestionOverlayState
 
   DocumentRange? _ignoredSpellingErrorRange;
 
-  final _suggestionListenable = ValueNotifier<SpellingErrorSuggestion?>(null);
+  final _suggestionListenable = ValueNotifier<SpellingError?>(null);
 
   final _boundsKey = GlobalKey();
 
-  SpellingErrorSuggestion? _currentSpellingSuggestions;
+  SpellingError? _currentSpellingSuggestions;
 
   @override
   void initState() {
@@ -158,7 +158,7 @@ class _SpellingErrorSuggestionOverlayState
   }
 
   @override
-  void showSuggestions(SpellingErrorSuggestion suggestions) {
+  void showSuggestions(SpellingError suggestions) {
     setState(() {
       _currentSpellingSuggestions = suggestions;
     });
@@ -172,7 +172,7 @@ class _SpellingErrorSuggestionOverlayState
   }
 
   @override
-  SpellingErrorSuggestion? findSuggestionsForWordAt(DocumentRange wordRange) {
+  SpellingError? findSuggestionsForWordAt(DocumentRange wordRange) {
     final misspelledSpan = _findSpellingSuggestionAtRange(widget.suggestions, wordRange);
     if (misspelledSpan == null) {
       // No selected mis-spelled word. Fizzle.
@@ -318,7 +318,7 @@ class _SpellingErrorSuggestionOverlayState
     );
   }
 
-  SpellingErrorSuggestion? _findSpellingSuggestionAtRange(
+  SpellingError? _findSpellingSuggestionAtRange(
     SpellingErrorSuggestions allSuggestions,
     DocumentRange selection,
   ) {

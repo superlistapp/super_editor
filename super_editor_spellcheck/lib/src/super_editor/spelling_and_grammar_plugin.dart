@@ -38,7 +38,7 @@ class SpellingAndGrammarPlugin extends SuperEditorPlugin {
     bool isGrammarCheckEnabled = true,
     UnderlineStyle grammarErrorUnderlineStyle = defaultGrammarErrorUnderlineStyle,
     SpellingErrorSuggestionToolbarBuilder toolbarBuilder = defaultSpellingSuggestionToolbarBuilder,
-    Color selectedWordHighlightColor = Colors.transparent,
+    Color? selectedWordHighlightColor,
     SuperEditorAndroidControlsController? androidControlsController,
     SuperEditorIosControlsController? iosControlsController,
   })  : _isSpellCheckEnabled = isSpellingCheckEnabled,
@@ -57,8 +57,12 @@ class SpellingAndGrammarPlugin extends SuperEditorPlugin {
         toolbarBuilder: toolbarBuilder,
       ),
     ];
+
     _styler = SpellingAndGrammarStyler(
-      selectionHighlightColor: selectedWordHighlightColor,
+      selectionHighlightColor: selectedWordHighlightColor ??
+          (defaultTargetPlatform == TargetPlatform.android //
+              ? Colors.red.withValues(alpha: 0.3)
+              : null),
     );
 
     _contentTapHandler = switch (defaultTargetPlatform) {
@@ -357,7 +361,7 @@ class SpellingAndGrammarReaction implements EditReaction {
     TextRange prevError = TextRange.empty;
     final locale = PlatformDispatcher.instance.locale;
     final language = _macSpellChecker.convertDartLocaleToMacLanguageCode(locale)!;
-    final spellingSuggestions = <TextRange, SpellingErrorSuggestion>{};
+    final spellingSuggestions = <TextRange, SpellingError>{};
     if (isSpellCheckEnabled) {
       do {
         prevError = await _macSpellChecker.checkSpelling(
@@ -381,7 +385,7 @@ class SpellingAndGrammarReaction implements EditReaction {
             ),
           );
 
-          spellingSuggestions[prevError] = SpellingErrorSuggestion(
+          spellingSuggestions[prevError] = SpellingError(
             word: word,
             nodeId: textNode.id,
             range: prevError,
@@ -442,7 +446,7 @@ class SpellingAndGrammarReaction implements EditReaction {
 
   Future<void> _findSpellingAndGrammarErrorsOnMobile(TextNode textNode) async {
     final textErrors = <TextError>{};
-    final spellingSuggestions = <TextRange, SpellingErrorSuggestion>{};
+    final spellingSuggestions = <TextRange, SpellingError>{};
 
     // Track this spelling and grammar request to make sure we don't process
     // the response out of order with other requests.
@@ -460,7 +464,7 @@ class SpellingAndGrammarReaction implements EditReaction {
 
     for (final suggestion in suggestions) {
       final misspelledWord = textNode.text.substring(suggestion.range.start, suggestion.range.end);
-      spellingSuggestions[suggestion.range] = SpellingErrorSuggestion(
+      spellingSuggestions[suggestion.range] = SpellingError(
         word: misspelledWord,
         nodeId: textNode.id,
         range: suggestion.range,
@@ -567,6 +571,14 @@ class SuperEditorIosSpellCheckerTapHandler extends _SpellCheckerContentTapDelega
     }
 
     _hideSpellCheckerPopover();
+    return TapHandlingInstruction.continueHandling;
+  }
+
+  @override
+  TapHandlingInstruction onPanStart(DocumentTapDetails details) {
+    if (popoverController.isShowing) {
+      _hideSpellCheckerPopover();
+    }
     return TapHandlingInstruction.continueHandling;
   }
 

@@ -8,6 +8,10 @@ import 'package:super_editor_spellcheck/src/super_editor/spelling_error_suggesti
 class SpellCheckerPopoverController {
   SpellCheckerPopoverDelegate? _delegate;
 
+  /// Whether or not the popover is currently showing.
+  bool get isShowing => _isShowing;
+  bool _isShowing = false;
+
   /// Attaches this controller to a delegate that knows how to
   /// show a popover with spelling suggestions.
   ///
@@ -32,22 +36,24 @@ class SpellCheckerPopoverController {
   }
 
   /// Shows the spelling suggestions popover with the suggetions
-  /// provided by [SpellingErrorSuggestion.suggestions].
+  /// provided by [SpellingError.suggestions].
   ///
   /// Does nothing if [spelling] doesn't have any suggestions.
-  void showSuggestions(SpellingErrorSuggestion spelling) {
+  void showSuggestions(SpellingError spelling) {
     _delegate?.showSuggestions(spelling);
+    _isShowing = true;
   }
 
   /// Hides the spelling suggestions popover if it's visible.
   void hide() {
     _delegate?.hideSuggestionsPopover();
+    _isShowing = false;
   }
 
   /// Finds spelling suggestions for the word at the given [wordRange].
   ///
   /// Returns `null` if no suggestions are found.
-  SpellingErrorSuggestion? findSuggestionsForWordAt(DocumentRange wordRange) {
+  SpellingError? findSuggestionsForWordAt(DocumentRange wordRange) {
     return _delegate?.findSuggestionsForWordAt(wordRange);
   }
 }
@@ -73,7 +79,7 @@ abstract class SpellCheckerPopoverDelegate {
   void onDetached();
 
   /// Shows the spelling suggestions popover with the suggetions
-  /// provided by [SpellingErrorSuggestion.suggestions].
+  /// provided by [SpellingError.suggestions].
   ///
   /// If the popover is already visible, this method should update
   /// the suggestions with the new ones.
@@ -82,7 +88,7 @@ abstract class SpellCheckerPopoverDelegate {
   /// should be closed.
   ///
   /// This method should not update the document selection.
-  void showSuggestions(SpellingErrorSuggestion suggestions) {}
+  void showSuggestions(SpellingError suggestions) {}
 
   /// Hides the spelling suggestions popover if it's visible.
   void hideSuggestionsPopover() {}
@@ -90,5 +96,5 @@ abstract class SpellCheckerPopoverDelegate {
   /// Finds spelling suggestions for the word at the given [wordRange].
   ///
   /// Returns `null` if no suggestions are found.
-  SpellingErrorSuggestion? findSuggestionsForWordAt(DocumentRange wordRange) => null;
+  SpellingError? findSuggestionsForWordAt(DocumentRange wordRange) => null;
 }

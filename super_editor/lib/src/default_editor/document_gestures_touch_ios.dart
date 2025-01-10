@@ -170,6 +170,11 @@ class SuperEditorIosControlsController {
   /// prevented by [preventSelectionHandles].
   void preventSelectionHandles() => _areSelectionHandlesAllowed.value = false;
 
+  /// Reports the [HandleType] of the handle being dragged by the user.
+  ///
+  /// If no drag handle is being dragged, this value is `null`.
+  final ValueNotifier<HandleType?> handleBeingDragged = ValueNotifier<HandleType?>(null);
+
   /// Controls the iOS floating cursor.
   late final FloatingCursorController floatingCursorController;
 
@@ -885,6 +890,24 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
     _globalTapDownOffset = null;
     _tapDownLongPressTimer?.cancel();
 
+    if (widget.contentTapHandlers != null) {
+      final docOffset = _interactorOffsetToDocumentOffset(details.localPosition);
+      for (final handler in widget.contentTapHandlers!) {
+        final result = handler.onPanStart(
+          DocumentTapDetails(
+            documentLayout: _docLayout,
+            layoutOffset: docOffset,
+            globalOffset: details.globalPosition,
+          ),
+        );
+        if (result == TapHandlingInstruction.halt) {
+          // The custom tap handler doesn't want us to react at all
+          // to the tap.
+          return;
+        }
+      }
+    }
+
     // TODO: to help the user drag handles instead of scrolling, try checking touch
     //       placement during onTapDown, and then pick that up here. I think the little
     //       bit of slop might be the problem.
@@ -971,6 +994,24 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
   }
 
   void _onPanUpdate(DragUpdateDetails details) {
+    if (widget.contentTapHandlers != null) {
+      final docOffset = _interactorOffsetToDocumentOffset(details.localPosition);
+      for (final handler in widget.contentTapHandlers!) {
+        final result = handler.onPanUpdate(
+          DocumentTapDetails(
+            documentLayout: _docLayout,
+            layoutOffset: docOffset,
+            globalOffset: details.globalPosition,
+          ),
+        );
+        if (result == TapHandlingInstruction.halt) {
+          // The custom tap handler doesn't want us to react at all
+          // to the tap.
+          return;
+        }
+      }
+    }
+
     _globalDragOffset = details.globalPosition;
 
     _dragEndInInteractor = interactorBox.globalToLocal(details.globalPosition);
@@ -1017,6 +1058,7 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
         const ClearComposingRegionRequest(),
       ]);
     } else if (_dragHandleType == HandleType.upstream) {
+      _controlsController!.handleBeingDragged.value = HandleType.upstream;
       widget.editor.execute([
         ChangeSelectionRequest(
           widget.selection.value!.copyWith(
@@ -1028,6 +1070,7 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
         const ClearComposingRegionRequest(),
       ]);
     } else if (_dragHandleType == HandleType.downstream) {
+      _controlsController!.handleBeingDragged.value = HandleType.downstream;
       widget.editor.execute([
         ChangeSelectionRequest(
           widget.selection.value!.copyWith(
@@ -1042,9 +1085,28 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
   }
 
   void _onPanEnd(DragEndDetails details) {
+    if (widget.contentTapHandlers != null) {
+      final docOffset = _interactorOffsetToDocumentOffset(details.localPosition);
+      for (final handler in widget.contentTapHandlers!) {
+        final result = handler.onPanEnd(
+          DocumentTapDetails(
+            documentLayout: _docLayout,
+            layoutOffset: docOffset,
+            globalOffset: details.globalPosition,
+          ),
+        );
+        if (result == TapHandlingInstruction.halt) {
+          // The custom tap handler doesn't want us to react at all
+          // to the tap.
+          return;
+        }
+      }
+    }
+
     _controlsController!
       ..hideMagnifier()
-      ..blinkCaret();
+      ..blinkCaret()
+      ..handleBeingDragged.value = null;
 
     if (_dragMode != null) {
       // The user was dragging a selection change in some way, either with handles
@@ -1054,9 +1116,21 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
   }
 
   void _onPanCancel() {
+    if (widget.contentTapHandlers != null) {
+      for (final handler in widget.contentTapHandlers!) {
+        final result = handler.onPanCancel();
+        if (result == TapHandlingInstruction.halt) {
+          // The custom tap handler doesn't want us to react at all
+          // to the tap.
+          return;
+        }
+      }
+    }
+
     if (_dragMode != null) {
       _onDragSelectionEnd();
     }
+    _controlsController!.handleBeingDragged.value = null;
   }
 
   void _onDragSelectionEnd() {
@@ -1916,6 +1990,7 @@ class SuperEditorIosHandlesDocumentLayerBuilder implements SuperEditorLayerBuild
         ]);
       },
       areSelectionHandlesAllowed: controlsController.areSelectionHandlesAllowed,
+      handleBeingDragged: controlsController.handleBeingDragged,
       handleColor: handleColor ?? controlsController.handleColor ?? Theme.of(context).primaryColor,
       caretWidth: caretWidth ?? 2,
       handleBallDiameter: handleBallDiameter ?? defaultIosHandleBallDiameter,

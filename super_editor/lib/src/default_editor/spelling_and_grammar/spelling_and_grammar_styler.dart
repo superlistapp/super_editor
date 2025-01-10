@@ -11,7 +11,7 @@ class SpellingAndGrammarStyler extends SingleColumnLayoutStylePhase {
   SpellingAndGrammarStyler({
     UnderlineStyle? spellingErrorUnderlineStyle,
     UnderlineStyle? grammarErrorUnderlineStyle,
-    this.selectionHighlightColor = Colors.transparent,
+    this.selectionHighlightColor,
   })  : _spellingErrorUnderlineStyle = spellingErrorUnderlineStyle,
         _grammarErrorUnderlineStyle = grammarErrorUnderlineStyle;
 
@@ -42,7 +42,7 @@ class SpellingAndGrammarStyler extends SingleColumnLayoutStylePhase {
   bool _overrideSelectionColor = false;
 
   /// The color to use for the selection highlight [overrideSelectionColor] is called.
-  final Color selectionHighlightColor;
+  final Color? selectionHighlightColor;
 
   final _errorsByNode = <String, Set<TextError>>{};
   final _dirtyNodes = <String>{};
@@ -126,8 +126,8 @@ class SpellingAndGrammarStyler extends SingleColumnLayoutStylePhase {
         for (final spellingError in spellingErrors) spellingError.range,
       ]);
 
-    if (_overrideSelectionColor) {
-      viewModel.selectionColor = selectionHighlightColor;
+    if (_overrideSelectionColor && selectionHighlightColor != null) {
+      viewModel.selectionColor = selectionHighlightColor!;
     }
 
     final grammarErrors = _errorsByNode[viewModel.nodeId]!.where((error) => error.type == TextErrorType.grammar);

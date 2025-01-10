@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:super_editor/super_editor.dart';
 import 'package:super_editor_spellcheck/super_editor_spellcheck.dart';
@@ -82,7 +83,6 @@ class _SuperEditorSpellcheckScreenState extends State<_SuperEditorSpellcheckScre
     _spellingAndGrammarPlugin = SpellingAndGrammarPlugin(
       iosControlsController: _iosControlsController,
       androidControlsController: _androidControlsController,
-      selectedWordHighlightColor: Colors.red.withOpacity(0.3),
     );
 
     _editor = createDefaultDocumentEditor(

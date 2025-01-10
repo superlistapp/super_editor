@@ -14,12 +14,12 @@ class SpellingErrorSuggestions with ChangeNotifier implements Editable {
   ///
   /// Each spelling error suggestion is a map from the text range of the mis-spelled word
   /// to the suggested replacements for that word.
-  final _suggestions = <String, Map<TextRange, SpellingErrorSuggestion>>{};
+  final _suggestions = <String, Map<TextRange, SpellingError>>{};
 
   /// Returns spelling correction suggestions for the word at the given [offset],
   /// or `null` if there's no spelling error at the given [offset], or no suggestions
   /// for the mis-spelled word at the given [offset].
-  SpellingErrorSuggestion? getSuggestionsAtTextOffset(String nodeId, int offset) {
+  SpellingError? getSuggestionsAtTextOffset(String nodeId, int offset) {
     final suggestionsForNode = _suggestions[nodeId];
     if (suggestionsForNode == null) {
       return null;
@@ -49,15 +49,15 @@ class SpellingErrorSuggestions with ChangeNotifier implements Editable {
   ///
   /// If the spelling suggestions are still being obtained from the spell checker,
   /// `null` is returned.
-  SpellingErrorSuggestion? getSuggestionsForWord(String nodeId, TextRange range) {
-    _suggestions[nodeId] ??= <TextRange, SpellingErrorSuggestion>{};
+  SpellingError? getSuggestionsForWord(String nodeId, TextRange range) {
+    _suggestions[nodeId] ??= <TextRange, SpellingError>{};
     return _suggestions[nodeId]![range];
   }
 
   /// Replaces all existing spelling suggestions for the node with the given [nodeId] with
   /// the given [spellingSuggestions].
-  void putSuggestions(String nodeId, Map<TextRange, SpellingErrorSuggestion> spellingSuggestions) {
-    _suggestions[nodeId] ??= <TextRange, SpellingErrorSuggestion>{};
+  void putSuggestions(String nodeId, Map<TextRange, SpellingError> spellingSuggestions) {
+    _suggestions[nodeId] ??= <TextRange, SpellingError>{};
     _suggestions[nodeId]!
       ..clear()
       ..addAll(spellingSuggestions);
@@ -97,8 +97,8 @@ class SpellingErrorSuggestions with ChangeNotifier implements Editable {
   }
 }
 
-class SpellingErrorSuggestion {
-  const SpellingErrorSuggestion({
+class SpellingError {
+  const SpellingError({
     required this.word,
     required this.nodeId,
     required this.range,
@@ -122,7 +122,7 @@ class SpellingErrorSuggestion {
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      other is SpellingErrorSuggestion &&
+      other is SpellingError &&
           runtimeType == other.runtimeType &&
           word == other.word &&
           nodeId == other.nodeId &&
