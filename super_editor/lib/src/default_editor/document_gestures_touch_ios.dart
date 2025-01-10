@@ -1506,23 +1506,25 @@ class SuperEditorIosMagnifierOverlayManagerState extends State<SuperEditorIosMag
     // When the user is dragging an overlay handle, SuperEditor
     // position a Leader with a LeaderLink. This magnifier follows that Leader
     // via the LeaderLink.
-    return ValueListenableBuilder(
-      valueListenable: _controlsController!.shouldShowMagnifier,
-      builder: (context, shouldShowMagnifier, child) {
-        return _controlsController!.magnifierBuilder != null //
-            ? _controlsController!.magnifierBuilder!(
-                context,
-                DocumentKeys.magnifier,
-                _controlsController!.magnifierFocalPoint,
-                shouldShowMagnifier,
-              )
-            : _buildDefaultMagnifier(
-                context,
-                DocumentKeys.magnifier,
-                _controlsController!.magnifierFocalPoint,
-                shouldShowMagnifier,
-              );
-      },
+    return IgnorePointer(
+      child: ValueListenableBuilder(
+        valueListenable: _controlsController!.shouldShowMagnifier,
+        builder: (context, shouldShowMagnifier, child) {
+          return _controlsController!.magnifierBuilder != null //
+              ? _controlsController!.magnifierBuilder!(
+                  context,
+                  DocumentKeys.magnifier,
+                  _controlsController!.magnifierFocalPoint,
+                  shouldShowMagnifier,
+                )
+              : _buildDefaultMagnifier(
+                  context,
+                  DocumentKeys.magnifier,
+                  _controlsController!.magnifierFocalPoint,
+                  shouldShowMagnifier,
+                );
+        },
+      ),
     );
   }
 
@@ -1537,10 +1539,10 @@ class SuperEditorIosMagnifierOverlayManagerState extends State<SuperEditorIosMag
       magnifierKey: magnifierKey,
       leaderLink: magnifierFocalPoint,
       show: isVisible,
-      // The bottom of the magnifier sits above the focal point.
-      // Leave a few pixels between the bottom of the magnifier and the focal point. This
-      // value was chosen empirically.
-      offsetFromFocalPoint: const Offset(0, -20),
+      // The magnifier is centered with the focal point. Translate it so that it sits
+      // above the focal point and leave a few pixels between the bottom of the magnifier
+      // and the focal point. This value was chosen empirically.
+      offsetFromFocalPoint: Offset(0, (-defaultIosMagnifierSize.height / 2) - 20),
       handleColor: _controlsController!.handleColor,
     );
   }
