@@ -95,7 +95,9 @@ void main() {
             Editor.composerKey: composer,
           },
           requestHandlers: [
-            (request) => request is _ExpandingCommandRequest ? _ExpandingCommand(request) : null,
+            (editor, request) => request is _ExpandingCommandRequest //
+                ? _ExpandingCommand(request)
+                : null,
           ],
           listeners: [
             FunctionalEditListener((newChangeList) {

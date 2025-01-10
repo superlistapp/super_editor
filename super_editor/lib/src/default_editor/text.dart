@@ -15,6 +15,7 @@ import 'package:super_editor/src/core/edit_context.dart';
 import 'package:super_editor/src/core/editor.dart';
 import 'package:super_editor/src/core/styles.dart';
 import 'package:super_editor/src/default_editor/attributions.dart';
+import 'package:super_editor/src/default_editor/tasks.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/attributed_text_styles.dart';
 import 'package:super_editor/src/infrastructure/composable_text.dart';
@@ -185,7 +186,6 @@ class TextNode extends DocumentNode {
     );
   }
 
-  @override
   TextNode copy() {
     return TextNode(id: id, text: text.copyText(0), metadata: Map.from(metadata));
   }
@@ -2052,6 +2052,340 @@ class TextDeletedEvent extends NodeChangeEvent {
   int get hashCode => super.hashCode ^ offset.hashCode ^ deletedText.hashCode;
 }
 
+class InsertNewlineRequest implements EditRequest {
+  InsertNewlineRequest();
+}
+
+class InsertNewlineInListItemCommand extends BaseInsertNewlineCommand {
+  const InsertNewlineInListItemCommand();
+
+  @override
+  void doInsertNewline(
+    EditContext context,
+    CommandExecutor executor,
+    DocumentPosition caretPosition,
+    NodePosition caretNodePosition,
+  ) {
+    final node = context.document.getNodeById(caretPosition.nodeId);
+    if (caretNodePosition is! TextNodePosition || node is! ListItemNode) {
+      // We don't know how to deal with this kind of node.
+      return;
+    }
+
+    if (node.text.isEmpty) {
+      // The list item is empty. Convert it to a paragraph.
+      executor.executeCommand(
+        ConvertListItemToParagraphCommand(nodeId: node.id),
+      );
+      return;
+    }
+
+    // Split the list item into two.
+    final newNodeId = Editor.createNodeId();
+    executor
+      ..executeCommand(
+        SplitListItemCommand(
+          nodeId: node.id,
+          splitPosition: caretNodePosition,
+          newNodeId: newNodeId,
+        ),
+      )
+      ..executeCommand(
+        ChangeSelectionCommand(
+          DocumentSelection.collapsed(
+            position: DocumentPosition(
+              nodeId: newNodeId,
+              nodePosition: const TextNodePosition(offset: 0),
+            ),
+          ),
+          SelectionChangeType.insertContent,
+          SelectionReason.userInteraction,
+        ),
+      );
+  }
+}
+
+class InsertNewlineInTaskCommand extends BaseInsertNewlineCommand {
+  const InsertNewlineInTaskCommand();
+
+  @override
+  void doInsertNewline(
+    EditContext context,
+    CommandExecutor executor,
+    DocumentPosition caretPosition,
+    NodePosition caretNodePosition,
+  ) {
+    final node = context.document.getNodeById(caretPosition.nodeId);
+    if (caretNodePosition is! TextNodePosition || node is! TaskNode) {
+      // We don't know how to deal with this kind of node.
+      return;
+    }
+
+    if (node.text.isEmpty) {
+      // The task is empty. Convert it to a paragraph.
+      executor.executeCommand(
+        ConvertTaskToParagraphCommand(nodeId: node.id),
+      );
+      return;
+    }
+
+    final newNodeId = Editor.createNodeId();
+    executor
+      ..executeCommand(
+        SplitExistingTaskCommand(
+          nodeId: node.id,
+          splitOffset: caretNodePosition.offset,
+          newNodeId: newNodeId,
+        ),
+      )
+      ..executeCommand(
+        ChangeSelectionCommand(
+          DocumentSelection.collapsed(
+            position: DocumentPosition(
+              nodeId: newNodeId,
+              nodePosition: const TextNodePosition(offset: 0),
+            ),
+          ),
+          SelectionChangeType.insertContent,
+          SelectionReason.userInteraction,
+        ),
+      );
+  }
+}
+
+class InsertNewlineInCodeBlockCommand extends BaseInsertNewlineCommand {
+  const InsertNewlineInCodeBlockCommand();
+
+  @override
+  void doInsertNewline(
+    EditContext context,
+    CommandExecutor executor,
+    DocumentPosition caretPosition,
+    NodePosition caretNodePosition,
+  ) {
+    final node = context.document.getNodeById(caretPosition.nodeId);
+    if (node is! TextNode || caretNodePosition is! TextNodePosition) {
+      return;
+    }
+    if (node.metadata[NodeMetadata.blockType] != codeAttribution) {
+      return;
+    }
+
+    // When inserting a newline in the middle of a code block, the
+    // newline should be inserted within the code block, without
+    // breaking the node into two.
+    //
+    // When inserting a newline at the end of a code block, immediately
+    // after some content, the newline should appear within the code block.
+    //
+    // When inserting a newline after another newline, the existing
+    // newline should be removed from the code block, and a new paragraph
+    // should be inserted below the code block.
+    if (caretNodePosition.offset == node.text.length && node.text.last == "\n") {
+      // The caret is at the end of a code block, following another newline.
+      // Remove the existing newline.
+      context.document.replaceNodeById(
+        node.id,
+        node.copyTextNodeWith(
+          text: node.text.removeRegion(
+            startOffset: node.text.length - 1,
+            endOffset: node.text.length,
+          ),
+        ),
+      );
+
+      // Insert a new empty paragraph after the code block.
+      context.document.insertNodeAfter(
+        existingNodeId: node.id,
+        newNode: ParagraphNode(
+          id: Editor.createNodeId(),
+          text: AttributedText(),
+        ),
+      );
+    } else {
+      // Insert a newline within the code block.
+      context.document.replaceNodeById(
+        node.id,
+        node.copyTextNodeWith(
+          text: node.text.insertString(
+            textToInsert: "\n",
+            startOffset: caretNodePosition.offset,
+          ),
+        ),
+      );
+    }
+  }
+}
+
+/// An [EditCommand] that handles a typical newline insertion.
+///
+/// If [documentSelection] is expanded, the selected content is first deleted.
+/// The remaining behavior is then guaranteed to apply to a caret offset.
+///
+/// Newline insertion operates as follows:
+///
+///  * Caret in the middle of a paragraph, the paragraph is split in two, with
+///    the same metadata applied to both paragraphs.
+///
+///  * Caret at the end of a paragraph, a new paragraph is inserted after the
+///    current paragraph, using a standard "paragraph" block type.
+///
+///  * Caret on the leading edge of a block node, an empty paragraph is inserted
+///    before the block node.
+///
+///  * Caret on the trailing edge of a block node, an empty paragraph is inserted
+///    after the block node.
+class DefaultInsertNewlineCommand extends BaseInsertNewlineCommand {
+  const DefaultInsertNewlineCommand();
+
+  @override
+  void doInsertNewline(
+    EditContext context,
+    CommandExecutor executor,
+    DocumentPosition caretPosition,
+    NodePosition caretNodePosition,
+  ) {
+    if (caretNodePosition is! UpstreamDownstreamNodePosition && caretNodePosition is! TextNodePosition) {
+      // We don't know how to deal with this kind of node.
+      return;
+    }
+
+    if (caretNodePosition is UpstreamDownstreamNodePosition) {
+      // The caret is sitting at the edge of an upstream/downstream node.
+      _insertNewlineInBinaryNode(context, executor, caretPosition, caretNodePosition);
+      return;
+    }
+
+    final node = context.document.getNodeById(caretPosition.nodeId);
+    if (caretNodePosition is TextNodePosition && node is TextNode) {
+      _insertNewlineInTextNode(context, executor, node, caretPosition, caretNodePosition);
+      return;
+    }
+  }
+
+  void _insertNewlineInBinaryNode(
+    EditContext context,
+    CommandExecutor executor,
+    DocumentPosition caretPosition,
+    UpstreamDownstreamNodePosition caretNodePosition,
+  ) {
+    final newNodeId = Editor.createNodeId();
+
+    if (caretNodePosition.affinity == TextAffinity.upstream) {
+      // Insert an empty paragraph before the block node.
+      executor
+        ..executeCommand(InsertNodeBeforeNodeCommand(
+          existingNodeId: caretPosition.nodeId,
+          newNode: ParagraphNode(
+            id: Editor.createNodeId(),
+            text: AttributedText(),
+          ),
+        ))
+        ..executeCommand(
+          ChangeSelectionCommand(
+            DocumentSelection.collapsed(
+              position: DocumentPosition(
+                nodeId: newNodeId,
+                nodePosition: const TextNodePosition(offset: 0),
+              ),
+            ),
+            SelectionChangeType.insertContent,
+            SelectionReason.userInteraction,
+          ),
+        );
+    } else {
+      // Insert an empty paragraph after the block node.
+      executor
+        ..executeCommand(
+          InsertNodeAfterNodeCommand(
+            existingNodeId: caretPosition.nodeId,
+            newNode: ParagraphNode(
+              id: newNodeId,
+              text: AttributedText(),
+            ),
+          ),
+        )
+        ..executeCommand(
+          ChangeSelectionCommand(
+            DocumentSelection.collapsed(
+              position: DocumentPosition(
+                nodeId: newNodeId,
+                nodePosition: const TextNodePosition(offset: 0),
+              ),
+            ),
+            SelectionChangeType.insertContent,
+            SelectionReason.userInteraction,
+          ),
+        );
+    }
+  }
+
+  void _insertNewlineInTextNode(
+    EditContext context,
+    CommandExecutor executor,
+    TextNode textNode,
+    DocumentPosition caretPosition,
+    TextNodePosition caretTextPosition,
+  ) {
+    // Split the paragraph into two. This includes headers, blockquotes, and
+    // any other block-level paragraph.
+    final newNodeId = Editor.createNodeId();
+    final endOfParagraph = textNode.endPosition;
+
+    editorOpsLog.finer("Splitting paragraph in two.");
+    executor
+      ..executeCommand(
+        SplitParagraphCommand(
+          nodeId: caretPosition.nodeId,
+          splitPosition: caretTextPosition,
+          newNodeId: newNodeId,
+          replicateExistingMetadata: caretTextPosition.offset != endOfParagraph.offset,
+        ),
+      )
+      ..executeCommand(
+        // Place the caret at the beginning of the new node.
+        ChangeSelectionCommand(
+          DocumentSelection.collapsed(
+            position: DocumentPosition(
+              nodeId: newNodeId,
+              nodePosition: const TextNodePosition(offset: 0),
+            ),
+          ),
+          SelectionChangeType.insertContent,
+          SelectionReason.userInteraction,
+        ),
+      );
+  }
+}
+
+abstract class BaseInsertNewlineCommand extends EditCommand {
+  const BaseInsertNewlineCommand();
+
+  @override
+  void execute(EditContext context, CommandExecutor executor) {
+    final documentSelection = context.composer.selection;
+    if (documentSelection == null) {
+      return;
+    }
+    if (!documentSelection.isCollapsed) {
+      // The selection is expanded. Delete the selected content.
+      DeleteSelectionCommand(affinity: TextAffinity.downstream).execute(context, executor);
+    }
+    assert(context.composer.selection!.isCollapsed);
+
+    final caretPosition = context.composer.selection!.extent;
+    final caretNodePosition = caretPosition.nodePosition;
+    doInsertNewline(context, executor, caretPosition, caretNodePosition);
+  }
+
+  void doInsertNewline(
+    EditContext context,
+    CommandExecutor executor,
+    DocumentPosition caretPosition,
+    NodePosition caretNodePosition,
+  );
+}
+
 class ConvertTextNodeToParagraphRequest implements EditRequest {
   const ConvertTextNodeToParagraphRequest({
     required this.nodeId,
@@ -2088,7 +2422,10 @@ class ConvertTextNodeToParagraphCommand extends EditCommand {
         metadata: newMetadata,
       );
     }
-    document.replaceNode(oldNode: extentNode, newNode: newParagraphNode);
+    document.replaceNodeById(
+      extentNode.id,
+      newParagraphNode,
+    );
 
     executor.logChanges([
       DocumentEdit(
@@ -2128,9 +2465,9 @@ class InsertAttributedTextCommand extends EditCommand {
 
     final textOffset = (documentPosition.nodePosition as TextPosition).offset;
 
-    document.replaceNode(
-      oldNode: textNode,
-      newNode: textNode.copyTextNodeWith(
+    document.replaceNodeById(
+      textNode.id,
+      textNode.copyTextNodeWith(
         text: textNode.text.insert(
           textToInsert: textToInsert,
           startOffset: textOffset,

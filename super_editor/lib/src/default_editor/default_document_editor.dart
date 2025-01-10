@@ -1,5 +1,7 @@
+import 'package:super_editor/src/core/document.dart';
 import 'package:super_editor/src/core/document_composer.dart';
 import 'package:super_editor/src/core/editor.dart';
+import 'package:super_editor/src/default_editor/attributions.dart';
 import 'package:super_editor/src/default_editor/composer/composer_reactions.dart';
 import 'package:super_editor/src/default_editor/box_component.dart';
 import 'package:super_editor/src/default_editor/list_items.dart';
@@ -32,7 +34,7 @@ Editor createDefaultDocumentEditor({
 }
 
 final defaultRequestHandlers = List.unmodifiable(<EditRequestHandler>[
-  (request) => request is ChangeSelectionRequest
+  (editor, request) => request is ChangeSelectionRequest
       ? ChangeSelectionCommand(
           request.newSelection,
           request.changeType,
@@ -40,136 +42,194 @@ final defaultRequestHandlers = List.unmodifiable(<EditRequestHandler>[
           notifyListeners: request.notifyListeners,
         )
       : null,
-  (request) => request is ClearSelectionRequest
+  (editor, request) => request is ClearSelectionRequest
       ? const ChangeSelectionCommand(
           null,
           SelectionChangeType.clearSelection,
           SelectionReason.userInteraction,
         )
       : null,
-  (request) => request is ChangeComposingRegionRequest //
+  (editor, request) => request is ChangeComposingRegionRequest //
       ? ChangeComposingRegionCommand(request.composingRegion)
       : null,
-  (request) => request is ClearComposingRegionRequest //
+  (editor, request) => request is ClearComposingRegionRequest //
       ? ChangeComposingRegionCommand(null)
       : null,
-  (request) => request is ChangeInteractionModeRequest //
+  (editor, request) => request is ChangeInteractionModeRequest //
       ? ChangeInteractionModeCommand(isInteractionModeDesired: request.isInteractionModeDesired)
       : null,
-  (request) => request is RemoveComposerPreferenceStylesRequest //
+  (editor, request) => request is RemoveComposerPreferenceStylesRequest //
       ? RemoveComposerPreferenceStylesCommand(request.stylesToRemove)
       : null,
-  (request) => request is InsertTextRequest
+  (editor, request) => request is InsertTextRequest
       ? InsertTextCommand(
           documentPosition: request.documentPosition,
           textToInsert: request.textToInsert,
           attributions: request.attributions,
         )
       : null,
-  (request) => request is InsertAttributedTextRequest
+  (editor, request) => request is InsertAttributedTextRequest
       ? InsertAttributedTextCommand(
           documentPosition: request.documentPosition,
           textToInsert: request.textToInsert,
         )
       : null,
-  (request) => request is PasteStructuredContentEditorRequest
+  (editor, request) {
+    if (request is! InsertNewlineRequest) {
+      return null;
+    }
+
+    final selection = editor.composer.selection;
+    if (selection == null) {
+      return null;
+    }
+
+    final base = selection.base;
+    if (editor.document.getNodeById(base.nodeId) is! ListItemNode) {
+      return null;
+    }
+
+    return const InsertNewlineInListItemCommand();
+  },
+  (editor, request) {
+    if (request is! InsertNewlineRequest) {
+      return null;
+    }
+
+    final selection = editor.composer.selection;
+    if (selection == null) {
+      return null;
+    }
+
+    final base = selection.base;
+    final node = editor.document.getNodeById(base.nodeId);
+    if (node is! ParagraphNode) {
+      return null;
+    }
+    if (node.metadata[NodeMetadata.blockType] != codeAttribution) {
+      return null;
+    }
+
+    return const InsertNewlineInCodeBlockCommand();
+  },
+  (editor, request) {
+    if (request is! InsertNewlineRequest) {
+      return null;
+    }
+
+    final selection = editor.composer.selection;
+    if (selection == null) {
+      return null;
+    }
+
+    final base = selection.base;
+    if (editor.document.getNodeById(base.nodeId) is! TaskNode) {
+      return null;
+    }
+
+    return const InsertNewlineInTaskCommand();
+  },
+  (editor, request) => request is InsertNewlineRequest //
+      ? const DefaultInsertNewlineCommand()
+      : null,
+  (editor, request) => request is PasteStructuredContentEditorRequest
       ? PasteStructuredContentEditorCommand(
           content: request.content,
           pastePosition: request.pastePosition,
         )
       : null,
-  (request) => request is InsertNodeAtIndexRequest
+  (editor, request) => request is InsertNodeAtIndexRequest
       ? InsertNodeAtIndexCommand(nodeIndex: request.nodeIndex, newNode: request.newNode)
       : null,
-  (request) => request is InsertNodeBeforeNodeRequest
+  (editor, request) => request is InsertNodeBeforeNodeRequest
       ? InsertNodeBeforeNodeCommand(existingNodeId: request.existingNodeId, newNode: request.newNode)
       : null,
-  (request) => request is InsertNodeAfterNodeRequest
+  (editor, request) => request is InsertNodeAfterNodeRequest
       ? InsertNodeAfterNodeCommand(existingNodeId: request.existingNodeId, newNode: request.newNode)
       : null,
-  (request) => request is InsertNodeAtCaretRequest //
+  (editor, request) => request is InsertNodeAtCaretRequest //
       ? InsertNodeAtCaretCommand(newNode: request.node)
       : null,
-  (request) => request is MoveNodeRequest //
+  (editor, request) => request is MoveNodeRequest //
       ? MoveNodeCommand(nodeId: request.nodeId, newIndex: request.newIndex)
       : null,
-  (request) => request is CombineParagraphsRequest
+  (editor, request) => request is CombineParagraphsRequest
       ? CombineParagraphsCommand(firstNodeId: request.firstNodeId, secondNodeId: request.secondNodeId)
       : null,
-  (request) => request is ReplaceNodeRequest
+  (editor, request) => request is ReplaceNodeRequest
       ? ReplaceNodeCommand(existingNodeId: request.existingNodeId, newNode: request.newNode)
       : null,
-  (request) => request is ReplaceNodeWithEmptyParagraphWithCaretRequest
+  (editor, request) => request is ReplaceNodeWithEmptyParagraphWithCaretRequest
       ? ReplaceNodeWithEmptyParagraphWithCaretCommand(nodeId: request.nodeId)
       : null,
-  (request) => request is DeleteContentRequest //
+  (editor, request) => request is DeleteContentRequest //
       ? DeleteContentCommand(documentRange: request.documentRange)
       : null,
-  (request) => request is DeleteSelectionRequest //
+  (editor, request) => request is DeleteSelectionRequest //
       ? DeleteSelectionCommand(affinity: request.affinity)
       : null,
-  (request) => request is DeleteUpstreamAtBeginningOfNodeRequest && request.node is ListItemNode
+  (editor, request) => request is DeleteUpstreamAtBeginningOfNodeRequest && request.node is ListItemNode
       ? ConvertListItemToParagraphCommand(nodeId: request.node.id, paragraphMetadata: request.node.metadata)
       : null,
-  (request) => request is DeleteUpstreamAtBeginningOfNodeRequest && request.node is ParagraphNode
+  (editor, request) => request is DeleteUpstreamAtBeginningOfNodeRequest && request.node is ParagraphNode
       ? DeleteUpstreamAtBeginningOfParagraphCommand(request.node)
       : null,
-  (request) => request is DeleteUpstreamAtBeginningOfNodeRequest && request.node is BlockNode
+  (editor, request) => request is DeleteUpstreamAtBeginningOfNodeRequest && request.node is BlockNode
       ? DeleteUpstreamAtBeginningOfBlockNodeCommand(request.node)
       : null,
-  (request) => request is DeleteNodeRequest //
+  (editor, request) => request is DeleteNodeRequest //
       ? DeleteNodeCommand(nodeId: request.nodeId)
       : null,
-  (request) => request is ClearDocumentRequest //
+  (editor, request) => request is ClearDocumentRequest //
       ? ClearDocumentCommand()
       : null,
-  (request) => request is DeleteUpstreamCharacterRequest //
+  (editor, request) => request is DeleteUpstreamCharacterRequest //
       ? const DeleteUpstreamCharacterCommand()
       : null,
-  (request) => request is DeleteDownstreamCharacterRequest //
+  (editor, request) => request is DeleteDownstreamCharacterRequest //
       ? const DeleteDownstreamCharacterCommand()
       : null,
-  (request) => request is InsertTextRequest
+  (editor, request) => request is InsertTextRequest
       ? InsertTextCommand(
           documentPosition: request.documentPosition,
           textToInsert: request.textToInsert,
           attributions: request.attributions)
       : null,
-  (request) => request is InsertCharacterAtCaretRequest
+  (editor, request) => request is InsertCharacterAtCaretRequest
       ? InsertCharacterAtCaretCommand(
           character: request.character,
           ignoreComposerAttributions: request.ignoreComposerAttributions,
         )
       : null,
-  (request) => request is ChangeParagraphAlignmentRequest
+  (editor, request) => request is ChangeParagraphAlignmentRequest
       ? ChangeParagraphAlignmentCommand(
           nodeId: request.nodeId,
           alignment: request.alignment,
         )
       : null,
-  (request) => request is IndentParagraphRequest
+  (editor, request) => request is IndentParagraphRequest
       ? IndentParagraphCommand(
           request.nodeId,
         )
       : null,
-  (request) => request is UnIndentParagraphRequest
+  (editor, request) => request is UnIndentParagraphRequest
       ? UnIndentParagraphCommand(
           request.nodeId,
         )
       : null,
-  (request) => request is SetParagraphIndentRequest
+  (editor, request) => request is SetParagraphIndentRequest
       ? SetParagraphIndentCommand(
           request.nodeId,
           level: request.level,
         )
       : null,
-  (request) => request is ChangeParagraphBlockTypeRequest
+  (editor, request) => request is ChangeParagraphBlockTypeRequest
       ? ChangeParagraphBlockTypeCommand(
           nodeId: request.nodeId,
           blockType: request.blockType,
         )
       : null,
-  (request) => request is SplitParagraphRequest
+  (editor, request) => request is SplitParagraphRequest
       ? SplitParagraphCommand(
           nodeId: request.nodeId,
           splitPosition: request.splitPosition,
@@ -178,85 +238,85 @@ final defaultRequestHandlers = List.unmodifiable(<EditRequestHandler>[
           attributionsToExtendToNewParagraph: request.attributionsToExtendToNewParagraph,
         )
       : null,
-  (request) => request is ConvertParagraphToTaskRequest
+  (editor, request) => request is ConvertParagraphToTaskRequest
       ? ConvertParagraphToTaskCommand(
           nodeId: request.nodeId,
           isComplete: request.isComplete,
         )
       : null,
-  (request) => request is ConvertTaskToParagraphRequest
+  (editor, request) => request is ConvertTaskToParagraphRequest
       ? ConvertTaskToParagraphCommand(
           nodeId: request.nodeId,
           paragraphMetadata: request.paragraphMetadata,
         )
       : null,
-  (request) => request is DeleteUpstreamAtBeginningOfNodeRequest && request.node is TaskNode
+  (editor, request) => request is DeleteUpstreamAtBeginningOfNodeRequest && request.node is TaskNode
       ? ConvertTaskToParagraphCommand(nodeId: request.node.id, paragraphMetadata: request.node.metadata)
       : null,
-  (request) => request is ChangeTaskCompletionRequest
+  (editor, request) => request is ChangeTaskCompletionRequest
       ? ChangeTaskCompletionCommand(
           nodeId: request.nodeId,
           isComplete: request.isComplete,
         )
       : null,
-  (request) => request is IndentTaskRequest //
+  (editor, request) => request is IndentTaskRequest //
       ? IndentTaskCommand(request.nodeId)
       : null,
-  (request) => request is UnIndentTaskRequest //
+  (editor, request) => request is UnIndentTaskRequest //
       ? UnIndentTaskCommand(request.nodeId)
       : null,
-  (request) => request is SetTaskIndentRequest //
+  (editor, request) => request is SetTaskIndentRequest //
       ? SetTaskIndentCommand(request.nodeId, request.indent)
       : null,
-  (request) => request is SplitExistingTaskRequest
+  (editor, request) => request is SplitExistingTaskRequest
       ? SplitExistingTaskCommand(
           nodeId: request.existingNodeId,
           splitOffset: request.splitOffset,
           newNodeId: request.newNodeId,
         )
       : null,
-  (request) => request is SplitListItemRequest
+  (editor, request) => request is SplitListItemRequest
       ? SplitListItemCommand(
           nodeId: request.nodeId,
           splitPosition: request.splitPosition,
           newNodeId: request.newNodeId,
         )
       : null,
-  (request) => request is IndentListItemRequest //
+  (editor, request) => request is IndentListItemRequest //
       ? IndentListItemCommand(nodeId: request.nodeId)
       : null,
-  (request) => request is UnIndentListItemRequest //
+  (editor, request) => request is UnIndentListItemRequest //
       ? UnIndentListItemCommand(nodeId: request.nodeId)
       : null,
-  (request) => request is ChangeListItemTypeRequest
+  (editor, request) => request is ChangeListItemTypeRequest
       ? ChangeListItemTypeCommand(nodeId: request.nodeId, newType: request.newType)
       : null,
-  (request) => request is ConvertListItemToParagraphRequest //
+  (editor, request) => request is ConvertListItemToParagraphRequest //
       ? ConvertListItemToParagraphCommand(nodeId: request.nodeId, paragraphMetadata: request.paragraphMetadata)
       : null,
-  (request) => request is ConvertParagraphToListItemRequest
+  (editor, request) => request is ConvertParagraphToListItemRequest
       ? ConvertParagraphToListItemCommand(nodeId: request.nodeId, type: request.type)
       : null,
-  (request) => request is AddTextAttributionsRequest
+  (editor, request) => request is AddTextAttributionsRequest
       ? AddTextAttributionsCommand(
           documentRange: request.documentRange,
           attributions: request.attributions,
           autoMerge: request.autoMerge,
         )
       : null,
-  (request) => request is ToggleTextAttributionsRequest
+  (editor, request) => request is ToggleTextAttributionsRequest
       ? ToggleTextAttributionsCommand(documentRange: request.documentRange, attributions: request.attributions)
       : null,
-  (request) => request is RemoveTextAttributionsRequest
+  (editor, request) => request is RemoveTextAttributionsRequest
       ? RemoveTextAttributionsCommand(documentRange: request.documentRange, attributions: request.attributions)
       : null,
-  (request) => request is ChangeSingleColumnLayoutComponentStylesRequest
+  (editor, request) => request is ChangeSingleColumnLayoutComponentStylesRequest
       ? ChangeSingleColumnLayoutComponentStylesCommand(nodeId: request.nodeId, styles: request.styles) //
       : null,
-  (request) => request is ConvertTextNodeToParagraphRequest
+  (editor, request) => request is ConvertTextNodeToParagraphRequest
       ? ConvertTextNodeToParagraphCommand(nodeId: request.nodeId, newMetadata: request.newMetadata)
       : null,
-  (request) => request is PasteEditorRequest
+  (editor, request) => request is PasteEditorRequest
       ? PasteEditorCommand(
           content: request.content,
           pastePosition: request.pastePosition,
