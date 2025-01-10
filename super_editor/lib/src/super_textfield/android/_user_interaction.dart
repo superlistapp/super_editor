@@ -1,6 +1,7 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:follow_the_leader/follow_the_leader.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/document_gestures_interaction_overrides.dart';
 import 'package:super_editor/src/infrastructure/flutter/flutter_scheduler.dart';
@@ -691,7 +692,7 @@ class AndroidTextFieldTouchInteractorState extends State<AndroidTextFieldTouchIn
     return Positioned(
       left: extentOffsetInViewport.dx,
       top: extentOffsetInViewport.dy + (extentLineHeight / 2),
-      child: CompositedTransformTarget(
+      child: Leader(
         link: widget.editingOverlayController.magnifierFocalPoint,
         child: widget.showDebugPaint
             ? FractionalTranslation(
