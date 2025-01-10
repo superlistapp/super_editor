@@ -33,7 +33,6 @@ class UpsellNode extends BlockNode {
     return null;
   }
 
-  @override
   DocumentNode copy() {
     return UpsellNode(id);
   }

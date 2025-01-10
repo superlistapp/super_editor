@@ -34,7 +34,9 @@ class ParagraphNode extends TextNode {
     super.metadata,
   }) {
     if (getMetadataValue("blockType") == null) {
-      initAddToMetadata({"blockType": paragraphAttribution});
+      initAddToMetadata({
+        "blockType": paragraphAttribution,
+      });
     }
   }
 
