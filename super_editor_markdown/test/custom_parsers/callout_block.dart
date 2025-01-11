@@ -78,8 +78,8 @@ class CalloutElementToNodeConverter implements ElementToNodeConverter {
     return ParagraphNode(
       id: Editor.createNodeId(),
       text: _parseInlineText(element),
-      metadata: {
-        'blockType': const NamedAttribution("callout"),
+      metadata: const {
+        'blockType': NamedAttribution("callout"),
       },
     );
   }
@@ -116,7 +116,7 @@ class _InlineMarkdownToDocument implements md.NodeVisitor {
   // if we find an image without any text, we're parsing an image.
   // Otherwise, if there is any text, then we're parsing a paragraph
   // and we ignore the image.
-  bool get isImage => _imageUrl != null && attributedText.text.isEmpty;
+  bool get isImage => _imageUrl != null && attributedText.isEmpty;
 
   String? _imageUrl;
   String? get imageUrl => _imageUrl;
@@ -157,27 +157,27 @@ class _InlineMarkdownToDocument implements md.NodeVisitor {
     if (element.tag == 'strong') {
       styledText.addAttribution(
         boldAttribution,
-        SpanRange(0, styledText.text.length - 1),
+        SpanRange(0, styledText.length - 1),
       );
     } else if (element.tag == 'em') {
       styledText.addAttribution(
         italicsAttribution,
-        SpanRange(0, styledText.text.length - 1),
+        SpanRange(0, styledText.length - 1),
       );
     } else if (element.tag == "del") {
       styledText.addAttribution(
         strikethroughAttribution,
-        SpanRange(0, styledText.text.length - 1),
+        SpanRange(0, styledText.length - 1),
       );
     } else if (element.tag == "u") {
       styledText.addAttribution(
         underlineAttribution,
-        SpanRange(0, styledText.text.length - 1),
+        SpanRange(0, styledText.length - 1),
       );
     } else if (element.tag == 'a') {
       styledText.addAttribution(
         LinkAttribution.fromUri(Uri.parse(element.attributes['href']!)),
-        SpanRange(0, styledText.text.length - 1),
+        SpanRange(0, styledText.length - 1),
       );
     }
 

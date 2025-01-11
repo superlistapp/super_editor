@@ -40,7 +40,9 @@ Paragraph 2''',
             ParagraphNode(
               id: Editor.createNodeId(),
               text: attributedTextFromMarkdown("This is a **callout!**"),
-              metadata: {"blockType": const NamedAttribution("callout")},
+              metadata: const {
+                "blockType": NamedAttribution("callout"),
+              },
             ),
             ParagraphNode(id: Editor.createNodeId(), text: AttributedText("Paragraph 2")),
           ],

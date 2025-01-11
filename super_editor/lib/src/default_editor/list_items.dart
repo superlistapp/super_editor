@@ -3,6 +3,7 @@ import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:super_editor/src/core/document_composer.dart';
+import 'package:super_editor/src/core/document_selection.dart';
 import 'package:super_editor/src/core/edit_context.dart';
 import 'package:super_editor/src/core/editor.dart';
 import 'package:super_editor/src/core/styles.dart';
@@ -995,6 +996,68 @@ class UnIndentListItemCommand extends EditCommand {
   }
 }
 
+/// An [EditCommand] that inserts a newline when the caret sits within a [ListItemNode].
+///
+/// This command adds the following behaviors beyond the usual:
+///  * When the caret is in the middle of a list item, splits the list item into two
+///    list items.
+///
+///  * When the caret is at the end of a list item, inserts a new empty list item
+///    instead of an empty paragraph.
+///
+///  * Inserting a newline into an empty list item converts it into a paragraph
+///    instead of inserting a new list item.
+class InsertNewlineInListItemAtCaretCommand extends BaseInsertNewlineAtCaretCommand {
+  const InsertNewlineInListItemAtCaretCommand(this.newNodeId);
+
+  /// {@macro newNodeId}
+  final String newNodeId;
+
+  @override
+  void doInsertNewline(
+    EditContext context,
+    CommandExecutor executor,
+    DocumentPosition caretPosition,
+    NodePosition caretNodePosition,
+  ) {
+    final node = context.document.getNodeById(caretPosition.nodeId);
+    if (caretNodePosition is! TextNodePosition || node is! ListItemNode) {
+      // We don't know how to deal with this kind of node.
+      return;
+    }
+
+    if (node.text.isEmpty) {
+      // The list item is empty. Convert it to a paragraph.
+      executor.executeCommand(
+        ConvertListItemToParagraphCommand(nodeId: node.id),
+      );
+      return;
+    }
+
+    // Split the list item into two.
+    executor
+      ..executeCommand(
+        SplitListItemCommand(
+          nodeId: node.id,
+          splitPosition: caretNodePosition,
+          newNodeId: newNodeId,
+        ),
+      )
+      ..executeCommand(
+        ChangeSelectionCommand(
+          DocumentSelection.collapsed(
+            position: DocumentPosition(
+              nodeId: newNodeId,
+              nodePosition: const TextNodePosition(offset: 0),
+            ),
+          ),
+          SelectionChangeType.insertContent,
+          SelectionReason.userInteraction,
+        ),
+      );
+  }
+}
+
 class ConvertListItemToParagraphRequest implements EditRequest {
   ConvertListItemToParagraphRequest({
     required this.nodeId,
@@ -1291,27 +1354,6 @@ ExecutionInstruction backspaceToUnIndentListItem({
   final wasIndented = editContext.commonOps.unindentListItem();
 
   return wasIndented ? ExecutionInstruction.haltExecution : ExecutionInstruction.continueExecution;
-}
-
-ExecutionInstruction splitListItemWhenEnterPressed({
-  required SuperEditorContext editContext,
-  required KeyEvent keyEvent,
-}) {
-  if (keyEvent is! KeyDownEvent && keyEvent is! KeyRepeatEvent) {
-    return ExecutionInstruction.continueExecution;
-  }
-
-  if (keyEvent.logicalKey != LogicalKeyboardKey.enter) {
-    return ExecutionInstruction.continueExecution;
-  }
-
-  final node = editContext.document.getNodeById(editContext.composer.selection!.extent.nodeId);
-  if (node is! ListItemNode) {
-    return ExecutionInstruction.continueExecution;
-  }
-
-  final didSplitListItem = editContext.commonOps.insertBlockLevelNewline();
-  return didSplitListItem ? ExecutionInstruction.haltExecution : ExecutionInstruction.continueExecution;
 }
 
 /// Computes the ordinal value of an ordered list item.

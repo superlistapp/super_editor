@@ -485,7 +485,7 @@ class KeyboardEditingToolbarOperations {
         SelectionChangeType.insertContent,
         SelectionReason.userInteraction,
       ),
-      const InsertCharacterAtCaretRequest(character: " "),
+      InsertCharacterAtCaretRequest(character: " "),
     ]);
   }
 

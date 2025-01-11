@@ -1,9 +1,13 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_test_robots/flutter_test_robots.dart';
 import 'package:flutter_test_runners/flutter_test_runners.dart';
+import 'package:super_editor/src/core/editor.dart';
+import 'package:super_editor/src/default_editor/attributions.dart';
 import 'package:super_editor/src/default_editor/paragraph.dart';
 import 'package:super_editor/src/default_editor/text.dart';
+import 'package:super_editor/super_editor.dart';
 import 'package:super_editor/super_editor_test.dart';
 
 import '../supereditor_test_tools.dart';
@@ -43,6 +47,236 @@ void main() {
       // alignment of the paragraph. This check ensures that the caret overlay updated
       // itself in response to the paragraph layout changing.
       expect(SuperEditorInspector.findCaretOffsetInDocument() == leftAlignedCaretOffset, isFalse);
+    });
+
+    group("block newlines >", () {
+      testWidgetsOnAllPlatforms("inserts newline in middle and splits paragraph into two paragraphs",
+          (WidgetTester tester) async {
+        await tester
+            .createDocument() //
+            .withSingleShortParagraph()
+            .pump();
+
+        // Place the caret in the middle of the paragraph:
+        // "This is the first |node in a document."
+        await tester.placeCaretInParagraph("1", 18);
+
+        // Insert a newline.
+        switch (debugDefaultTargetPlatformOverride) {
+          case TargetPlatform.android:
+          case TargetPlatform.iOS:
+            // FIXME: pressEnterWithIme should work, but it seems to think there are no
+            //        connected IME clients, so it fizzles. For now, we use the implementation
+            //        directly.
+            // await tester.pressEnterWithIme();
+            await tester.testTextInput.receiveAction(TextInputAction.newline);
+          case TargetPlatform.macOS:
+          case TargetPlatform.windows:
+          case TargetPlatform.linux:
+          case TargetPlatform.fuchsia:
+          case null:
+            await tester.pressEnter();
+        }
+
+        // Ensure we have two paragraphs, each with part of the original text.
+        final document = SuperEditorInspector.findDocument()!;
+        expect(document.nodeCount, 2);
+
+        expect(document.first.metadata["blockType"], paragraphAttribution);
+        expect(document.first.asTextNode.text.toPlainText(), "This is the first ");
+
+        expect(document.last.metadata["blockType"], paragraphAttribution);
+        expect(document.last.asTextNode.text.toPlainText(), "node in a document.");
+      });
+
+      testWidgetsOnAllPlatforms("inserts newline at end of paragraph to create a new empty paragraph",
+          (WidgetTester tester) async {
+        await tester
+            .createDocument() //
+            .withSingleShortParagraph()
+            .pump();
+
+        // Place caret at the end of the paragraph.
+        await tester.placeCaretInParagraph("1", 37);
+
+        // Insert a newline.
+        switch (debugDefaultTargetPlatformOverride) {
+          case TargetPlatform.android:
+          case TargetPlatform.iOS:
+            // FIXME: pressEnterWithIme should work, but it seems to think there are no
+            //        connected IME clients, so it fizzles. For now, we use the implementation
+            //        directly.
+            // await tester.pressEnterWithIme();
+            await tester.testTextInput.receiveAction(TextInputAction.newline);
+          case TargetPlatform.macOS:
+          case TargetPlatform.windows:
+          case TargetPlatform.linux:
+          case TargetPlatform.fuchsia:
+          case null:
+            await tester.pressEnter();
+        }
+
+        // Ensure a new, empty paragraph was inserted after the blockquote.
+        final document = SuperEditorInspector.findDocument()!;
+        expect(document.nodeCount, 2);
+
+        expect(document.first.metadata["blockType"], paragraphAttribution);
+        expect(document.first.asTextNode.text.toPlainText(), "This is the first node in a document.");
+
+        expect(document.last.metadata["blockType"], paragraphAttribution);
+        expect(document.last.asTextNode.text.toPlainText(), "");
+      });
+
+      testWidgetsOnAllPlatforms("does nothing when caret is in non-deletable paragraph", (tester) async {
+        await tester
+            .createDocument()
+            .withCustomContent(
+              MutableDocument(
+                nodes: [
+                  ParagraphNode(
+                    id: "1",
+                    text: AttributedText("Non-deletable paragraph."),
+                    metadata: const {
+                      NodeMetadata.isDeletable: false,
+                    },
+                  ),
+                  ParagraphNode(
+                    id: "2",
+                    text: AttributedText("A deletable paragraph."),
+                  ),
+                ],
+              ),
+            )
+            .pump();
+
+        // Place caret in the middle of the non-deletable paragraph.
+        await tester.placeCaretInParagraph("1", 5);
+
+        // Press enter to try to split the paragraph.
+        switch (debugDefaultTargetPlatformOverride) {
+          case TargetPlatform.android:
+          case TargetPlatform.iOS:
+            // FIXME: pressEnterWithIme should work, but it seems to think there are no
+            //        connected IME clients, so it fizzles. For now, we use the implementation
+            //        directly.
+            // await tester.pressEnterWithIme();
+            await tester.testTextInput.receiveAction(TextInputAction.newline);
+          case TargetPlatform.macOS:
+          case TargetPlatform.windows:
+          case TargetPlatform.linux:
+          case TargetPlatform.fuchsia:
+          case null:
+            await tester.pressEnter();
+        }
+
+        // Ensure the paragraph wasn't changed.
+        final document = SuperEditorInspector.findDocument()!;
+        expect(document.nodeCount, 2);
+        expect(document.first.asTextNode.text.toPlainText(), "Non-deletable paragraph.");
+      });
+
+      testWidgetsOnAllPlatforms("does nothing when non-deletable content is selected", (tester) async {
+        final editContext = await tester
+            .createDocument()
+            .withCustomContent(
+              MutableDocument(
+                nodes: [
+                  ParagraphNode(
+                    id: "1",
+                    text: AttributedText("A paragraph."),
+                  ),
+                  HorizontalRuleNode(
+                    id: "2",
+                    metadata: const {
+                      NodeMetadata.isDeletable: false,
+                    },
+                  ),
+                ],
+              ),
+            )
+            .autoFocus(true)
+            .pump();
+
+        // Select from the paragraph across the HR.
+        editContext.editor.execute([
+          const ChangeSelectionRequest(
+            DocumentSelection(
+              base: DocumentPosition(
+                nodeId: "1",
+                nodePosition: TextNodePosition(offset: 5),
+              ),
+              extent: DocumentPosition(
+                nodeId: "2",
+                nodePosition: UpstreamDownstreamNodePosition.downstream(),
+              ),
+            ),
+            SelectionChangeType.expandSelection,
+            SelectionReason.userInteraction,
+          ),
+        ]);
+        await tester.pump();
+
+        // Press enter to try to delete part of the paragraph and a non-deletable
+        // horizontal rule.
+        switch (debugDefaultTargetPlatformOverride) {
+          case TargetPlatform.android:
+          case TargetPlatform.iOS:
+            // FIXME: pressEnterWithIme should work, but it seems to think there are no
+            //        connected IME clients, so it fizzles. For now, we use the implementation
+            //        directly.
+            // await tester.pressEnterWithIme();
+            await tester.testTextInput.receiveAction(TextInputAction.newline);
+          case TargetPlatform.macOS:
+          case TargetPlatform.windows:
+          case TargetPlatform.linux:
+          case TargetPlatform.fuchsia:
+          case null:
+            await tester.pressEnter();
+        }
+
+        // Ensure nothing happened to the document.
+        final document = SuperEditorInspector.findDocument()!;
+        expect(document.nodeCount, 2);
+        expect(document.first.asTextNode.text.toPlainText(), "A paragraph.");
+        expect(document.last, isA<HorizontalRuleNode>());
+      });
+    });
+
+    group("soft newlines >", () {
+      testWidgetsOnDesktop("SHIFT + ENTER inserts a soft newline in middle of paragraph", (tester) async {
+        final editorContext = await tester //
+            .createDocument()
+            .withSingleShortParagraph()
+            .pump();
+
+        // Place the caret in the middle of the paragraph:
+        // "This is the first |node in a document."
+        await tester.placeCaretInParagraph("1", 18);
+
+        // Hold shift and press enter.
+        await tester.pressShiftEnter();
+
+        // Ensure that we still have a single paragraph, but there's a newline in the middle.
+        expect(editorContext.document.nodeCount, 1);
+        expect(editorContext.document.first.asTextNode.text.toPlainText(), "This is the first \nnode in a document.");
+      });
+
+      testWidgetsOnDesktop("SHIFT + ENTER inserts a soft newline at end of paragraph", (tester) async {
+        final editorContext = await tester //
+            .createDocument()
+            .withSingleShortParagraph()
+            .pump();
+
+        // Place the caret at the end of the paragraph.
+        await tester.placeCaretInParagraph("1", 37);
+
+        // Hold shift and press enter.
+        await tester.pressShiftEnter();
+
+        // Ensure that we still have a single paragraph, but it ends with a newline.
+        expect(editorContext.document.nodeCount, 1);
+        expect(editorContext.document.first.asTextNode.text.last, "\n");
+      });
     });
 
     group("indentation >", () {

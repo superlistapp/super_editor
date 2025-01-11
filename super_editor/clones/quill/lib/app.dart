@@ -45,16 +45,16 @@ class _HomeScreenState extends State<HomeScreen> {
         Editor.composerKey: _composer,
       },
       requestHandlers: [
-        (request) => request is ConvertTextBlockToFormatRequest //
+        (editor, request) => request is ConvertTextBlockToFormatRequest //
             ? ConvertTextBlockToFormatCommand(request.blockFormat)
             : null,
-        (request) => request is ToggleInlineFormatRequest //
+        (editor, request) => request is ToggleInlineFormatRequest //
             ? ToggleInlineFormatCommand(request.inlineFormat)
             : null,
-        (request) => request is ToggleTextBlockFormatRequest //
+        (editor, request) => request is ToggleTextBlockFormatRequest //
             ? ToggleTextBlockFormatCommand(request.blockFormat)
             : null,
-        (request) => request is ClearSelectedStylesRequest //
+        (editor, request) => request is ClearSelectedStylesRequest //
             ? const ClearSelectedStylesCommand()
             : null,
         ...defaultRequestHandlers,

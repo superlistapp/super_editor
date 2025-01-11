@@ -1637,6 +1637,7 @@ class CommonEditorOperations {
   /// Returns `true` if the [text] was successfully inserted, or [false]
   /// if it wasn't, e.g., there was no selection, or more than one node
   /// was selected.
+  @Deprecated("Execute a relevant EditRequest in an Editor, e.g., InsertPlainTextAtCaretRequest.")
   bool insertPlainText(String text) {
     editorOpsLog.fine('Attempting to insert "$text" at document selection: ${composer.selection}');
     if (composer.selection == null) {
@@ -1718,7 +1719,7 @@ class CommonEditorOperations {
     final extentNodePosition = composer.selection!.extent.nodePosition;
     if (extentNodePosition is UpstreamDownstreamNodePosition) {
       editorOpsLog.fine("The selected position is an UpstreamDownstreamPosition. Inserting new paragraph first.");
-      insertBlockLevelNewline();
+      editor.execute([InsertNewlineAtCaretRequest()]);
     }
 
     final extentNode = document.getNodeById(composer.selection!.extent.nodeId)!;
@@ -1779,6 +1780,7 @@ class CommonEditorOperations {
   ///
   /// Returns `true` if a new node was inserted or a node was split into two.
   /// Returns `false` if there was no selection.
+  @Deprecated("Execute a relevant EditRequest in an Editor, e.g., InsertNewlineAtCaretRequest.")
   bool insertBlockLevelNewline() {
     editorOpsLog.fine("Inserting block-level newline");
     if (composer.selection == null) {

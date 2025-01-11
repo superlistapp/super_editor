@@ -69,6 +69,13 @@ class TestDocumentSelector {
     );
   }
 
+  TestSuperEditorConfigurator withSingleShortParagraph() {
+    return TestSuperEditorConfigurator._(
+      _widgetTester,
+      singleParagraphDocShortText(),
+    );
+  }
+
   TestSuperEditorConfigurator withSingleParagraphAndLink() {
     return TestSuperEditorConfigurator._(
       _widgetTester,

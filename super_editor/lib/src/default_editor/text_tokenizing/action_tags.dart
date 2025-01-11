@@ -43,10 +43,10 @@ class ActionTagsPlugin extends SuperEditorPlugin {
     TagRule tagRule = defaultActionTagRule,
   }) : _tagRule = tagRule {
     _requestHandlers = <EditRequestHandler>[
-      (request) => request is SubmitComposingActionTagRequest //
+      (editor, request) => request is SubmitComposingActionTagRequest //
           ? SubmitComposingActionTagCommand()
           : null,
-      (request) => request is CancelComposingActionTagRequest //
+      (editor, request) => request is CancelComposingActionTagRequest //
           ? CancelComposingActionTagCommand(request.tagRule)
           : null,
     ];

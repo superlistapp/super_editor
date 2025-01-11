@@ -62,10 +62,10 @@ class StableTagPlugin extends SuperEditorPlugin {
   })  : _tagRule = tagRule,
         tagIndex = StableTagIndex() {
     _requestHandlers = <EditRequestHandler>[
-      (request) => request is FillInComposingStableTagRequest
+      (editor, request) => request is FillInComposingStableTagRequest
           ? FillInComposingUserTagCommand(request.tag, request.tagRule)
           : null,
-      (request) => request is CancelComposingStableTagRequest //
+      (editor, request) => request is CancelComposingStableTagRequest //
           ? CancelComposingStableTagCommand(request.tagRule)
           : null,
     ];
