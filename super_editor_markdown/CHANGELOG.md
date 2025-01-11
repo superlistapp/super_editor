@@ -1,3 +1,8 @@
+## [0.1.7] - Jan, 2024
+* Update `super_editor` dependency to `v0.3.0-dev.13`.
+* Update `markdown` dependency to `v7.2.1`.
+* Update `logging` dependency to `v1.3.0`.
+
 ## [0.1.6] - Aug, 2024
 * Update `super_editor` dependency to `v0.3.0-dev.3`.
 * Update package metadata.
