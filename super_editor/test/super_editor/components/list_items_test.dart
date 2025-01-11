@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -98,6 +99,123 @@ void main() {
         expect(find.byType(LayoutAwareRichText), findsWidgets);
         richText = (find.byType(LayoutAwareRichText).evaluate().first.widget) as LayoutAwareRichText;
         expect(richText.text.style!.color, Colors.blue);
+      });
+    });
+
+    group('newlines >', () {
+      testWidgetsOnAllPlatforms("does nothing when caret is in non-deletable task", (tester) async {
+        await tester
+            .createDocument()
+            .withCustomContent(
+              MutableDocument(
+                nodes: [
+                  ListItemNode.unordered(
+                    id: "1",
+                    text: AttributedText("Non-deletable list item."),
+                    metadata: const {
+                      NodeMetadata.isDeletable: false,
+                    },
+                  ),
+                  ParagraphNode(
+                    id: "2",
+                    text: AttributedText("A deletable paragraph."),
+                  ),
+                ],
+              ),
+            )
+            .pump();
+
+        // Place caret in the middle of the non-deletable list item.
+        await tester.placeCaretInParagraph("1", 5);
+
+        // Press enter to try to split the list item.
+        switch (debugDefaultTargetPlatformOverride) {
+          case TargetPlatform.android:
+          case TargetPlatform.iOS:
+            // FIXME: pressEnterWithIme should work, but it seems to think there are no
+            //        connected IME clients, so it fizzles. For now, we use the implementation
+            //        directly.
+            // await tester.pressEnterWithIme();
+            await tester.testTextInput.receiveAction(TextInputAction.newline);
+          case TargetPlatform.macOS:
+          case TargetPlatform.windows:
+          case TargetPlatform.linux:
+          case TargetPlatform.fuchsia:
+          case null:
+            await tester.pressEnter();
+        }
+
+        // Ensure the list item wasn't changed.
+        final document = SuperEditorInspector.findDocument()!;
+        expect(document.nodeCount, 2);
+        expect(document.first.asTextNode.text.toPlainText(), "Non-deletable list item.");
+        expect(document.first, isA<ListItemNode>());
+      });
+
+      testWidgetsOnAllPlatforms("does nothing when non-deletable content is selected", (tester) async {
+        final editContext = await tester
+            .createDocument()
+            .withCustomContent(
+              MutableDocument(
+                nodes: [
+                  ListItemNode.ordered(
+                    id: "1",
+                    text: AttributedText("A list item."),
+                  ),
+                  HorizontalRuleNode(
+                    id: "2",
+                    metadata: const {
+                      NodeMetadata.isDeletable: false,
+                    },
+                  ),
+                ],
+              ),
+            )
+            .autoFocus(true)
+            .pump();
+
+        // Select from the list item across the HR.
+        editContext.editor.execute([
+          const ChangeSelectionRequest(
+            DocumentSelection(
+              base: DocumentPosition(
+                nodeId: "1",
+                nodePosition: TextNodePosition(offset: 5),
+              ),
+              extent: DocumentPosition(
+                nodeId: "2",
+                nodePosition: UpstreamDownstreamNodePosition.downstream(),
+              ),
+            ),
+            SelectionChangeType.expandSelection,
+            SelectionReason.userInteraction,
+          ),
+        ]);
+        await tester.pump();
+
+        // Press enter to try to delete part of the list item and a non-deletable
+        // horizontal rule.
+        switch (debugDefaultTargetPlatformOverride) {
+          case TargetPlatform.android:
+          case TargetPlatform.iOS:
+            // FIXME: pressEnterWithIme should work, but it seems to think there are no
+            //        connected IME clients, so it fizzles. For now, we use the implementation
+            //        directly.
+            // await tester.pressEnterWithIme();
+            await tester.testTextInput.receiveAction(TextInputAction.newline);
+          case TargetPlatform.macOS:
+          case TargetPlatform.windows:
+          case TargetPlatform.linux:
+          case TargetPlatform.fuchsia:
+          case null:
+            await tester.pressEnter();
+        }
+
+        // Ensure nothing happened to the document.
+        final document = SuperEditorInspector.findDocument()!;
+        expect(document.nodeCount, 2);
+        expect(document.first.asTextNode.text.toPlainText(), "A list item.");
+        expect(document.last, isA<HorizontalRuleNode>());
       });
     });
 

@@ -614,9 +614,11 @@ ExecutionInstruction enterToInsertNewlineInCodeBlock({
     return ExecutionInstruction.continueExecution;
   }
 
-  final didInsertNewline = editContext.commonOps.insertPlainText('\n');
+  editContext.editor.execute([
+    InsertNewlineAtCaretRequest(),
+  ]);
 
-  return didInsertNewline ? ExecutionInstruction.haltExecution : ExecutionInstruction.continueExecution;
+  return ExecutionInstruction.haltExecution;
 }
 
 enum FeatherTextBlock {

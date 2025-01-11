@@ -189,7 +189,7 @@ class TextBlockDeltaSerializer implements DeltaSerializer {
 
     for (int i = 0; i < spans.length; i += 1) {
       final span = spans[i];
-      final text = line.text.substring(span.start, line.text.isNotEmpty ? span.end + 1 : span.end);
+      final text = line.toPlainText().substring(span.start, line.isNotEmpty ? span.end + 1 : span.end);
 
       // Attempt to serialize this text span as an inline embed.
       bool didSerializeAsInlineEmbed = false;
@@ -224,7 +224,7 @@ class TextBlockDeltaSerializer implements DeltaSerializer {
       deltas.operations.add(newDelta);
     }
 
-    if (line.text.endsWith("\n")) {
+    if (line.isNotEmpty && line.last == "\n") {
       // There's already a trailing newline. No need to add another one.
       return;
     }
@@ -337,7 +337,7 @@ class TextBlockDeltaSerializer implements DeltaSerializer {
         continue;
       }
       if (attribution is LinkAttribution) {
-        attributes["link"] = attribution.url;
+        attributes["link"] = attribution.plainTextUri;
         continue;
       }
     }
@@ -352,7 +352,8 @@ extension Split on AttributedText {
     final segments = <AttributedText>[];
     int segmentStart = 0;
     int searchIndex = 0;
-    final plainText = text;
+    // FIXME: This doesn't account for space taken up by placeholders
+    final plainText = toPlainText();
 
     int patternIndex = plainText.indexOf(pattern, searchIndex);
     while (patternIndex >= 0) {
