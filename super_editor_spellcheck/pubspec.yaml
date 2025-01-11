@@ -12,6 +12,7 @@ dependencies:
   flutter:
     sdk: flutter
   follow_the_leader: ^0.0.4+8
+  overlord: ^0.0.3+5
   plugin_platform_interface: ^2.0.2
 
 #  collection: ^1.18.0
