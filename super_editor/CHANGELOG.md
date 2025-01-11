@@ -1,3 +1,18 @@
+## [0.3.0-dev.13] - Jan 10, 2024
+ * BREAKING: All `DocumentNode`s are now immutable. To change a node, it must be copied and replaced.
+ * BREAKING: Newline insertion behavior is now configurable.
+   * All newlines are inserted with explicit `EditRequest`s, e.g., `InsertNewlineRequest`, `InsertSoftNewlineRequest`.
+   * The signature for mapping from `EditRequest` to `EditCommand` was adjusted.
+   * Some `EditRequest`s no longer support `const` construction.
+ * FIX: Make `KeyboardScaffoldSafeArea` work when not positioned at bottom of screen.
+ * FIX: Crash in tags plugin related to selection.
+ * FIX: Selection highlight issue with `SuperTextField`.
+ * FIX: Magnifier doesn't move offscreen.
+ * ADJUSTMENT: Email links launch with a "mailto:" scheme, and app links are linkified.
+ * ADJUSTMENT: Apps can override tap gestures.
+ * ADJUSTMENT: iOS tap word snapping is less aggressive.
+ * ADJUSTMENT: Upgraded `attributed_text` dependency to `v0.4.1`.
+
 ## [0.3.0-dev.12] - Dec 23, 2024
  * FEATURE: Added support for inline widgets.
  * FEATURE: Created a `ClearDocumentRequest`, which deletes all content and moves caret to the start.
