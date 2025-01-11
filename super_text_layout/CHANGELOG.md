@@ -1,3 +1,6 @@
+## [0.1.18] - Jan, 2024
+ * Upgrade `attributed_text` dependency to `v0.4.1`.
+
 ## [0.1.17] - Dec, 2024
  * Upgrade `attributed_text` dependency to `v0.4.0` (forgot to do it in `0.1.16`).
 
