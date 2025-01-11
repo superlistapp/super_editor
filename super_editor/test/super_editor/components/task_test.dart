@@ -4,9 +4,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_test_robots/flutter_test_robots.dart';
 import 'package:flutter_test_runners/flutter_test_runners.dart';
 import 'package:super_editor/src/test/ime.dart';
-import 'package:super_editor/src/test/super_editor_test/tasks_test_tools.dart';
 import 'package:super_editor/src/test/super_editor_test/supereditor_inspector.dart';
 import 'package:super_editor/src/test/super_editor_test/supereditor_robot.dart';
+import 'package:super_editor/src/test/super_editor_test/tasks_test_tools.dart';
 import 'package:super_editor/super_editor.dart';
 
 import '../../test_runners.dart';
@@ -677,6 +677,10 @@ Future<Editor> _pumpScaffold(WidgetTester tester, {MutableDocument? document}) a
       home: Scaffold(
         body: SuperEditor(
           editor: editor,
+          componentBuilders: [
+            TaskComponentBuilder(editor),
+            ...defaultComponentBuilders,
+          ],
         ),
       ),
     ),

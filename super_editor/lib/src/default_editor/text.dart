@@ -2382,6 +2382,16 @@ abstract class BaseInsertNewlineAtCaretCommand extends EditCommand {
     if (documentSelection == null) {
       return;
     }
+
+    // Ensure selection doesn't include any non-deletable nodes.
+    final selectedNodes = context.document.getNodesInside(documentSelection.base, documentSelection.extent);
+    for (final node in selectedNodes) {
+      if (!node.isDeletable) {
+        // There's at least one non-deletable node. Fizzle.
+        return;
+      }
+    }
+
     if (!documentSelection.isCollapsed) {
       // The selection is expanded. Delete the selected content.
       executor.executeCommand(DeleteSelectionCommand(affinity: TextAffinity.downstream));
