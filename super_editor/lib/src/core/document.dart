@@ -326,7 +326,14 @@ class DocumentPosition {
 abstract class DocumentNode {
   DocumentNode({
     Map<String, dynamic>? metadata,
-  }) : _metadata = metadata ?? {};
+  }) {
+    // We construct a new map here, instead of directly assigning from the
+    // constructor, because we need to make sure that `_metadata` is mutable.
+    _metadata = {
+      if (metadata != null) //
+        ...metadata,
+    };
+  }
 
   /// Adds [addedMetadata] to this nodes [metadata].
   ///
@@ -425,7 +432,7 @@ abstract class DocumentNode {
   /// Returns all metadata attached to this [DocumentNode].
   Map<String, dynamic> get metadata => Map.from(_metadata);
 
-  final Map<String, dynamic> _metadata;
+  late final Map<String, dynamic> _metadata;
 
   /// Returns `true` if this node has a non-null metadata value for
   /// the given metadata [key], and returns `false`, otherwise.

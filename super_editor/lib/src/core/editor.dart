@@ -289,7 +289,7 @@ class Editor implements RequestDispatcher {
   EditCommand _findCommandForRequest(EditRequest request) {
     EditCommand? command;
     for (final handler in requestHandlers) {
-      command = handler(request);
+      command = handler(this, request);
       if (command != null) {
         return command;
       }
@@ -902,7 +902,7 @@ class EditorCommandQueue {
 /// Factory method that creates and returns an [EditCommand] that can handle
 /// the given [EditRequest], or `null` if this handler doesn't apply to the given
 /// [EditRequest].
-typedef EditRequestHandler = EditCommand? Function(EditRequest);
+typedef EditRequestHandler = EditCommand? Function(Editor editor, EditRequest request);
 
 /// An action that a [Editor] should execute.
 abstract class EditRequest {

@@ -218,7 +218,7 @@ class TaskNodeSerializer extends NodeTypedDocumentNodeMarkdownSerializer<TaskNod
 
   @override
   String doSerialization(Document document, TaskNode node) {
-    return '- [${node.isComplete ? 'x' : ' '}] ${node.text.text}';
+    return '- [${node.isComplete ? 'x' : ' '}] ${node.text.toPlainText()}';
   }
 }
 
@@ -252,10 +252,10 @@ class AttributedTextMarkdownSerializer extends AttributionVisitor {
   late int _bufferCursor;
 
   String serialize(AttributedText attributedText) {
-    _fullText = attributedText.text;
+    _fullText = attributedText.toPlainText();
     _buffer = StringBuffer();
     _bufferCursor = 0;
-    if (attributedText.text.isNotEmpty) {
+    if (attributedText.toPlainText().isNotEmpty) {
       attributedText.visitAttributions(this);
     }
     return _buffer.toString();
@@ -270,7 +270,7 @@ class AttributedTextMarkdownSerializer extends AttributionVisitor {
   ) {
     // Write out the text between the end of the last markers, and these new markers.
     _writeTextToBuffer(
-      fullText.text.substring(_bufferCursor, index),
+      fullText.toPlainText().substring(_bufferCursor, index),
     );
 
     // Add start markers.
@@ -382,7 +382,7 @@ class AttributedTextMarkdownSerializer extends AttributionVisitor {
       if (event == AttributionVisitEvent.start) {
         return '[';
       } else {
-        return '](${linkAttribution.url.toString()})';
+        return '](${linkAttribution.plainTextUri})';
       }
     }
     return "";

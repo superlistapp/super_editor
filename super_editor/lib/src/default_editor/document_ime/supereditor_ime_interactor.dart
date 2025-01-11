@@ -669,7 +669,9 @@ void insertNewLine(SuperEditorContext context) {
   if (CurrentPlatform.isWeb) {
     return;
   }
-  context.commonOps.insertBlockLevelNewline();
+  context.editor.execute([
+    InsertNewlineAtCaretRequest(),
+  ]);
 }
 
 void deleteWordBackward(SuperEditorContext context) {

@@ -121,7 +121,6 @@ class UrlMediaNode extends BlockNode {
     );
   }
 
-  @override
   DocumentNode copy() {
     return UrlMediaNode(
       id: id,

@@ -118,6 +118,15 @@ class AttributedText {
 
   late final String _textWithPlaceholders;
 
+  /// Returns the character or placeholder at offset zero.
+  Object get first => placeholders[0] ?? _text[0];
+
+  /// Returns the character or placeholder at the given [offset].
+  Object operator [](int offset) => placeholders[offset] ?? _text[offset];
+
+  /// Returns the character or placeholder at the end of this `AttributedText`.
+  Object get last => placeholders[length - 1] ?? _text[length - 1];
+
   /// Returns a plain-text version of this `AttributedText`.
   ///
   /// Plain text has no attributions or placeholder objects.

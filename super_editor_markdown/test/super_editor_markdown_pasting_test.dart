@@ -21,7 +21,7 @@ void main() {
           Editor.composerKey: composer,
         },
         requestHandlers: [
-          (request) => request is PasteStructuredContentEditorRequest
+          (editor, request) => request is PasteStructuredContentEditorRequest
               ? PasteStructuredContentEditorCommand(
                   content: request.content,
                   pastePosition: request.pastePosition,
@@ -369,7 +369,7 @@ Aenean mattis ante justo, quis sollicitudin metus interdum id.''',
       await tester.pressCmdV();
 
       // Ensure that the Markdown link was linkified.
-      expect(SuperEditorInspector.findTextInComponent(paragraph.id).text, "Hello link");
+      expect(SuperEditorInspector.findTextInComponent(paragraph.id).toPlainText(), "Hello link");
       const expectedAttribution = LinkAttribution("www.google.com");
       expect(SuperEditorInspector.findTextInComponent(paragraph.id).getAttributionSpansByFilter((a) => true), {
         const AttributionSpan(attribution: expectedAttribution, start: 6, end: 9),

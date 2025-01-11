@@ -34,7 +34,7 @@ class _ActionTagsFeatureDemoState extends State<ActionTagsFeatureDemo> {
         Editor.composerKey: _composer,
       },
       requestHandlers: [
-        (request) => request is ConvertSelectedTextNodeRequest //
+        (editor, request) => request is ConvertSelectedTextNodeRequest //
             ? ConvertSelectedTextNodeCommand(request.newType)
             : null,
         ...defaultRequestHandlers,
@@ -118,36 +118,36 @@ class _ActionTagsFeatureDemoState extends State<ActionTagsFeatureDemo> {
         inlineTextStyler: (attributions, existingStyle) {
           TextStyle style = defaultInlineTextStyler(attributions, existingStyle);
 
-        if (attributions.contains(actionTagComposingAttribution)) {
-          style = style.copyWith(
-            color: Colors.blue,
-          );
-        }
+          if (attributions.contains(actionTagComposingAttribution)) {
+            style = style.copyWith(
+              color: Colors.blue,
+            );
+          }
 
-        return style;
-      },
-      addRulesAfter: [
-        ...darkModeStyles,
-      ],
-    ),
-    documentOverlayBuilders: [
-      AttributedTextBoundsOverlay(
-        selector: (a) => a == actionTagComposingAttribution,
-        builder: (BuildContext context, Attribution attribution) {
-          return Leader(
-            link: _composingLink,
-            child: const SizedBox(),
-          );
+          return style;
         },
+        addRulesAfter: [
+          ...darkModeStyles,
+        ],
       ),
-      DefaultCaretOverlayBuilder(
-        caretStyle: CaretStyle().copyWith(color: Colors.redAccent),
-      ),
-    ],
-    plugins: {
-      _actionTagPlugin,
-    },
-        );
+      documentOverlayBuilders: [
+        AttributedTextBoundsOverlay(
+          selector: (a) => a == actionTagComposingAttribution,
+          builder: (BuildContext context, Attribution attribution) {
+            return Leader(
+              link: _composingLink,
+              child: const SizedBox(),
+            );
+          },
+        ),
+        DefaultCaretOverlayBuilder(
+          caretStyle: CaretStyle().copyWith(color: Colors.redAccent),
+        ),
+      ],
+      plugins: {
+        _actionTagPlugin,
+      },
+    );
   }
 
   Widget _buildTagList() {

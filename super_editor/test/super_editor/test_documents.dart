@@ -42,6 +42,7 @@ MutableDocument singleParagraphDocShortText() => MutableDocument(
         ParagraphNode(
           id: "1",
           text: AttributedText(
+            // End position is 37.
             "This is the first node in a document.",
           ),
         ),

@@ -25,7 +25,7 @@ void main() {
             ParagraphNode(
               id: "2",
               text: AttributedText("This is a header\nThis is line two\nThis is line three"),
-              metadata: {
+              metadata: const {
                 "blockType": header1Attribution,
               },
             ),
@@ -67,7 +67,7 @@ void main() {
             ParagraphNode(
               id: "2",
               text: AttributedText("This is a blockquote\nThis is line two\nThis is line three"),
-              metadata: {
+              metadata: const {
                 "blockType": blockquoteAttribution,
               },
             ),
@@ -108,7 +108,7 @@ void main() {
             ParagraphNode(
               id: "2",
               text: AttributedText("This is a code block\nThis is line two\nThis is line three"),
-              metadata: {
+              metadata: const {
                 "blockType": codeAttribution,
               },
             ),
@@ -294,8 +294,8 @@ void main() {
               text: AttributedText(
                 "This is a banner (a custom block style).",
               ),
-              metadata: {
-                'blockType': const _BannerAttribution('red'),
+              metadata: const {
+                'blockType': _BannerAttribution('red'),
               },
             ),
           ],
