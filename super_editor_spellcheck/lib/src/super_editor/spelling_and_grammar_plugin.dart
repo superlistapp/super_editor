@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:ui';
 
 import 'package:flutter/foundation.dart';
@@ -616,45 +617,84 @@ class SuperEditorAndroidSpellCheckerTapHandler extends _SpellCheckerContentTapDe
       return TapHandlingInstruction.continueHandling;
     }
 
-    final spelling = popoverController.findSuggestionsForWordAt(DocumentSelection.collapsed(position: tapPosition));
+    final selectionAtTapPosition = DocumentSelection.collapsed(position: tapPosition);
+
+    final spelling = popoverController.findSuggestionsForWordAt(selectionAtTapPosition);
     if (spelling == null || spelling.suggestions.isEmpty) {
       _hideSpellCheckerPopover();
       return TapHandlingInstruction.continueHandling;
     }
 
-    controlsController
-      ..hideToolbar()
-      ..hideMagnifier()
-      ..hideToolbar()
-      ..preventSelectionHandles();
-
-    final wordSelection = DocumentSelection(
-      base: DocumentPosition(
-        nodeId: tapPosition.nodeId,
-        nodePosition: TextNodePosition(offset: spelling.range.start),
-      ),
-      extent: DocumentPosition(
-        nodeId: tapPosition.nodeId,
-        nodePosition: TextNodePosition(offset: spelling.range.end),
-      ),
-    );
-
-    // Select the whole word and update the composing region to match
-    // the Android behavior of placing the whole word on the composing
-    // region when tapping at a word.
+    // On Android, tapping on a misspelled word first places the caret at the tap
+    // position, then expands the selection to the whole word and shows the suggestions
+    // popover, after a brief delay.
     editor!.execute([
       ChangeSelectionRequest(
-        wordSelection,
-        SelectionChangeType.expandSelection,
+        selectionAtTapPosition,
+        SelectionChangeType.placeCaret,
         SelectionReason.userInteraction,
       ),
-      ChangeComposingRegionRequest(wordSelection),
+      ChangeComposingRegionRequest(selectionAtTapPosition),
     ]);
 
-    // Change the selection color while the suggestion popover is visible.
-    styler.overrideSelectionColor();
+    // Allow the selection handles, otherwise the caret won't be visible prior
+    // to expanding the selection.
+    controlsController.allowSelectionHandles();
 
-    popoverController.showSuggestions(spelling);
+    Timer(const Duration(milliseconds: 300), () {
+      // Hide all controls and prevent handles being displayed. We don't want
+      // to display drag handles while the suggestion popover is visible.
+      controlsController
+        ..hideToolbar()
+        ..hideMagnifier()
+        ..hideToolbar()
+        ..preventSelectionHandles();
+
+      // The word bounds around the tap position.
+      final wordSelection = DocumentSelection(
+        base: DocumentPosition(
+          nodeId: tapPosition.nodeId,
+          nodePosition: TextNodePosition(offset: spelling.range.start),
+        ),
+        extent: DocumentPosition(
+          nodeId: tapPosition.nodeId,
+          nodePosition: TextNodePosition(offset: spelling.range.end),
+        ),
+      );
+
+      // Select the whole word and update the composing region to match
+      // the Android behavior of placing the whole word on the composing
+      // region when tapping at a word.
+      editor!.execute([
+        ChangeSelectionRequest(
+          wordSelection,
+          SelectionChangeType.expandSelection,
+          SelectionReason.userInteraction,
+        ),
+        ChangeComposingRegionRequest(wordSelection),
+      ]);
+
+      // Change the selection color while the suggestion popover is visible.
+      styler.overrideSelectionColor();
+
+      popoverController.showSuggestions(
+        spelling,
+        // When the user dismisses the popover, we want to restore the selection
+        // to the exact tap position.
+        onDismiss: () {
+          editor!.execute([
+            ChangeSelectionRequest(
+              selectionAtTapPosition,
+              SelectionChangeType.placeCaret,
+              SelectionReason.userInteraction,
+            ),
+            ChangeComposingRegionRequest(selectionAtTapPosition),
+          ]);
+
+          _hideSpellCheckerPopover();
+        },
+      );
+    });
 
     return TapHandlingInstruction.halt;
   }

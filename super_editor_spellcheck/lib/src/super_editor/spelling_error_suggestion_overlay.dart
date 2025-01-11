@@ -94,6 +94,8 @@ class _SpellingErrorSuggestionOverlayState
 
   SpellingError? _currentSpellingSuggestions;
 
+  VoidCallback? _onDismissToolbar;
+
   @override
   void initState() {
     super.initState();
@@ -158,9 +160,13 @@ class _SpellingErrorSuggestionOverlayState
   }
 
   @override
-  void showSuggestions(SpellingError suggestions) {
+  void showSuggestions(
+    SpellingError suggestions, {
+    VoidCallback? onDismiss,
+  }) {
     setState(() {
       _currentSpellingSuggestions = suggestions;
+      _onDismissToolbar = onDismiss;
     });
   }
 
@@ -168,6 +174,7 @@ class _SpellingErrorSuggestionOverlayState
   void hideSuggestionsPopover() {
     setState(() {
       _currentSpellingSuggestions = null;
+      _onDismissToolbar = null;
     });
   }
 
@@ -432,6 +439,31 @@ class _SpellingErrorSuggestionOverlayState
             devicePixelRatio: MediaQuery.devicePixelRatioOf(context),
           ),
           child: child,
+        );
+      case TargetPlatform.android:
+        return Stack(
+          children: [
+            // On Android, the user can't interact with the content
+            // bellow the toolbar.
+            ModalBarrier(
+              dismissible: true,
+              onDismiss: () {
+                _onDismissToolbar?.call();
+                hideSuggestionsPopover();
+              },
+            ),
+            Follower.withOffset(
+              link: widget.selectedWordLink,
+              leaderAnchor: Alignment.bottomLeft,
+              followerAnchor: Alignment.topLeft,
+              offset: const Offset(0, 16),
+              boundary: ScreenFollowerBoundary(
+                screenSize: MediaQuery.sizeOf(context),
+                devicePixelRatio: MediaQuery.devicePixelRatioOf(context),
+              ),
+              child: child,
+            ),
+          ],
         );
       default:
         return Follower.withOffset(

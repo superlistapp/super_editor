@@ -39,8 +39,19 @@ class SpellCheckerPopoverController {
   /// provided by [SpellingError.suggestions].
   ///
   /// Does nothing if [spelling] doesn't have any suggestions.
-  void showSuggestions(SpellingError spelling) {
-    _delegate?.showSuggestions(spelling);
+  ///
+  /// Provide a [onDismiss] callback to be called when the popover
+  /// is dismissed by tapping outside of the suggestions popover.
+  /// For example, restoring the previous selection when the popover
+  /// is dismissed.
+  void showSuggestions(
+    SpellingError spelling, {
+    VoidCallback? onDismiss,
+  }) {
+    _delegate?.showSuggestions(
+      spelling,
+      onDismiss: onDismiss,
+    );
     _isShowing = true;
   }
 
@@ -88,7 +99,15 @@ abstract class SpellCheckerPopoverDelegate {
   /// should be closed.
   ///
   /// This method should not update the document selection.
-  void showSuggestions(SpellingError suggestions) {}
+  ///
+  /// Provide a [onDismiss] callback to be called when the popover
+  /// is dismissed by tapping outside of the suggestions popover.
+  /// For example, restoring the previous selection when the popover
+  /// is dismissed.
+  void showSuggestions(
+    SpellingError suggestions, {
+    VoidCallback? onDismiss,
+  }) {}
 
   /// Hides the spelling suggestions popover if it's visible.
   void hideSuggestionsPopover() {}
