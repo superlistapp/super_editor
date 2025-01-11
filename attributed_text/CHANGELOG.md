@@ -1,3 +1,6 @@
+## [0.4.1] - Dec, 2024
+ * [ADJUSTMENT] - Added a few queries for the character or the placeholder at a given text offset.
+
 ## [0.4.0] - Dec, 2024
  * [FEATURE] - Added support for placeholders in text, e.g., to render inline widgets.
  * [ADJUSTMENT] - Upgrade `logging` to `v1.3.0`.
