@@ -1,3 +1,7 @@
+## 0.1.0-dev.8
+* Update `super_editor` to `v0.3.0-dev.13`.
+* Update `logging` to `v1.3.0`.
+
 ## 0.1.0-dev.7
 * Feature: Customizable block-level embed parsers.
 
