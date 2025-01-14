@@ -44,6 +44,26 @@ class SpellingAndGrammarStyler extends SingleColumnLayoutStylePhase {
   /// The color to use for the selection highlight [overrideSelectionColor] is called.
   final Color? selectionHighlightColor;
 
+  /// Configure this styler to override the default selection color with [selectionHighlightColor].
+  ///
+  /// The default editor selection styler phase configures a selection color for all selections.
+  /// Call this method to use [selectionHighlightColor] instead. This is useful to highlight a
+  /// selected misspelled word with a color that is different from the default selection color.
+  ///
+  /// Call [useDefaultSelectionColor] to stop overriding the default selection color.
+  void overrideSelectionColor() {
+    _overrideSelectionColor = true;
+    markDirty();
+  }
+
+  /// Stop overriding the default selection color.
+  ///
+  /// After calling this method, all selections will use the default selection color.
+  void useDefaultSelectionColor() {
+    _overrideSelectionColor = false;
+    markDirty();
+  }
+
   final _errorsByNode = <String, Set<TextError>>{};
   final _dirtyNodes = <String>{};
 
@@ -66,26 +86,6 @@ class SpellingAndGrammarStyler extends SingleColumnLayoutStylePhase {
     _dirtyNodes.addAll(_errorsByNode.keys);
     _errorsByNode.clear();
 
-    markDirty();
-  }
-
-  /// Configure this styler to override the default selection color with [selectionHighlightColor].
-  ///
-  /// The default editor selection styler phase configures a selection color for all selections.
-  /// Call this method to use [selectionHighlightColor] instead. This is useful to highlight a
-  /// selected misspelled word with a color that is different from the default selection color.
-  ///
-  /// Call [useDefaultSelectionColor] to stop overriding the default selection color.
-  void overrideSelectionColor() {
-    _overrideSelectionColor = true;
-    markDirty();
-  }
-
-  /// Stop overriding the default selection color.
-  ///
-  /// After calling this method, all selections will use the default selection color.
-  void useDefaultSelectionColor() {
-    _overrideSelectionColor = false;
     markDirty();
   }
 

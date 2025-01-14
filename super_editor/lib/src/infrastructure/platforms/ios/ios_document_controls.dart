@@ -520,6 +520,9 @@ class IosHandlesDocumentLayer extends DocumentLayoutLayerStatefulWidget {
   /// {@macro are_selection_handles_allowed}
   final ValueListenable<bool>? areSelectionHandlesAllowed;
 
+  /// Reports the [HandleType] of the handle being dragged by the user.
+  ///
+  /// If no drag handle is being dragged, this value is `null`.
   final ValueListenable<HandleType?>? handleBeingDragged;
 
   /// Color the iOS-style text selection drag handles.
