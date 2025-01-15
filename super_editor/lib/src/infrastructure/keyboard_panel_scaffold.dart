@@ -1080,11 +1080,9 @@ class _KeyboardScaffoldSafeAreaState extends State<KeyboardScaffoldSafeArea> {
         // There's no ancestor KeyboardScaffoldSafeArea, but there might be an ancestor
         // KeyboardScaffoldSafeAreaScope, whose insets we should use.
         final inheritedGeometry = _ancestorSafeAreaScope?.geometry;
-        final keyboardSafeArea = inheritedGeometry ??
-            KeyboardSafeAreaGeometry(
-              bottomInsets: MediaQuery.viewInsetsOf(context).bottom,
-              bottomPadding: MediaQuery.paddingOf(context).bottom,
-            );
+
+        // Either use the ancestor geometry, or use our own.
+        final keyboardSafeArea = inheritedGeometry ?? KeyboardScaffoldSafeAreaScope.of(safeAreaContext).geometry;
 
         // Get the current keyboard safe area bottom insets, and then adjust that
         // value based on our global bottom y-value. When this widget appears at
