@@ -29,12 +29,9 @@ import 'package:super_editor_quill/src/parsing/inline_formats.dart';
 /// be combined into a single block vs one block per line. E.g., a code block
 /// with multiple lines of code vs a series of independent code blocks.
 ///
-/// [consecutiveBlockTypesToMerge] explicitly tells the parser which consecutive
+/// [blockMergeRules] explicitly tells the parser which consecutive
 /// [DocumentNode]s should be merged together when not separated by an unstyled
-/// newline in the given deltas. If you don't want to ever merge consecutive
-/// blocks, pass an empty set `{}`. If you want the default block merge behavior,
-/// pass nothing or pass `null`. If you want to choose a custom set of blocks
-/// to merge, then pass a set with those [DocumentNode] block type attributions.
+/// newline in the given deltas.
 ///
 /// Example of consecutive code blocks that would be merged (if requested):
 ///
@@ -63,7 +60,7 @@ MutableDocument parseQuillDeltaDocument(
   Map<String, dynamic> deltaDocument, {
   Editor? customEditor,
   List<BlockDeltaFormat> blockFormats = defaultBlockFormats,
-  Set<Attribution>? consecutiveBlockTypesToMerge,
+  List<DeltaBlockMergeRule> blockMergeRules = defaultBlockMergeRules,
   List<InlineDeltaFormat> inlineFormats = defaultInlineFormats,
   List<InlineEmbedFormat> inlineEmbedFormats = const [],
   List<BlockDeltaFormat> embedBlockFormats = defaultEmbedBockFormats,
@@ -71,7 +68,7 @@ MutableDocument parseQuillDeltaDocument(
   return parseQuillDeltaOps(
     deltaDocument["ops"],
     customEditor: customEditor,
-    consecutiveBlockTypesToMerge: consecutiveBlockTypesToMerge,
+    blockMergeRules: blockMergeRules,
     blockFormats: blockFormats,
     inlineFormats: inlineFormats,
     inlineEmbedFormats: inlineEmbedFormats,
@@ -93,13 +90,11 @@ MutableDocument parseQuillDeltaOps(
   List<dynamic> deltaOps, {
   Editor? customEditor,
   List<BlockDeltaFormat> blockFormats = defaultBlockFormats,
-  Set<Attribution>? consecutiveBlockTypesToMerge,
+  List<DeltaBlockMergeRule> blockMergeRules = defaultBlockMergeRules,
   List<InlineDeltaFormat> inlineFormats = defaultInlineFormats,
   List<InlineEmbedFormat> inlineEmbedFormats = const [],
   List<BlockDeltaFormat> embedBlockFormats = defaultEmbedBockFormats,
 }) {
-  consecutiveBlockTypesToMerge ??= defaultConsecutiveBlockTypesToMerge;
-
   // Deserialize the delta operations JSON into a Dart data structure.
   final deltaDocument = Delta.fromJson(deltaOps);
 
@@ -159,7 +154,7 @@ MutableDocument parseQuillDeltaOps(
     delta.applyToDocument(
       editor,
       blockFormats: blockFormats,
-      consecutiveBlockTypesToMerge: consecutiveBlockTypesToMerge,
+      blockMergeRules: blockMergeRules,
       inlineFormats: inlineFormats,
       inlineEmbedFormats: inlineEmbedFormats,
       embedBlockFormats: embedBlockFormats,
@@ -222,13 +217,11 @@ extension OperationParser on Operation {
   void applyToDocument(
     Editor editor, {
     required List<BlockDeltaFormat> blockFormats,
-    Set<Attribution>? consecutiveBlockTypesToMerge,
+    List<DeltaBlockMergeRule> blockMergeRules = defaultBlockMergeRules,
     required List<InlineDeltaFormat> inlineFormats,
     required List<InlineEmbedFormat> inlineEmbedFormats,
     required List<BlockDeltaFormat> embedBlockFormats,
   }) {
-    consecutiveBlockTypesToMerge ??= defaultConsecutiveBlockTypesToMerge;
-
     final document = editor.context.find<MutableDocument>(Editor.documentKey);
     final composer = editor.context.find<MutableDocumentComposer>(Editor.composerKey);
 
@@ -250,6 +243,29 @@ extension OperationParser on Operation {
           break;
         }
 
+        final nodeBeforeTrailingNewline = document.getNodeBefore(document.last)!;
+        final blockTypeToMerge = nodeBeforeTrailingNewline.getMetadataValue(NodeMetadata.blockType);
+        var shouldMerge = false;
+        for (final rule in blockMergeRules) {
+          final ruleShouldMerge = rule.shouldMerge(blockTypeToMerge);
+          if (ruleShouldMerge == true) {
+            // The rule says we definitely want to merge.
+            shouldMerge = true;
+            break;
+          }
+          if (ruleShouldMerge == false) {
+            // The rule says we definitely don't want to merge.
+            shouldMerge = false;
+            break;
+          }
+        }
+        if (!shouldMerge) {
+          // Our merge rules don't want us to merge this node.
+          break;
+        }
+
+        // The most recently inserted node supports merging. Check if we should merge with
+        // the previous node.
         var blocksToMerge = <ParagraphNode>[];
         for (int i = document.nodeCount - 2; i >= 0; i -= 1) {
           final node = document.getNodeAt(i)!;
@@ -257,8 +273,9 @@ extension OperationParser on Operation {
             break;
           }
 
-          final blockType = node.getMetadataValue("blockType");
-          if (!consecutiveBlockTypesToMerge.contains(blockType)) {
+          if (node.getMetadataValue("blockType") != blockTypeToMerge) {
+            // This node doesn't have the same block type as the one(s) we want
+            // to merge. Break out the of loop.
             break;
           }
 
@@ -506,7 +523,7 @@ extension OperationParser on Operation {
 
         // The caret wants to move beyond this paragraph.
         unitsToMove -= selectedNode.text.length - currentPosition.offset;
-        selectedNode = document.getNodeAfter(selectedNode)!;
+        selectedNode = document.getNodeAfterById(selectedNode.id)!;
         caretPosition = DocumentPosition(
           nodeId: selectedNode.id,
           nodePosition: selectedNode.beginningPosition,
@@ -525,7 +542,7 @@ extension OperationParser on Operation {
 
         // The deltas want to retain more beyond this node.
         unitsToMove -= 1;
-        selectedNode = document.getNodeAfter(selectedNode)!;
+        selectedNode = document.getNodeAfterById(selectedNode.id)!;
         caretPosition = DocumentPosition(
           nodeId: selectedNode.id,
           nodePosition: selectedNode.beginningPosition,
@@ -560,7 +577,39 @@ enum DeltaOperationType {
   delete,
 }
 
-final defaultConsecutiveBlockTypesToMerge = {
-  blockquoteAttribution,
-  codeAttribution,
-};
+/// The standard set of [DeltaBlockMergeRule]s used when parsing Quill Deltas.
+const defaultBlockMergeRules = [
+  MergeBlock(blockquoteAttribution),
+  MergeBlock(codeAttribution),
+];
+
+/// A rule that decides whether a given [DocumentNode] should be merged into
+/// the node before it, when creating a [Document] from Quill Deltas.
+///
+/// This is useful, for example, to place multiple lines of code within a
+/// single code block.
+abstract interface class DeltaBlockMergeRule {
+  /// Returns `true` if the block type should merge consecutive blocks,
+  /// `false` if it shouldn't, or `null` if this rule has no opinion
+  /// about the given [blockType].
+  bool? shouldMerge(Attribution blockType);
+}
+
+/// A [DeltaBlockMergeRule] that chooses to merge two blocks whose block
+/// types are `==`.
+class MergeBlock implements DeltaBlockMergeRule {
+  const MergeBlock(this._blockType);
+
+  final Attribution _blockType;
+
+  @override
+  bool? shouldMerge(Attribution blockType) {
+    if (blockType == _blockType) {
+      // Yes, try to merge them.
+      return true;
+    }
+
+    // This isn't our block type. We don't have an opinion.
+    return null;
+  }
+}
