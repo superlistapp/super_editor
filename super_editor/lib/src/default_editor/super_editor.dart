@@ -616,9 +616,12 @@ class SuperEditorState extends State<SuperEditor> {
             composingRegion: editContext.composer.composingRegion,
             showComposingUnderline: true,
           ),
-        // Selection changes are very volatile. Put that phase last
+        // Selection changes are very volatile. Put that phase last,
+        // just before the phases that the app wants to be at the end
         // to minimize view model recalculations.
         _docLayoutSelectionStyler,
+        for (final plugin in widget.plugins) //
+          ...plugin.appendedStylePhases,
       ],
     );
 
@@ -877,7 +880,11 @@ class SuperEditorState extends State<SuperEditor> {
           getDocumentLayout: () => editContext.documentLayout,
           selectionChanges: editContext.composer.selectionChanges,
           selectionNotifier: editContext.composer.selectionNotifier,
-          contentTapHandlers: _contentTapHandlers,
+          contentTapHandlers: [
+            ..._contentTapHandlers ?? [],
+            for (final plugin in widget.plugins) //
+              ...plugin.contentTapHandlers,
+          ],
           autoScroller: _autoScrollController,
           fillViewport: fillViewport,
           showDebugPaint: widget.debugPaint.gestures,
@@ -892,7 +899,11 @@ class SuperEditorState extends State<SuperEditor> {
           selection: editContext.composer.selectionNotifier,
           openKeyboardWhenTappingExistingSelection: widget.selectionPolicies.openKeyboardWhenTappingExistingSelection,
           openSoftwareKeyboard: _openSoftareKeyboard,
-          contentTapHandlers: _contentTapHandlers,
+          contentTapHandlers: [
+            ..._contentTapHandlers ?? [],
+            for (final plugin in widget.plugins) //
+              ...plugin.contentTapHandlers,
+          ],
           scrollController: _scrollController,
           dragHandleAutoScroller: _dragHandleAutoScroller,
           fillViewport: fillViewport,
@@ -909,7 +920,11 @@ class SuperEditorState extends State<SuperEditor> {
           openKeyboardWhenTappingExistingSelection: widget.selectionPolicies.openKeyboardWhenTappingExistingSelection,
           openSoftwareKeyboard: _openSoftareKeyboard,
           isImeConnected: _isImeConnected,
-          contentTapHandlers: _contentTapHandlers,
+          contentTapHandlers: [
+            ..._contentTapHandlers ?? [],
+            for (final plugin in widget.plugins) //
+              ...plugin.contentTapHandlers,
+          ],
           scrollController: _scrollController,
           dragHandleAutoScroller: _dragHandleAutoScroller,
           fillViewport: fillViewport,
@@ -1157,6 +1172,16 @@ abstract class SuperEditorPlugin {
 
   /// Additional overlay [SuperEditorLayerBuilder]s that will be added to a given [SuperEditor].
   List<SuperEditorLayerBuilder> get documentOverlayBuilders => [];
+
+  /// Optional handlers that respond to taps on content, e.g., opening
+  /// a link when the user taps on text with a link attribution.
+  ///
+  /// If a handler returns [TapHandlingInstruction.halt], no subsequent handlers
+  /// nor the default tap behavior will be executed.
+  List<ContentTapDelegate> get contentTapHandlers => const [];
+
+  /// Custom style phases that are added to the very end of the [SuperEditor] style phases.
+  List<SingleColumnLayoutStylePhase> get appendedStylePhases => const [];
 }
 
 /// A collection of policies that dictate how a [SuperEditor]'s selection will change

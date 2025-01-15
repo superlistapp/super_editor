@@ -128,7 +128,6 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor> with 
     widget.autoScroller
       ..addListener(_updateDragSelection)
       ..addListener(_updateMouseCursorAtLatestOffset);
-
     if (widget.contentTapHandlers != null) {
       for (final handler in widget.contentTapHandlers!) {
         handler.addListener(_updateMouseCursorAtLatestOffset);
