@@ -22,12 +22,48 @@ import 'package:super_editor_quill/src/parsing/inline_formats.dart';
 /// and a [MutableComposer]. The document must be empty.
 /// {@endtemplate}
 ///
+/// {@template merge_consecutive_blocks}
+/// ### Merging consecutive blocks
+///
+/// The Delta format creates some ambiguity around when multiple lines should
+/// be combined into a single block vs one block per line. E.g., a code block
+/// with multiple lines of code vs a series of independent code blocks.
+///
+/// [consecutiveBlockTypesToMerge] explicitly tells the parser which consecutive
+/// [DocumentNode]s should be merged together when not separated by an unstyled
+/// newline in the given deltas. If you don't want to ever merge consecutive
+/// blocks, pass an empty set `{}`. If you want the default block merge behavior,
+/// pass nothing or pass `null`. If you want to choose a custom set of blocks
+/// to merge, then pass a set with those [DocumentNode] block type attributions.
+///
+/// Example of consecutive code blocks that would be merged (if requested):
+///
+///     [
+///       { "insert": "Code line one" },
+///       { "insert": "\n", "attributed": { "code-block": "plain"} },
+///       { "insert": "Code line two" },
+///       { "insert": "\n", "attributed": { "code-block": "plain"} },
+///     ]
+///
+/// Example of code blocks, separated by an unstyled newline, that wouldn't be merged:
+///
+///     [
+///       { "insert": "Code line one" },
+///       { "insert": "\n", "attributed": { "code-block": "plain"} },
+///       { "insert": "\n" },
+///       { "insert": "Code line two" },
+///       { "insert": "\n", "attributed": { "code-block": "plain"} },
+///     ]
+///
+/// {@endtemplate}
+///
 /// For more information about the Quill Delta format, see the official
 /// documentation: https://quilljs.com/docs/delta/
 MutableDocument parseQuillDeltaDocument(
   Map<String, dynamic> deltaDocument, {
   Editor? customEditor,
   List<BlockDeltaFormat> blockFormats = defaultBlockFormats,
+  Set<Attribution>? consecutiveBlockTypesToMerge,
   List<InlineDeltaFormat> inlineFormats = defaultInlineFormats,
   List<InlineEmbedFormat> inlineEmbedFormats = const [],
   List<BlockDeltaFormat> embedBlockFormats = defaultEmbedBockFormats,
@@ -35,6 +71,7 @@ MutableDocument parseQuillDeltaDocument(
   return parseQuillDeltaOps(
     deltaDocument["ops"],
     customEditor: customEditor,
+    consecutiveBlockTypesToMerge: consecutiveBlockTypesToMerge,
     blockFormats: blockFormats,
     inlineFormats: inlineFormats,
     inlineEmbedFormats: inlineEmbedFormats,
@@ -42,7 +79,7 @@ MutableDocument parseQuillDeltaDocument(
   );
 }
 
-/// Parses a list Quill Delta operations (as JSON) into a [MutableDocument].
+/// Parses a list of Quill Delta operations (as JSON) into a [MutableDocument].
 ///
 /// This parser is the same as [parseQuillDeltaDocument] except that this method
 /// directly accepts the operations list instead of the whole document map. This
@@ -50,14 +87,19 @@ MutableDocument parseQuillDeltaDocument(
 /// operations are exchanged, rather than the whole document object.
 ///
 /// {@macro parse_deltas_custom_editor}
+///
+/// {@macro merge_consecutive_blocks}
 MutableDocument parseQuillDeltaOps(
   List<dynamic> deltaOps, {
   Editor? customEditor,
   List<BlockDeltaFormat> blockFormats = defaultBlockFormats,
+  Set<Attribution>? consecutiveBlockTypesToMerge,
   List<InlineDeltaFormat> inlineFormats = defaultInlineFormats,
   List<InlineEmbedFormat> inlineEmbedFormats = const [],
   List<BlockDeltaFormat> embedBlockFormats = defaultEmbedBockFormats,
 }) {
+  consecutiveBlockTypesToMerge ??= defaultConsecutiveBlockTypesToMerge;
+
   // Deserialize the delta operations JSON into a Dart data structure.
   final deltaDocument = Delta.fromJson(deltaOps);
 
@@ -117,6 +159,7 @@ MutableDocument parseQuillDeltaOps(
     delta.applyToDocument(
       editor,
       blockFormats: blockFormats,
+      consecutiveBlockTypesToMerge: consecutiveBlockTypesToMerge,
       inlineFormats: inlineFormats,
       inlineEmbedFormats: inlineEmbedFormats,
       embedBlockFormats: embedBlockFormats,
@@ -179,10 +222,13 @@ extension OperationParser on Operation {
   void applyToDocument(
     Editor editor, {
     required List<BlockDeltaFormat> blockFormats,
+    Set<Attribution>? consecutiveBlockTypesToMerge,
     required List<InlineDeltaFormat> inlineFormats,
     required List<InlineEmbedFormat> inlineEmbedFormats,
     required List<BlockDeltaFormat> embedBlockFormats,
   }) {
+    consecutiveBlockTypesToMerge ??= defaultConsecutiveBlockTypesToMerge;
+
     final document = editor.context.find<MutableDocument>(Editor.documentKey);
     final composer = editor.context.find<MutableDocumentComposer>(Editor.composerKey);
 
@@ -197,44 +243,47 @@ extension OperationParser on Operation {
           _doInsertMedia(editor, composer, inlineEmbedFormats, embedBlockFormats);
         }
 
-        // Deduplicate all back-to-back code blocks.
+        // Merge consecutive blocks as desired by the given node types.
         final document = editor.context.find<MutableDocument>(Editor.documentKey);
         if (document.nodeCount < 3) {
-          // Minimum of 3 nodes: code, code, newline.
+          // Minimum of 3 nodes: block, block, newline.
           break;
         }
 
-        var codeBlocks = <ParagraphNode>[];
+        var blocksToMerge = <ParagraphNode>[];
         for (int i = document.nodeCount - 2; i >= 0; i -= 1) {
           final node = document.getNodeAt(i)!;
           if (node is! ParagraphNode) {
             break;
           }
-          if (node.getMetadataValue("blockType") != codeAttribution) {
+
+          final blockType = node.getMetadataValue("blockType");
+          if (!consecutiveBlockTypesToMerge.contains(blockType)) {
             break;
           }
 
-          codeBlocks.add(node);
+          blocksToMerge.add(node);
         }
 
-        if (codeBlocks.length < 2) {
+        if (blocksToMerge.length < 2) {
           break;
         }
 
-        codeBlocks = codeBlocks.reversed.toList();
-        final mergeNode = codeBlocks.first;
-        var codeToMove = codeBlocks[1].text.insertString(textToInsert: "\n", startOffset: 0);
-        for (int i = 2; i < codeBlocks.length; i += 1) {
-          codeToMove = codeToMove.copyAndAppend(codeBlocks[i].text.insertString(textToInsert: "\n", startOffset: 0));
+        blocksToMerge = blocksToMerge.reversed.toList();
+        final mergeNode = blocksToMerge.first;
+        var nodeContentToMove = blocksToMerge[1].text.insertString(textToInsert: "\n", startOffset: 0);
+        for (int i = 2; i < blocksToMerge.length; i += 1) {
+          nodeContentToMove =
+              nodeContentToMove.copyAndAppend(blocksToMerge[i].text.insertString(textToInsert: "\n", startOffset: 0));
         }
 
         editor.execute([
           InsertAttributedTextRequest(
             DocumentPosition(nodeId: mergeNode.id, nodePosition: mergeNode.endPosition),
-            codeToMove,
+            nodeContentToMove,
           ),
-          for (int i = 1; i < codeBlocks.length; i += 1) //
-            DeleteNodeRequest(nodeId: codeBlocks[i].id),
+          for (int i = 1; i < blocksToMerge.length; i += 1) //
+            DeleteNodeRequest(nodeId: blocksToMerge[i].id),
         ]);
 
       case DeltaOperationType.retain:
@@ -510,3 +559,8 @@ enum DeltaOperationType {
   retain,
   delete,
 }
+
+final defaultConsecutiveBlockTypesToMerge = {
+  blockquoteAttribution,
+  codeAttribution,
+};
