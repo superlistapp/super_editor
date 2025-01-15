@@ -31,6 +31,22 @@ abstract class ContentTapDelegate with ChangeNotifier {
   TapHandlingInstruction onTripleTap(DocumentTapDetails details) {
     return TapHandlingInstruction.continueHandling;
   }
+
+  TapHandlingInstruction onPanStart(DocumentTapDetails details) {
+    return TapHandlingInstruction.continueHandling;
+  }
+
+  TapHandlingInstruction onPanUpdate(DocumentTapDetails details) {
+    return TapHandlingInstruction.continueHandling;
+  }
+
+  TapHandlingInstruction onPanEnd(DocumentTapDetails details) {
+    return TapHandlingInstruction.continueHandling;
+  }
+
+  TapHandlingInstruction onPanCancel() {
+    return TapHandlingInstruction.continueHandling;
+  }
 }
 
 /// Information about a gesture that occured within a [DocumentLayout].
