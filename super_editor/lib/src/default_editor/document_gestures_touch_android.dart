@@ -259,6 +259,29 @@ class SuperEditorAndroidControlsController {
     }
   }
 
+  /// {@template are_selection_handles_allowed}
+  /// Whether or not the selection handles are allowed to be displayed.
+  ///
+  /// Typically, whenever the selection changes the drag handles are displayed. However,
+  /// there are some cases where we want to select some content, but don't show the
+  /// drag handles. For example, when the user taps a misspelled word, we might want to select
+  /// the misspelled word without showing any handles.
+  ///
+  /// Defaults to `true`.
+  /// {@endtemplate}
+  ValueListenable<bool> get areSelectionHandlesAllowed => _areSelectionHandlesAllowed;
+  final _areSelectionHandlesAllowed = ValueNotifier<bool>(true);
+
+  /// Temporarily prevents any selection handles from being displayed.
+  ///
+  /// Call this when you want to select some content, but don't want to show the drag handles.
+  /// [allowSelectionHandles] must be called to allow the drag handles to be displayed again.
+  void preventSelectionHandles() => _areSelectionHandlesAllowed.value = false;
+
+  /// Allows the selection handles to be displayed after they have been temporarily
+  /// prevented by [preventSelectionHandles].
+  void allowSelectionHandles() => _areSelectionHandlesAllowed.value = true;
+
   /// (Optional) Builder to create the visual representation of the expanded drag handles.
   ///
   /// If [expandedHandlesBuilder] is `null`, default Android handles are displayed.
@@ -1752,6 +1775,7 @@ class SuperEditorAndroidControlsOverlayManagerState extends State<SuperEditorAnd
           link: _controlsController!.collapsedHandleFocalPoint,
           leaderAnchor: Alignment.bottomCenter,
           followerAnchor: Alignment.topCenter,
+          showWhenUnlinked: false,
           // Use the offset to account for the invisible expanded touch region around the handle.
           offset: -Offset(0, AndroidSelectionHandle.defaultTouchRegionExpansion.top) *
               MediaQuery.devicePixelRatioOf(context),
@@ -1822,6 +1846,7 @@ class SuperEditorAndroidControlsOverlayManagerState extends State<SuperEditorAnd
             link: _controlsController!.upstreamHandleFocalPoint,
             leaderAnchor: Alignment.bottomLeft,
             followerAnchor: Alignment.topRight,
+            showWhenUnlinked: false,
             // Use the offset to account for the invisible expanded touch region around the handle.
             offset:
                 -AndroidSelectionHandle.defaultTouchRegionExpansion.topRight * MediaQuery.devicePixelRatioOf(context),
@@ -1852,6 +1877,7 @@ class SuperEditorAndroidControlsOverlayManagerState extends State<SuperEditorAnd
             link: _controlsController!.downstreamHandleFocalPoint,
             leaderAnchor: Alignment.bottomRight,
             followerAnchor: Alignment.topLeft,
+            showWhenUnlinked: false,
             // Use the offset to account for the invisible expanded touch region around the handle.
             offset:
                 -AndroidSelectionHandle.defaultTouchRegionExpansion.topLeft * MediaQuery.devicePixelRatioOf(context),
