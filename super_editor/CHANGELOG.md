@@ -1,3 +1,6 @@
+## [0.3.0-dev.14] - Jan 14, 2024
+ * FIX: `KeyboardScaffoldSafeArea` breaks and defers to `MediaQuery` when there's only one in the tree.
+
 ## [0.3.0-dev.13] - Jan 10, 2024
  * BREAKING: All `DocumentNode`s are now immutable. To change a node, it must be copied and replaced.
  * BREAKING: Newline insertion behavior is now configurable.
