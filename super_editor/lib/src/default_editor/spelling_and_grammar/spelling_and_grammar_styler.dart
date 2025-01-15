@@ -11,6 +11,7 @@ class SpellingAndGrammarStyler extends SingleColumnLayoutStylePhase {
   SpellingAndGrammarStyler({
     UnderlineStyle? spellingErrorUnderlineStyle,
     UnderlineStyle? grammarErrorUnderlineStyle,
+    this.selectionHighlightColor,
   })  : _spellingErrorUnderlineStyle = spellingErrorUnderlineStyle,
         _grammarErrorUnderlineStyle = grammarErrorUnderlineStyle;
 
@@ -31,6 +32,35 @@ class SpellingAndGrammarStyler extends SingleColumnLayoutStylePhase {
     }
 
     _grammarErrorUnderlineStyle = style;
+    markDirty();
+  }
+
+  /// Whether or not we should override the default selection color with [selectionHighlightColor].
+  ///
+  /// On mobile platforms, when the suggestions popover is opened, the selected text uses a different
+  /// highlight color.
+  bool _overrideSelectionColor = false;
+
+  /// The color to use for the selection highlight [overrideSelectionColor] is called.
+  final Color? selectionHighlightColor;
+
+  /// Configure this styler to override the default selection color with [selectionHighlightColor].
+  ///
+  /// The default editor selection styler phase configures a selection color for all selections.
+  /// Call this method to use [selectionHighlightColor] instead. This is useful to highlight a
+  /// selected misspelled word with a color that is different from the default selection color.
+  ///
+  /// Call [useDefaultSelectionColor] to stop overriding the default selection color.
+  void overrideSelectionColor() {
+    _overrideSelectionColor = true;
+    markDirty();
+  }
+
+  /// Stop overriding the default selection color.
+  ///
+  /// After calling this method, all selections will use the default selection color.
+  void useDefaultSelectionColor() {
+    _overrideSelectionColor = false;
     markDirty();
   }
 
@@ -65,7 +95,7 @@ class SpellingAndGrammarStyler extends SingleColumnLayoutStylePhase {
       padding: viewModel.padding,
       componentViewModels: [
         for (final previousViewModel in viewModel.componentViewModels) //
-          _applyErrors(previousViewModel),
+          _applyErrors(previousViewModel.copy()),
       ],
     );
 
@@ -95,6 +125,10 @@ class SpellingAndGrammarStyler extends SingleColumnLayoutStylePhase {
       ..addAll([
         for (final spellingError in spellingErrors) spellingError.range,
       ]);
+
+    if (_overrideSelectionColor && selectionHighlightColor != null) {
+      viewModel.selectionColor = selectionHighlightColor!;
+    }
 
     final grammarErrors = _errorsByNode[viewModel.nodeId]!.where((error) => error.type == TextErrorType.grammar);
     if (_grammarErrorUnderlineStyle != null) {
