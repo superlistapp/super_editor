@@ -39,7 +39,7 @@ packages:
       path: "../../../attributed_text"
       relative: true
     source: path
-    version: "0.4.0"
+    version: "0.4.1"
   boolean_selector:
     dependency: transitive
     description:
@@ -506,21 +506,21 @@ packages:
       path: "../.."
       relative: true
     source: path
-    version: "0.3.0-dev.12"
+    version: "0.3.0-dev.13"
   super_editor_markdown:
     dependency: "direct main"
     description:
       path: "../../../super_editor_markdown"
       relative: true
     source: path
-    version: "0.1.6"
+    version: "0.1.7"
   super_editor_quill:
     dependency: "direct main"
     description:
       path: "../../../super_editor_quill"
       relative: true
     source: path
-    version: "0.1.0-dev.7"
+    version: "0.1.0-dev.8"
   super_keyboard:
     dependency: transitive
     description:
@@ -535,7 +535,7 @@ packages:
       path: "../../../super_text_layout"
       relative: true
     source: path
-    version: "0.1.17"
+    version: "0.1.18"
   term_glyph:
     dependency: transitive
     description:
