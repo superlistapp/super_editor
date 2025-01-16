@@ -3,43 +3,15 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:super_editor/super_editor.dart';
 import 'package:super_editor_quill/super_editor_quill.dart';
 
-import 'test_documents.dart';
+import '../test_documents.dart';
 
 // Useful links:
-//  - create a Delta document in the browser: https://quilljs.com/docs/delta
+//  - create a Delta document in the browser: https://quilljs.com/playground/snow
 //  - list of supported formats (bold, italics, header, etc): https://quilljs.com/docs/formats
 
 void main() {
   group("Delta document parsing >", () {
     group("text >", () {
-      test("newlines", () {
-        final document = parseQuillDeltaDocument(
-          {
-            "ops": [
-              {"insert": "\nLine one\nLine two\nLine three\nLine four\n\n"}
-            ],
-          },
-        );
-
-        expect((document.getNodeAt(0)! as TextNode).text.toPlainText(), "");
-        expect((document.getNodeAt(1)! as TextNode).text.toPlainText(), "Line one");
-        expect((document.getNodeAt(2)! as TextNode).text.toPlainText(), "Line two");
-        expect((document.getNodeAt(3)! as TextNode).text.toPlainText(), "Line three");
-        expect((document.getNodeAt(4)! as TextNode).text.toPlainText(), "Line four");
-        expect((document.getNodeAt(5)! as TextNode).text.toPlainText(), "");
-        expect((document.getNodeAt(6)! as TextNode).text.toPlainText(), "");
-
-        // A note on the length of the document. If this document is placed in a
-        // Quill editor, there will only be 6 lines the user can edit. This seems
-        // like it's probably a part of Quill specified behavior. I think that
-        // because every Quill document must always end with a newline, the final
-        // newline of a document is ignored by a Quill editor. But in our case
-        // we parse every newline, including the trailing newline, so the length
-        // of this document is 7. If that's a problem, we can make the parser
-        // more intelligent about this later.
-        expect(document.nodeCount, 7);
-      });
-
       test("plain text followed by block format", () {
         final document = parseQuillDeltaDocument(
           {
@@ -65,42 +37,6 @@ void main() {
         expect((document.getNodeAt(1)! as ParagraphNode).getMetadataValue("blockType"), codeAttribution);
         expect((document.getNodeAt(2)! as ParagraphNode).text.toPlainText(), "");
         expect(document.nodeCount, 3);
-      });
-
-      test("multiline code block", () {
-        // Notice that Delta encodes each line of a code block as a separate attributed
-        // delta. But when a Quill editor renders the code block, it's rendered as one
-        // block. This test ensures that Super Editor accumulates back-to-back code
-        // lines into a single code node.
-        final document = parseQuillDeltaDocument(
-          {
-            "ops": [
-              {"insert": "This is a code block"},
-              {
-                "attributes": {"code-block": "plain"},
-                "insert": "\n"
-              },
-              {"insert": "This is line two"},
-              {
-                "attributes": {"code-block": "plain"},
-                "insert": "\n"
-              },
-              {"insert": "This is line three"},
-              {
-                "attributes": {"code-block": "plain"},
-                "insert": "\n"
-              },
-            ],
-          },
-        );
-
-        expect(
-          (document.getNodeAt(0)! as ParagraphNode).text.toPlainText(),
-          "This is a code block\nThis is line two\nThis is line three",
-        );
-        expect((document.getNodeAt(0)! as ParagraphNode).getMetadataValue("blockType"), codeAttribution);
-        expect((document.getNodeAt(1)! as ParagraphNode).text.toPlainText(), "");
-        expect(document.nodeCount, 2);
       });
 
       test("all text blocks and styles", () {

@@ -106,12 +106,18 @@ This is regular text right below header 2.
 Some **bold** text.
 
 > This is a blockquote.
+> It can span multiple lines.
 
-* This is a list item.
+* This is a bulleted list item.
+
+1. This is a numerical list item.
 
 ```
 This is a code block.
+It can span multiple lines.
 ```
+
+The end.
 ''');
 }
 
