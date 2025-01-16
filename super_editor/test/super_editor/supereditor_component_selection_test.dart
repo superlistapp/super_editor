@@ -644,7 +644,8 @@ class _UnselectableHorizontalRuleComponent extends StatelessWidget {
 }
 
 /// A [DocumentNode] used to display a button.
-class _ButtonNode extends BlockNode with ChangeNotifier {
+@immutable
+class _ButtonNode extends BlockNode {
   _ButtonNode({
     required this.id,
   });
@@ -654,6 +655,16 @@ class _ButtonNode extends BlockNode with ChangeNotifier {
 
   @override
   String? copyContent(dynamic selection) => '';
+
+  @override
+  _ButtonNode copyWithAddedMetadata(Map<String, dynamic> newProperties) {
+    return _ButtonNode(id: id);
+  }
+
+  @override
+  _ButtonNode copyAndReplaceMetadata(Map<String, dynamic> newMetadata) {
+    return _ButtonNode(id: id);
+  }
 
   @override
   DocumentNode copy() {

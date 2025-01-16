@@ -86,9 +86,9 @@ Future<void> main() async {
             .useStylesheet(_createStylesheet())
             .withAddedComponents(
           [
-            _ListItemWithCustomStyleBuilder(
+            const _ListItemWithCustomStyleBuilder(
               dotStyle: ListItemDotStyle(
-                size: const Size(14, 14),
+                size: Size(14, 14),
               ),
             ),
           ],
@@ -125,7 +125,7 @@ Future<void> main() async {
             .useStylesheet(_createStylesheet())
             .withAddedComponents(
           [
-            _ListItemWithCustomStyleBuilder(
+            const _ListItemWithCustomStyleBuilder(
               dotStyle: ListItemDotStyle(
                 shape: BoxShape.rectangle,
               ),
@@ -164,7 +164,7 @@ Future<void> main() async {
             .useStylesheet(_createStylesheet())
             .withAddedComponents(
           [
-            _ListItemWithCustomStyleBuilder(
+            const _ListItemWithCustomStyleBuilder(
               dotStyle: ListItemDotStyle(
                 color: Colors.red,
               ),

@@ -180,7 +180,7 @@ class _SelectedTextColorsDemoState extends State<SelectedTextColorsDemo> {
           border: Border.all(color: Colors.white, width: 4),
           color: color,
           boxShadow: [
-            BoxShadow(color: Colors.black.withOpacity(0.5), blurRadius: 5, offset: Offset(0, 5)),
+            BoxShadow(color: Colors.black.withValues(alpha: 0.5), blurRadius: 5, offset: Offset(0, 5)),
           ],
         ),
       ),
@@ -299,7 +299,7 @@ class ColorPickerPopoverModal extends StatelessWidget {
             border: Border.all(color: Colors.white, width: 2),
             color: color,
             boxShadow: [
-              BoxShadow(color: Colors.black.withOpacity(0.2), blurRadius: 3, offset: Offset(0, 3)),
+              BoxShadow(color: Colors.black.withValues(alpha: 0.2), blurRadius: 3, offset: Offset(0, 3)),
             ],
           ),
         ),

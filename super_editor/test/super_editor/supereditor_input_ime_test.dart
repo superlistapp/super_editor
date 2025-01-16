@@ -35,7 +35,7 @@ void main() {
         await tester.typeImeText("Hello");
 
         // Ensure the text was typed.
-        expect((document.first as ParagraphNode).text.text, "Hello<- text here");
+        expect((document.first as ParagraphNode).text.toPlainText(), "Hello<- text here");
       });
 
       testWidgetsOnAllPlatforms('in the middle of existing text', (tester) async {
@@ -58,7 +58,7 @@ void main() {
         await tester.typeImeText("Hello");
 
         // Ensure the text was typed.
-        expect((document.first as ParagraphNode).text.text, "text here ->Hello<---");
+        expect((document.first as ParagraphNode).text.toPlainText(), "text here ->Hello<---");
       });
 
       testWidgetsOnAllPlatforms('at the end of existing text', (tester) async {
@@ -81,7 +81,7 @@ void main() {
         await tester.typeImeText("Hello");
 
         // Ensure the text was typed.
-        expect((document.first as ParagraphNode).text.text, "text here ->Hello");
+        expect((document.first as ParagraphNode).text.toPlainText(), "text here ->Hello");
       });
     });
 
@@ -279,7 +279,7 @@ void main() {
 
       // Ensure the text was inserted.
       expect(
-        SuperEditorInspector.findTextInComponent('1').text,
+        SuperEditorInspector.findTextInComponent('1').toPlainText(),
         'Going.',
       );
     });
@@ -353,7 +353,7 @@ void main() {
           ),
         ]);
 
-        expect((document.first as ParagraphNode).text.text, "This is a sentence. ");
+        expect((document.first as ParagraphNode).text.toPlainText(), "This is a sentence. ");
       });
 
       testWidgets('can type compound character in an empty paragraph', (tester) async {
@@ -395,7 +395,7 @@ void main() {
         await tester.pumpAndSettle();
 
         // Ensure that the empty paragraph now reads "¨".
-        expect((editContext.document.getNodeAt(1)! as ParagraphNode).text.text, "¨");
+        expect((editContext.document.getNodeAt(1)! as ParagraphNode).text.toPlainText(), "¨");
 
         // Ensure that the IME still has the invisible characters.
         expect(deltaClient.currentTextEditingValue!.text, ". ¨");
@@ -420,7 +420,7 @@ void main() {
         await tester.pumpAndSettle();
 
         // Ensure that the empty paragraph now reads "ü".
-        expect((editContext.document.getNodeAt(1)! as ParagraphNode).text.text, "ü");
+        expect((editContext.document.getNodeAt(1)! as ParagraphNode).text.toPlainText(), "ü");
       });
     });
 
@@ -494,13 +494,13 @@ void main() {
 
         // Ensure the paragraph was split.
         expect(
-          (doc.getNodeAt(0)! as ParagraphNode).text.text,
+          (doc.getNodeAt(0)! as ParagraphNode).text.toPlainText(),
           'Before the line break ',
         );
 
         // Ensure the paragraph was split.
         expect(
-          (doc.getNodeAt(1)! as ParagraphNode).text.text,
+          (doc.getNodeAt(1)! as ParagraphNode).text.toPlainText(),
           'new line',
         );
 
@@ -559,7 +559,7 @@ Paragraph two
 
         // Ensure the paragraph was merged.
         expect(
-          (doc.getNodeAt(0)! as ParagraphNode).text.text,
+          (doc.getNodeAt(0)! as ParagraphNode).text.toPlainText(),
           'Paragraph oneParagraph two',
         );
 
@@ -621,7 +621,7 @@ Paragraph two
         ], getter: imeClientGetter);
 
         expect(
-          SuperEditorInspector.findTextInComponent('1').text,
+          SuperEditorInspector.findTextInComponent('1').toPlainText(),
           'Anonymous ',
         );
       });
@@ -666,7 +666,7 @@ Paragraph two
         ], getter: imeClientGetter);
 
         expect(
-          SuperEditorInspector.findTextInComponent('1').text,
+          SuperEditorInspector.findTextInComponent('1').toPlainText(),
           'Anonymous ',
         );
       });
@@ -890,7 +890,7 @@ Paragraph two
         ], getter: imeClientGetter);
 
         // Ensure text and selection were updated.
-        expect(SuperEditorInspector.findTextInComponent('1').text, '쇼');
+        expect(SuperEditorInspector.findTextInComponent('1').toPlainText(), '쇼');
         expect(
           SuperEditorInspector.findDocumentSelection(),
           selectionEquivalentTo(
@@ -953,8 +953,8 @@ Paragraph two
 
         // Ensure the replacement was ignored and a new empty node was added.
         expect(document.nodeCount, 2);
-        expect((document.getNodeAt(0)! as TextNode).text.text, 'run tom');
-        expect((document.getNodeAt(1)! as TextNode).text.text, '');
+        expect((document.getNodeAt(0)! as TextNode).text.toPlainText(), 'run tom');
+        expect((document.getNodeAt(1)! as TextNode).text.toPlainText(), '');
       });
     });
 
@@ -1030,7 +1030,7 @@ Paragraph two
       await _typeSpaceAdaptive(tester);
 
       // Ensure the space character was inserted.
-      expect(SuperEditorInspector.findTextInComponent(nodeId).text, ' ');
+      expect(SuperEditorInspector.findTextInComponent(nodeId).toPlainText(), ' ');
     });
 
     testWidgetsOnWebDesktop('deletes a character with backspace', (tester) async {
@@ -1062,7 +1062,7 @@ Paragraph two
       );
 
       // Ensure the last character was deleted.
-      expect(SuperEditorInspector.findTextInComponent(nodeId).text, 'This is a paragrap');
+      expect(SuperEditorInspector.findTextInComponent(nodeId).toPlainText(), 'This is a paragrap');
     });
 
     testWidgetsOnWebDesktop('merges paragraphs backspace at the beginning of a paragraph', (tester) async {
@@ -1102,7 +1102,7 @@ Paragraph two
 
       // Ensure the paragraph was merged.
       expect(
-        (doc.getNodeAt(0)! as ParagraphNode).text.text,
+        (doc.getNodeAt(0)! as ParagraphNode).text.toPlainText(),
         'Paragraph oneParagraph two',
       );
     });
@@ -1621,7 +1621,7 @@ Paragraph two
       // Simulate an insertion containing a composing region.
       await tester.ime.sendDeltas(
         [
-          TextEditingDeltaNonTextUpdate(
+          const TextEditingDeltaNonTextUpdate(
             oldText: '. ',
             selection: TextSelection.collapsed(offset: 2),
             composing: TextRange(start: 2, end: 2),

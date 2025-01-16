@@ -3,6 +3,7 @@ import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:super_editor/src/core/document_composer.dart';
+import 'package:super_editor/src/core/document_selection.dart';
 import 'package:super_editor/src/core/edit_context.dart';
 import 'package:super_editor/src/core/editor.dart';
 import 'package:super_editor/src/core/styles.dart';
@@ -20,69 +21,95 @@ import 'text.dart';
 
 final _log = Logger(scope: 'list_items.dart');
 
+@immutable
 class ListItemNode extends TextNode {
   ListItemNode.ordered({
-    required String id,
-    required AttributedText text,
-    Map<String, dynamic>? metadata,
-    int indent = 0,
-  })  : type = ListItemType.ordered,
-        _indent = indent,
-        super(
-          id: id,
-          text: text,
-          metadata: metadata,
-        ) {
-    putMetadataValue("blockType", listItemAttribution);
+    required super.id,
+    required super.text,
+    super.metadata,
+    this.indent = 0,
+  }) : type = ListItemType.ordered {
+    initAddToMetadata({
+      NodeMetadata.blockType: listItemAttribution,
+    });
   }
 
   ListItemNode.unordered({
-    required String id,
-    required AttributedText text,
-    Map<String, dynamic>? metadata,
-    int indent = 0,
-  })  : type = ListItemType.unordered,
-        _indent = indent,
-        super(
-          id: id,
-          text: text,
-          metadata: metadata,
-        ) {
-    putMetadataValue("blockType", listItemAttribution);
+    required super.id,
+    required super.text,
+    super.metadata,
+    this.indent = 0,
+  }) : type = ListItemType.unordered {
+    initAddToMetadata({
+      NodeMetadata.blockType: listItemAttribution,
+    });
   }
 
   ListItemNode({
-    required String id,
+    required super.id,
     required ListItemType itemType,
-    required AttributedText text,
-    Map<String, dynamic>? metadata,
-    int indent = 0,
-  })  : type = itemType,
-        _indent = indent,
-        super(
-          id: id,
-          text: text,
-          metadata: metadata ?? {},
-        ) {
-    if (!hasMetadataValue("blockType")) {
-      putMetadataValue("blockType", listItemAttribution);
-    }
+    required super.text,
+    super.metadata,
+    this.indent = 0,
+  }) : type = itemType {
+    initAddToMetadata({
+      NodeMetadata.blockType: listItemAttribution,
+    });
   }
 
   final ListItemType type;
 
-  int _indent;
-  int get indent => _indent;
-  set indent(int newIndent) {
-    if (newIndent != _indent) {
-      _indent = newIndent;
-      notifyListeners();
-    }
-  }
+  final int indent;
 
   @override
   bool hasEquivalentContent(DocumentNode other) {
     return other is ListItemNode && type == other.type && indent == other.indent && text == other.text;
+  }
+
+  ListItemNode copyListItemWith({
+    String? id,
+    ListItemType? itemType,
+    AttributedText? text,
+    int? indent,
+    Map<String, dynamic>? metadata,
+  }) {
+    return ListItemNode(
+      id: id ?? this.id,
+      itemType: itemType ?? type,
+      text: text ?? this.text,
+      indent: indent ?? this.indent,
+      metadata: metadata ?? this.metadata,
+    );
+  }
+
+  @override
+  ListItemNode copyTextNodeWith({
+    String? id,
+    AttributedText? text,
+    Map<String, dynamic>? metadata,
+  }) {
+    return copyListItemWith(
+      id: id ?? this.id,
+      text: text ?? this.text,
+      metadata: metadata ?? this.metadata,
+    );
+  }
+
+  @override
+  ListItemNode copyAndReplaceMetadata(Map<String, dynamic> newMetadata) {
+    return copyListItemWith(
+      metadata: newMetadata,
+    );
+  }
+
+  @override
+  ListItemNode copyWithAddedMetadata(Map<String, dynamic> newProperties) {
+    return copyListItemWith(
+      metadata: {
+        ...metadata,
+        ...newProperties,
+      },
+    );
   }
 
   @override
@@ -103,10 +130,14 @@ class ListItemNode extends TextNode {
           other is ListItemNode &&
           runtimeType == other.runtimeType &&
           type == other.type &&
-          _indent == other._indent;
+          indent == other.indent;
 
   @override
-  int get hashCode => super.hashCode ^ type.hashCode ^ _indent.hashCode;
+  int get hashCode => super.hashCode ^ type.hashCode ^ indent.hashCode;
+}
+
+extension ListItemNodeType on DocumentNode {
+  ListItemNode get asListItem => this as ListItemNode;
 }
 
 const listItemAttribution = NamedAttribution("listItem");
@@ -188,8 +219,8 @@ class ListItemComponentBuilder implements ComponentBuilder {
       );
     }
 
-    editorLayoutLog
-        .warning("Tried to build a component for a list item view model without a list item type: $componentViewModel");
+    editorLayoutLog.warning(
+        "Tried to build a component for a list item view model without a list item itemType: $componentViewModel");
     return null;
   }
 }
@@ -202,6 +233,7 @@ abstract class ListItemComponentViewModel extends SingleColumnLayoutComponentVie
     required this.indent,
     required this.text,
     required this.textStyleBuilder,
+    this.inlineWidgetBuilders = const [],
     this.textDirection = TextDirection.ltr,
     this.textAlignment = TextAlign.left,
     this.selection,
@@ -230,6 +262,8 @@ abstract class ListItemComponentViewModel extends SingleColumnLayoutComponentVie
   AttributedText text;
   @override
   AttributionStyleBuilder textStyleBuilder;
+  @override
+  InlineWidgetBuilderChain inlineWidgetBuilders;
   @override
   TextDirection textDirection;
   @override
@@ -287,6 +321,7 @@ class UnorderedListItemComponentViewModel extends ListItemComponentViewModel {
     required super.indent,
     required super.text,
     required super.textStyleBuilder,
+    super.inlineWidgetBuilders = const [],
     this.dotStyle = const ListItemDotStyle(),
     super.textDirection = TextDirection.ltr,
     super.textAlignment = TextAlign.left,
@@ -357,6 +392,7 @@ class OrderedListItemComponentViewModel extends ListItemComponentViewModel {
     this.numeralStyle = OrderedListNumeralStyle.arabic,
     required super.text,
     required super.textStyleBuilder,
+    super.inlineWidgetBuilders = const [],
     super.textDirection = TextDirection.ltr,
     super.textAlignment = TextAlign.left,
     super.selection,
@@ -462,6 +498,7 @@ class UnorderedListItemComponent extends StatefulWidget {
     required this.componentKey,
     required this.text,
     required this.styleBuilder,
+    this.inlineWidgetBuilders = const [],
     this.dotBuilder = _defaultUnorderedListItemDotBuilder,
     this.dotStyle,
     this.indent = 0,
@@ -478,6 +515,7 @@ class UnorderedListItemComponent extends StatefulWidget {
   final GlobalKey componentKey;
   final AttributedText text;
   final AttributionStyleBuilder styleBuilder;
+  final InlineWidgetBuilderChain inlineWidgetBuilders;
   final UnorderedListItemDotBuilder dotBuilder;
   final ListItemDotStyle? dotStyle;
   final int indent;
@@ -542,6 +580,7 @@ class _UnorderedListItemComponentState extends State<UnorderedListItemComponent>
               key: _innerTextComponentKey,
               text: widget.text,
               textStyleBuilder: widget.styleBuilder,
+              inlineWidgetBuilders: widget.inlineWidgetBuilders,
               textSelection: widget.textSelection,
               textScaler: textScaler,
               selectionColor: widget.selectionColor,
@@ -625,6 +664,7 @@ class OrderedListItemComponent extends StatefulWidget {
     required this.listIndex,
     required this.text,
     required this.styleBuilder,
+    this.inlineWidgetBuilders = const [],
     this.numeralBuilder = _defaultOrderedListItemNumeralBuilder,
     this.numeralStyle = OrderedListNumeralStyle.arabic,
     this.indent = 0,
@@ -642,6 +682,7 @@ class OrderedListItemComponent extends StatefulWidget {
   final int listIndex;
   final AttributedText text;
   final AttributionStyleBuilder styleBuilder;
+  final InlineWidgetBuilderChain inlineWidgetBuilders;
   final OrderedListItemNumeralBuilder numeralBuilder;
   final OrderedListNumeralStyle numeralStyle;
   final int indent;
@@ -707,6 +748,7 @@ class _OrderedListItemComponentState extends State<OrderedListItemComponent> {
               key: _innerTextComponentKey,
               text: widget.text,
               textStyleBuilder: widget.styleBuilder,
+              inlineWidgetBuilders: widget.inlineWidgetBuilders,
               textSelection: widget.textSelection,
               textScaler: textScaler,
               selectionColor: widget.selectionColor,
@@ -897,7 +939,12 @@ class IndentListItemCommand extends EditCommand {
       return;
     }
 
-    listItem.indent += 1;
+    document.replaceNodeById(
+      node.id,
+      node.copyListItemWith(
+        indent: listItem.indent + 1,
+      ),
+    );
 
     executor.logChanges([
       DocumentEdit(
@@ -931,9 +978,12 @@ class UnIndentListItemCommand extends EditCommand {
     final node = document.getNodeById(nodeId);
     final listItem = node as ListItemNode;
     if (listItem.indent > 0) {
-      // TODO: figure out how node changes should work in terms of
-      //       a DocumentEditorTransaction (#67)
-      listItem.indent -= 1;
+      document.replaceNodeById(
+        node.id,
+        node.copyListItemWith(
+          indent: listItem.indent - 1,
+        ),
+      );
 
       executor.logChanges([
         DocumentEdit(
@@ -947,6 +997,68 @@ class UnIndentListItemCommand extends EditCommand {
         ),
       );
     }
+  }
+}
+
+/// An [EditCommand] that inserts a newline when the caret sits within a [ListItemNode].
+///
+/// This command adds the following behaviors beyond the usual:
+///  * When the caret is in the middle of a list item, splits the list item into two
+///    list items.
+///
+///  * When the caret is at the end of a list item, inserts a new empty list item
+///    instead of an empty paragraph.
+///
+///  * Inserting a newline into an empty list item converts it into a paragraph
+///    instead of inserting a new list item.
+class InsertNewlineInListItemAtCaretCommand extends BaseInsertNewlineAtCaretCommand {
+  const InsertNewlineInListItemAtCaretCommand(this.newNodeId);
+
+  /// {@macro newNodeId}
+  final String newNodeId;
+
+  @override
+  void doInsertNewline(
+    EditContext context,
+    CommandExecutor executor,
+    DocumentPosition caretPosition,
+    NodePosition caretNodePosition,
+  ) {
+    final node = context.document.getNodeById(caretPosition.nodeId);
+    if (caretNodePosition is! TextNodePosition || node is! ListItemNode) {
+      // We don't know how to deal with this kind of node.
+      return;
+    }
+
+    if (node.text.isEmpty) {
+      // The list item is empty. Convert it to a paragraph.
+      executor.executeCommand(
+        ConvertListItemToParagraphCommand(nodeId: node.id),
+      );
+      return;
+    }
+
+    // Split the list item into two.
+    executor
+      ..executeCommand(
+        SplitListItemCommand(
+          nodeId: node.id,
+          splitPosition: caretNodePosition,
+          newNodeId: newNodeId,
+        ),
+      )
+      ..executeCommand(
+        ChangeSelectionCommand(
+          DocumentSelection.collapsed(
+            position: DocumentPosition(
+              nodeId: newNodeId,
+              nodePosition: const TextNodePosition(offset: 0),
+            ),
+          ),
+          SelectionChangeType.insertContent,
+          SelectionReason.userInteraction,
+        ),
+      );
   }
 }
 
@@ -987,7 +1099,7 @@ class ConvertListItemToParagraphCommand extends EditCommand {
       text: listItem.text,
       metadata: newMetadata,
     );
-    document.replaceNode(oldNode: listItem, newNode: newParagraphNode);
+    document.replaceNodeById(listItem.id, newParagraphNode);
 
     executor.logChanges([
       DocumentEdit(
@@ -1030,7 +1142,7 @@ class ConvertParagraphToListItemCommand extends EditCommand {
       itemType: type,
       text: paragraphNode.text,
     );
-    document.replaceNode(oldNode: paragraphNode, newNode: newListItemNode);
+    document.replaceNodeById(paragraphNode.id, newListItemNode);
 
     executor.logChanges([
       DocumentEdit(
@@ -1072,7 +1184,7 @@ class ChangeListItemTypeCommand extends EditCommand {
       itemType: newType,
       text: existingListItem.text,
     );
-    document.replaceNode(oldNode: existingListItem, newNode: newListItemNode);
+    document.replaceNodeById(existingListItem.id, newListItemNode);
 
     executor.logChanges([
       DocumentEdit(
@@ -1124,9 +1236,11 @@ class SplitListItemCommand extends EditCommand {
 
     // Change the current node's content to just the text before the caret.
     _log.log('SplitListItemCommand', ' - changing the original list item text due to split');
-    // TODO: figure out how node changes should work in terms of
-    //       a DocumentEditorTransaction (#67)
-    listItemNode.text = startText;
+    final updatedListItemNode = listItemNode.copyListItemWith(text: startText);
+    document.replaceNodeById(
+      listItemNode.id,
+      updatedListItemNode,
+    );
 
     // Create a new node that will follow the current node. Set its text
     // to the text that was removed from the current node.
@@ -1145,7 +1259,7 @@ class SplitListItemCommand extends EditCommand {
     // Insert the new node after the current node.
     _log.log('SplitListItemCommand', ' - inserting new node in document');
     document.insertNodeAfter(
-      existingNode: node,
+      existingNodeId: updatedListItemNode.id,
       newNode: newNode,
     );
 
@@ -1246,27 +1360,6 @@ ExecutionInstruction backspaceToUnIndentListItem({
   return wasIndented ? ExecutionInstruction.haltExecution : ExecutionInstruction.continueExecution;
 }
 
-ExecutionInstruction splitListItemWhenEnterPressed({
-  required SuperEditorContext editContext,
-  required KeyEvent keyEvent,
-}) {
-  if (keyEvent is! KeyDownEvent && keyEvent is! KeyRepeatEvent) {
-    return ExecutionInstruction.continueExecution;
-  }
-
-  if (keyEvent.logicalKey != LogicalKeyboardKey.enter) {
-    return ExecutionInstruction.continueExecution;
-  }
-
-  final node = editContext.document.getNodeById(editContext.composer.selection!.extent.nodeId);
-  if (node is! ListItemNode) {
-    return ExecutionInstruction.continueExecution;
-  }
-
-  final didSplitListItem = editContext.commonOps.insertBlockLevelNewline();
-  return didSplitListItem ? ExecutionInstruction.haltExecution : ExecutionInstruction.continueExecution;
-}
-
 /// Computes the ordinal value of an ordered list item.
 ///
 /// Walks backwards counting the number of ordered list items above the [listItem] with the same indentation level.
@@ -1279,7 +1372,7 @@ int computeListItemOrdinalValue(ListItemNode listItem, Document document) {
   }
 
   int ordinalValue = 1;
-  DocumentNode? nodeAbove = document.getNodeBefore(listItem);
+  DocumentNode? nodeAbove = document.getNodeBeforeById(listItem.id);
   while (nodeAbove != null && nodeAbove is ListItemNode && nodeAbove.indent >= listItem.indent) {
     if (nodeAbove.indent == listItem.indent) {
       if (nodeAbove.type != ListItemType.ordered) {
@@ -1289,7 +1382,7 @@ int computeListItemOrdinalValue(ListItemNode listItem, Document document) {
       }
       ordinalValue = ordinalValue + 1;
     }
-    nodeAbove = document.getNodeBefore(nodeAbove);
+    nodeAbove = document.getNodeBeforeById(nodeAbove.id);
   }
 
   return ordinalValue;

@@ -1,3 +1,54 @@
+## [0.3.0-dev.14] - Jan 14, 2024
+ * FIX: `KeyboardScaffoldSafeArea` breaks and defers to `MediaQuery` when there's only one in the tree.
+
+## [0.3.0-dev.13] - Jan 10, 2024
+ * BREAKING: All `DocumentNode`s are now immutable. To change a node, it must be copied and replaced.
+ * BREAKING: Newline insertion behavior is now configurable.
+   * All newlines are inserted with explicit `EditRequest`s, e.g., `InsertNewlineRequest`, `InsertSoftNewlineRequest`.
+   * The signature for mapping from `EditRequest` to `EditCommand` was adjusted.
+   * Some `EditRequest`s no longer support `const` construction.
+ * FIX: Make `KeyboardScaffoldSafeArea` work when not positioned at bottom of screen.
+ * FIX: Crash in tags plugin related to selection.
+ * FIX: Selection highlight issue with `SuperTextField`.
+ * FIX: Magnifier doesn't move offscreen.
+ * ADJUSTMENT: Email links launch with a "mailto:" scheme, and app links are linkified.
+ * ADJUSTMENT: Apps can override tap gestures.
+ * ADJUSTMENT: iOS tap word snapping is less aggressive.
+ * ADJUSTMENT: Upgraded `attributed_text` dependency to `v0.4.1`.
+
+## [0.3.0-dev.12] - Dec 23, 2024
+ * FEATURE: Added support for inline widgets.
+ * FEATURE: Created a `ClearDocumentRequest`, which deletes all content and moves caret to the start.
+ * FIX: Web - option + arrow selection changes.
+ * FIX: `SuperTextField` (iOS) - native content menu focal point was wrong.
+ * FIX: Action tag not identified and triggered in expected situations.
+ * ADJUSTMENT: `KeyboardPanelScaffold` supports opening a panel before opening the software keyboard.
+ * ADJUSTMENT: `getDocumentPositionAfterExpandedDeletion` returns `null` for collapsed selections.
+ * ADJUSTMENT: `TaskNode` checkbox sets visual density based on `ThemeData.visualDensity`.
+
+## [0.3.0-dev.11] - Nov 26, 2024
+ * FEATURE: Add an (optional) tap handler that automatically inserts empty paragraph
+   when user taps at the end of the document.
+ * FIX: `KeyboardScaffoldSafeArea` now initializes its insets in a way that works with
+   certain navigation use-cases that previously thought the keyboard was up when it's down.
+ * FIX: Honor the Android handle builders in the Android controls controller.
+ * ADJUSTMENT: Upgraded versions for a number of dependencies.
+
+## [0.3.0-dev.10] - Nov 18, 2024
+ * FEATURE: Created `KeyboardPanelScaffold` and `KeyboardScaffoldSafeArea` to aid with
+   implementing mobile phone messaging and chat experiences.
+ * FEATURE: Added ability to show the iOS native context popover toolbar when
+   editing a document. See `iOSSystemPopoverEditorToolbarWithFallbackBuilder`
+   and `IOSSystemContextMenu`.
+ * FEATURE: Plugins can now provide their own `ComponentBuilder`s.
+ * FEATURE: Can configure block nodes as "non-deletable".
+ * FIX: CMD + RIGHT caret movement on Web.
+ * FIX: Don't restore editor selection on refocus if document changed in way that
+   invalidates the previous selection.
+ * FIX: `shrinkWrap` as `true` no longer breaks `SuperEditor`.
+ * ADJUSTMENT: Remove custom gesture handlers in `SuperEditor` and `SuperReader`
+   and utilize Flutter's built-in behaviors.
+
 ## [0.3.0-dev.9] - Sept 26, 2024
  * FEATURE: Indent for blockquotes.
 

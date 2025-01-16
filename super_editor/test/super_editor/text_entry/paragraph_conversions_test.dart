@@ -31,7 +31,7 @@ void main() {
           final paragraph = document.first as ParagraphNode;
 
           expect(paragraph.metadata['blockType'], headerVariant.$2);
-          expect(paragraph.text.text.isEmpty, isTrue);
+          expect(paragraph.text.toPlainText().isEmpty, isTrue);
         },
         variant: _headerVariant,
       );
@@ -52,7 +52,7 @@ void main() {
         final paragraph = document.first as ParagraphNode;
 
         expect(paragraph.metadata['blockType'], paragraphAttribution);
-        expect(paragraph.text.text, "####### ");
+        expect(paragraph.text.toPlainText(), "####### ");
       });
     });
 
@@ -71,7 +71,7 @@ void main() {
         final listItemNode = context.findEditContext().document.first;
         expect(listItemNode, isA<ListItemNode>());
         expect((listItemNode as ListItemNode).type, ListItemType.unordered);
-        expect(listItemNode.text.text.isEmpty, isTrue);
+        expect(listItemNode.text.toPlainText().isEmpty, isTrue);
       }, variant: _unorderedListVariant);
 
       testWidgetsOnAllPlatforms('does not convert "1 "', (tester) async {
@@ -86,7 +86,7 @@ void main() {
 
         final paragraphNode = context.findEditContext().document.first;
         expect(paragraphNode, isA<ParagraphNode>());
-        expect((paragraphNode as ParagraphNode).text.text, "1 ");
+        expect((paragraphNode as ParagraphNode).text.toPlainText(), "1 ");
       });
 
       testWidgetsOnAllPlatforms('does not convert " 1 "', (tester) async {
@@ -101,7 +101,7 @@ void main() {
 
         final paragraphNode = context.findEditContext().document.first;
         expect(paragraphNode, isA<ParagraphNode>());
-        expect((paragraphNode as ParagraphNode).text.text, " 1 ");
+        expect((paragraphNode as ParagraphNode).text.toPlainText(), " 1 ");
       });
     });
 
@@ -120,7 +120,7 @@ void main() {
         final listItemNode = context.findEditContext().document.first;
         expect(listItemNode, isA<ListItemNode>());
         expect((listItemNode as ListItemNode).type, ListItemType.ordered);
-        expect(listItemNode.text.text.isEmpty, isTrue);
+        expect(listItemNode.text.toPlainText().isEmpty, isTrue);
       }, variant: _orderedListVariant);
 
       testWidgetsOnAllPlatforms('with a number that continues the sequence', (tester) async {
@@ -147,7 +147,7 @@ void main() {
         final listItemNode = context.findEditContext().document.getNodeAt(3)!;
         expect(listItemNode, isA<ListItemNode>());
         expect((listItemNode as ListItemNode).type, ListItemType.ordered);
-        expect(listItemNode.text.text.isEmpty, isTrue);
+        expect(listItemNode.text.toPlainText().isEmpty, isTrue);
       }, variant: _orderedListNumberVariant);
 
       testWidgetsOnAllPlatforms('does not convert with a number that does not continues the sequence', (tester) async {
@@ -174,7 +174,7 @@ void main() {
         // Ensure the paragraph was not converted and the typed text was kept.
         final editingNode = context.findEditContext().document.getNodeAt(3)!;
         expect(editingNode, isA<ParagraphNode>());
-        expect((editingNode as ParagraphNode).text.text, orderedListItemPattern);
+        expect((editingNode as ParagraphNode).text.toPlainText(), orderedListItemPattern);
       }, variant: _orderedListNumberVariant);
 
       testWidgetsOnAllPlatforms('does not start a list with a number bigger than one', (tester) async {
@@ -195,7 +195,7 @@ void main() {
         // Ensure the paragraph was not converted and the typed text was kept.
         final editingNode = document.first;
         expect(editingNode, isA<ParagraphNode>());
-        expect((editingNode as ParagraphNode).text.text, orderedListItemPattern);
+        expect((editingNode as ParagraphNode).text.toPlainText(), orderedListItemPattern);
       }, variant: _orderedListNumberVariant);
 
       testWidgetsOnAllPlatforms('does not convert "1 "', (tester) async {
@@ -210,7 +210,7 @@ void main() {
 
         final paragraphNode = context.findEditContext().document.first;
         expect(paragraphNode, isA<ParagraphNode>());
-        expect((paragraphNode as ParagraphNode).text.text, "1 ");
+        expect((paragraphNode as ParagraphNode).text.toPlainText(), "1 ");
       });
 
       testWidgetsOnAllPlatforms('does not convert " 1 "', (tester) async {
@@ -225,7 +225,7 @@ void main() {
 
         final paragraphNode = context.findEditContext().document.first;
         expect(paragraphNode, isA<ParagraphNode>());
-        expect((paragraphNode as ParagraphNode).text.text, " 1 ");
+        expect((paragraphNode as ParagraphNode).text.toPlainText(), " 1 ");
       });
     });
 
@@ -249,7 +249,7 @@ void main() {
 
         expect(document.first, isA<HorizontalRuleNode>());
         expect(document.last, isA<ParagraphNode>());
-        expect((document.last as ParagraphNode).text.text.isEmpty, isTrue);
+        expect((document.last as ParagraphNode).text.toPlainText().isEmpty, isTrue);
       });
 
       testAllInputsOnAllPlatforms('with --- at the beginning of an non-empty paragraph', (
@@ -269,13 +269,13 @@ void main() {
         await tester.typeTextAdaptive('-');
 
         // Ensure no conversion was performed.
-        expect((context.document.first as ParagraphNode).text.text, '-Existing paragraph');
+        expect((context.document.first as ParagraphNode).text.toPlainText(), '-Existing paragraph');
 
         // Type the second dash.
         await tester.typeTextAdaptive('-');
 
         // Ensure the two dashes were converted to an em-dash.
-        expect((context.document.first as ParagraphNode).text.text, '—Existing paragraph');
+        expect((context.document.first as ParagraphNode).text.toPlainText(), '—Existing paragraph');
 
         // Type the third dash.
         await tester.typeTextAdaptive('- ');
@@ -284,7 +284,7 @@ void main() {
         expect(context.document.nodeCount, 2);
         expect(context.document.first, isA<HorizontalRuleNode>());
         expect(context.document.last, isA<ParagraphNode>());
-        expect((context.document.last as ParagraphNode).text.text, 'Existing paragraph');
+        expect((context.document.last as ParagraphNode).text.toPlainText(), 'Existing paragraph');
       });
 
       testWidgetsOnAllPlatforms('does not convert non-HR dashes', (tester) async {
@@ -303,7 +303,7 @@ void main() {
 
         final paragraphNode = context.findEditContext().document.first;
         expect(paragraphNode, isA<ParagraphNode>());
-        expect((paragraphNode as ParagraphNode).text.text, expectedResult);
+        expect((paragraphNode as ParagraphNode).text.toPlainText(), expectedResult);
       }, variant: _nonHrVariant);
     });
 
@@ -323,7 +323,7 @@ void main() {
         final paragraph = document.first as ParagraphNode;
 
         expect(paragraph.metadata['blockType'], blockquoteAttribution);
-        expect(paragraph.text.text.isEmpty, isTrue);
+        expect(paragraph.text.toPlainText().isEmpty, isTrue);
       });
     });
 
@@ -334,12 +334,12 @@ void main() {
             .fromMarkdown("# My Header")
             .withInputSource(TextInputSource.ime)
             .pump();
-        final headerNode = context.findEditContext().document.first;
+        final document = context.document;
 
-        await tester.placeCaretInParagraph(headerNode.id, 0);
+        await tester.placeCaretInParagraph(document.first.id, 0);
 
         // Ensure that we're starting with a header.
-        expect(headerNode.metadata["blockType"], header1Attribution);
+        expect(document.first.metadata["blockType"], header1Attribution);
 
         // Simulate a backspace deletion delta.
         await tester.ime.sendDeltas(
@@ -360,8 +360,8 @@ void main() {
         );
 
         // Ensure that the header became a paragraph.
-        expect(headerNode.metadata["blockType"], paragraphAttribution);
-        expect(SuperEditorInspector.findTextInComponent(headerNode.id).text, "My Header");
+        expect(document.first.metadata["blockType"], paragraphAttribution);
+        expect(SuperEditorInspector.findTextInComponent(document.first.id).toPlainText(), "My Header");
       });
 
       testWidgetsOnAllPlatforms("blockquotes", (tester) async {
@@ -370,12 +370,12 @@ void main() {
             .fromMarkdown("> My Blockquote")
             .withInputSource(TextInputSource.ime)
             .pump();
-        final blockquoteNode = context.findEditContext().document.first;
+        final document = context.document;
 
-        await tester.placeCaretInParagraph(blockquoteNode.id, 0);
+        await tester.placeCaretInParagraph(document.first.id, 0);
 
         // Ensure that we're starting with a blockquote.
-        expect(blockquoteNode.metadata["blockType"], blockquoteAttribution);
+        expect(document.first.metadata["blockType"], blockquoteAttribution);
 
         // Simulate a backspace deletion delta.
         await tester.ime.sendDeltas(
@@ -396,8 +396,8 @@ void main() {
         );
 
         // Ensure that the blockquote became a paragraph.
-        expect(blockquoteNode.metadata["blockType"], paragraphAttribution);
-        expect(SuperEditorInspector.findTextInComponent(blockquoteNode.id).text, "My Blockquote");
+        expect(document.first.metadata["blockType"], paragraphAttribution);
+        expect(SuperEditorInspector.findTextInComponent(document.first.id).toPlainText(), "My Blockquote");
       });
 
       testWidgetsOnAllPlatforms("ordered list items", (tester) async {
@@ -406,12 +406,12 @@ void main() {
             .fromMarkdown("1. My list item")
             .withInputSource(TextInputSource.ime)
             .pump();
-        final listItemNode = context.findEditContext().document.first;
+        final document = context.document;
 
-        await tester.placeCaretInParagraph(listItemNode.id, 0);
+        await tester.placeCaretInParagraph(document.first.id, 0);
 
         // Ensure that we're starting with list item.
-        expect(listItemNode, isA<ListItemNode>());
+        expect(document.first, isA<ListItemNode>());
 
         // Simulate a backspace deletion delta.
         await tester.ime.sendDeltas(
@@ -432,10 +432,10 @@ void main() {
         );
 
         // Ensure that the list item became a paragraph.
-        final newNode = context.findEditContext().document.first;
+        final newNode = document.first;
         expect(newNode, isA<ParagraphNode>());
         expect(newNode.metadata["blockType"], paragraphAttribution);
-        expect(SuperEditorInspector.findTextInComponent(listItemNode.id).text, "My list item");
+        expect(SuperEditorInspector.findTextInComponent(document.first.id).toPlainText(), "My list item");
       });
     });
   });

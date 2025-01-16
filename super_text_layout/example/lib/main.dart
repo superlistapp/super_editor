@@ -251,7 +251,7 @@ class _SuperTextExampleScreenState extends State<SuperTextExampleScreen> with Ti
               RainbowBuilder(builder: (context, color) {
                 return TextLayoutSelectionHighlight(
                   textLayout: textLayout,
-                  style: _primaryHighlightStyle.copyWith(color: color.withOpacity(0.2)),
+                  style: _primaryHighlightStyle.copyWith(color: color.withValues(alpha: 0.2)),
                   selection: const TextSelection(baseOffset: 11, extentOffset: 21),
                 );
               }),
@@ -481,7 +481,7 @@ const _johnCaretStyle = CaretStyle(
   color: Colors.red,
 );
 final _johnHighlightStyle = SelectionHighlightStyle(
-  color: Colors.red.withOpacity(0.5),
+  color: Colors.red.withValues(alpha: 0.5),
 );
 const _johnUserLabelStyle = UserLabelStyle(
   color: Colors.red,
@@ -499,7 +499,7 @@ const _sallyCaretStyle = CaretStyle(
   color: Colors.purpleAccent,
 );
 final _sallyHighlightStyle = SelectionHighlightStyle(
-  color: Colors.purpleAccent.withOpacity(0.5),
+  color: Colors.purpleAccent.withValues(alpha: 0.5),
 );
 const _sallyUserLabelStyle = UserLabelStyle(
   color: Colors.purpleAccent,

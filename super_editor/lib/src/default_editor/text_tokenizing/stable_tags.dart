@@ -62,10 +62,10 @@ class StableTagPlugin extends SuperEditorPlugin {
   })  : _tagRule = tagRule,
         tagIndex = StableTagIndex() {
     _requestHandlers = <EditRequestHandler>[
-      (request) => request is FillInComposingStableTagRequest
+      (editor, request) => request is FillInComposingStableTagRequest
           ? FillInComposingUserTagCommand(request.tag, request.tagRule)
           : null,
-      (request) => request is CancelComposingStableTagRequest //
+      (editor, request) => request is CancelComposingStableTagRequest //
           ? CancelComposingStableTagCommand(request.tagRule)
           : null,
     ];
@@ -615,7 +615,7 @@ class TagUserReaction extends EditReaction {
       for (final tag in allStableTags) {
         final tagText = textNode.text.substring(tag.start, tag.end + 1);
         final attribution = tag.attribution as CommittedStableTagAttribution;
-        final containsTrigger = textNode.text.text[tag.start] == _tagRule.trigger;
+        final containsTrigger = textNode.text.toPlainText()[tag.start] == _tagRule.trigger;
 
         if (tagText != "${_tagRule.trigger}${attribution.tagValue}" || !containsTrigger) {
           // The tag was partially deleted it. Delete the whole thing.

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:follow_the_leader/follow_the_leader.dart';
 import 'package:super_editor/src/infrastructure/attributed_text_styles.dart';
 import 'package:super_editor/src/infrastructure/flutter/build_context.dart';
 import 'package:super_editor/src/infrastructure/flutter/flutter_scheduler.dart';
@@ -12,6 +13,7 @@ import 'package:super_editor/src/super_textfield/android/_editing_controls.dart'
 import 'package:super_editor/src/super_textfield/android/_user_interaction.dart';
 import 'package:super_editor/src/super_textfield/infrastructure/fill_width_if_constrained.dart';
 import 'package:super_editor/src/super_textfield/infrastructure/hint_text.dart';
+import 'package:super_editor/src/super_textfield/infrastructure/text_field_gestures_interaction_overrides.dart';
 import 'package:super_editor/src/super_textfield/infrastructure/text_scrollview.dart';
 import 'package:super_editor/src/super_textfield/input_method_engine/_ime_text_editing_controller.dart';
 import 'package:super_text_layout/super_text_layout.dart';
@@ -44,6 +46,7 @@ class SuperAndroidTextField extends StatefulWidget {
     this.textInputAction,
     this.imeConfiguration,
     this.showComposingUnderline = true,
+    this.tapHandlers = const [],
     this.popoverToolbarBuilder = _defaultAndroidToolbarBuilder,
     this.showDebugPaint = false,
     this.padding,
@@ -139,6 +142,9 @@ class SuperAndroidTextField extends StatefulWidget {
   /// Whether to show an underline beneath the text in the composing region.
   final bool showComposingUnderline;
 
+  /// {@macro super_text_field_tap_handlers}
+  final List<SuperTextFieldTapHandler> tapHandlers;
+
   /// Whether to paint debug guides.
   final bool showDebugPaint;
 
@@ -169,7 +175,7 @@ class SuperAndroidTextFieldState extends State<SuperAndroidTextField>
 
   late ImeAttributedTextEditingController _textEditingController;
 
-  final _magnifierLayerLink = LayerLink();
+  final _magnifierLayerLink = LeaderLink();
   late AndroidEditingOverlayController _editingOverlayController;
 
   late TextScrollController _textScrollController;
@@ -555,6 +561,7 @@ class SuperAndroidTextFieldState extends State<SuperAndroidTextField>
           link: _textFieldLayerLink,
           child: AndroidTextFieldTouchInteractor(
             focusNode: _focusNode,
+            tapHandlers: widget.tapHandlers,
             textKey: _textContentKey,
             getGlobalCaretRect: _getGlobalCaretRect,
             textFieldLayerLink: _textFieldLayerLink,
@@ -598,7 +605,7 @@ class SuperAndroidTextFieldState extends State<SuperAndroidTextField>
   }
 
   Widget _buildSelectableText() {
-    final textSpan = _textEditingController.text.text.isNotEmpty
+    final textSpan = _textEditingController.text.isNotEmpty
         ? _textEditingController.text.computeTextSpan(widget.textStyleBuilder)
         : TextSpan(text: "", style: widget.textStyleBuilder({}));
 
@@ -608,7 +615,7 @@ class SuperAndroidTextFieldState extends State<SuperAndroidTextField>
       textAlign: widget.textAlign,
       textScaler: MediaQuery.textScalerOf(context),
       layerBeneathBuilder: (context, textLayout) {
-        final isTextEmpty = _textEditingController.text.text.isEmpty;
+        final isTextEmpty = _textEditingController.text.isEmpty;
         final showHint = widget.hintBuilder != null &&
             ((isTextEmpty && widget.hintBehavior == HintBehavior.displayHintUntilTextEntered) ||
                 (isTextEmpty && !_focusNode.hasFocus && widget.hintBehavior == HintBehavior.displayHintUntilFocus));
@@ -708,7 +715,7 @@ void _onToolbarCutPressed(AndroidEditingOverlayController controller) {
     return;
   }
 
-  final selectedText = selection.textInside(textController.text.text);
+  final selectedText = selection.textInside(textController.text.toPlainText());
 
   textController.deleteSelectedText();
 
@@ -718,7 +725,7 @@ void _onToolbarCutPressed(AndroidEditingOverlayController controller) {
 void _onToolbarCopyPressed(AndroidEditingOverlayController controller) {
   final textController = controller.textController;
   final selection = textController.selection;
-  final selectedText = selection.textInside(textController.text.text);
+  final selectedText = selection.textInside(textController.text.toPlainText());
 
   Clipboard.setData(ClipboardData(text: selectedText));
 }

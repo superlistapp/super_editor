@@ -4,9 +4,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_test_robots/flutter_test_robots.dart';
 import 'package:flutter_test_runners/flutter_test_runners.dart';
 import 'package:super_editor/src/test/ime.dart';
-import 'package:super_editor/src/test/super_editor_test/tasks_test_tools.dart';
 import 'package:super_editor/src/test/super_editor_test/supereditor_inspector.dart';
 import 'package:super_editor/src/test/super_editor_test/supereditor_robot.dart';
+import 'package:super_editor/src/test/super_editor_test/tasks_test_tools.dart';
 import 'package:super_editor/super_editor.dart';
 
 import '../../test_runners.dart';
@@ -54,7 +54,7 @@ void main() {
       // Ensure the node is now a task.
       expect(document.nodeCount, 1);
       expect(document.first, isA<TaskNode>());
-      expect((document.first as TaskNode).text.text, "This will be a task");
+      expect((document.first as TaskNode).text.toPlainText(), "This will be a task");
     });
 
     group("inserts", () {
@@ -76,9 +76,9 @@ void main() {
         // Ensure that a new, empty task was created.
         expect(document.nodeCount, 2);
         expect(document.first, isA<TaskNode>());
-        expect((document.first as TaskNode).text.text, "This is a task");
+        expect((document.first as TaskNode).text.toPlainText(), "This is a task");
         expect(document.last, isA<TaskNode>());
-        expect((document.last as TaskNode).text.text, "");
+        expect((document.last as TaskNode).text.toPlainText(), "");
         expect(
           SuperEditorInspector.findDocumentSelection(),
           DocumentSelection.collapsed(
@@ -111,9 +111,9 @@ void main() {
         // Ensure that a new, empty task was created.
         expect(document.nodeCount, 2);
         expect(document.first, isA<TaskNode>());
-        expect((document.first as TaskNode).text.text, "This is a task");
+        expect((document.first as TaskNode).text.toPlainText(), "This is a task");
         expect(document.last, isA<TaskNode>());
-        expect((document.last as TaskNode).text.text, "");
+        expect((document.last as TaskNode).text.toPlainText(), "");
         expect(
           SuperEditorInspector.findDocumentSelection(),
           DocumentSelection.collapsed(
@@ -143,9 +143,9 @@ void main() {
         // Ensure that a new, empty task was created.
         expect(document.nodeCount, 2);
         expect(document.first, isA<TaskNode>());
-        expect((document.first as TaskNode).text.text, "This is a task");
+        expect((document.first as TaskNode).text.toPlainText(), "This is a task");
         expect(document.last, isA<TaskNode>());
-        expect((document.last as TaskNode).text.text, "");
+        expect((document.last as TaskNode).text.toPlainText(), "");
         expect(
           SuperEditorInspector.findDocumentSelection(),
           DocumentSelection.collapsed(
@@ -175,9 +175,9 @@ void main() {
         // Ensure that a new, empty task was created.
         expect(document.nodeCount, 2);
         expect(document.first, isA<TaskNode>());
-        expect((document.first as TaskNode).text.text, "This is a task");
+        expect((document.first as TaskNode).text.toPlainText(), "This is a task");
         expect(document.last, isA<TaskNode>());
-        expect((document.last as TaskNode).text.text, "");
+        expect((document.last as TaskNode).text.toPlainText(), "");
         expect(
           SuperEditorInspector.findDocumentSelection(),
           DocumentSelection.collapsed(
@@ -208,9 +208,9 @@ void main() {
         // Ensure that a new task was created with part of the previous task.
         expect(document.nodeCount, 2);
         expect(document.first, isA<TaskNode>());
-        expect((document.first as TaskNode).text.text, "This is ");
+        expect((document.first as TaskNode).text.toPlainText(), "This is ");
         expect(document.last, isA<TaskNode>());
-        expect((document.last as TaskNode).text.text, "a task");
+        expect((document.last as TaskNode).text.toPlainText(), "a task");
         expect(
           SuperEditorInspector.findDocumentSelection(),
           DocumentSelection.collapsed(
@@ -239,9 +239,9 @@ void main() {
         // Ensure that a new task was created with part of the previous task.
         expect(document.nodeCount, 2);
         expect(document.first, isA<TaskNode>());
-        expect((document.first as TaskNode).text.text, "This is ");
+        expect((document.first as TaskNode).text.toPlainText(), "This is ");
         expect(document.last, isA<TaskNode>());
-        expect((document.last as TaskNode).text.text, "a task");
+        expect((document.last as TaskNode).text.toPlainText(), "a task");
         expect(
           SuperEditorInspector.findDocumentSelection(),
           DocumentSelection.collapsed(
@@ -270,9 +270,9 @@ void main() {
         // Ensure that a new task was created with part of the previous task.
         expect(document.nodeCount, 2);
         expect(document.first, isA<TaskNode>());
-        expect((document.first as TaskNode).text.text, "This is ");
+        expect((document.first as TaskNode).text.toPlainText(), "This is ");
         expect(document.last, isA<TaskNode>());
-        expect((document.last as TaskNode).text.text, "a task");
+        expect((document.last as TaskNode).text.toPlainText(), "a task");
         expect(
           SuperEditorInspector.findDocumentSelection(),
           DocumentSelection.collapsed(
@@ -303,7 +303,7 @@ void main() {
         // Ensure the task converted to a paragraph.
         expect(document.nodeCount, 1);
         expect(document.first, isA<ParagraphNode>());
-        expect((document.first as ParagraphNode).text.text, "This is a task");
+        expect((document.first as ParagraphNode).text.toPlainText(), "This is a task");
       });
 
       testWidgetsOnAllPlatforms(
@@ -336,7 +336,7 @@ void main() {
         // Ensure the task converted to a paragraph.
         expect(document.nodeCount, 1);
         expect(document.first, isA<ParagraphNode>());
-        expect((document.first as ParagraphNode).text.text, "This is a task");
+        expect((document.first as ParagraphNode).text.toPlainText(), "This is a task");
       });
 
       testWidgetsOnAllPlatforms("task to paragraph when the user presses ENTER on an empty task", (tester) async {
@@ -353,7 +353,7 @@ void main() {
         // Ensure the task was converted to a paragraph.
         expect(document.nodeCount, 1);
         expect(document.first, isA<ParagraphNode>());
-        expect((document.first as ParagraphNode).text.text, "");
+        expect((document.first as ParagraphNode).text.toPlainText(), "");
       });
 
       testWidgetsOnAndroid("task to paragraph upon new line insertion on an empty task", (tester) async {
@@ -371,7 +371,7 @@ void main() {
         // Ensure the task was converted to a paragraph.
         expect(document.nodeCount, 1);
         expect(document.first, isA<ParagraphNode>());
-        expect((document.first as ParagraphNode).text.text, "");
+        expect((document.first as ParagraphNode).text.toPlainText(), "");
       });
 
       testWidgetsOnIos("task to paragraph new line input action on an empty task", (tester) async {
@@ -389,7 +389,7 @@ void main() {
         // Ensure the task was converted to a paragraph.
         expect(document.nodeCount, 1);
         expect(document.first, isA<ParagraphNode>());
-        expect((document.first as ParagraphNode).text.text, "");
+        expect((document.first as ParagraphNode).text.toPlainText(), "");
       });
 
       testWidgetsOnWebDesktop("task to paragraph when the user presses ENTER on an empty task", (tester) async {
@@ -409,7 +409,7 @@ void main() {
         // Ensure the task was converted to a paragraph.
         expect(document.nodeCount, 1);
         expect(document.first, isA<ParagraphNode>());
-        expect((document.first as ParagraphNode).text.text, "");
+        expect((document.first as ParagraphNode).text.toPlainText(), "");
       });
 
       testWidgets("paragraph to task for incomplete task", (tester) async {
@@ -513,7 +513,7 @@ void main() {
 
         // Ensure that the Backspace deleted a character, instead of un-indenting.
         expect(SuperEditorInspector.findTaskIndent("2"), 1);
-        expect(SuperEditorInspector.findTextInComponent("2").text, "tw");
+        expect(SuperEditorInspector.findTextInComponent("2").toPlainText(), "tw");
 
         // Place caret at start of task.
         await tester.placeCaretInParagraph("2", 0);

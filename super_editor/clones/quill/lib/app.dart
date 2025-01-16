@@ -45,16 +45,16 @@ class _HomeScreenState extends State<HomeScreen> {
         Editor.composerKey: _composer,
       },
       requestHandlers: [
-        (request) => request is ConvertTextBlockToFormatRequest //
+        (editor, request) => request is ConvertTextBlockToFormatRequest //
             ? ConvertTextBlockToFormatCommand(request.blockFormat)
             : null,
-        (request) => request is ToggleInlineFormatRequest //
+        (editor, request) => request is ToggleInlineFormatRequest //
             ? ToggleInlineFormatCommand(request.inlineFormat)
             : null,
-        (request) => request is ToggleTextBlockFormatRequest //
+        (editor, request) => request is ToggleTextBlockFormatRequest //
             ? ToggleTextBlockFormatCommand(request.blockFormat)
             : null,
-        (request) => request is ClearSelectedStylesRequest //
+        (editor, request) => request is ClearSelectedStylesRequest //
             ? const ClearSelectedStylesCommand()
             : null,
         ...defaultRequestHandlers,
@@ -106,12 +106,18 @@ This is regular text right below header 2.
 Some **bold** text.
 
 > This is a blockquote.
+> It can span multiple lines.
 
-* This is a list item.
+* This is a bulleted list item.
+
+1. This is a numerical list item.
 
 ```
 This is a code block.
+It can span multiple lines.
 ```
+
+The end.
 ''');
 }
 

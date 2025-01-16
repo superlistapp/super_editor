@@ -3,7 +3,6 @@ import 'dart:io';
 import 'package:attributed_text/attributed_text.dart';
 import 'package:characters/characters.dart';
 import 'package:collection/collection.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:linkify/linkify.dart';
@@ -81,7 +80,7 @@ class HeaderConversionReaction extends ParagraphPrefixConversionReaction {
       ),
       extent: DocumentPosition(
         nodeId: paragraph.id,
-        nodePosition: TextNodePosition(offset: paragraph.text.text.indexOf(" ") + 1),
+        nodePosition: TextNodePosition(offset: paragraph.text.toPlainText().indexOf(" ") + 1),
       ),
     );
 
@@ -316,7 +315,7 @@ class HorizontalRuleConversionReaction extends EditReaction {
 
     final textInsertionEvent = edit.change as TextInsertionEvent;
     final paragraph = document.getNodeById(textInsertionEvent.nodeId) as TextNode;
-    final match = _hrPattern.firstMatch(paragraph.text.text)?.group(0);
+    final match = _hrPattern.firstMatch(paragraph.text.toPlainText())?.group(0);
     if (match == null) {
       return;
     }
@@ -377,7 +376,7 @@ abstract class ParagraphPrefixConversionReaction extends EditReaction {
     if (typedText == null) {
       return;
     }
-    if (_requireSpaceInsertion && !typedText.text.text.endsWith(" ")) {
+    if (_requireSpaceInsertion && !typedText.text.toPlainText().endsWith(" ")) {
       return;
     }
 
@@ -386,7 +385,7 @@ abstract class ParagraphPrefixConversionReaction extends EditReaction {
       return;
     }
 
-    final match = pattern.firstMatch(paragraph.text.text)?.group(0);
+    final match = pattern.firstMatch(paragraph.text.toPlainText())?.group(0);
     if (match == null) {
       return;
     }
@@ -447,7 +446,7 @@ class ImageUrlConversionReaction extends EditReaction {
 
     // Check if the submitted paragraph is comprised of a single URL.
     final extractedLinks = linkify(
-      previousNode.text.text,
+      previousNode.text.toPlainText(),
       options: const LinkifyOptions(
         humanize: false,
       ),
@@ -461,7 +460,7 @@ class ImageUrlConversionReaction extends EditReaction {
     }
 
     final url = extractedLinks.firstWhere((element) => element is UrlElement).text;
-    if (url != previousNode.text.text.trim()) {
+    if (url != previousNode.text.toPlainText().trim()) {
       // There's more in the paragraph than just a URL. This reaction
       // doesn't apply.
       editorOpsLog.finer("Paragraph had more than just a URL");
@@ -472,7 +471,7 @@ class ImageUrlConversionReaction extends EditReaction {
     // URL is an image. If it is, replace the submitted paragraph with
     // an image.
     // TODO: move the URL lookup into a behavior within the node. We don't want async reaction behaviors.
-    final originalText = previousNode.text.text;
+    final originalText = previousNode.text.toPlainText();
     _isImageUrl(url).then((isImage) {
       if (!isImage) {
         editorOpsLog.finer("Checked URL, but it's not an image");
@@ -486,7 +485,7 @@ class ImageUrlConversionReaction extends EditReaction {
         editorOpsLog.finer('The node has become something other than a ParagraphNode ($node). Can\'t convert node.');
         return;
       }
-      final currentText = node.text.text;
+      final currentText = node.text.toPlainText();
       if (currentText.trim() != originalText.trim()) {
         editorOpsLog.finer('The node content changed in a non-trivial way. Aborting node conversion.');
         return;
@@ -574,7 +573,7 @@ class LinkifyReaction extends EditReaction {
       final edit = edits[i];
       if (edit is DocumentEdit) {
         final change = edit.change;
-        if (change is TextInsertionEvent && change.text.text == " ") {
+        if (change is TextInsertionEvent && change.text.toPlainText() == " ") {
           // Every space insertion might appear after a URL.
           linkifyCandidate = change;
           didInsertSpace = true;
@@ -648,7 +647,7 @@ class LinkifyReaction extends EditReaction {
 
   /// Extracts a word ending at [endOffset] tries to linkify it.
   void _extractUpstreamWordAndLinkify(AttributedText text, int endOffset) {
-    final wordStartOffset = _moveOffsetByWord(text.text, endOffset, true) ?? 0;
+    final wordStartOffset = _moveOffsetByWord(text.toPlainText(), endOffset, true) ?? 0;
     final word = text.substring(wordStartOffset, endOffset);
 
     // Ensure that the preceding word doesn't already contain a full or partial
@@ -663,32 +662,18 @@ class LinkifyReaction extends EditReaction {
       return;
     }
 
-    final extractedLinks = linkify(
-      word,
-      options: const LinkifyOptions(
-        humanize: false,
-        looseUrl: true,
-      ),
+    // Try to linkify.
+    final uri = tryToParseUrl(word);
+    if (uri == null) {
+      // No link in the word. Fizzle.
+      return;
+    }
+
+    // We found a link. Attribute it.
+    text.addAttribution(
+      LinkAttribution.fromUri(uri),
+      SpanRange(wordStartOffset, endOffset - 1),
     );
-    final int linkCount = extractedLinks.fold(0, (value, element) => element is UrlElement ? value + 1 : value);
-    if (linkCount != 1) {
-      // There's either zero links, or more than one link. Either way we fizzle.
-      return;
-    }
-
-    // The word is a single URL. Linkify it.
-    try {
-      // Try to parse the word as a link.
-      final uri = parseLink(word);
-
-      text.addAttribution(
-        LinkAttribution.fromUri(uri),
-        SpanRange(wordStartOffset, endOffset - 1),
-      );
-    } catch (exception) {
-      // Something went wrong parsing the link. Fizzle.
-      return;
-    }
   }
 
   int? _moveOffsetByWord(String text, int textOffset, bool upstream) {
@@ -859,17 +844,51 @@ class LinkifyReaction extends EditReaction {
     // If the policy is `LinkUpdatePolicy.update` then we need to add a new
     // link attribution that reflects the edited URL text. We do that below.
     if (updatePolicy == LinkUpdatePolicy.update) {
-      linkChangeRequests.add(
-        // Switch out the old link attribution for the new one.
-        AddTextAttributionsRequest(
-          documentRange: linkRange,
-          attributions: {
-            LinkAttribution.fromUri(
-              parseLink(changedNodeText.text.substring(rangeToUpdate.start, rangeToUpdate.end + 1)),
-            )
-          },
-        ),
+      final existingLinkAttribution =
+          changedNodeText.getAllAttributionsAt(rangeToUpdate.start).whereType<LinkAttribution>().firstOrNull;
+      assert(
+        existingLinkAttribution != null,
+        "Tried to update a LinkAttribution after the user added/deleted character, but we couldn't find the LinkAttribution. We searched at offset ${rangeToUpdate.start} in '${changedNodeText.toPlainText()}'",
       );
+
+      // We expect the link attribution to be non-null, but we can't know for
+      // sure until runtime. So only attempt an attribution update if we found
+      // the attribution.
+      if (existingLinkAttribution != null) {
+        final newLinkText = changedNodeText.toPlainText().substring(rangeToUpdate.start, rangeToUpdate.end + 1);
+        final newLinkUri = Uri.tryParse(newLinkText);
+        final newScheme = newLinkUri?.scheme;
+
+        late final LinkAttribution updatedAttribution;
+        if (newLinkUri != null && newScheme != null && newScheme.isNotEmpty) {
+          // The text includes a scheme - use that scheme.
+          updatedAttribution = LinkAttribution.fromUri(newLinkUri);
+        } else {
+          // The text doesn't include a scheme.
+          if (existingLinkAttribution.hasStructuredUri && existingLinkAttribution.uri!.scheme.isNotEmpty) {
+            // The existing link attribution has a structured URI, and that URI has a scheme.
+            // Retain the existing scheme.
+            final scheme = existingLinkAttribution.uri!.scheme;
+            updatedAttribution = LinkAttribution.fromUri(Uri.parse("$scheme://$newLinkText"));
+          } else {
+            // The existing link attribution doesn't have a structure URI,
+            // so we can't ask what scheme to use. Use the literal text as
+            // the full URL because that's the best we can do. It might even
+            // be an invalid URL or URI.
+            updatedAttribution = LinkAttribution(newLinkText);
+          }
+        }
+
+        linkChangeRequests.add(
+          // Switch out the old link attribution for the new one.
+          AddTextAttributionsRequest(
+            documentRange: linkRange,
+            attributions: {
+              updatedAttribution,
+            },
+          ),
+        );
+      }
     }
 
     linkChangeRequests.add(
@@ -891,11 +910,65 @@ class LinkifyReaction extends EditReaction {
 // TODO: Make this private again. It was private, but we have some split linkification between the reaction
 //       and the paste behavior in common_editor_operations. Once we create a way for reactions to identify
 //       paste behaviors, move the paste linkification into the linkify reaction and make this private again.
-Uri parseLink(String text) {
-  final uri = text.startsWith("http://") || text.startsWith("https://") //
-      ? Uri.parse(text)
-      : Uri.parse("https://$text");
-  return uri;
+Uri? tryToParseUrl(String word) {
+  // First, try extracting emails.
+  final extractedEmails = linkify(
+    word,
+    options: const LinkifyOptions(
+      humanize: false,
+      looseUrl: true,
+    ),
+    linkifiers: [
+      const EmailLinkifier(),
+    ],
+  );
+  final int emailCount = extractedEmails.fold(0, (value, element) => element is EmailElement ? value + 1 : value);
+  if (emailCount == 1) {
+    // Found exactly one email. Create and return a link attribution.
+    final emailElement = extractedEmails.first as EmailElement;
+    return Uri(
+      scheme: "mailto",
+      path: emailElement.emailAddress,
+    );
+  }
+
+  // Second, try extracting HTTP URLs.
+  final extractedLinks = linkify(
+    word,
+    options: const LinkifyOptions(
+      humanize: false,
+      looseUrl: true,
+    ),
+    linkifiers: [
+      const UrlLinkifier(),
+    ],
+  );
+  final int linkCount = extractedLinks.fold(0, (value, element) => element is UrlElement ? value + 1 : value);
+  if (linkCount == 1) {
+    // Found exactly 1 URL. Create and return an attribution.
+    try {
+      // Try to parse the word as a link.
+      final uri = Uri.parse(word);
+      if (uri.hasScheme) {
+        // URL is fully specified. Return it.
+        return uri;
+      }
+
+      // The URL is missing a scheme. Add "https:" and re-parse.
+      return Uri.parse("https://$word");
+    } catch (exception) {
+      // Something went wrong parsing the link. Fizzle.
+      return null;
+    }
+  }
+
+  // Third, try directly parsing a non-http URL.
+  if (word.contains("://")) {
+    return Uri.tryParse(word);
+  }
+
+  // Didn't find a URL in the given text.
+  return null;
 }
 
 /// Configuration for the action that should happen when a text containing
@@ -943,7 +1016,7 @@ class DashConversionReaction extends EditReaction {
       if (change is! TextInsertionEvent) {
         continue;
       }
-      if (change.text.text != "-") {
+      if (change.text.toPlainText() != "-") {
         continue;
       }
 
@@ -962,7 +1035,7 @@ class DashConversionReaction extends EditReaction {
     }
 
     final insertionNode = document.getNodeById(dashInsertionEvent.nodeId) as TextNode;
-    final upstreamCharacter = insertionNode.text.text[dashInsertionEvent.offset - 1];
+    final upstreamCharacter = insertionNode.text.toPlainText()[dashInsertionEvent.offset - 1];
     if (upstreamCharacter != '-') {
       return;
     }
@@ -1039,7 +1112,7 @@ class EditInspector {
     if (textInsertionEvent is! TextInsertionEvent) {
       return false;
     }
-    if (textInsertionEvent.text.text != " ") {
+    if (textInsertionEvent.text.toPlainText() != " ") {
       return false;
     }
 
@@ -1059,8 +1132,8 @@ class EditInspector {
   /// Finds and returns the last text the user typed within the given [edit]s, or `null` if
   /// no text was typed.
   static UserTypedText? findLastTextUserTyped(Document document, List<EditEvent> edits) {
-    final lastSpaceInsertion = edits.whereType<DocumentEdit>().lastWhereOrNull(
-        (edit) => edit.change is TextInsertionEvent && (edit.change as TextInsertionEvent).text.text.endsWith(" "));
+    final lastSpaceInsertion = edits.whereType<DocumentEdit>().lastWhereOrNull((edit) =>
+        edit.change is TextInsertionEvent && (edit.change as TextInsertionEvent).text.toPlainText().endsWith(" "));
     if (lastSpaceInsertion == null) {
       // The user didn't insert any text segment that ended with a space.
       return null;

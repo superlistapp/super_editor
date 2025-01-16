@@ -1,0 +1,37 @@
+# Configuration for the package that this website documents.
+package:
+  name: super_keyboard
+  title: Super Keyboard
+  description: A Flutter plugin for watching software keyboard state and size
+  is_on_pub: true
+  
+  github:
+    url: https://github.com/superlistapp/super_editor
+    organization: superlistapp
+    name: super_editor
+  
+  discord: 
+  sponsorship: https://flutterbountyhunters.com
+
+# Configuration of the GitHub plugin for loading info about GitHub repositories.
+github:
+  contributors:
+    repositories:
+      
+      - { organization: superlistapp, name: super_editor }
+      
+
+# The default layout applied to all pages in this website.
+layout: layouts/docs_page.jinja
+
+# The global navigation manu for all documentation pages in this website.
+navigation:
+  show_contributors: true
+
+  items:
+    - title: Get Started
+      url: /
+
+    - title: Guides
+      tag: guides
+      sortBy: navOrder

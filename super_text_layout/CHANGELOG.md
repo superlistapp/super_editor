@@ -1,3 +1,20 @@
+## [0.1.18] - Jan, 2024
+ * Upgrade `attributed_text` dependency to `v0.4.1`.
+
+## [0.1.17] - Dec, 2024
+ * Upgrade `attributed_text` dependency to `v0.4.0` (forgot to do it in `0.1.16`).
+
+## [0.1.16] - Dec, 2024
+ * [FEATURE] - Added support for inline images. Only minor changes needed in this package.
+   * Selection boxes now take up the `max` vertical space - this will result in taller selection boxes.
+   * Caret size/position always uses a `downstream` affinity. This was done to minimize the impact of Flutter bugs for inline widgets.
+   * A couple classes were created as inline image placeholders. Any type of object can be used, but providing a couple defaults seemed reasonable.
+   * Most of the relevant changes for inline widgets will happen in `super_editor`.
+ * [ADJUSTMENT] - Upgraded `logging` to `v1.3.0`.
+
+## [0.1.15] - Nov, 2024
+ * [FIX] - Fix layout error when text in `SuperText` is empty.
+
 ## [0.1.14] - Sept, 2024
  * [FIX] - Flutter was reporting 1px height different between empty text and non-empty text.
    We introduced a temporary hack fix to keep the reported height consistent until Flutter

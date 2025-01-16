@@ -13,6 +13,7 @@ import 'package:super_editor/src/infrastructure/platforms/mobile_documents.dart'
 import 'package:super_editor/src/infrastructure/signal_notifier.dart';
 import 'package:super_editor/src/super_textfield/infrastructure/fill_width_if_constrained.dart';
 import 'package:super_editor/src/super_textfield/infrastructure/hint_text.dart';
+import 'package:super_editor/src/super_textfield/infrastructure/text_field_gestures_interaction_overrides.dart';
 import 'package:super_editor/src/super_textfield/infrastructure/text_scrollview.dart';
 import 'package:super_editor/src/super_textfield/input_method_engine/_ime_text_editing_controller.dart';
 import 'package:super_editor/src/super_textfield/ios/editing_controls.dart';
@@ -37,6 +38,7 @@ class SuperIOSTextField extends StatefulWidget {
     Key? key,
     this.focusNode,
     this.tapRegionGroupId,
+    this.tapHandlers = const [],
     this.textController,
     this.textStyleBuilder = defaultTextFieldStyleBuilder,
     this.textAlign = TextAlign.left,
@@ -62,6 +64,9 @@ class SuperIOSTextField extends StatefulWidget {
 
   /// {@macro super_text_field_tap_region_group_id}
   final String? tapRegionGroupId;
+
+  /// {@macro super_text_field_tap_handlers}
+  final List<SuperTextFieldTapHandler> tapHandlers;
 
   /// Controller that owns the text content and text selection for
   /// this text field.
@@ -555,6 +560,7 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField>
           link: _textFieldLayerLink,
           child: IOSTextFieldTouchInteractor(
             focusNode: _focusNode,
+            tapHandlers: widget.tapHandlers,
             selectableTextKey: _textContentKey,
             getGlobalCaretRect: _getGlobalCaretRect,
             textFieldLayerLink: _textFieldLayerLink,
@@ -598,7 +604,7 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField>
   }
 
   Widget _buildSelectableText() {
-    final textSpan = _textEditingController.text.text.isNotEmpty
+    final textSpan = _textEditingController.text.isNotEmpty
         ? _textEditingController.text.computeTextSpan(widget.textStyleBuilder)
         : AttributedText().computeTextSpan(widget.textStyleBuilder);
 
@@ -615,7 +621,7 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField>
       textAlign: widget.textAlign,
       textScaler: MediaQuery.textScalerOf(context),
       layerBeneathBuilder: (context, textLayout) {
-        final isTextEmpty = _textEditingController.text.text.isEmpty;
+        final isTextEmpty = _textEditingController.text.isEmpty;
         final showHint = widget.hintBuilder != null &&
             ((isTextEmpty && widget.hintBehavior == HintBehavior.displayHintUntilTextEntered) ||
                 (isTextEmpty && !_focusNode.hasFocus && widget.hintBehavior == HintBehavior.displayHintUntilFocus));
@@ -623,17 +629,17 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField>
         return Stack(
           clipBehavior: Clip.none,
           children: [
-            if (widget.textController?.selection.isValid == true)
+            if (_textEditingController.selection.isValid == true)
               // Selection highlight beneath the text.
               TextLayoutSelectionHighlight(
                 textLayout: textLayout,
                 style: SelectionHighlightStyle(
                   color: widget.selectionColor,
                 ),
-                selection: widget.textController?.selection,
+                selection: _textEditingController.selection,
               ),
             // Underline beneath the composing region.
-            if (widget.textController?.composingRegion.isValid == true && widget.showComposingUnderline)
+            if (_textEditingController.composingRegion.isValid == true && widget.showComposingUnderline)
               TextUnderlineLayer(
                 textLayout: textLayout,
                 style: StraightUnderlineStyle(
@@ -642,7 +648,7 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField>
                 ),
                 underlines: [
                   TextLayoutUnderline(
-                    range: widget.textController!.composingRegion,
+                    range: _textEditingController.composingRegion,
                   ),
                 ],
               ),
@@ -704,8 +710,8 @@ typedef IOSPopoverToolbarBuilder = Widget Function(BuildContext, IOSEditingOverl
 /// iOS is recent enough, otherwise builds [defaultIosPopoverToolbarBuilder].
 Widget iOSSystemPopoverTextFieldToolbarWithFallback(BuildContext context, IOSEditingOverlayController controller) {
   if (IOSSystemContextMenu.isSupported(context)) {
-    return IOSSystemContextMenu(
-      anchor: controller.toolbarFocalPoint.offset! & controller.toolbarFocalPoint.leaderSize!,
+    return IOSSuperTextFieldSystemContextMenu(
+      controller: controller,
     );
   }
 
@@ -723,7 +729,7 @@ Widget defaultIosPopoverToolbarBuilder(BuildContext context, IOSEditingOverlayCo
         return;
       }
 
-      final selectedText = selection.textInside(textController.text.text);
+      final selectedText = selection.textInside(textController.text.toPlainText());
 
       textController.deleteSelectedText();
 
@@ -732,7 +738,7 @@ Widget defaultIosPopoverToolbarBuilder(BuildContext context, IOSEditingOverlayCo
     onCopyPressed: () {
       final textController = controller.textController;
       final selection = textController.selection;
-      final selectedText = selection.textInside(textController.text.text);
+      final selectedText = selection.textInside(textController.text.toPlainText());
 
       Clipboard.setData(ClipboardData(text: selectedText));
     },
@@ -751,4 +757,76 @@ Widget defaultIosPopoverToolbarBuilder(BuildContext context, IOSEditingOverlayCo
       }
     },
   );
+}
+
+class IOSSuperTextFieldSystemContextMenu extends StatefulWidget {
+  const IOSSuperTextFieldSystemContextMenu({
+    super.key,
+    required this.controller,
+  });
+
+  final IOSEditingOverlayController controller;
+
+  @override
+  State<IOSSuperTextFieldSystemContextMenu> createState() => _IOSSuperTextFieldSystemContextMenuState();
+}
+
+class _IOSSuperTextFieldSystemContextMenuState extends State<IOSSuperTextFieldSystemContextMenu> {
+  late final SystemContextMenuController _systemContextMenuController;
+
+  @override
+  void initState() {
+    super.initState();
+    _systemContextMenuController = SystemContextMenuController();
+    widget.controller.addListener(_onControllerChanged);
+    onNextFrame((_) {
+      _positionSystemMenu();
+    });
+  }
+
+  @override
+  void didUpdateWidget(covariant IOSSuperTextFieldSystemContextMenu oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.controller != oldWidget.controller) {
+      oldWidget.controller.removeListener(_onControllerChanged);
+      widget.controller.addListener(_onControllerChanged);
+    }
+    onNextFrame((_) {
+      _positionSystemMenu();
+    });
+  }
+
+  @override
+  void dispose() {
+    widget.controller.removeListener(_onControllerChanged);
+    _systemContextMenuController.dispose();
+    super.dispose();
+  }
+
+  void _onControllerChanged() {
+    onNextFrame((_) {
+      _positionSystemMenu();
+    });
+  }
+
+  void _positionSystemMenu() {
+    // The size reported by the controller's toolbarFocalPoint is one frame behind. Query the information
+    // overlayController instead.
+    final topAnchor = widget.controller.overlayController.toolbarTopAnchor;
+    final bottomAnchor = widget.controller.overlayController.toolbarTopAnchor;
+
+    if (topAnchor == null || bottomAnchor == null) {
+      // We don't expect the toolbar builder to be called without having the anchors
+      // defined. But, since these properties are nullable, we account for that.
+      return;
+    }
+
+    _systemContextMenuController.show(Rect.fromLTRB(topAnchor.dx, topAnchor.dy, bottomAnchor.dx, bottomAnchor.dy));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    assert(IOSSystemContextMenu.isSupported(context));
+    return const SizedBox.shrink();
+  }
 }

@@ -22,26 +22,26 @@ class CalloutBlockSyntax extends md.BlockSyntax {
   // This method was adapted from the standard Blockquote parser, and
   // the standard code fence block parser.
   @override
-  List<String> parseChildLines(md.BlockParser parser) {
+  List<md.Line?> parseChildLines(md.BlockParser parser) {
     // Grab all of the lines that form the custom block, stripping off the
     // first line, e.g., "@@@ customBlock", and the last line, e.g., "@@@".
     var childLines = <String>[];
 
     while (!parser.isDone) {
-      final openingLine = pattern.firstMatch(parser.current);
+      final openingLine = pattern.firstMatch(parser.current.content);
       if (openingLine != null) {
         // This is the first line. Ignore it.
         parser.advance();
         continue;
       }
-      final closingLine = _endLinePattern.firstMatch(parser.current);
+      final closingLine = _endLinePattern.firstMatch(parser.current.content);
       if (closingLine != null) {
         // This is the closing line. Ignore it.
         parser.advance();
 
         // If we're followed by a blank line, skip it, so that we don't end
         // up with an extra paragraph for that blank line.
-        if (parser.current.trim().isEmpty) {
+        if (parser.current.content.trim().isEmpty) {
           parser.advance();
         }
 
@@ -49,11 +49,11 @@ class CalloutBlockSyntax extends md.BlockSyntax {
         break;
       }
 
-      childLines.add(parser.current);
+      childLines.add(parser.current.content);
       parser.advance();
     }
 
-    return childLines;
+    return childLines.map((l) => md.Line(l)).toList();
   }
 
   // This method was adapted from the standard Blockquote parser, and
@@ -78,8 +78,8 @@ class CalloutElementToNodeConverter implements ElementToNodeConverter {
     return ParagraphNode(
       id: Editor.createNodeId(),
       text: _parseInlineText(element),
-      metadata: {
-        'blockType': const NamedAttribution("callout"),
+      metadata: const {
+        'blockType': NamedAttribution("callout"),
       },
     );
   }
@@ -95,6 +95,7 @@ _InlineMarkdownToDocument _parseInline(md.Element element) {
     element.textContent,
     md.Document(
       inlineSyntaxes: [
+        SingleStrikethroughSyntax(), // this needs to be before md.StrikethroughSyntax to be recognized
         md.StrikethroughSyntax(),
         UnderlineSyntax(),
       ],
@@ -115,7 +116,7 @@ class _InlineMarkdownToDocument implements md.NodeVisitor {
   // if we find an image without any text, we're parsing an image.
   // Otherwise, if there is any text, then we're parsing a paragraph
   // and we ignore the image.
-  bool get isImage => _imageUrl != null && attributedText.text.isEmpty;
+  bool get isImage => _imageUrl != null && attributedText.isEmpty;
 
   String? _imageUrl;
   String? get imageUrl => _imageUrl;
@@ -156,27 +157,27 @@ class _InlineMarkdownToDocument implements md.NodeVisitor {
     if (element.tag == 'strong') {
       styledText.addAttribution(
         boldAttribution,
-        SpanRange(0, styledText.text.length - 1),
+        SpanRange(0, styledText.length - 1),
       );
     } else if (element.tag == 'em') {
       styledText.addAttribution(
         italicsAttribution,
-        SpanRange(0, styledText.text.length - 1),
+        SpanRange(0, styledText.length - 1),
       );
     } else if (element.tag == "del") {
       styledText.addAttribution(
         strikethroughAttribution,
-        SpanRange(0, styledText.text.length - 1),
+        SpanRange(0, styledText.length - 1),
       );
     } else if (element.tag == "u") {
       styledText.addAttribution(
         underlineAttribution,
-        SpanRange(0, styledText.text.length - 1),
+        SpanRange(0, styledText.length - 1),
       );
     } else if (element.tag == 'a') {
       styledText.addAttribution(
         LinkAttribution.fromUri(Uri.parse(element.attributes['href']!)),
-        SpanRange(0, styledText.text.length - 1),
+        SpanRange(0, styledText.length - 1),
       );
     }
 

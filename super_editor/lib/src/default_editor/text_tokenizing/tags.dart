@@ -17,7 +17,7 @@ class TagFinder {
     required TextNodePosition expansionPosition,
     required bool Function(Set<Attribution> tokenAttributions) isTokenCandidate,
   }) {
-    final rawText = text.text;
+    final rawText = text.toPlainText();
     if (rawText.isEmpty) {
       return null;
     }
@@ -90,7 +90,7 @@ class TagFinder {
 
   /// Finds and returns all tags in the given [textNode], which meet the given [rule].
   static Set<IndexedTag> findAllTagsInTextNode(TextNode textNode, TagRule rule) {
-    final plainText = textNode.text.text;
+    final plainText = textNode.text.toPlainText();
     final tags = <IndexedTag>{};
 
     int characterIndex = 0;
@@ -282,6 +282,9 @@ class IndexedTag {
 
   /// The [DocumentRange] from [start] to [end].
   DocumentRange get range => DocumentRange(start: start, end: end);
+
+  /// The length of the [tag]'s text.
+  int get length => tag.raw.length;
 
   /// Collects and returns all attributions in this tag's [TextNode], between the
   /// [start] of the tag and the [end] of the tag.

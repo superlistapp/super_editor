@@ -130,12 +130,62 @@ class _EditorSelectionAndFocusPolicyState extends State<EditorSelectionAndFocusP
           return;
         }
 
+        if (_previousSelection == null) {
+          // There's no selection to restore.
+          return;
+        }
+
         // Restore the previous selection.
         editorPoliciesLog
             .info("[${widget.runtimeType}] - restoring previous editor selection because the editor re-gained focus");
+        final previousSelection = _previousSelection!;
+        late final DocumentSelection restoredSelection;
+        final baseNode = widget.editor.context.document.getNodeById(previousSelection.base.nodeId);
+        final extentNode = widget.editor.context.document.getNodeById(previousSelection.extent.nodeId);
+        if (baseNode == null && extentNode == null) {
+          // The node(s) where the selection was previously are gone. Possibly deleted.
+          // Therefore, we can't restore the previous selection. Fizzle.
+          return;
+        }
+
+        if (baseNode != null && extentNode != null) {
+          if (!baseNode.containsPosition(previousSelection.base.nodePosition)) {
+            // Either the base node content changed and the selection no longer fits, or the
+            // type of content in the node changed. Either way, we can't restore this selection.
+            return;
+          }
+          if (!extentNode.containsPosition(previousSelection.extent.nodePosition)) {
+            // Either the extent node content changed and the selection no longer fits, or the
+            // type of content in the node changed. Either way, we can't restore this selection.
+            return;
+          }
+
+          // The base and extent nodes both still exist. Use the previous selection
+          // without modification.
+          restoredSelection = previousSelection;
+        } else if (baseNode == null) {
+          // The base node disappeared, but the extent node remains.
+          if (!extentNode!.containsPosition(previousSelection.extent.nodePosition)) {
+            // Either the extent node content changed and the selection no longer fits, or the
+            // type of content in the node changed. Either way, we can't restore this selection.
+            return;
+          }
+
+          restoredSelection = DocumentSelection.collapsed(position: previousSelection.extent);
+        } else if (extentNode == null) {
+          // The extent node disappeared, but the base node remains.
+          if (!baseNode.containsPosition(previousSelection.base.nodePosition)) {
+            // Either the base node content changed and the selection no longer fits, or the
+            // type of content in the node changed. Either way, we can't restore this selection.
+            return;
+          }
+
+          restoredSelection = DocumentSelection.collapsed(position: previousSelection.base);
+        }
+
         widget.editor.execute([
           ChangeSelectionRequest(
-            _previousSelection,
+            restoredSelection,
             SelectionChangeType.placeCaret,
             SelectionReason.contentChange,
           ),
@@ -177,6 +227,7 @@ class _EditorSelectionAndFocusPolicyState extends State<EditorSelectionAndFocusP
     // (Maybe) remove the editor's selection when it loses focus.
     if (!widget.focusNode.hasFocus && widget.clearSelectionWhenEditorLosesFocus) {
       editorPoliciesLog.info("[${widget.runtimeType}] - clearing editor selection because the editor lost all focus");
+
       widget.editor.execute([
         const ClearSelectionRequest(),
       ]);

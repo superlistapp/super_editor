@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:markdown/markdown.dart' as md;
 import 'package:super_editor/super_editor.dart';
 import 'package:super_editor_markdown/super_editor_markdown.dart';
@@ -13,18 +12,27 @@ import 'package:super_editor_markdown/super_editor_markdown.dart';
 /// change on all blog posts over time. As a result, this node, and its component
 /// in the [SuperReader] are just placeholders for content that will be chosen
 /// when rendered.
-class UpsellNode extends BlockNode with ChangeNotifier {
+class UpsellNode extends BlockNode {
   UpsellNode(this.id);
 
   @override
   final String id;
 
   @override
+  UpsellNode copyAndReplaceMetadata(Map<String, dynamic> newMetadata) {
+    return UpsellNode(id);
+  }
+
+  @override
+  UpsellNode copyWithAddedMetadata(Map<String, dynamic> newProperties) {
+    return UpsellNode(id);
+  }
+
+  @override
   String? copyContent(NodeSelection selection) {
     return null;
   }
 
-  @override
   DocumentNode copy() {
     return UpsellNode(id);
   }

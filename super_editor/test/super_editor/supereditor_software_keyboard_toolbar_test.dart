@@ -40,7 +40,7 @@ void main() {
 
       final secondNode = document.getNodeAt(1)!;
       expect(secondNode, isA<ParagraphNode>());
-      expect((secondNode as ParagraphNode).text.text, isEmpty);
+      expect((secondNode as ParagraphNode).text.toPlainText(), isEmpty);
 
       // Ensure the caret sits in the new paragraph node.
       final selection = SuperEditorInspector.findDocumentSelection()!;

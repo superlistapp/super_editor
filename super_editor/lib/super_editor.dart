@@ -93,6 +93,9 @@ export 'src/infrastructure/text_input.dart';
 export 'src/infrastructure/popovers.dart';
 export 'src/infrastructure/selectable_list.dart';
 export 'src/infrastructure/actions.dart';
+export 'src/infrastructure/keyboard_panel_scaffold.dart';
+
+export 'src/default_editor/tap_handlers/tap_handlers.dart';
 
 // Super Reader
 export 'src/super_reader/read_only_document_android_touch_interactor.dart';

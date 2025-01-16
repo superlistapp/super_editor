@@ -18,7 +18,7 @@ class CompositeComponentBuilder implements ComponentBuilder {
 
     print("Creating a composite view model (${node.id}) with ${node.nodeCount} child nodes");
     final childViewModels = <SingleColumnLayoutComponentViewModel>[];
-    for (final childNode in node) {
+    for (final childNode in node.nodes) {
       print("  - Creating view model for child node: $childNode");
       SingleColumnLayoutComponentViewModel? viewModel;
       for (final builder in componentBuilders) {

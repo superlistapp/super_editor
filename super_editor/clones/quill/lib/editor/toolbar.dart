@@ -743,7 +743,7 @@ class _NamedTextSizeSelectorState extends State<_NamedTextSizeSelector> {
       itemBuilder: (context, item, isActive, onTap) {
         return DecoratedBox(
           decoration: BoxDecoration(
-            color: isActive ? Colors.grey.withOpacity(0.2) : Colors.transparent,
+            color: isActive ? Colors.grey.withValues(alpha: 0.2) : Colors.transparent,
           ),
           child: InkWell(
             onTap: onTap,
@@ -873,7 +873,7 @@ class _HeaderSelectorState extends State<_HeaderSelector> {
       ),
       itemBuilder: (context, item, isActive, onTap) => DecoratedBox(
         decoration: BoxDecoration(
-          color: isActive ? Colors.grey.withOpacity(0.2) : Colors.transparent,
+          color: isActive ? Colors.grey.withValues(alpha: 0.2) : Colors.transparent,
         ),
         child: InkWell(
           onTap: onTap,
@@ -1101,7 +1101,7 @@ class _FontFamilySelectorState extends State<_FontFamilySelector> {
       ),
       itemBuilder: (context, item, isActive, onTap) => DecoratedBox(
         decoration: BoxDecoration(
-          color: isActive ? Colors.grey.withOpacity(0.2) : Colors.transparent,
+          color: isActive ? Colors.grey.withValues(alpha: 0.2) : Colors.transparent,
         ),
         child: InkWell(
           onTap: onTap,

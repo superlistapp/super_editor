@@ -2,10 +2,12 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:follow_the_leader/follow_the_leader.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
+import 'package:super_editor/src/infrastructure/document_gestures_interaction_overrides.dart';
 import 'package:super_editor/src/infrastructure/flutter/flutter_scheduler.dart';
 import 'package:super_editor/src/infrastructure/flutter/text_selection.dart';
 import 'package:super_editor/src/infrastructure/multi_tap_gesture.dart';
 import 'package:super_editor/src/infrastructure/platforms/ios/selection_heuristics.dart';
+import 'package:super_editor/src/super_textfield/infrastructure/text_field_gestures_interaction_overrides.dart';
 import 'package:super_editor/src/super_textfield/super_textfield.dart';
 import 'package:super_editor/src/test/test_globals.dart';
 import 'package:super_text_layout/super_text_layout.dart';
@@ -37,9 +39,14 @@ final _log = iosTextFieldLog;
 ///
 /// Selection changes are made via the given [textController].
 class IOSTextFieldTouchInteractor extends StatefulWidget {
+  /// {@macro ios_use_selection_heuristics}
+  @visibleForTesting
+  static bool useIosSelectionHeuristics = true;
+
   const IOSTextFieldTouchInteractor({
     Key? key,
     required this.focusNode,
+    this.tapHandlers = const [],
     required this.textFieldLayerLink,
     required this.textController,
     required this.editingOverlayController,
@@ -59,6 +66,9 @@ class IOSTextFieldTouchInteractor extends StatefulWidget {
   ///
   /// [IOSTextFieldInteractor] requests focus when the user taps on it.
   final FocusNode focusNode;
+
+  /// {@macro super_text_field_tap_handlers}
+  final List<SuperTextFieldTapHandler> tapHandlers;
 
   /// [LayerLink] that follows the text field that contains this
   /// [IOSExtFieldInteractor].
@@ -175,14 +185,46 @@ class IOSTextFieldTouchInteractorState extends State<IOSTextFieldTouchInteractor
 
   void _onTapDown(TapDownDetails details) {
     _log.fine("User tapped down");
-    if (!widget.focusNode.hasFocus) {
-      _log.finer("Field isn't focused. Ignoring press.");
-      return;
+
+    final textOffset = _globalOffsetToTextOffset(details.globalPosition);
+
+    for (final handler in widget.tapHandlers) {
+      final result = handler.onTapDown(
+        SuperTextFieldGestureDetails(
+          textLayout: _textLayout,
+          textController: widget.textController,
+          globalOffset: details.globalPosition,
+          layoutOffset: details.localPosition,
+          textOffset: textOffset,
+        ),
+      );
+
+      if (result == TapHandlingInstruction.halt) {
+        return;
+      }
     }
   }
 
   void _onTapUp(TapUpDetails details) {
     _log.fine('User released a tap');
+
+    final textOffset = _globalOffsetToTextOffset(details.globalPosition);
+
+    for (final handler in widget.tapHandlers) {
+      final result = handler.onTapUp(
+        SuperTextFieldGestureDetails(
+          textLayout: _textLayout,
+          textController: widget.textController,
+          globalOffset: details.globalPosition,
+          layoutOffset: details.localPosition,
+          textOffset: textOffset,
+        ),
+      );
+
+      if (result == TapHandlingInstruction.halt) {
+        return;
+      }
+    }
 
     _selectionBeforeTap = widget.textController.selection;
 
@@ -201,15 +243,17 @@ class IOSTextFieldTouchInteractorState extends State<IOSTextFieldTouchInteractor
     final exactTapTextPosition = _getTextPositionNearestToOffset(details.localPosition);
     final adjustedTapTextPosition =
         exactTapTextPosition != null ? _moveTapPositionToWordBoundary(exactTapTextPosition) : null;
-    final didTapOnExistingSelection = adjustedTapTextPosition != null &&
+    final didTapOnExistingSelection = exactTapTextPosition != null &&
         _selectionBeforeTap != null &&
         (_selectionBeforeTap!.isCollapsed
-            ? adjustedTapTextPosition.offset == _selectionBeforeTap!.extent.offset
-            : adjustedTapTextPosition.offset >= _selectionBeforeTap!.start &&
-                adjustedTapTextPosition.offset <= _selectionBeforeTap!.end);
+            ? exactTapTextPosition.offset == _selectionBeforeTap!.extent.offset
+            : exactTapTextPosition.offset >= _selectionBeforeTap!.start &&
+                exactTapTextPosition.offset <= _selectionBeforeTap!.end);
 
-    // Select the text that's nearest to where the user tapped.
-    _selectPosition(adjustedTapTextPosition);
+    if (!didTapOnExistingSelection) {
+      // Select the text that's nearest to where the user tapped.
+      _selectPosition(adjustedTapTextPosition);
+    }
 
     final didCaretStayInSamePlace = _selectionBeforeTap != null &&
         _selectionBeforeTap?.hasSameBoundsAs(widget.textController.selection) == true &&
@@ -231,8 +275,18 @@ class IOSTextFieldTouchInteractorState extends State<IOSTextFieldTouchInteractor
     _selectionBeforeTap = null;
   }
 
+  void _onTapCancel() {
+    for (final handler in widget.tapHandlers) {
+      final result = handler.onTapCancel();
+
+      if (result == TapHandlingInstruction.halt) {
+        return;
+      }
+    }
+  }
+
   TextPosition _moveTapPositionToWordBoundary(TextPosition textPosition) {
-    if (Testing.isInTest) {
+    if (!IOSTextFieldTouchInteractor.useIosSelectionHeuristics) {
       // Don't adjust the tap location in tests because we want tests to be
       // able to precisely position the caret at a given offset.
       // TODO: Make this decision configurable, similar to SuperEditor, so that
@@ -244,7 +298,7 @@ class IOSTextFieldTouchInteractorState extends State<IOSTextFieldTouchInteractor
       return textPosition;
     }
 
-    final text = widget.textController.text.text;
+    final text = widget.textController.text.toPlainText();
     final tapOffset = textPosition.offset;
     if (tapOffset == text.length) {
       return textPosition;
@@ -268,6 +322,25 @@ class IOSTextFieldTouchInteractorState extends State<IOSTextFieldTouchInteractor
 
   void _onDoubleTapDown(TapDownDetails details) {
     _log.fine('Double tap');
+
+    final textOffset = _globalOffsetToTextOffset(details.globalPosition);
+
+    for (final handler in widget.tapHandlers) {
+      final result = handler.onDoubleTapDown(
+        SuperTextFieldGestureDetails(
+          textLayout: _textLayout,
+          textController: widget.textController,
+          globalOffset: details.globalPosition,
+          layoutOffset: details.localPosition,
+          textOffset: textOffset,
+        ),
+      );
+
+      if (result == TapHandlingInstruction.halt) {
+        return;
+      }
+    }
+
     widget.focusNode.requestFocus();
 
     // When the user released the first tap, the toolbar was set
@@ -289,12 +362,90 @@ class IOSTextFieldTouchInteractorState extends State<IOSTextFieldTouchInteractor
     }
   }
 
+  void _onDoubleTapUp(TapUpDetails details) {
+    final textOffset = _globalOffsetToTextOffset(details.globalPosition);
+
+    for (final handler in widget.tapHandlers) {
+      final result = handler.onDoubleTapUp(
+        SuperTextFieldGestureDetails(
+          textLayout: _textLayout,
+          textController: widget.textController,
+          globalOffset: details.globalPosition,
+          layoutOffset: details.localPosition,
+          textOffset: textOffset,
+        ),
+      );
+
+      if (result == TapHandlingInstruction.halt) {
+        return;
+      }
+    }
+  }
+
+  void _onDoubleTapCancel() {
+    for (final handler in widget.tapHandlers) {
+      final result = handler.onDoubleTapCancel();
+
+      if (result == TapHandlingInstruction.halt) {
+        return;
+      }
+    }
+  }
+
   void _onTripleTapDown(TapDownDetails details) {
+    final textOffset = _globalOffsetToTextOffset(details.globalPosition);
+
+    for (final handler in widget.tapHandlers) {
+      final result = handler.onTripleTapDown(
+        SuperTextFieldGestureDetails(
+          textLayout: _textLayout,
+          textController: widget.textController,
+          globalOffset: details.globalPosition,
+          layoutOffset: details.localPosition,
+          textOffset: textOffset,
+        ),
+      );
+
+      if (result == TapHandlingInstruction.halt) {
+        return;
+      }
+    }
+
     final textLayout = _textLayout;
     final tapTextPosition = textLayout.getPositionAtOffset(details.localPosition)!;
 
     widget.textController.selection =
         textLayout.expandSelection(tapTextPosition, paragraphExpansionFilter, TextAffinity.downstream);
+  }
+
+  void _onTripleTapUp(TapUpDetails details) {
+    final textOffset = _globalOffsetToTextOffset(details.globalPosition);
+
+    for (final handler in widget.tapHandlers) {
+      final result = handler.onTripleTapUp(
+        SuperTextFieldGestureDetails(
+          textLayout: _textLayout,
+          textController: widget.textController,
+          globalOffset: details.globalPosition,
+          layoutOffset: details.localPosition,
+          textOffset: textOffset,
+        ),
+      );
+
+      if (result == TapHandlingInstruction.halt) {
+        return;
+      }
+    }
+  }
+
+  void _onTripleTapCancel() {
+    for (final handler in widget.tapHandlers) {
+      final result = handler.onTripleTapCancel();
+
+      if (result == TapHandlingInstruction.halt) {
+        return;
+      }
+    }
   }
 
   void _onPanStart(DragStartDetails details) {
@@ -416,7 +567,7 @@ class IOSTextFieldTouchInteractorState extends State<IOSTextFieldTouchInteractor
     // We show placeholder text when there is no text content. We don't want
     // to place the caret in the placeholder text, so when _currentText is
     // empty, explicitly set the text position to an offset of -1.
-    if (widget.textController.text.text.isEmpty) {
+    if (widget.textController.text.isEmpty) {
       return const TextPosition(offset: -1);
     }
 
@@ -433,7 +584,7 @@ class IOSTextFieldTouchInteractorState extends State<IOSTextFieldTouchInteractor
     // We show placeholder text when there is no text content. We don't want
     // to place the caret in the placeholder text, so when _currentText is
     // empty, explicitly set the text position to an offset of -1.
-    if (widget.textController.text.text.isEmpty) {
+    if (widget.textController.text.isEmpty) {
       return const TextPosition(offset: -1);
     }
 
@@ -503,8 +654,13 @@ class IOSTextFieldTouchInteractorState extends State<IOSTextFieldTouchInteractor
               recognizer
                 ..onTapDown = _onTapDown
                 ..onTapUp = _onTapUp
+                ..onTapCancel = _onTapCancel
                 ..onDoubleTapDown = _onDoubleTapDown
+                ..onDoubleTapUp = _onDoubleTapUp
+                ..onDoubleTapCancel = _onDoubleTapCancel
                 ..onTripleTapDown = _onTripleTapDown
+                ..onTripleTapUp = _onTripleTapUp
+                ..onTripleTapCancel = _onTripleTapCancel
                 ..gestureSettings = gestureSettings;
             },
           ),
@@ -536,7 +692,7 @@ class IOSTextFieldTouchInteractorState extends State<IOSTextFieldTouchInteractor
           rect: selectionRect,
           child: Leader(
             link: widget.editingOverlayController.toolbarFocalPoint,
-            child: widget.showDebugPaint ? ColoredBox(color: Colors.green.withOpacity(0.2)) : const SizedBox(),
+            child: widget.showDebugPaint ? ColoredBox(color: Colors.green.withValues(alpha: 0.2)) : const SizedBox(),
           ),
         );
       },
@@ -593,7 +749,7 @@ class IOSTextFieldTouchInteractorState extends State<IOSTextFieldTouchInteractor
                 child: Container(
                   width: 20,
                   height: 20,
-                  color: Colors.purpleAccent.withOpacity(0.5),
+                  color: Colors.purpleAccent.withValues(alpha: 0.5),
                 ),
               )
             : const SizedBox(width: 1, height: 1),

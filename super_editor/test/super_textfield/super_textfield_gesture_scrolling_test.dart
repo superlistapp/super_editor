@@ -251,7 +251,7 @@ void main() {
     });
 
     testWidgetsOnMobile("multi-line is vertically scrollable when text spans more lines than maxLines", (tester) async {
-      final initialText = "The first line of text in the field\n"
+      const initialText = "The first line of text in the field\n"
           "The second line of text in the field\n"
           "The third line of text in the field";
       final controller = AttributedTextEditingController(
@@ -292,8 +292,9 @@ void main() {
       expect(textTop, moreOrLessEquals(viewportTop));
     });
 
-    testWidgetsOnDesktop("multi-line is vertically scrollable when text spans more lines than maxLines", (tester) async {
-      final initialText = "The first line of text in the field\n"
+    testWidgetsOnDesktop("multi-line is vertically scrollable when text spans more lines than maxLines",
+        (tester) async {
+      const initialText = "The first line of text in the field\n"
           "The second line of text in the field\n"
           "The third line of text in the field";
       final controller = AttributedTextEditingController(

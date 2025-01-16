@@ -319,7 +319,7 @@ abstract class StandardEmbedBlockDeltaFormat implements BlockDeltaFormat {
     final document = editor.context.find<MutableDocument>(Editor.documentKey);
     final selectedNodeId = editor.context.composer.selection!.extent.nodeId;
     final selectedNode = document.getNodeById(selectedNodeId);
-    final shouldReplaceSelectedNode = selectedNode is TextNode && selectedNode.text.text.isEmpty;
+    final shouldReplaceSelectedNode = selectedNode is TextNode && selectedNode.text.isEmpty;
 
     final newNodeId = Editor.createNodeId();
     final newNode = createNodeForEmbed(operation, newNodeId);

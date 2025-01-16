@@ -306,7 +306,7 @@ void main() {
       // Place the caret at the beginning of the document.
       await tester.placeCaretInParagraph('1', 0);
 
-      final paragraphImeText = '. ${SuperEditorInspector.findTextInComponent('1').text}';
+      final paragraphImeText = '. ${SuperEditorInspector.findTextInComponent('1').toPlainText()}';
 
       // Simulate the user dragging the spacebar to move the caret to
       // "In aliquet convallis efficitur|.". This position was chosen arbitrarily, we
@@ -749,7 +749,7 @@ void main() {
 
       await tester //
           .createDocument()
-          .withSingleParagraph()
+          .withLongDoc()
           .withScrollController(scrollController)
           .pump();
 
@@ -781,7 +781,7 @@ void main() {
 
       await tester //
           .createDocument()
-          .withSingleParagraph()
+          .withLongDoc()
           .withScrollController(scrollController)
           .pump();
 

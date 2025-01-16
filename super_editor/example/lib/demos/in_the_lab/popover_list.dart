@@ -182,7 +182,7 @@ class _PopoverListState extends State<PopoverList> {
           for (int i = 0; i < widget.listItems.length; i += 1) ...[
             ColoredBox(
               color: i == _selectedValueIndex && _focusNode.hasPrimaryFocus
-                  ? Colors.white.withOpacity(0.05)
+                  ? Colors.white.withValues(alpha: 0.05)
                   : Colors.transparent,
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -209,7 +209,7 @@ class _PopoverListState extends State<PopoverList> {
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 8),
                 child: Divider(
-                  color: Colors.white.withOpacity(0.2),
+                  color: Colors.white.withValues(alpha: 0.2),
                   height: 1,
                 ),
               ),
@@ -229,7 +229,7 @@ class _PopoverListState extends State<PopoverList> {
           "NO ACTIONS",
           textAlign: TextAlign.center,
           style: TextStyle(
-            color: Colors.black.withOpacity(0.5),
+            color: Colors.black.withValues(alpha: 0.5),
             fontSize: 12,
             fontWeight: FontWeight.bold,
           ),

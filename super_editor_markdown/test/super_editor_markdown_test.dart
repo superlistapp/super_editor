@@ -6,30 +6,100 @@ void main() {
   group('Markdown', () {
     group('serialization', () {
       test('headers', () {
-        final doc = MutableDocument(nodes: [
-          ParagraphNode(
-            id: '1',
-            text: AttributedText('My Header'),
+        final paragraph = ParagraphNode(
+          id: '1',
+          text: AttributedText('My Header'),
+        );
+
+        expect(
+          serializeDocumentToMarkdown(
+            MutableDocument(
+              nodes: [
+                paragraph.copyParagraphWith(
+                  metadata: const {
+                    "blockType": header1Attribution,
+                  },
+                ),
+              ],
+            ),
           ),
-        ]);
+          '# My Header',
+        );
 
-        (doc.getNodeAt(0)! as ParagraphNode).putMetadataValue('blockType', header1Attribution);
-        expect(serializeDocumentToMarkdown(doc), '# My Header');
+        expect(
+          serializeDocumentToMarkdown(
+            MutableDocument(
+              nodes: [
+                paragraph.copyParagraphWith(
+                  metadata: const {
+                    "blockType": header2Attribution,
+                  },
+                ),
+              ],
+            ),
+          ),
+          '## My Header',
+        );
 
-        (doc.getNodeAt(0)! as ParagraphNode).putMetadataValue('blockType', header2Attribution);
-        expect(serializeDocumentToMarkdown(doc), '## My Header');
+        expect(
+          serializeDocumentToMarkdown(
+            MutableDocument(
+              nodes: [
+                paragraph.copyParagraphWith(
+                  metadata: const {
+                    "blockType": header3Attribution,
+                  },
+                ),
+              ],
+            ),
+          ),
+          '### My Header',
+        );
 
-        (doc.getNodeAt(0)! as ParagraphNode).putMetadataValue('blockType', header3Attribution);
-        expect(serializeDocumentToMarkdown(doc), '### My Header');
+        expect(
+          serializeDocumentToMarkdown(
+            MutableDocument(
+              nodes: [
+                paragraph.copyParagraphWith(
+                  metadata: const {
+                    "blockType": header4Attribution,
+                  },
+                ),
+              ],
+            ),
+          ),
+          '#### My Header',
+        );
 
-        (doc.getNodeAt(0)! as ParagraphNode).putMetadataValue('blockType', header4Attribution);
-        expect(serializeDocumentToMarkdown(doc), '#### My Header');
+        expect(
+          serializeDocumentToMarkdown(
+            MutableDocument(
+              nodes: [
+                paragraph.copyParagraphWith(
+                  metadata: const {
+                    "blockType": header5Attribution,
+                  },
+                ),
+              ],
+            ),
+          ),
+          '##### My Header',
+        );
 
-        (doc.getNodeAt(0)! as ParagraphNode).putMetadataValue('blockType', header5Attribution);
-        expect(serializeDocumentToMarkdown(doc), '##### My Header');
-
-        (doc.getNodeAt(0)! as ParagraphNode).putMetadataValue('blockType', header6Attribution);
-        expect(serializeDocumentToMarkdown(doc), '###### My Header');
+        expect(
+          serializeDocumentToMarkdown(
+            MutableDocument(
+              nodes: [
+                paragraph.copyParagraphWith(
+                  metadata: const {
+                    "blockType": header6Attribution,
+                  },
+                ),
+              ],
+            ),
+          ),
+          '###### My Header',
+        );
       });
 
       test('header with left alignment', () {
@@ -37,7 +107,7 @@ void main() {
           ParagraphNode(
             id: '1',
             text: AttributedText('Header1'),
-            metadata: {
+            metadata: const {
               'textAlign': 'left',
               'blockType': header1Attribution,
             },
@@ -56,7 +126,7 @@ void main() {
           ParagraphNode(
             id: '1',
             text: AttributedText('Header1'),
-            metadata: {
+            metadata: const {
               'textAlign': 'center',
               'blockType': header1Attribution,
             },
@@ -70,7 +140,7 @@ void main() {
           ParagraphNode(
             id: '1',
             text: AttributedText('Header1'),
-            metadata: {
+            metadata: const {
               'textAlign': 'right',
               'blockType': header1Attribution,
             },
@@ -84,7 +154,7 @@ void main() {
           ParagraphNode(
             id: '1',
             text: AttributedText('Header1'),
-            metadata: {
+            metadata: const {
               'textAlign': 'justify',
               'blockType': header1Attribution,
             },
@@ -98,7 +168,7 @@ void main() {
           ParagraphNode(
             id: '1',
             text: attributedTextFromMarkdown("My **Header**"),
-            metadata: {'blockType': header1Attribution},
+            metadata: const {'blockType': header1Attribution},
           ),
         ]);
 
@@ -110,7 +180,7 @@ void main() {
           ParagraphNode(
             id: '1',
             text: AttributedText('This is a blockquote'),
-            metadata: {'blockType': blockquoteAttribution},
+            metadata: const {'blockType': blockquoteAttribution},
           ),
         ]);
 
@@ -122,7 +192,7 @@ void main() {
           ParagraphNode(
             id: '1',
             text: attributedTextFromMarkdown('This is a **blockquote**'),
-            metadata: {'blockType': blockquoteAttribution},
+            metadata: const {'blockType': blockquoteAttribution},
           ),
         ]);
 
@@ -134,7 +204,7 @@ void main() {
           ParagraphNode(
             id: '1',
             text: AttributedText('This is some code'),
-            metadata: {'blockType': codeAttribution},
+            metadata: const {'blockType': codeAttribution},
           ),
         ]);
 
@@ -296,7 +366,7 @@ This is some code
           ParagraphNode(
             id: '1',
             text: AttributedText('Paragraph1'),
-            metadata: {
+            metadata: const {
               'textAlign': 'left',
             },
           ),
@@ -315,7 +385,7 @@ This is some code
           ParagraphNode(
             id: '1',
             text: AttributedText('Paragraph1'),
-            metadata: {
+            metadata: const {
               'textAlign': 'center',
             },
           ),
@@ -329,7 +399,7 @@ This is some code
           ParagraphNode(
             id: '1',
             text: AttributedText('Paragraph1'),
-            metadata: {
+            metadata: const {
               'textAlign': 'right',
             },
           ),
@@ -343,7 +413,7 @@ This is some code
           ParagraphNode(
             id: '1',
             text: AttributedText('Paragraph1'),
-            metadata: {
+            metadata: const {
               'textAlign': 'justify',
             },
           ),
@@ -357,7 +427,7 @@ This is some code
           ParagraphNode(
             id: '1',
             text: AttributedText('Paragraph1'),
-            metadata: {
+            metadata: const {
               'textAlign': 'center',
             },
           ),
@@ -695,27 +765,27 @@ with multiple lines
           ParagraphNode(
             id: Editor.createNodeId(),
             text: AttributedText('Example Doc'),
-            metadata: {'blockType': header1Attribution},
+            metadata: const {'blockType': header1Attribution},
           ),
           ParagraphNode(
             id: Editor.createNodeId(),
             text: AttributedText('Example Doc With Left Alignment'),
-            metadata: {'blockType': header1Attribution, 'textAlign': 'left'},
+            metadata: const {'blockType': header1Attribution, 'textAlign': 'left'},
           ),
           ParagraphNode(
             id: Editor.createNodeId(),
             text: AttributedText('Example Doc With Center Alignment'),
-            metadata: {'blockType': header1Attribution, 'textAlign': 'center'},
+            metadata: const {'blockType': header1Attribution, 'textAlign': 'center'},
           ),
           ParagraphNode(
             id: Editor.createNodeId(),
             text: AttributedText('Example Doc With Right Alignment'),
-            metadata: {'blockType': header1Attribution, 'textAlign': 'right'},
+            metadata: const {'blockType': header1Attribution, 'textAlign': 'right'},
           ),
           ParagraphNode(
             id: Editor.createNodeId(),
             text: AttributedText('Example Doc With Justify Alignment'),
-            metadata: {'blockType': header1Attribution, 'textAlign': 'justify'},
+            metadata: const {'blockType': header1Attribution, 'textAlign': 'justify'},
           ),
           HorizontalRuleNode(id: Editor.createNodeId()),
           ParagraphNode(
@@ -753,7 +823,7 @@ with multiple lines
           ParagraphNode(
             id: Editor.createNodeId(),
             text: AttributedText('This is a blockquote.'),
-            metadata: {'blockType': blockquoteAttribution},
+            metadata: const {'blockType': blockquoteAttribution},
           ),
           ParagraphNode(
             id: Editor.createNodeId(),
@@ -762,7 +832,7 @@ with multiple lines
           ParagraphNode(
             id: Editor.createNodeId(),
             text: AttributedText('{\n  // This is some code.\n}'),
-            metadata: {'blockType': codeAttribution},
+            metadata: const {'blockType': codeAttribution},
           ),
           TaskNode(
             id: Editor.createNodeId(),
@@ -835,7 +905,7 @@ with multiple lines
         final header = headerLeftAlignment1.first as ParagraphNode;
         expect(header.getMetadataValue('blockType'), header1Attribution);
         expect(header.getMetadataValue('textAlign'), 'left');
-        expect(header.text.text, 'Header 1');
+        expect(header.text.toPlainText(), 'Header 1');
       });
 
       test('header with center alignment', () {
@@ -843,7 +913,7 @@ with multiple lines
         final header = headerLeftAlignment1.first as ParagraphNode;
         expect(header.getMetadataValue('blockType'), header1Attribution);
         expect(header.getMetadataValue('textAlign'), 'center');
-        expect(header.text.text, 'Header 1');
+        expect(header.text.toPlainText(), 'Header 1');
       });
 
       test('header with right alignment', () {
@@ -851,7 +921,7 @@ with multiple lines
         final header = headerLeftAlignment1.first as ParagraphNode;
         expect(header.getMetadataValue('blockType'), header1Attribution);
         expect(header.getMetadataValue('textAlign'), 'right');
-        expect(header.text.text, 'Header 1');
+        expect(header.text.toPlainText(), 'Header 1');
       });
 
       test('header with justify alignment', () {
@@ -859,7 +929,7 @@ with multiple lines
         final header = headerLeftAlignment1.first as ParagraphNode;
         expect(header.getMetadataValue('blockType'), header1Attribution);
         expect(header.getMetadataValue('textAlign'), 'justify');
-        expect(header.text.text, 'Header 1');
+        expect(header.text.toPlainText(), 'Header 1');
       });
 
       test('blockquote', () {
@@ -867,7 +937,7 @@ with multiple lines
 
         final blockquote = blockquoteDoc.first as ParagraphNode;
         expect(blockquote.getMetadataValue('blockType'), blockquoteAttribution);
-        expect(blockquote.text.text, 'This is a blockquote');
+        expect(blockquote.text.toPlainText(), 'This is a blockquote');
       });
 
       test('code block', () {
@@ -878,7 +948,7 @@ This is some code
 
         final code = codeBlockDoc.first as ParagraphNode;
         expect(code.getMetadataValue('blockType'), codeAttribution);
-        expect(code.text.text, 'This is some code\n');
+        expect(code.text.toPlainText(), 'This is some code\n');
       });
 
       test('image', () {
@@ -963,7 +1033,7 @@ This is some code
         expect(document.first, isA<ParagraphNode>());
 
         final paragraph = document.first as ParagraphNode;
-        expect(paragraph.text.text, 'This is some unstyled text to parse as markdown');
+        expect(paragraph.text.toPlainText(), 'This is some unstyled text to parse as markdown');
       });
 
       test('single styled paragraph', () {
@@ -976,7 +1046,7 @@ This is some code
 
         final paragraph = document.first as ParagraphNode;
         final styledText = paragraph.text;
-        expect(styledText.text, 'This is some styled text to parse as markdown');
+        expect(styledText.toPlainText(), 'This is some styled text to parse as markdown');
 
         expect(styledText.getAllAttributionsAt(0).isEmpty, true);
         expect(styledText.getAllAttributionsAt(8).contains(boldAttribution), true);
@@ -995,7 +1065,7 @@ This is some code
 
         final paragraph = document.first as ParagraphNode;
         final styledText = paragraph.text;
-        expect(styledText.text, 'Preserves symbols like &, <, and >, rather than use HTML escape codes.');
+        expect(styledText.toPlainText(), 'Preserves symbols like &, <, and >, rather than use HTML escape codes.');
       });
 
       test('paragraph with special HTML symbols can escape them', () {
@@ -1008,7 +1078,7 @@ This is some code
 
         final paragraph = document.first as ParagraphNode;
         final styledText = paragraph.text;
-        expect(styledText.text, 'Escapes HTML symbols like &amp;, &lt;, and &gt;, when requested.');
+        expect(styledText.toPlainText(), 'Escapes HTML symbols like &amp;, &lt;, and &gt;, when requested.');
       });
 
       test('link within multiple styles', () {
@@ -1021,7 +1091,7 @@ This is some code
 
         final paragraph = document.first as ParagraphNode;
         final styledText = paragraph.text;
-        expect(styledText.text, 'This is some styled link text');
+        expect(styledText.toPlainText(), 'This is some styled link text');
 
         expect(styledText.getAllAttributionsAt(0).isEmpty, true);
         expect(styledText.getAllAttributionsAt(8).contains(boldAttribution), true);
@@ -1043,7 +1113,7 @@ This is some code
 
         final paragraph = document.first as ParagraphNode;
         final styledText = paragraph.text;
-        expect(styledText.text, 'This is a test');
+        expect(styledText.toPlainText(), 'This is a test');
 
         expect(styledText.getAllAttributionsAt(0).isEmpty, true);
         expect(styledText.getAllAttributionsAt(8).contains(boldAttribution), true);
@@ -1065,7 +1135,7 @@ This is some code
 
         final paragraph = document.first as ParagraphNode;
         final styledText = paragraph.text;
-        expect(styledText.text, 'This **is a** link test');
+        expect(styledText.toPlainText(), 'This **is a** link test');
 
         expect(styledText.getAllAttributionsAt(9).isEmpty, true);
         expect(styledText.getAllAttributionsAt(12).single, LinkAttribution.fromUri(Uri.https('example.org', '')));
@@ -1082,7 +1152,7 @@ This is some code
 
         final paragraph = document.first as ParagraphNode;
         final styledText = paragraph.text;
-        expect(styledText.text, 'This is a link test');
+        expect(styledText.toPlainText(), 'This is a link test');
 
         expect(styledText.getAllAttributionsAt(12).single, LinkAttribution.fromUri(Uri.parse('')));
       });
@@ -1104,19 +1174,19 @@ This is some code
         }
 
         expect((document.getNodeAt(0)! as ListItemNode).indent, 0);
-        expect((document.getNodeAt(0)! as ListItemNode).text.text, 'list item 1');
+        expect((document.getNodeAt(0)! as ListItemNode).text.toPlainText(), 'list item 1');
 
         expect((document.getNodeAt(1)! as ListItemNode).indent, 0);
-        expect((document.getNodeAt(1)! as ListItemNode).text.text, 'list item 2');
+        expect((document.getNodeAt(1)! as ListItemNode).text.toPlainText(), 'list item 2');
 
         expect((document.getNodeAt(2)! as ListItemNode).indent, 1);
-        expect((document.getNodeAt(2)! as ListItemNode).text.text, 'list item 2.1');
+        expect((document.getNodeAt(2)! as ListItemNode).text.toPlainText(), 'list item 2.1');
 
         expect((document.getNodeAt(3)! as ListItemNode).indent, 1);
-        expect((document.getNodeAt(3)! as ListItemNode).text.text, 'list item 2.2');
+        expect((document.getNodeAt(3)! as ListItemNode).text.toPlainText(), 'list item 2.2');
 
         expect((document.getNodeAt(4)! as ListItemNode).indent, 0);
-        expect((document.getNodeAt(4)! as ListItemNode).text.text, 'list item 3');
+        expect((document.getNodeAt(4)! as ListItemNode).text.toPlainText(), 'list item 3');
       });
 
       test('empty unordered list item', () {
@@ -1126,20 +1196,23 @@ This is some code
         expect(document.nodeCount, 1);
         expect(document.first, isA<ListItemNode>());
         expect((document.first as ListItemNode).type, ListItemType.unordered);
-        expect((document.first as ListItemNode).text.text, isEmpty);
+        expect((document.first as ListItemNode).text.toPlainText(), isEmpty);
       });
 
-      test('unordered list followd by empty list item', () {
+      test('unordered list followed by empty list item', () {
         const markdown = """- list item 1
-    - """;
+- """;
 
         final document = deserializeMarkdownToDocument(markdown);
 
-        expect(document.nodeCount, 1);
+        expect(document.nodeCount, 2);
 
         expect(document.getNodeAt(0)!, isA<ListItemNode>());
         expect((document.getNodeAt(0)! as ListItemNode).type, ListItemType.unordered);
-        expect((document.getNodeAt(0)! as ListItemNode).text.text, 'list item 1');
+        expect((document.getNodeAt(0)! as ListItemNode).text.toPlainText(), 'list item 1');
+        expect(document.getNodeAt(1)!, isA<ListItemNode>());
+        expect((document.getNodeAt(1)! as ListItemNode).type, ListItemType.unordered);
+        expect((document.getNodeAt(1)! as ListItemNode).text.toPlainText(), '');
       });
 
       test('parses mixed unordered and ordered items', () {
@@ -1164,31 +1237,31 @@ This is some code
         }
 
         expect((document.getNodeAt(0)! as ListItemNode).type, ListItemType.ordered);
-        expect((document.getNodeAt(0)! as ListItemNode).text.text, 'Ordered 1');
+        expect((document.getNodeAt(0)! as ListItemNode).text.toPlainText(), 'Ordered 1');
 
         expect((document.getNodeAt(1)! as ListItemNode).type, ListItemType.unordered);
-        expect((document.getNodeAt(1)! as ListItemNode).text.text, 'Unordered 1');
+        expect((document.getNodeAt(1)! as ListItemNode).text.toPlainText(), 'Unordered 1');
 
         expect((document.getNodeAt(2)! as ListItemNode).type, ListItemType.unordered);
-        expect((document.getNodeAt(2)! as ListItemNode).text.text, 'Unordered 2');
+        expect((document.getNodeAt(2)! as ListItemNode).text.toPlainText(), 'Unordered 2');
 
         expect((document.getNodeAt(3)! as ListItemNode).type, ListItemType.ordered);
-        expect((document.getNodeAt(3)! as ListItemNode).text.text, 'Ordered 2');
+        expect((document.getNodeAt(3)! as ListItemNode).text.toPlainText(), 'Ordered 2');
 
         expect((document.getNodeAt(4)! as ListItemNode).type, ListItemType.unordered);
-        expect((document.getNodeAt(4)! as ListItemNode).text.text, 'Unordered 1');
+        expect((document.getNodeAt(4)! as ListItemNode).text.toPlainText(), 'Unordered 1');
 
         expect((document.getNodeAt(5)! as ListItemNode).type, ListItemType.unordered);
-        expect((document.getNodeAt(5)! as ListItemNode).text.text, 'Unordered 2');
+        expect((document.getNodeAt(5)! as ListItemNode).text.toPlainText(), 'Unordered 2');
 
         expect((document.getNodeAt(6)! as ListItemNode).type, ListItemType.ordered);
-        expect((document.getNodeAt(6)! as ListItemNode).text.text, 'Ordered 3');
+        expect((document.getNodeAt(6)! as ListItemNode).text.toPlainText(), 'Ordered 3');
 
         expect((document.getNodeAt(7)! as ListItemNode).type, ListItemType.unordered);
-        expect((document.getNodeAt(7)! as ListItemNode).text.text, 'Unordered 1');
+        expect((document.getNodeAt(7)! as ListItemNode).text.toPlainText(), 'Unordered 1');
 
         expect((document.getNodeAt(8)! as ListItemNode).type, ListItemType.unordered);
-        expect((document.getNodeAt(8)! as ListItemNode).text.text, 'Unordered 2');
+        expect((document.getNodeAt(8)! as ListItemNode).text.toPlainText(), 'Unordered 2');
       });
 
       test('unordered list with empty lines between items', () {
@@ -1207,9 +1280,9 @@ This is some code
           expect((node as ListItemNode).type, ListItemType.unordered);
         }
 
-        expect((document.getNodeAt(0)! as ListItemNode).text.text, 'list item 1');
-        expect((document.getNodeAt(1)! as ListItemNode).text.text, 'list item 2');
-        expect((document.getNodeAt(2)! as ListItemNode).text.text, 'list item 3');
+        expect((document.getNodeAt(0)! as ListItemNode).text.toPlainText(), 'list item 1');
+        expect((document.getNodeAt(1)! as ListItemNode).text.toPlainText(), 'list item 2');
+        expect((document.getNodeAt(2)! as ListItemNode).text.toPlainText(), 'list item 3');
       });
 
       test('ordered list', () {
@@ -1229,19 +1302,19 @@ This is some code
         }
 
         expect((document.getNodeAt(0)! as ListItemNode).indent, 0);
-        expect((document.getNodeAt(0)! as ListItemNode).text.text, 'list item 1');
+        expect((document.getNodeAt(0)! as ListItemNode).text.toPlainText(), 'list item 1');
 
         expect((document.getNodeAt(1)! as ListItemNode).indent, 0);
-        expect((document.getNodeAt(1)! as ListItemNode).text.text, 'list item 2');
+        expect((document.getNodeAt(1)! as ListItemNode).text.toPlainText(), 'list item 2');
 
         expect((document.getNodeAt(2)! as ListItemNode).indent, 1);
-        expect((document.getNodeAt(2)! as ListItemNode).text.text, 'list item 2.1');
+        expect((document.getNodeAt(2)! as ListItemNode).text.toPlainText(), 'list item 2.1');
 
         expect((document.getNodeAt(3)! as ListItemNode).indent, 1);
-        expect((document.getNodeAt(3)! as ListItemNode).text.text, 'list item 2.2');
+        expect((document.getNodeAt(3)! as ListItemNode).text.toPlainText(), 'list item 2.2');
 
         expect((document.getNodeAt(4)! as ListItemNode).indent, 0);
-        expect((document.getNodeAt(4)! as ListItemNode).text.text, 'list item 3');
+        expect((document.getNodeAt(4)! as ListItemNode).text.toPlainText(), 'list item 3');
       });
 
       test('empty ordered list item', () {
@@ -1251,7 +1324,7 @@ This is some code
         expect(document.nodeCount, 1);
         expect(document.first, isA<ListItemNode>());
         expect((document.first as ListItemNode).type, ListItemType.ordered);
-        expect((document.first as ListItemNode).text.text, isEmpty);
+        expect((document.first as ListItemNode).text.toPlainText(), isEmpty);
       });
 
       test('ordered list with empty lines between items', () {
@@ -1270,9 +1343,9 @@ This is some code
           expect((node as ListItemNode).type, ListItemType.ordered);
         }
 
-        expect((document.getNodeAt(0)! as ListItemNode).text.text, 'list item 1');
-        expect((document.getNodeAt(1)! as ListItemNode).text.text, 'list item 2');
-        expect((document.getNodeAt(2)! as ListItemNode).text.text, 'list item 3');
+        expect((document.getNodeAt(0)! as ListItemNode).text.toPlainText(), 'list item 1');
+        expect((document.getNodeAt(1)! as ListItemNode).text.toPlainText(), 'list item 2');
+        expect((document.getNodeAt(2)! as ListItemNode).text.toPlainText(), 'list item 3');
       });
 
       test('mixing multiple levels of ordered and unordered lists', () {
@@ -1297,55 +1370,55 @@ This is some code
 
         expect((document.getNodeAt(0)! as ListItemNode).indent, 0);
         expect((document.getNodeAt(0)! as ListItemNode).type, ListItemType.unordered);
-        expect((document.getNodeAt(0)! as ListItemNode).text.text, 'Level 1');
+        expect((document.getNodeAt(0)! as ListItemNode).text.toPlainText(), 'Level 1');
 
         expect((document.getNodeAt(1)! as ListItemNode).indent, 1);
         expect((document.getNodeAt(1)! as ListItemNode).type, ListItemType.ordered);
-        expect((document.getNodeAt(1)! as ListItemNode).text.text, 'Level 2');
+        expect((document.getNodeAt(1)! as ListItemNode).text.toPlainText(), 'Level 2');
 
         expect((document.getNodeAt(2)! as ListItemNode).indent, 2);
         expect((document.getNodeAt(2)! as ListItemNode).type, ListItemType.ordered);
-        expect((document.getNodeAt(2)! as ListItemNode).text.text, 'Level 3');
+        expect((document.getNodeAt(2)! as ListItemNode).text.toPlainText(), 'Level 3');
 
         expect((document.getNodeAt(3)! as ListItemNode).indent, 3);
         expect((document.getNodeAt(3)! as ListItemNode).type, ListItemType.unordered);
-        expect((document.getNodeAt(3)! as ListItemNode).text.text, 'Sublevel 1');
+        expect((document.getNodeAt(3)! as ListItemNode).text.toPlainText(), 'Sublevel 1');
 
         expect((document.getNodeAt(4)! as ListItemNode).indent, 3);
         expect((document.getNodeAt(4)! as ListItemNode).type, ListItemType.unordered);
-        expect((document.getNodeAt(4)! as ListItemNode).text.text, 'Sublevel 2');
+        expect((document.getNodeAt(4)! as ListItemNode).text.toPlainText(), 'Sublevel 2');
 
         expect((document.getNodeAt(5)! as ListItemNode).indent, 2);
         expect((document.getNodeAt(5)! as ListItemNode).type, ListItemType.ordered);
-        expect((document.getNodeAt(5)! as ListItemNode).text.text, 'Level 3 again');
+        expect((document.getNodeAt(5)! as ListItemNode).text.toPlainText(), 'Level 3 again');
 
         expect((document.getNodeAt(6)! as ListItemNode).indent, 1);
         expect((document.getNodeAt(6)! as ListItemNode).type, ListItemType.ordered);
-        expect((document.getNodeAt(6)! as ListItemNode).text.text, 'Level 2 returning');
+        expect((document.getNodeAt(6)! as ListItemNode).text.toPlainText(), 'Level 2 returning');
 
         expect((document.getNodeAt(7)! as ListItemNode).indent, 0);
         expect((document.getNodeAt(7)! as ListItemNode).type, ListItemType.ordered);
-        expect((document.getNodeAt(7)! as ListItemNode).text.text, 'Level 1 once more');
+        expect((document.getNodeAt(7)! as ListItemNode).text.toPlainText(), 'Level 1 once more');
 
         expect((document.getNodeAt(8)! as ListItemNode).indent, 1);
         expect((document.getNodeAt(8)! as ListItemNode).type, ListItemType.unordered);
-        expect((document.getNodeAt(8)! as ListItemNode).text.text, 'Bullet list');
+        expect((document.getNodeAt(8)! as ListItemNode).text.toPlainText(), 'Bullet list');
 
         expect((document.getNodeAt(9)! as ListItemNode).indent, 2);
         expect((document.getNodeAt(9)! as ListItemNode).type, ListItemType.unordered);
-        expect((document.getNodeAt(9)! as ListItemNode).text.text, 'Another bullet');
+        expect((document.getNodeAt(9)! as ListItemNode).text.toPlainText(), 'Another bullet');
 
         expect((document.getNodeAt(10)! as ListItemNode).indent, 0);
         expect((document.getNodeAt(10)! as ListItemNode).type, ListItemType.unordered);
-        expect((document.getNodeAt(10)! as ListItemNode).text.text, 'Main bullet list');
+        expect((document.getNodeAt(10)! as ListItemNode).text.toPlainText(), 'Main bullet list');
 
         expect((document.getNodeAt(11)! as ListItemNode).indent, 1);
         expect((document.getNodeAt(11)! as ListItemNode).type, ListItemType.unordered);
-        expect((document.getNodeAt(11)! as ListItemNode).text.text, 'Sub bullet list');
+        expect((document.getNodeAt(11)! as ListItemNode).text.toPlainText(), 'Sub bullet list');
 
         expect((document.getNodeAt(12)! as ListItemNode).indent, 2);
         expect((document.getNodeAt(12)! as ListItemNode).type, ListItemType.unordered);
-        expect((document.getNodeAt(12)! as ListItemNode).text.text, 'Subsub bullet list');
+        expect((document.getNodeAt(12)! as ListItemNode).text.toPlainText(), 'Subsub bullet list');
       });
 
       test('tasks', () {
@@ -1365,16 +1438,16 @@ with multiple lines
         expect(document.getNodeAt(2)!, isA<TaskNode>());
         expect(document.getNodeAt(3)!, isA<TaskNode>());
 
-        expect((document.getNodeAt(0)! as TaskNode).text.text, 'Task 1');
+        expect((document.getNodeAt(0)! as TaskNode).text.toPlainText(), 'Task 1');
         expect((document.getNodeAt(0)! as TaskNode).isComplete, isTrue);
 
-        expect((document.getNodeAt(1)! as TaskNode).text.text, 'Task 2');
+        expect((document.getNodeAt(1)! as TaskNode).text.toPlainText(), 'Task 2');
         expect((document.getNodeAt(1)! as TaskNode).isComplete, isFalse);
 
-        expect((document.getNodeAt(2)! as TaskNode).text.text, 'Task 3\nwith multiple lines');
+        expect((document.getNodeAt(2)! as TaskNode).text.toPlainText(), 'Task 3\nwith multiple lines');
         expect((document.getNodeAt(2)! as TaskNode).isComplete, isFalse);
 
-        expect((document.getNodeAt(3)! as TaskNode).text.text, 'Task 4');
+        expect((document.getNodeAt(3)! as TaskNode).text.toPlainText(), 'Task 4');
         expect((document.getNodeAt(3)! as TaskNode).isComplete, isTrue);
       });
 
@@ -1433,8 +1506,20 @@ with multiple lines
         expect(document.getNodeAt(25)!, isA<ParagraphNode>());
       });
 
-      test('paragraph with strikethrough', () {
+      test('paragraph with single strikethrough', () {
         final doc = deserializeMarkdownToDocument('~This is~ a paragraph.');
+        final styledText = (doc.getNodeAt(0)! as ParagraphNode).text;
+
+        // Ensure text within the range is attributed.
+        expect(styledText.getAllAttributionsAt(0).contains(strikethroughAttribution), true);
+        expect(styledText.getAllAttributionsAt(6).contains(strikethroughAttribution), true);
+
+        // Ensure text outside the range isn't attributed.
+        expect(styledText.getAllAttributionsAt(7).contains(strikethroughAttribution), false);
+      });
+
+      test('paragraph with double strikethrough', () {
+        final doc = deserializeMarkdownToDocument('~~This is~~ a paragraph.');
         final styledText = (doc.getNodeAt(0)! as ParagraphNode).text;
 
         // Ensure text within the range is attributed.
@@ -1462,7 +1547,7 @@ with multiple lines
 
         final paragraph = doc.first as ParagraphNode;
         expect(paragraph.getMetadataValue('textAlign'), 'left');
-        expect(paragraph.text.text, 'Paragraph1');
+        expect(paragraph.text.toPlainText(), 'Paragraph1');
       });
 
       test('paragraph with center alignment', () {
@@ -1470,7 +1555,7 @@ with multiple lines
 
         final paragraph = doc.first as ParagraphNode;
         expect(paragraph.getMetadataValue('textAlign'), 'center');
-        expect(paragraph.text.text, 'Paragraph1');
+        expect(paragraph.text.toPlainText(), 'Paragraph1');
       });
 
       test('paragraph with right alignment', () {
@@ -1478,7 +1563,7 @@ with multiple lines
 
         final paragraph = doc.first as ParagraphNode;
         expect(paragraph.getMetadataValue('textAlign'), 'right');
-        expect(paragraph.text.text, 'Paragraph1');
+        expect(paragraph.text.toPlainText(), 'Paragraph1');
       });
 
       test('paragraph with justify alignment', () {
@@ -1486,7 +1571,7 @@ with multiple lines
 
         final paragraph = doc.first as ParagraphNode;
         expect(paragraph.getMetadataValue('textAlign'), 'justify');
-        expect(paragraph.text.text, 'Paragraph1');
+        expect(paragraph.text.toPlainText(), 'Paragraph1');
       });
 
       test('treats alignment token as text at the end of the document', () {
@@ -1494,7 +1579,7 @@ with multiple lines
 
         final paragraph = doc.first as ParagraphNode;
         expect(paragraph.getMetadataValue('textAlign'), isNull);
-        expect(paragraph.text.text, '---:');
+        expect(paragraph.text.toPlainText(), '---:');
       });
 
       test('treats alignment token as text when not followed by a paragraph', () {
@@ -1502,7 +1587,7 @@ with multiple lines
 
         final paragraph = doc.first as ParagraphNode;
         expect(paragraph.getMetadataValue('textAlign'), isNull);
-        expect(paragraph.text.text, '---:');
+        expect(paragraph.text.toPlainText(), '---:');
 
         // Ensure the horizontal rule is parsed.
         expect(doc.getNodeAt(1)!, isA<HorizontalRuleNode>());
@@ -1513,7 +1598,7 @@ with multiple lines
 
         final paragraph = doc.first as ParagraphNode;
         expect(paragraph.getMetadataValue('textAlign'), isNull);
-        expect(paragraph.text.text, ':---\nParagraph1');
+        expect(paragraph.text.toPlainText(), ':---\nParagraph1');
       });
 
       test('multiple paragraphs', () {
@@ -1523,8 +1608,8 @@ Paragraph2""";
         final doc = deserializeMarkdownToDocument(input);
 
         expect(doc.nodeCount, 2);
-        expect((doc.getNodeAt(0)! as ParagraphNode).text.text, 'Paragraph1');
-        expect((doc.getNodeAt(1)! as ParagraphNode).text.text, 'Paragraph2');
+        expect((doc.getNodeAt(0)! as ParagraphNode).text.toPlainText(), 'Paragraph1');
+        expect((doc.getNodeAt(1)! as ParagraphNode).text.toPlainText(), 'Paragraph2');
       });
 
       test('empty paragraph between paragraphs', () {
@@ -1536,9 +1621,30 @@ Paragraph3""";
         final doc = deserializeMarkdownToDocument(input);
 
         expect(doc.nodeCount, 3);
-        expect((doc.getNodeAt(0)! as ParagraphNode).text.text, 'Paragraph1');
-        expect((doc.getNodeAt(1)! as ParagraphNode).text.text, '');
-        expect((doc.getNodeAt(2)! as ParagraphNode).text.text, 'Paragraph3');
+        expect((doc.getNodeAt(0)! as ParagraphNode).text.toPlainText(), 'Paragraph1');
+        expect((doc.getNodeAt(1)! as ParagraphNode).text.toPlainText(), '');
+        expect((doc.getNodeAt(2)! as ParagraphNode).text.toPlainText(), 'Paragraph3');
+      });
+
+      test('every 2 newlines after a list are a paragraph', () {
+        const input = '''
+1. First item
+2. Second item
+3. Third item
+
+
+
+
+''';
+        final doc = deserializeMarkdownToDocument(input);
+
+        expect(doc.nodeCount, 5);
+        expect((doc.getNodeAt(0)! as ListItemNode).text.toPlainText(), 'First item');
+        expect((doc.getNodeAt(1)! as ListItemNode).text.toPlainText(), 'Second item');
+        expect((doc.getNodeAt(2)! as ListItemNode).text.toPlainText(), 'Third item');
+        // super_editor tests expect empty newlines after a list to be retained
+        expect((doc.getNodeAt(3)! as ParagraphNode).text.toPlainText(), '');
+        expect((doc.getNodeAt(4)! as ParagraphNode).text.toPlainText(), '');
       });
 
       test('multiple empty paragraph between paragraphs', () {
@@ -1552,10 +1658,10 @@ Paragraph4""";
         final doc = deserializeMarkdownToDocument(input);
 
         expect(doc.nodeCount, 4);
-        expect((doc.getNodeAt(0)! as ParagraphNode).text.text, 'Paragraph1');
-        expect((doc.getNodeAt(1)! as ParagraphNode).text.text, '');
-        expect((doc.getNodeAt(2)! as ParagraphNode).text.text, '');
-        expect((doc.getNodeAt(3)! as ParagraphNode).text.text, 'Paragraph4');
+        expect((doc.getNodeAt(0)! as ParagraphNode).text.toPlainText(), 'Paragraph1');
+        expect((doc.getNodeAt(1)! as ParagraphNode).text.toPlainText(), '');
+        expect((doc.getNodeAt(2)! as ParagraphNode).text.toPlainText(), '');
+        expect((doc.getNodeAt(3)! as ParagraphNode).text.toPlainText(), 'Paragraph4');
       });
 
       test('paragraph ending with one blank line', () {
@@ -1563,10 +1669,10 @@ Paragraph4""";
         expect(doc.nodeCount, 2);
 
         expect(doc.first, isA<ParagraphNode>());
-        expect((doc.first as ParagraphNode).text.text, 'First Paragraph.\n');
+        expect((doc.first as ParagraphNode).text.toPlainText(), 'First Paragraph.\n');
 
         expect(doc.last, isA<ParagraphNode>());
-        expect((doc.last as ParagraphNode).text.text, 'Second Paragraph');
+        expect((doc.last as ParagraphNode).text.toPlainText(), 'Second Paragraph');
       });
 
       test('paragraph ending with multiple blank lines', () {
@@ -1575,10 +1681,10 @@ Paragraph4""";
         expect(doc.nodeCount, 2);
 
         expect(doc.first, isA<ParagraphNode>());
-        expect((doc.first as ParagraphNode).text.text, 'First Paragraph.\n\n\n');
+        expect((doc.first as ParagraphNode).text.toPlainText(), 'First Paragraph.\n\n\n');
 
         expect(doc.last, isA<ParagraphNode>());
-        expect((doc.last as ParagraphNode).text.text, 'Second Paragraph');
+        expect((doc.last as ParagraphNode).text.toPlainText(), 'Second Paragraph');
       });
 
       test('paragraph with multiple blank lines at the middle', () {
@@ -1588,10 +1694,10 @@ Paragraph4""";
         expect(doc.nodeCount, 2);
 
         expect(doc.first, isA<ParagraphNode>());
-        expect((doc.first as ParagraphNode).text.text, 'First Paragraph.\n\n\nStill First Paragraph');
+        expect((doc.first as ParagraphNode).text.toPlainText(), 'First Paragraph.\n\n\nStill First Paragraph');
 
         expect(doc.last, isA<ParagraphNode>());
-        expect((doc.last as ParagraphNode).text.text, 'Second Paragraph');
+        expect((doc.last as ParagraphNode).text.toPlainText(), 'Second Paragraph');
       });
 
       test('paragraph beginning with multiple blank lines', () {
@@ -1600,10 +1706,10 @@ Paragraph4""";
         expect(doc.nodeCount, 2);
 
         expect(doc.first, isA<ParagraphNode>());
-        expect((doc.first as ParagraphNode).text.text, '\n\nFirst Paragraph.');
+        expect((doc.first as ParagraphNode).text.toPlainText(), '\n\nFirst Paragraph.');
 
         expect(doc.last, isA<ParagraphNode>());
-        expect((doc.last as ParagraphNode).text.text, 'Second Paragraph');
+        expect((doc.last as ParagraphNode).text.toPlainText(), 'Second Paragraph');
       });
 
       test('document ending with an empty paragraph', () {
@@ -1616,10 +1722,10 @@ First Paragraph.
         expect(doc.nodeCount, 2);
 
         expect(doc.first, isA<ParagraphNode>());
-        expect((doc.first as ParagraphNode).text.text, 'First Paragraph.');
+        expect((doc.first as ParagraphNode).text.toPlainText(), 'First Paragraph.');
 
         expect(doc.last, isA<ParagraphNode>());
-        expect((doc.last as ParagraphNode).text.text, '');
+        expect((doc.last as ParagraphNode).text.toPlainText(), '');
       });
 
       test('empty markdown produces an empty paragraph', () {
@@ -1628,7 +1734,7 @@ First Paragraph.
         expect(doc.nodeCount, 1);
 
         expect(doc.first, isA<ParagraphNode>());
-        expect((doc.first as ParagraphNode).text.text, '');
+        expect((doc.first as ParagraphNode).text.toPlainText(), '');
       });
     });
   });

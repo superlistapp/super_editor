@@ -1,5 +1,3 @@
-import 'dart:ui';
-
 import 'package:clock/clock.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -26,13 +24,13 @@ void main() {
       await tester.typeImeText("a");
 
       // Ensure we entered the "a".
-      expect(SuperEditorInspector.findTextInComponent("1").text, "a");
+      expect(SuperEditorInspector.findTextInComponent("1").toPlainText(), "a");
 
       // Try to run undo.
       await tester.pressCmdZ(tester);
 
       // Ensure that the text was unchanged.
-      expect(SuperEditorInspector.findTextInComponent("1").text, "a");
+      expect(SuperEditorInspector.findTextInComponent("1").toPlainText(), "a");
     });
 
     group("text insertion >", () {
@@ -118,7 +116,7 @@ void main() {
         // Type characters.
         await tester.typeImeText("Hello");
 
-        expect(SuperEditorInspector.findTextInComponent("1").text, "Hello");
+        expect(SuperEditorInspector.findTextInComponent("1").toPlainText(), "Hello");
         expect(
           SuperEditorInspector.findDocumentSelection(),
           const DocumentSelection.collapsed(
@@ -204,14 +202,14 @@ void main() {
         await tester.pressKey(LogicalKeyboardKey.keyB);
 
         // Ensure we inserted the text.
-        expect((testContext.document.getNodeAt(1) as TextNode).text.text, "ab");
+        expect((testContext.document.getNodeAt(1) as TextNode).text.toPlainText(), "ab");
 
         // Undo the text insertion.
         // TODO: remove `tester` reference after updating flutter_test_robots
         await tester.pressCmdZ(tester);
 
         // Ensure that the paragraph removed the last entered character.
-        expect((testContext.document.getNodeAt(1) as TextNode).text.text, "a");
+        expect((testContext.document.getNodeAt(1) as TextNode).text.toPlainText(), "a");
       });
     });
 
@@ -232,7 +230,7 @@ void main() {
         final document = editContext.document;
         var paragraph = document.first as ParagraphNode;
         expect(paragraph.metadata['blockType'], header1Attribution);
-        expect(SuperEditorInspector.findTextInComponent(document.first.id).text, "");
+        expect(SuperEditorInspector.findTextInComponent(document.first.id).toPlainText(), "");
 
         await tester.pressCmdZ(tester);
         await tester.pump();
@@ -240,7 +238,7 @@ void main() {
         // Ensure that the header attribution is gone.
         paragraph = document.first as ParagraphNode;
         expect(paragraph.metadata['blockType'], paragraphAttribution);
-        expect(SuperEditorInspector.findTextInComponent(document.first.id).text, "# ");
+        expect(SuperEditorInspector.findTextInComponent(document.first.id).toPlainText(), "# ");
       });
 
       testWidgetsOnMac("dashes to em dash", (tester) async {
@@ -256,19 +254,19 @@ void main() {
         await tester.typeImeText("--");
 
         // Ensure that the double dashes are now an "em" dash.
-        expect(SuperEditorInspector.findTextInComponent("1").text, "—");
+        expect(SuperEditorInspector.findTextInComponent("1").toPlainText(), "—");
 
         await tester.pressCmdZ(tester);
         await tester.pump();
 
         // Ensure that the em dash was reverted to the regular dashes.
-        expect(SuperEditorInspector.findTextInComponent("1").text, "--");
+        expect(SuperEditorInspector.findTextInComponent("1").toPlainText(), "--");
 
         // Continue typing.
         await tester.typeImeText(" ");
 
         // Ensure that the dashes weren't reconverted into an em dash.
-        expect(SuperEditorInspector.findTextInComponent("1").text, "-- ");
+        expect(SuperEditorInspector.findTextInComponent("1").toPlainText(), "-- ");
       });
 
       testWidgetsOnMac("paragraph to list item", (tester) async {
@@ -287,7 +285,7 @@ void main() {
         final document = editContext.document;
         var node = document.first as TextNode;
         expect(node, isA<ListItemNode>());
-        expect(SuperEditorInspector.findTextInComponent(document.first.id).text, "");
+        expect(SuperEditorInspector.findTextInComponent(document.first.id).toPlainText(), "");
 
         await tester.pressCmdZ(tester);
         await tester.pump();
@@ -295,7 +293,7 @@ void main() {
         // Ensure that the node is back to a paragraph.
         node = document.first as TextNode;
         expect(node, isA<ParagraphNode>());
-        expect(SuperEditorInspector.findTextInComponent(document.first.id).text, "1. ");
+        expect(SuperEditorInspector.findTextInComponent(document.first.id).toPlainText(), "1. ");
       });
 
       testWidgetsOnMac("url to a link", (tester) async {
@@ -348,7 +346,7 @@ void main() {
         await tester.pump();
 
         expect(editContext.document.first, isA<ParagraphNode>());
-        expect(SuperEditorInspector.findTextInComponent(editContext.document.first.id).text, "—- ");
+        expect(SuperEditorInspector.findTextInComponent(editContext.document.first.id).toPlainText(), "—- ");
       });
     });
 
@@ -372,9 +370,9 @@ This is paragraph 3''');
       // Ensure the pasted content was applied as expected.
       final document = editContext.document;
       expect(document.nodeCount, 3);
-      expect(SuperEditorInspector.findTextInComponent(document.getNodeAt(0)!.id).text, "This is paragraph 1");
-      expect(SuperEditorInspector.findTextInComponent(document.getNodeAt(1)!.id).text, "This is paragraph 2");
-      expect(SuperEditorInspector.findTextInComponent(document.getNodeAt(2)!.id).text, "This is paragraph 3");
+      expect(SuperEditorInspector.findTextInComponent(document.getNodeAt(0)!.id).toPlainText(), "This is paragraph 1");
+      expect(SuperEditorInspector.findTextInComponent(document.getNodeAt(1)!.id).toPlainText(), "This is paragraph 2");
+      expect(SuperEditorInspector.findTextInComponent(document.getNodeAt(2)!.id).toPlainText(), "This is paragraph 3");
 
       // Undo the paste.
       await tester.pressCmdZ(tester);
@@ -382,7 +380,7 @@ This is paragraph 3''');
 
       // Ensure we're back to a single empty paragraph.
       expect(document.nodeCount, 1);
-      expect(SuperEditorInspector.findTextInComponent(document.getNodeAt(0)!.id).text, "");
+      expect(SuperEditorInspector.findTextInComponent(document.getNodeAt(0)!.id).toPlainText(), "");
 
       // Redo the paste
       // TODO: remove WidgetTester as required argument to this robot method
@@ -391,9 +389,9 @@ This is paragraph 3''');
 
       // Ensure the pasted content was applied as expected.
       expect(document.nodeCount, 3);
-      expect(SuperEditorInspector.findTextInComponent(document.getNodeAt(0)!.id).text, "This is paragraph 1");
-      expect(SuperEditorInspector.findTextInComponent(document.getNodeAt(1)!.id).text, "This is paragraph 2");
-      expect(SuperEditorInspector.findTextInComponent(document.getNodeAt(2)!.id).text, "This is paragraph 3");
+      expect(SuperEditorInspector.findTextInComponent(document.getNodeAt(0)!.id).toPlainText(), "This is paragraph 1");
+      expect(SuperEditorInspector.findTextInComponent(document.getNodeAt(1)!.id).toPlainText(), "This is paragraph 2");
+      expect(SuperEditorInspector.findTextInComponent(document.getNodeAt(2)!.id).toPlainText(), "This is paragraph 3");
     });
 
     group("transaction grouping >", () {
@@ -412,14 +410,14 @@ This is paragraph 3''');
           await tester.typeImeText("Hello");
 
           // Ensure our typed text exists.
-          expect(SuperEditorInspector.findTextInComponent("1").text, "Hello");
+          expect(SuperEditorInspector.findTextInComponent("1").toPlainText(), "Hello");
 
           // Undo the typing.
           await tester.pressCmdZ(tester);
           await tester.pump();
 
           // Ensure that the whole word was undone.
-          expect(SuperEditorInspector.findTextInComponent("1").text, "");
+          expect(SuperEditorInspector.findTextInComponent("1").toPlainText(), "");
         });
 
         testWidgetsOnMac("separates text typed later", (tester) async {
@@ -450,7 +448,7 @@ This is paragraph 3''');
           });
 
           // Ensure our typed text exists.
-          expect(SuperEditorInspector.findTextInComponent("1").text, "Hello World!");
+          expect(SuperEditorInspector.findTextInComponent("1").toPlainText(), "Hello World!");
 
           // Undo the typing.
           await tester.pressCmdZ(tester);
@@ -458,7 +456,7 @@ This is paragraph 3''');
 
           // Ensure that the text typed later was removed, but the text typed earlier
           // remains.
-          expect(SuperEditorInspector.findTextInComponent("1").text, "Hello ");
+          expect(SuperEditorInspector.findTextInComponent("1").toPlainText(), "Hello ");
         });
       });
 

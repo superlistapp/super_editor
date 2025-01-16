@@ -21,13 +21,13 @@ import 'package:super_editor/src/default_editor/document_gestures_touch_ios.dart
 import 'package:super_editor/src/default_editor/document_scrollable.dart';
 import 'package:super_editor/src/default_editor/layout_single_column/_styler_composing_region.dart';
 import 'package:super_editor/src/default_editor/list_items.dart';
+import 'package:super_editor/src/default_editor/tap_handlers/tap_handlers.dart';
 import 'package:super_editor/src/default_editor/tasks.dart';
-import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/content_layers.dart';
 import 'package:super_editor/src/infrastructure/documents/document_scaffold.dart';
 import 'package:super_editor/src/infrastructure/documents/document_scroller.dart';
 import 'package:super_editor/src/infrastructure/documents/selection_leader_document_layer.dart';
-import 'package:super_editor/src/infrastructure/links.dart';
+import 'package:super_editor/src/infrastructure/flutter/build_context.dart';
 import 'package:super_editor/src/infrastructure/platforms/android/toolbar.dart';
 import 'package:super_editor/src/infrastructure/platforms/ios/toolbar.dart';
 import 'package:super_editor/src/infrastructure/platforms/mac/mac_ime.dart';
@@ -124,10 +124,11 @@ class SuperEditor extends StatefulWidget {
     this.imePolicies = const SuperEditorImePolicies(),
     this.imeConfiguration,
     this.imeOverrides,
+    this.isImeConnected,
     this.keyboardActions,
     this.selectorHandlers,
     this.gestureMode,
-    this.contentTapDelegateFactory = superEditorLaunchLinkTapHandlerFactory,
+    this.contentTapDelegateFactories = const [superEditorLaunchLinkTapHandlerFactory],
     this.selectionLayerLinks,
     this.documentUnderlayBuilders = const [],
     this.documentOverlayBuilders = defaultSuperEditorDocumentOverlayBuilders,
@@ -268,15 +269,24 @@ class SuperEditor extends StatefulWidget {
   /// behaviors for various IME messages.
   final DeltaTextInputClientDecorator? imeOverrides;
 
+  /// A (optional) notifier that's notified when the IME connection opens or closes.
+  ///
+  /// A `true` value means [SuperEditor] is connected to the platform's IME, a `false`
+  /// value means [SuperEditor] isn't connected to the platforms IME.
+  final ValueNotifier<bool>? isImeConnected;
+
   /// The `SuperEditor` gesture mode, e.g., mouse or touch.
   final DocumentGestureMode? gestureMode;
 
-  /// Factory that creates a [ContentTapDelegate], which is given an
+  /// List of factories that creates a [ContentTapDelegate], which is given an
   /// opportunity to respond to taps on content before the editor, itself.
   ///
   /// A [ContentTapDelegate] might be used, for example, to launch a URL
   /// when a user taps on a link.
-  final SuperEditorContentTapDelegateFactory? contentTapDelegateFactory;
+  ///
+  /// If a handler returns [TapHandlingInstruction.halt], no subsequent handlers
+  /// nor the default tap behavior will be executed.
+  final List<SuperEditorContentTapDelegateFactory>? contentTapDelegateFactories;
 
   /// Leader links that connect leader widgets near the user's selection
   /// to carets, handles, and other things that want to follow the selection.
@@ -389,7 +399,7 @@ class SuperEditorState extends State<SuperEditor> {
   @visibleForTesting
   late SuperEditorContext editContext;
 
-  ContentTapDelegate? _contentTapDelegate;
+  List<ContentTapDelegate>? _contentTapHandlers;
 
   final _dragHandleAutoScroller = ValueNotifier<DragHandleAutoScroller?>(null);
 
@@ -413,6 +423,8 @@ class SuperEditorState extends State<SuperEditor> {
   SingleColumnLayoutPresenter get presenter => _docLayoutPresenter!;
 
   late SoftwareKeyboardController _softwareKeyboardController;
+
+  late ValueNotifier<bool> _isImeConnected;
 
   @override
   void initState() {
@@ -439,6 +451,8 @@ class SuperEditorState extends State<SuperEditor> {
     _selectionLinks = widget.selectionLayerLinks ?? SelectionLayerLinks();
 
     _softwareKeyboardController = widget.softwareKeyboardController ?? SoftwareKeyboardController();
+
+    _isImeConnected = widget.isImeConnected ?? ValueNotifier(false);
 
     widget.editor.context.put(
       Editor.layoutKey,
@@ -504,12 +518,20 @@ class SuperEditorState extends State<SuperEditor> {
       _softwareKeyboardController = widget.softwareKeyboardController ?? SoftwareKeyboardController();
     }
 
+    if (widget.isImeConnected != oldWidget.isImeConnected) {
+      _isImeConnected = widget.isImeConnected ?? ValueNotifier(false);
+    }
+
     _recomputeIfLayoutShouldShowCaret();
   }
 
   @override
   void dispose() {
-    _contentTapDelegate?.dispose();
+    if (_contentTapHandlers != null) {
+      for (final handler in _contentTapHandlers!) {
+        handler.dispose();
+      }
+    }
 
     _iosControlsController.dispose();
     _androidControlsController.dispose();
@@ -551,9 +573,13 @@ class SuperEditorState extends State<SuperEditor> {
     }
 
     // The ContentTapDelegate depends upon the EditContext. Recreate the
-    // delegate, now that we've created a new EditContext.
-    _contentTapDelegate?.dispose();
-    _contentTapDelegate = widget.contentTapDelegateFactory?.call(editContext);
+    // handlers, now that we've created a new EditContext.
+    if (_contentTapHandlers != null) {
+      for (final handler in _contentTapHandlers!) {
+        handler.dispose();
+      }
+    }
+    _contentTapHandlers = widget.contentTapDelegateFactories?.map((factory) => factory.call(editContext)).toList();
   }
 
   void _createLayoutPresenter() {
@@ -591,9 +617,12 @@ class SuperEditorState extends State<SuperEditor> {
             composingRegion: editContext.composer.composingRegion,
             showComposingUnderline: true,
           ),
-        // Selection changes are very volatile. Put that phase last
+        // Selection changes are very volatile. Put that phase last,
+        // just before the phases that the app wants to be at the end
         // to minimize view model recalculations.
         _docLayoutSelectionStyler,
+        for (final plugin in widget.plugins) //
+          ...plugin.appendedStylePhases,
       ],
     );
 
@@ -780,6 +809,7 @@ class SuperEditorState extends State<SuperEditor> {
             ..._keyboardActions,
           ],
           selectorHandlers: widget.selectorHandlers ?? defaultEditorSelectorHandlers,
+          isImeConnected: _isImeConnected,
           child: child,
         );
     }
@@ -838,7 +868,10 @@ class SuperEditorState extends State<SuperEditor> {
     }
   }
 
-  Widget _buildGestureInteractor(BuildContext context) {
+  Widget _buildGestureInteractor(BuildContext context, {required Widget child}) {
+    // Ensure that gesture object fill entire viewport when not being
+    // in user specified scrollable.
+    final fillViewport = context.findAncestorScrollableWithVerticalScroll == null;
     switch (gestureMode) {
       case DocumentGestureMode.mouse:
         return DocumentMouseInteractor(
@@ -848,9 +881,15 @@ class SuperEditorState extends State<SuperEditor> {
           getDocumentLayout: () => editContext.documentLayout,
           selectionChanges: editContext.composer.selectionChanges,
           selectionNotifier: editContext.composer.selectionNotifier,
-          contentTapHandler: _contentTapDelegate,
+          contentTapHandlers: [
+            ..._contentTapHandlers ?? [],
+            for (final plugin in widget.plugins) //
+              ...plugin.contentTapHandlers,
+          ],
           autoScroller: _autoScrollController,
+          fillViewport: fillViewport,
           showDebugPaint: widget.debugPaint.gestures,
+          child: child,
         );
       case DocumentGestureMode.android:
         return AndroidDocumentTouchInteractor(
@@ -859,11 +898,18 @@ class SuperEditorState extends State<SuperEditor> {
           document: editContext.document,
           getDocumentLayout: () => editContext.documentLayout,
           selection: editContext.composer.selectionNotifier,
+          openKeyboardWhenTappingExistingSelection: widget.selectionPolicies.openKeyboardWhenTappingExistingSelection,
           openSoftwareKeyboard: _openSoftareKeyboard,
-          contentTapHandler: _contentTapDelegate,
+          contentTapHandlers: [
+            ..._contentTapHandlers ?? [],
+            for (final plugin in widget.plugins) //
+              ...plugin.contentTapHandlers,
+          ],
           scrollController: _scrollController,
           dragHandleAutoScroller: _dragHandleAutoScroller,
+          fillViewport: fillViewport,
           showDebugPaint: widget.debugPaint.gestures,
+          child: child,
         );
       case DocumentGestureMode.iOS:
         return IosDocumentTouchInteractor(
@@ -872,11 +918,19 @@ class SuperEditorState extends State<SuperEditor> {
           document: editContext.document,
           getDocumentLayout: () => editContext.documentLayout,
           selection: editContext.composer.selectionNotifier,
+          openKeyboardWhenTappingExistingSelection: widget.selectionPolicies.openKeyboardWhenTappingExistingSelection,
           openSoftwareKeyboard: _openSoftareKeyboard,
-          contentTapHandler: _contentTapDelegate,
+          isImeConnected: _isImeConnected,
+          contentTapHandlers: [
+            ..._contentTapHandlers ?? [],
+            for (final plugin in widget.plugins) //
+              ...plugin.contentTapHandlers,
+          ],
           scrollController: _scrollController,
           dragHandleAutoScroller: _dragHandleAutoScroller,
+          fillViewport: fillViewport,
           showDebugPaint: widget.debugPaint.gestures,
+          child: child,
         );
     }
   }
@@ -896,16 +950,9 @@ Widget iOSSystemPopoverEditorToolbarWithFallbackBuilder(
     return const SizedBox();
   }
 
-  if (focalPoint.offset == null || focalPoint.leaderSize == null) {
-    // It's unclear when/why this might happen. But there seem to be some
-    // cases, such as placing a caret in an empty document and tapping again
-    // to show the toolbar.
-    return const SizedBox();
-  }
-
   if (IOSSystemContextMenu.isSupported(context)) {
     return IOSSystemContextMenu(
-      anchor: focalPoint.offset! & focalPoint.leaderSize!,
+      leaderLink: focalPoint,
     );
   }
 
@@ -1129,6 +1176,16 @@ abstract class SuperEditorPlugin {
 
   /// Additional overlay [SuperEditorLayerBuilder]s that will be added to a given [SuperEditor].
   List<SuperEditorLayerBuilder> get documentOverlayBuilders => [];
+
+  /// Optional handlers that respond to taps on content, e.g., opening
+  /// a link when the user taps on text with a link attribution.
+  ///
+  /// If a handler returns [TapHandlingInstruction.halt], no subsequent handlers
+  /// nor the default tap behavior will be executed.
+  List<ContentTapDelegate> get contentTapHandlers => const [];
+
+  /// Custom style phases that are added to the very end of the [SuperEditor] style phases.
+  List<SingleColumnLayoutStylePhase> get appendedStylePhases => const [];
 }
 
 /// A collection of policies that dictate how a [SuperEditor]'s selection will change
@@ -1137,6 +1194,7 @@ class SuperEditorSelectionPolicies {
   const SuperEditorSelectionPolicies({
     this.placeCaretAtEndOfDocumentOnGainFocus = true,
     this.restorePreviousSelectionOnGainFocus = true,
+    this.openKeyboardWhenTappingExistingSelection = true,
     this.clearSelectionWhenEditorLosesFocus = true,
     this.clearSelectionWhenImeConnectionCloses = true,
   });
@@ -1150,6 +1208,30 @@ class SuperEditorSelectionPolicies {
   /// Whether the editor's previous selection should be restored when the editor re-gains
   /// focus, after having previous lost focus.
   final bool restorePreviousSelectionOnGainFocus;
+
+  /// {@template openKeyboardWhenTappingExistingSelection}
+  /// Whether the software keyboard should be opened when the user taps on the existing
+  /// selection.
+  ///
+  /// Defaults to `true`.
+  ///
+  /// Typically, when an editor has a selection, the software keyboard is already open.
+  /// However, in some cases, the user might want to temporarily close the keyboard. For
+  /// example, the user might replace the keyboard with a custom emoji picker panel.
+  ///
+  /// When the user is done with the temporary keyboard replacement, the user then wants to
+  /// open the keyboard again, so the user taps on the caret. If this property is `true`
+  /// then tapping on the caret will open the keyboard again.
+  ///
+  /// In other, similar cases, the user might want to be able to tap on the editor without
+  /// opening the keyboard. For example, the user might open a keyboard panel that can insert
+  /// various types of content. In that case, the user might want to move the caret to then
+  /// insert something from the panel. In this case, it's easy to accidentally tap on the
+  /// existing caret, which would then close the panel and open the keyboard. To avoid this
+  /// annoyance, this property can be set to `false`, in which case tapping on the caret won't
+  /// automatically open the keyboard. It's left to the app to re-open the keyboard when desired.
+  /// {@endtemplate}
+  final bool openKeyboardWhenTappingExistingSelection;
 
   /// Whether the editor's selection should be removed when the editor loses
   /// all focus (not just primary focus).
@@ -1578,6 +1660,7 @@ final defaultStylesheet = Stylesheet(
     ),
   ],
   inlineTextStyler: defaultInlineTextStyler,
+  inlineWidgetBuilders: defaultInlineWidgetBuilderChain,
 );
 
 TextStyle defaultInlineTextStyler(Set<Attribution> attributions, TextStyle existingStyle) {
@@ -1647,81 +1730,3 @@ TextStyle defaultStyleBuilder(Set<Attribution> attributions) {
 const defaultSelectionStyle = SelectionStyles(
   selectionColor: Color(0xFFACCEF7),
 );
-
-typedef SuperEditorContentTapDelegateFactory = ContentTapDelegate Function(SuperEditorContext editContext);
-
-SuperEditorLaunchLinkTapHandler superEditorLaunchLinkTapHandlerFactory(SuperEditorContext editContext) =>
-    SuperEditorLaunchLinkTapHandler(editContext.document, editContext.composer);
-
-/// A [ContentTapDelegate] that opens links when the user taps text with
-/// a [LinkAttribution].
-///
-/// This delegate only opens links when [composer.isInInteractionMode] is
-/// `true`.
-class SuperEditorLaunchLinkTapHandler extends ContentTapDelegate {
-  SuperEditorLaunchLinkTapHandler(this.document, this.composer) {
-    composer.isInInteractionMode.addListener(notifyListeners);
-  }
-
-  @override
-  void dispose() {
-    composer.isInInteractionMode.removeListener(notifyListeners);
-    super.dispose();
-  }
-
-  final Document document;
-  final DocumentComposer composer;
-
-  @override
-  MouseCursor? mouseCursorForContentHover(DocumentPosition hoverPosition) {
-    if (!composer.isInInteractionMode.value) {
-      // The editor isn't in "interaction mode". We don't want a special cursor
-      return null;
-    }
-
-    final link = _getLinkAtPosition(hoverPosition);
-    return link != null ? SystemMouseCursors.click : null;
-  }
-
-  @override
-  TapHandlingInstruction onTap(DocumentPosition tapPosition) {
-    if (!composer.isInInteractionMode.value) {
-      // The editor isn't in "interaction mode". We don't want to allow
-      // users to open links by tapping on them.
-      return TapHandlingInstruction.continueHandling;
-    }
-
-    final link = _getLinkAtPosition(tapPosition);
-    if (link != null) {
-      // The user tapped on a link. Launch it.
-      UrlLauncher.instance.launchUrl(link);
-      return TapHandlingInstruction.halt;
-    } else {
-      // The user didn't tap on a link.
-      return TapHandlingInstruction.continueHandling;
-    }
-  }
-
-  Uri? _getLinkAtPosition(DocumentPosition position) {
-    final nodePosition = position.nodePosition;
-    if (nodePosition is! TextNodePosition) {
-      return null;
-    }
-
-    final textNode = document.getNodeById(position.nodeId);
-    if (textNode is! TextNode) {
-      editorGesturesLog
-          .shout("Received a report of a tap on a TextNodePosition, but the node with that ID is a: $textNode");
-      return null;
-    }
-
-    final tappedAttributions = textNode.text.getAllAttributionsAt(nodePosition.offset);
-    for (final tappedAttribution in tappedAttributions) {
-      if (tappedAttribution is LinkAttribution) {
-        return tappedAttribution.uri;
-      }
-    }
-
-    return null;
-  }
-}

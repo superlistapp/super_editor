@@ -226,14 +226,19 @@ class ClearTextAttributionsCommand extends EditCommand {
         resizeSpansToFitInRange: true,
       );
       for (final span in spans) {
-        node.text = AttributedText(
-          node.text.text,
-          node.text.spans.copy()
-            ..removeAttribution(
-              attributionToRemove: span.attribution,
-              start: span.start,
-              end: span.end,
+        document.replaceNode(
+          oldNode: node,
+          newNode: node.copyTextNodeWith(
+            text: AttributedText(
+              node.text.text,
+              node.text.spans.copy()
+                ..removeAttribution(
+                  attributionToRemove: span.attribution,
+                  start: span.start,
+                  end: span.end,
+                ),
             ),
+          ),
         );
 
         executor.logChanges([
@@ -609,9 +614,11 @@ ExecutionInstruction enterToInsertNewlineInCodeBlock({
     return ExecutionInstruction.continueExecution;
   }
 
-  final didInsertNewline = editContext.commonOps.insertPlainText('\n');
+  editContext.editor.execute([
+    InsertNewlineAtCaretRequest(),
+  ]);
 
-  return didInsertNewline ? ExecutionInstruction.haltExecution : ExecutionInstruction.continueExecution;
+  return ExecutionInstruction.haltExecution;
 }
 
 enum FeatherTextBlock {
