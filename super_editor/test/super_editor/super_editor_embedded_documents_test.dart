@@ -11,6 +11,11 @@ import 'supereditor_test_tools.dart';
 void main() {
   group("SuperEditor embedded documents >", () {
     testWidgetsOnAllPlatforms("displays embedded documents", (tester) async {
+      tester.view.physicalSize = const Size(600, 600);
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+      });
+
       await tester
           .createDocument()
           .withCustomContent(MutableDocument(nodes: [

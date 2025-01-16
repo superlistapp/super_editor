@@ -453,9 +453,15 @@ class DocumentImeSerializer {
 
   TextPosition _documentToImePosition(DocumentPosition docPosition) {
     editorImeLog.fine("Converting DocumentPosition to IME TextPosition: $docPosition");
-    final imeRange = docTextNodesToImeRanges[docPosition.nodeId];
+    // FIXME: don't assume top-level node
+    final nodePath = NodePath.forNode(docPosition.nodeId);
+    final imeRange = docTextNodesToImeRanges[nodePath];
     if (imeRange == null) {
-      throw Exception("No such document position in the IME content: $docPosition");
+      print("Available node paths in mapping:");
+      for (final entry in docTextNodesToImeRanges.entries) {
+        print(" - ${entry.key}");
+      }
+      throw Exception("No such node path in the IME content: $nodePath");
     }
 
     final nodePosition = docPosition.nodePosition;

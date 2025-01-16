@@ -519,6 +519,9 @@ class NodePath {
   NodePath addSubPath(String nodeId) => NodePath([...nodeIds, nodeId]);
 
   @override
+  String toString() => "[NodePath] - ${nodeIds.join(" > ")}";
+
+  @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       other is NodePath &&
@@ -526,7 +529,7 @@ class NodePath {
           const DeepCollectionEquality().equals(nodeIds, other.nodeIds);
 
   @override
-  int get hashCode => nodeIds.hashCode;
+  int get hashCode => const ListEquality().hash(nodeIds);
 }
 
 /// A [DocumentNode] that contains other [DocumentNode]s in a hierarchy.
