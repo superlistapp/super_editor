@@ -35,3 +35,6 @@ Quill Delta document. Also, a `SuperEditor` document can be serialized to a Quil
 Regardless of the incoming or outgoing document format, the actual editing pipeline within `SuperEditor`
 remains the same. Thus, you could start a document from Markdown, and then export a document to
 Quill Delta, or vis-a-versa. `SuperEditor` internals are format agnostic.
+
+## References
+ * Interactive Playground: https://v1.quilljs.com/playground/
