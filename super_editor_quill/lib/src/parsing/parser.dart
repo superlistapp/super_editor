@@ -243,29 +243,10 @@ extension OperationParser on Operation {
           break;
         }
 
+        // Beginning with the last non-empty node, move backwards, collecting all
+        // nodes that should be merged into one.
         final nodeBeforeTrailingNewline = document.getNodeBefore(document.last)!;
         final blockTypeToMerge = nodeBeforeTrailingNewline.getMetadataValue(NodeMetadata.blockType);
-        var shouldMerge = false;
-        for (final rule in blockMergeRules) {
-          final ruleShouldMerge = rule.shouldMerge(blockTypeToMerge);
-          if (ruleShouldMerge == true) {
-            // The rule says we definitely want to merge.
-            shouldMerge = true;
-            break;
-          }
-          if (ruleShouldMerge == false) {
-            // The rule says we definitely don't want to merge.
-            shouldMerge = false;
-            break;
-          }
-        }
-        if (!shouldMerge) {
-          // Our merge rules don't want us to merge this node.
-          break;
-        }
-
-        // The most recently inserted node supports merging. Check if we should merge with
-        // the previous node.
         var blocksToMerge = <ParagraphNode>[];
         for (int i = document.nodeCount - 2; i >= 0; i -= 1) {
           final node = document.getNodeAt(i)!;
@@ -273,9 +254,22 @@ extension OperationParser on Operation {
             break;
           }
 
-          if (node.getMetadataValue("blockType") != blockTypeToMerge) {
-            // This node doesn't have the same block type as the one(s) we want
-            // to merge. Break out the of loop.
+          var shouldMerge = false;
+          for (final rule in blockMergeRules) {
+            final ruleShouldMerge = rule.shouldMerge(blockTypeToMerge, node.getMetadataValue(NodeMetadata.blockType));
+            if (ruleShouldMerge == true) {
+              // The rule says we definitely want to merge.
+              shouldMerge = true;
+              break;
+            }
+            if (ruleShouldMerge == false) {
+              // The rule says we definitely don't want to merge.
+              shouldMerge = false;
+              break;
+            }
+          }
+          if (!shouldMerge) {
+            // Our merge rules don't want us to merge this node.
             break;
           }
 
@@ -589,22 +583,21 @@ const defaultBlockMergeRules = [
 /// This is useful, for example, to place multiple lines of code within a
 /// single code block.
 abstract interface class DeltaBlockMergeRule {
-  /// Returns `true` if the block type should merge consecutive blocks,
-  /// `false` if it shouldn't, or `null` if this rule has no opinion
-  /// about the given [blockType].
-  bool? shouldMerge(Attribution blockType);
+  /// Returns `true` if two consecutive blocks with the given types should merge,
+  /// `false` if they shouldn't, or `null` if this rule has no opinion about the merge.
+  bool? shouldMerge(Attribution block1, Attribution block2);
 }
 
-/// A [DeltaBlockMergeRule] that chooses to merge two blocks whose block
-/// types are `==`.
+/// A [DeltaBlockMergeRule] that chooses to merge blocks whose type `==`
+/// the given block type.
 class MergeBlock implements DeltaBlockMergeRule {
   const MergeBlock(this._blockType);
 
   final Attribution _blockType;
 
   @override
-  bool? shouldMerge(Attribution blockType) {
-    if (blockType == _blockType) {
+  bool? shouldMerge(Attribution block1, Attribution block2) {
+    if (block1 == _blockType && block2 == _blockType) {
       // Yes, try to merge them.
       return true;
     }
