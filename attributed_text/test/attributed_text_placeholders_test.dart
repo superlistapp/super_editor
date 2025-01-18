@@ -247,6 +247,34 @@ void main() {
       });
     });
 
+    group("attribution queries >", () {
+      test('finds spans that exceed plain text length', () {
+        final attributedText = AttributedText(
+          'Hello world',
+          AttributedSpans(
+            attributions: [
+              const SpanMarker(attribution: ExpectedSpans.bold, offset: 0, markerType: SpanMarkerType.start),
+              const SpanMarker(attribution: ExpectedSpans.bold, offset: 12, markerType: SpanMarkerType.end),
+            ],
+          ),
+          {
+            11: const _FakePlaceholder("trailing1"),
+            12: const _FakePlaceholder("trailing2"),
+          },
+        );
+
+        final ranges = attributedText.getAttributionSpans({ExpectedSpans.bold});
+
+        expect(ranges.length, 1);
+        expect(
+          ranges,
+          [
+            const AttributionSpan(attribution: ExpectedSpans.bold, start: 0, end: 12),
+          ],
+        );
+      });
+    });
+
     group("full copy >", () {
       test("only a single placeholder", () {
         expect(
@@ -463,6 +491,66 @@ void main() {
           }),
         );
       });
+
+      test("at end of text (with attributions) with leading placeholder", () {
+        // Note: We include attributions in this test because in a client app the presence
+        //       of attributions unearthed a bug where we were still using the plain text
+        //       length, when we should have been using the text + placeholders length.
+        expect(
+          AttributedText(
+            "Hello",
+            AttributedSpans(attributions: const [
+              SpanMarker(attribution: ExpectedSpans.bold, offset: 1, markerType: SpanMarkerType.start),
+              SpanMarker(attribution: ExpectedSpans.bold, offset: 5, markerType: SpanMarkerType.end),
+            ]),
+            {
+              0: const _FakePlaceholder("leading"),
+            },
+          ).copyAndAppend(
+            AttributedText(", world!"),
+          ),
+          AttributedText(
+            "Hello, world!",
+            AttributedSpans(attributions: const [
+              SpanMarker(attribution: ExpectedSpans.bold, offset: 1, markerType: SpanMarkerType.start),
+              SpanMarker(attribution: ExpectedSpans.bold, offset: 5, markerType: SpanMarkerType.end),
+            ]),
+            {
+              0: const _FakePlaceholder("leading"),
+            },
+          ),
+        );
+      });
+
+      test("at end of text (with attributions) with trailing placeholder", () {
+        // Note: We include attributions in this test because in a client app the presence
+        //       of attributions unearthed a bug where we were still using the plain text
+        //       length, when we should have been using the text + placeholders length.
+        expect(
+          AttributedText(
+            "Hello",
+            AttributedSpans(attributions: const [
+              SpanMarker(attribution: ExpectedSpans.bold, offset: 0, markerType: SpanMarkerType.start),
+              SpanMarker(attribution: ExpectedSpans.bold, offset: 4, markerType: SpanMarkerType.end),
+            ]),
+            {
+              5: const _FakePlaceholder("trailing"),
+            },
+          ).copyAndAppend(
+            AttributedText(", world!"),
+          ),
+          AttributedText(
+            "Hello, world!",
+            AttributedSpans(attributions: const [
+              SpanMarker(attribution: ExpectedSpans.bold, offset: 0, markerType: SpanMarkerType.start),
+              SpanMarker(attribution: ExpectedSpans.bold, offset: 4, markerType: SpanMarkerType.end),
+            ]),
+            {
+              5: const _FakePlaceholder("trailing"),
+            },
+          ),
+        );
+      });
     });
 
     test("insert attributed text >", () {
@@ -575,6 +663,38 @@ void main() {
           ),
         ),
       );
+    });
+
+    group("collapses spans >", () {
+      test("when placeholders sit beyond plain text", () {
+        final attributedText = AttributedText(
+          'Hello world',
+          AttributedSpans(
+            attributions: [
+              const SpanMarker(attribution: ExpectedSpans.bold, offset: 0, markerType: SpanMarkerType.start),
+              const SpanMarker(attribution: ExpectedSpans.bold, offset: 11, markerType: SpanMarkerType.end),
+              const SpanMarker(attribution: ExpectedSpans.underline, offset: 12, markerType: SpanMarkerType.start),
+              const SpanMarker(attribution: ExpectedSpans.underline, offset: 12, markerType: SpanMarkerType.end),
+            ],
+          ),
+          {
+            11: const _FakePlaceholder("trailing1"),
+            12: const _FakePlaceholder("trailing2"),
+          },
+        );
+
+        final spans = attributedText.computeAttributionSpans().toList();
+
+        expect(spans.length, 2);
+
+        expect(spans[0].attributions, {ExpectedSpans.bold});
+        expect(spans[0].start, 0);
+        expect(spans[0].end, 11);
+
+        expect(spans[1].attributions, {ExpectedSpans.underline});
+        expect(spans[1].start, 12);
+        expect(spans[1].end, 12);
+      });
     });
   });
 }

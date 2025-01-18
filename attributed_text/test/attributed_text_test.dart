@@ -21,7 +21,7 @@ void main() {
         applyAttributions: {ExpectedSpans.bold},
       );
 
-      expect(newText.text, 'aabcdefghij');
+      expect(newText.toPlainText(), 'aabcdefghij');
       expect(
         newText.hasAttributionsWithin(attributions: {ExpectedSpans.bold}, range: const SpanRange(0, 10)),
         true,
@@ -43,7 +43,7 @@ void main() {
         );
 
         final slice = text.copyTextInRange(const SpanRange(5, 9));
-        expect(slice.text, "that");
+        expect(slice.toPlainText(), "that");
         expect(slice.length, 4);
         expect(slice.getAttributedRange({ExpectedSpans.bold}, 0), const SpanRange(0, 1));
         expect(slice.getAttributedRange({ExpectedSpans.italics}, 2), const SpanRange(2, 3));
@@ -63,7 +63,7 @@ void main() {
         );
 
         final slice = text.copyText(5, 9);
-        expect(slice.text, "that");
+        expect(slice.toPlainText(), "that");
         expect(slice.length, 4);
         expect(slice.getAttributedRange({ExpectedSpans.bold}, 0), const SpanRange(0, 1));
         expect(slice.getAttributedRange({ExpectedSpans.italics}, 2), const SpanRange(2, 3));
