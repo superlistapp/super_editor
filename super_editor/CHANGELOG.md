@@ -1,3 +1,7 @@
+## [0.3.0-dev.15] - Jan 17, 2024
+ * FEATURE: Spellcheck for mobile (when using the `super_editor_spellcheck` plugin).
+ * ADJUSTMENT: Upgrade to `attributed_text` `v0.4.2` (with some fixes to inline placeholders).
+
 ## [0.3.0-dev.14] - Jan 14, 2024
  * FIX: `KeyboardScaffoldSafeArea` breaks and defers to `MediaQuery` when there's only one in the tree.
 

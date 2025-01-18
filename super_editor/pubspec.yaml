@@ -1,6 +1,6 @@
 name: super_editor
 description: Configurable, composable, extensible text editor and document renderer for Flutter.
-version: 0.3.0-dev.14
+version: 0.3.0-dev.15
 homepage: https://github.com/superlistapp/super_editor
 funding:
   - https://flutterbountyhunters.com
@@ -29,7 +29,7 @@ dependencies:
   flutter:
     sdk: flutter
 
-  attributed_text: ^0.4.1
+  attributed_text: ^0.4.2
   characters: ^1.3.0
   collection: ^1.15.0
   follow_the_leader: ^0.0.4+8
