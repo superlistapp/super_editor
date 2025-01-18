@@ -1,13 +1,13 @@
 import 'dart:math';
 import 'dart:ui' as ui;
 
-import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart' hide SelectableText;
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 import 'package:super_editor/src/core/document_layout.dart';
+import 'package:super_editor/src/default_editor/text_tools.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/actions.dart';
 import 'package:super_editor/src/infrastructure/attributed_text_styles.dart';
@@ -23,7 +23,6 @@ import 'package:super_editor/src/infrastructure/multi_tap_gesture.dart';
 import 'package:super_editor/src/infrastructure/platforms/mac/mac_ime.dart';
 import 'package:super_editor/src/infrastructure/platforms/platform.dart';
 import 'package:super_editor/src/infrastructure/text_input.dart';
-import 'package:super_editor/src/super_textfield/infrastructure/text_field_gestures_interaction_overrides.dart';
 import 'package:super_editor/src/super_textfield/infrastructure/text_field_scroller.dart';
 import 'package:super_editor/src/super_textfield/super_textfield.dart';
 import 'package:super_text_layout/super_text_layout.dart';
@@ -52,7 +51,7 @@ class SuperDesktopTextField extends StatefulWidget {
     this.tapRegionGroupId,
     this.textController,
     this.textStyleBuilder = defaultTextFieldStyleBuilder,
-    this.textAlign = TextAlign.left,
+    this.textAlign,
     this.hintBehavior = HintBehavior.displayHintUntilFocus,
     this.hintBuilder,
     this.selectionHighlightStyle = const SelectionHighlightStyle(
@@ -102,7 +101,10 @@ class SuperDesktopTextField extends StatefulWidget {
   final WidgetBuilder? hintBuilder;
 
   /// The alignment to use for text in this text field.
-  final TextAlign textAlign;
+  ///
+  /// If `null`, the text alignment is determined by the text direction
+  /// of the content.
+  final TextAlign? textAlign;
 
   /// The visual representation of the user's selection highlight.
   final SelectionHighlightStyle selectionHighlightStyle;
@@ -170,6 +172,22 @@ class SuperDesktopTextFieldState extends State<SuperDesktopTextField> implements
 
   late SuperTextFieldContext _textFieldContext;
   late ImeAttributedTextEditingController _controller;
+
+  /// The text direction of the first character in the text.
+  ///
+  /// Used to align and position the caret depending on whether
+  /// the text is RTL or LTR.
+  TextDirection? _contentTextDirection;
+
+  /// The text direction applied to the inner text.
+  TextDirection get _textDirection => _contentTextDirection ?? TextDirection.ltr;
+
+  TextAlign get _textAlign =>
+      widget.textAlign ??
+      ((_textDirection == TextDirection.ltr) //
+          ? TextAlign.left
+          : TextAlign.right);
+
   late ScrollController _scrollController;
   late TextFieldScroller _textFieldScroller;
 
@@ -198,6 +216,8 @@ class SuperDesktopTextFieldState extends State<SuperDesktopTextField> implements
 
     // Check if we need to update the selection.
     _updateSelectionAndComposingRegionOnFocusChange();
+
+    _contentTextDirection = getParagraphDirection(_controller.text.toPlainText());
   }
 
   @override
@@ -316,6 +336,12 @@ class SuperDesktopTextFieldState extends State<SuperDesktopTextField> implements
     // so that any pending visual content changes can happen before
     // attempting to calculate the visual position of the selection extent.
     onNextFrame((_) => _updateViewportHeight());
+
+    // Even though we calling `onNextFrame`, it doesn't necessarily mean
+    // a new frame will be scheduled. Call setState to ensure the text direction is updated.
+    setState(() {
+      _contentTextDirection = getParagraphDirection(_controller.text.toPlainText());
+    });
   }
 
   /// Returns true if the viewport height changed, false otherwise.
@@ -433,7 +459,7 @@ class SuperDesktopTextFieldState extends State<SuperDesktopTextField> implements
                     key: _textScrollKey,
                     textKey: _textKey,
                     textController: _controller,
-                    textAlign: widget.textAlign,
+                    textAlign: _textAlign,
                     scrollController: _scrollController,
                     viewportHeight: _viewportHeight,
                     estimatedLineHeight: _getEstimatedLineHeight(),
@@ -498,7 +524,8 @@ class SuperDesktopTextFieldState extends State<SuperDesktopTextField> implements
     return SuperText(
       key: _textKey,
       richText: _controller.text.computeTextSpan(widget.textStyleBuilder),
-      textAlign: widget.textAlign,
+      textAlign: _textAlign,
+      textDirection: _textDirection,
       textScaler: _textScaler,
       layerBeneathBuilder: (context, textLayout) {
         final isTextEmpty = _controller.text.isEmpty;

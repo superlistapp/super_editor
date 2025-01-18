@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:follow_the_leader/follow_the_leader.dart';
+import 'package:super_editor/src/default_editor/text_tools.dart';
 import 'package:super_editor/src/infrastructure/attributed_text_styles.dart';
 import 'package:super_editor/src/infrastructure/flutter/build_context.dart';
 import 'package:super_editor/src/infrastructure/flutter/flutter_scheduler.dart';
@@ -32,7 +33,7 @@ class SuperAndroidTextField extends StatefulWidget {
     this.focusNode,
     this.tapRegionGroupId,
     this.textController,
-    this.textAlign = TextAlign.left,
+    this.textAlign,
     this.textStyleBuilder = defaultTextFieldStyleBuilder,
     this.hintBehavior = HintBehavior.displayHintUntilFocus,
     this.hintBuilder,
@@ -63,7 +64,10 @@ class SuperAndroidTextField extends StatefulWidget {
   final ImeAttributedTextEditingController? textController;
 
   /// The alignment to use for text in this text field.
-  final TextAlign textAlign;
+  ///
+  /// If `null`, the text alignment is determined by the text direction
+  /// of the content.
+  final TextAlign? textAlign;
 
   /// Text style factory that creates styles for the content in
   /// [textController] based on the attributions in that content.
@@ -175,6 +179,21 @@ class SuperAndroidTextFieldState extends State<SuperAndroidTextField>
 
   late ImeAttributedTextEditingController _textEditingController;
 
+  /// The text direction of the first character in the text.
+  ///
+  /// Used to align and position the caret depending on whether
+  /// the text is RTL or LTR.
+  TextDirection? _contentTextDirection;
+
+  /// The text direction applied to the inner text.
+  TextDirection get _textDirection => _contentTextDirection ?? TextDirection.ltr;
+
+  TextAlign get _textAlign =>
+      widget.textAlign ??
+      ((_textDirection == TextDirection.ltr) //
+          ? TextAlign.left
+          : TextAlign.right);
+
   final _magnifierLayerLink = LeaderLink();
   late AndroidEditingOverlayController _editingOverlayController;
 
@@ -216,6 +235,8 @@ class SuperAndroidTextFieldState extends State<SuperAndroidTextField>
       caretBlinkController: _caretBlinkController,
       magnifierFocalPoint: _magnifierLayerLink,
     );
+
+    _contentTextDirection = getParagraphDirection(_textEditingController.text.toPlainText());
 
     WidgetsBinding.instance.addObserver(this);
 
@@ -432,6 +453,10 @@ class SuperAndroidTextFieldState extends State<SuperAndroidTextField>
     if (_textEditingController.selection.isCollapsed) {
       _editingOverlayController.hideToolbar();
     }
+
+    setState(() {
+      _contentTextDirection = getParagraphDirection(_textEditingController.text.toPlainText());
+    });
   }
 
   void _onTextScrollChange() {
@@ -576,7 +601,7 @@ class SuperAndroidTextFieldState extends State<SuperAndroidTextField>
               textScrollController: _textScrollController,
               textKey: _textContentKey,
               textEditingController: _textEditingController,
-              textAlign: widget.textAlign,
+              textAlign: _textAlign,
               minLines: widget.minLines,
               maxLines: widget.maxLines,
               lineHeight: widget.lineHeight,
@@ -612,7 +637,8 @@ class SuperAndroidTextFieldState extends State<SuperAndroidTextField>
     return SuperText(
       key: _textContentKey,
       richText: textSpan,
-      textAlign: widget.textAlign,
+      textAlign: _textAlign,
+      textDirection: _textDirection,
       textScaler: MediaQuery.textScalerOf(context),
       layerBeneathBuilder: (context, textLayout) {
         final isTextEmpty = _textEditingController.text.isEmpty;
