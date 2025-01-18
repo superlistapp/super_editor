@@ -270,14 +270,14 @@ class AttributedText {
   /// Returns all spans in this [AttributedText] for the given [attributions].
   Set<AttributionSpan> getAttributionSpans(Set<Attribution> attributions) => getAttributionSpansInRange(
         attributionFilter: (a) => attributions.contains(a),
-        range: SpanRange(0, _text.length),
+        range: SpanRange(0, length),
       );
 
   /// Returns all spans in this [AttributedText], for attributions that are
   /// selected by the given [filter].
   Set<AttributionSpan> getAttributionSpansByFilter(AttributionFilter filter) => getAttributionSpansInRange(
         attributionFilter: filter,
-        range: SpanRange(0, _text.length),
+        range: SpanRange(0, length),
       );
 
   /// Returns spans for each attribution that (at least partially) appear
@@ -502,7 +502,7 @@ class AttributedText {
 
     return AttributedText(
       _text + other._text,
-      spans.copy()..addAt(other: other.spans, index: _text.length),
+      spans.copy()..addAt(other: other.spans, index: length),
       {
         ...placeholders,
         ...other.placeholders.map((offset, placeholder) => MapEntry(offset + length, placeholder)),
@@ -707,7 +707,7 @@ class AttributedText {
   ///
   /// Attribution groups are useful when computing all style variations for [AttributedText].
   Iterable<MultiAttributionSpan> computeAttributionSpans() {
-    return spans.collapseSpans(contentLength: _text.length);
+    return spans.collapseSpans(contentLength: length);
   }
 
   /// Returns a copy of this [AttributedText].
