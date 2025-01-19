@@ -42,7 +42,8 @@ class SuperIOSTextField extends StatefulWidget {
     this.tapHandlers = const [],
     this.textController,
     this.textStyleBuilder = defaultTextFieldStyleBuilder,
-    this.textAlign,
+    this.inlineWidgetBuilders = const [],
+    this.textAlign = TextAlign.left,
     this.padding,
     this.hintBehavior = HintBehavior.displayHintUntilFocus,
     this.hintBuilder,
@@ -82,6 +83,9 @@ class SuperIOSTextField extends StatefulWidget {
   /// Text style factory that creates styles for the content in
   /// [textController] based on the attributions in that content.
   final AttributionStyleBuilder textStyleBuilder;
+
+  /// {@macro super_text_field_inline_widget_builders}
+  final InlineWidgetBuilderChain inlineWidgetBuilders;
 
   /// Padding placed around the text content of this text field, but within the
   /// scrollable viewport.
@@ -630,9 +634,10 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField>
   }
 
   Widget _buildSelectableText() {
-    final textSpan = _textEditingController.text.isNotEmpty
-        ? _textEditingController.text.computeTextSpan(widget.textStyleBuilder)
-        : AttributedText().computeTextSpan(widget.textStyleBuilder);
+    final text = _textEditingController.text.isNotEmpty //
+        ? _textEditingController.text
+        : AttributedText();
+    final textSpan = text.computeInlineSpan(context, widget.textStyleBuilder, widget.inlineWidgetBuilders);
 
     CaretStyle caretStyle = widget.caretStyle;
 

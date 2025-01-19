@@ -51,7 +51,8 @@ class SuperDesktopTextField extends StatefulWidget {
     this.tapRegionGroupId,
     this.textController,
     this.textStyleBuilder = defaultTextFieldStyleBuilder,
-    this.textAlign,
+    this.inlineWidgetBuilders = const [],
+    this.textAlign = TextAlign.left,
     this.hintBehavior = HintBehavior.displayHintUntilFocus,
     this.hintBuilder,
     this.selectionHighlightStyle = const SelectionHighlightStyle(
@@ -91,6 +92,9 @@ class SuperDesktopTextField extends StatefulWidget {
   /// Text style factory that creates styles for the content in
   /// [textController] based on the attributions in that content.
   final AttributionStyleBuilder textStyleBuilder;
+
+  /// {@macro super_text_field_inline_widget_builders}
+  final InlineWidgetBuilderChain inlineWidgetBuilders;
 
   /// Policy for when the hint should be displayed.
   final HintBehavior hintBehavior;
@@ -525,7 +529,7 @@ class SuperDesktopTextFieldState extends State<SuperDesktopTextField> implements
       textDirection: _textDirection,
       child: SuperText(
         key: _textKey,
-        richText: _controller.text.computeTextSpan(widget.textStyleBuilder),
+        richText: _controller.text.computeInlineSpan(context, widget.textStyleBuilder, widget.inlineWidgetBuilders),
         textAlign: _textAlign,
         textDirection: _textDirection,
         textScaler: _textScaler,
