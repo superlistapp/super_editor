@@ -31,7 +31,7 @@ void main() {
         );
 
         // Ensure the text is colored orange.
-        for (int i = 0; i < 9; i++) {
+        for (int i = 0; i <= 9; i++) {
           expect(
             SuperTextFieldInspector.findRichText().getSpanForPosition(TextPosition(offset: i))!.style!.color,
             Colors.orange,
