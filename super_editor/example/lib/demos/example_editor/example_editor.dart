@@ -273,6 +273,16 @@ class _ExampleEditorState extends State<ExampleEditor> {
     }
   }
 
+  /// Makes text white, for use during dark mode styling.
+  ///
+  /// This is the same behavior observed in Apple Notes.
+  Color _darkModeSelectedColorStrategy({
+    required Color originalTextColor,
+    required Color selectionHighlightColor,
+  }) {
+    return Colors.white;
+  }
+
   @override
   Widget build(BuildContext context) {
     return ValueListenableBuilder(
@@ -415,6 +425,7 @@ class _ExampleEditorState extends State<ExampleEditor> {
                       selectionColor: Colors.red.withValues(alpha: 0.3),
                     ),
               stylesheet: defaultStylesheet.copyWith(
+                selectedTextColorStrategy: isLight ? null : _darkModeSelectedColorStrategy,
                 addRulesAfter: [
                   if (!isLight) ..._darkModeStyles,
                   taskStyles,
