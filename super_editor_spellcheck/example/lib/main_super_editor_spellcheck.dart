@@ -85,7 +85,14 @@ class _SuperEditorSpellcheckScreenState extends State<_SuperEditorSpellcheckScre
     );
 
     _editor = createDefaultDocumentEditor(
-      document: MutableDocument.empty(),
+      document: MutableDocument(
+        // Start the document with some misspelled content to ensure pre-existing
+        // content is analyzed and styled.
+        nodes: [
+          ParagraphNode(id: "1", text: AttributedText("Tihs is mipelled")),
+          ParagraphNode(id: "2", text: AttributedText()),
+        ],
+      ),
       composer: MutableDocumentComposer(),
     );
 
@@ -104,8 +111,8 @@ class _SuperEditorSpellcheckScreenState extends State<_SuperEditorSpellcheckScre
       _editor.execute([
         InsertTextRequest(
           documentPosition: DocumentPosition(
-            nodeId: _editor.context.document.first.id,
-            nodePosition: _editor.context.document.first.beginningPosition,
+            nodeId: _editor.context.document.last.id,
+            nodePosition: _editor.context.document.last.beginningPosition,
           ),
           textToInsert:
               'Flutter is a populr framework developd by Google for buildng natively compilid applications for mobil, web, and desktop from a single code base. Its hot reload featur allows developers to see the changes they make in real-time without havng to restart the app, which can greatly sped up the development proccess. With a rich set of widgets and a customizble UI, Flutter makes it easy to creat beautiful and performant apps quickly.',
