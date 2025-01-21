@@ -140,6 +140,10 @@ class SpellingAndGrammarPlugin extends SuperEditorPlugin {
 
     _reaction = SpellingAndGrammarReaction(_spellingErrorSuggestions, _styler);
     editor.reactionPipeline.add(_reaction);
+
+    // Do initial spelling and grammar analysis, in case the document already
+    // contains some content.
+    _reaction.analyzeWholeDocument(editor.context);
   }
 
   @override
@@ -266,6 +270,18 @@ class SpellingAndGrammarReaction implements EditReaction {
 
   final _mobileSpellChecker = DefaultSpellCheckService();
   final _macSpellChecker = SuperEditorSpellCheckerPlugin().macSpellChecker;
+
+  /// Checks every [TextNode] in the given document for spelling and grammar
+  /// errors and stores them for visual styling.
+  void analyzeWholeDocument(EditContext editorContext) {
+    for (final node in editorContext.document) {
+      if (node is! TextNode) {
+        continue;
+      }
+
+      _findSpellingAndGrammarErrors(node);
+    }
+  }
 
   @override
   void modifyContent(EditContext editorContext, RequestDispatcher requestDispatcher, List<EditEvent> changeList) {
