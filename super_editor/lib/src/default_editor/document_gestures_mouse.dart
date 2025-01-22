@@ -364,10 +364,10 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor> with 
     }
 
     _selectionType = SelectionType.word;
-    _clearSelection();
+    bool didSelectContent = false;
 
     if (docPosition != null) {
-      bool didSelectContent = _selectWordAt(
+      didSelectContent = _selectWordAt(
         docPosition: docPosition,
         docLayout: _docLayout,
       );
@@ -387,6 +387,15 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor> with 
         // user tapped.
         _selectPosition(docPosition);
       }
+    }
+
+    // Only clear the existing selection if we were not able to place a new selection,
+    // because clearing the selection might close the IME connection, depending
+    // on the `SuperEditorImePolicies` used. If we cleared the selection and then
+    // placed a new selection, the IME connection would be closed and then immediately
+    // reopened, and this doesn't seem to work on Safari and Firefox.
+    if (!didSelectContent) {
+      _clearSelection();
     }
 
     _focusNode.requestFocus();
