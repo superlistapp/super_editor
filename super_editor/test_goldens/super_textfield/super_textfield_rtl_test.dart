@@ -12,21 +12,22 @@ import '../test_tools_goldens.dart';
 void main() {
   group('SuperTextfield > RTL mode >', () {
     testGoldensOnAllPlatforms(
-      'inserts text and paints caret on the left side',
+      'inserts text and paints caret on the left side for downstream position',
       (tester) async {
         await _pumpTestApp(tester);
 
         // Place the caret at the beginning of the text field.
         await tester.placeCaretInSuperTextField(0);
 
-        // Type the text "Example of text containing multiple lines.".
+        // Type the text "Example".
         await tester.ime.typeText(
-          'مثال لنص يحتوي على عدة أسطر',
+          'مثال',
           getter: imeClientGetter,
         );
         await tester.pumpAndSettle();
 
-        await screenMatchesGolden(tester, 'super-text-field_rtl-caret-${defaultTargetPlatform.name}');
+        await screenMatchesGolden(
+            tester, 'super-text-field_rtl-caret-at-leftmost-character-${defaultTargetPlatform.name}');
       },
       windowSize: const Size(600, 600),
     );

@@ -1,5 +1,3 @@
-import 'dart:ui';
-
 import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_test_robots/flutter_test_robots.dart';
@@ -14,7 +12,7 @@ import '../test_tools_goldens.dart';
 void main() {
   group('SuperEditor > RTL mode >', () {
     testGoldensOnAllPlatforms(
-      'inserts text and paints caret on the left side of paragraph',
+      'inserts text and paints caret on the left side of paragraph for downstream position',
       (tester) async {
         await tester //
             .createDocument()
@@ -25,19 +23,20 @@ void main() {
         // Place the caret at the beginning of the paragraph.
         await tester.placeCaretInParagraph('1', 0);
 
-        // Type the text "Example of text containing multiple lines.".
+        // Type the text "Example".
         await tester.ime.typeText(
-          'مثال لنص يحتوي على عدة أسطر.',
+          'مثال',
           getter: imeClientGetter,
         );
 
-        await screenMatchesGolden(tester, 'super-editor-rtl-caret-paragraph-${defaultTargetPlatform.name}');
+        await screenMatchesGolden(
+            tester, 'super-editor-rtl-caret-at-leftmost-character-paragraph-${defaultTargetPlatform.name}');
       },
-      windowSize: const Size(800, 500),
+      windowSize: goldenSizeSmall,
     );
 
     testGoldensOnAllPlatforms(
-      'inserts text and paints caret on the left side of unordered list item',
+      'inserts text and paints caret on the left side of unordered list item for downstream position',
       (tester) async {
         await tester //
             .createDocument()
@@ -54,19 +53,20 @@ void main() {
         // Place the caret at the beginning of the list item.
         await tester.placeCaretInParagraph('1', 0);
 
-        // Type the text "Example of text containing multiple lines.".
+        // Type the text "Example".
         await tester.ime.typeText(
-          'مثال لنص يحتوي على عدة أسطر.',
+          'مثال',
           getter: imeClientGetter,
         );
 
-        await screenMatchesGolden(tester, 'super-editor-rtl-caret-unordered-list-item-${defaultTargetPlatform.name}');
+        await screenMatchesGolden(
+            tester, 'super-editor-rtl-caret-at-leftmost-character-unordered-list-item-${defaultTargetPlatform.name}');
       },
-      windowSize: const Size(800, 500),
+      windowSize: goldenSizeSmall,
     );
 
     testGoldensOnAllPlatforms(
-      'inserts text and paints caret on the left side of ordered list item',
+      'inserts text and paints caret on the left side of ordered list item for downstream position',
       (tester) async {
         await tester //
             .createDocument()
@@ -83,19 +83,20 @@ void main() {
         // Place the caret at the beginning of the list item.
         await tester.placeCaretInParagraph('1', 0);
 
-        // Type the text "Example of text containing multiple lines.".
+        // Type the text "Example".
         await tester.ime.typeText(
-          'مثال لنص يحتوي على عدة أسطر.',
+          'مثال',
           getter: imeClientGetter,
         );
 
-        await screenMatchesGolden(tester, 'super-editor-rtl-caret-ordered-list-item-${defaultTargetPlatform.name}');
+        await screenMatchesGolden(
+            tester, 'super-editor-rtl-caret-at-leftmost-character-ordered-list-item-${defaultTargetPlatform.name}');
       },
-      windowSize: const Size(800, 500),
+      windowSize: goldenSizeSmall,
     );
 
     testGoldensOnAllPlatforms(
-      'inserts text and paints caret on the left side of task',
+      'inserts text and paints caret on the left side of task for downstream position',
       (tester) async {
         await tester //
             .createDocument()
@@ -112,15 +113,16 @@ void main() {
         // Place the caret at the beginning of the task.
         await tester.placeCaretInParagraph('1', 0);
 
-        // Type the text "Example of text containing multiple lines.".
+        // Type the text "Example".
         await tester.ime.typeText(
-          'مثال لنص يحتوي على عدة أسطر.',
+          'مثال',
           getter: imeClientGetter,
         );
 
-        await screenMatchesGolden(tester, 'super-editor-rtl-caret-task-${defaultTargetPlatform.name}');
+        await screenMatchesGolden(
+            tester, 'super-editor-rtl-caret-at-leftmost-character-task-${defaultTargetPlatform.name}');
       },
-      windowSize: const Size(800, 500),
+      windowSize: goldenSizeSmall,
     );
   });
 }
