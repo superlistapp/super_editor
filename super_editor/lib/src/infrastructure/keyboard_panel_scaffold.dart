@@ -1148,6 +1148,10 @@ class _KeyboardScaffoldSafeAreaState extends State<KeyboardScaffoldSafeArea> {
       //       a Leader and Follower in some way. That way positioning occurs as late
       //       as possible.
       WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) {
+          return;
+        }
+
         setState(() {
           // Re-run build.
         });
