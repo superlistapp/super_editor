@@ -1077,49 +1077,7 @@ class _KeyboardScaffoldSafeAreaState extends State<KeyboardScaffoldSafeArea> {
           return widget.child;
         }
 
-        // There's no ancestor KeyboardScaffoldSafeArea, but there might be an ancestor
-        // KeyboardScaffoldSafeAreaScope, whose insets we should use.
-        final inheritedGeometry = _ancestorSafeAreaScope?.geometry;
-
-        // Either use the ancestor geometry, or use our own.
-        final keyboardSafeArea = inheritedGeometry ?? KeyboardScaffoldSafeAreaScope.of(safeAreaContext).geometry;
-
-        // Get the current keyboard safe area bottom insets, and then adjust that
-        // value based on our global bottom y-value. When this widget appears at
-        // the very bottom of the screen, this adjustment will be zero (no change),
-        // but when this widget sits somewhere above the bottom of the screen, we
-        // need to account for that extra space between us and the keyboard that's
-        // coming up from the bottom of the screen.
-        var bottomInsets = keyboardSafeArea.bottomInsets;
-        if (_myBoxKey.currentContext != null && _myBoxKey.currentContext!.findRenderObject() != null) {
-          final myBox = _myBoxKey.currentContext!.findRenderObject() as RenderBox;
-          final myGlobalBottom = myBox.localToGlobal(Offset(0, myBox.size.height)).dy;
-          final spaceBelowMe = MediaQuery.sizeOf(safeAreaContext).height - myGlobalBottom;
-
-          // The bottom insets are measured from the bottom of the screen. But we might not
-          // be sitting at the bottom of the screen. There might be some space beneath us.
-          // In that case, we don't need to push as far up. Remove the space below us from
-          // the bottom insets.
-          bottomInsets = max(bottomInsets - spaceBelowMe, 0);
-        } else {
-          // This is our first widget build and we need to adjust our insets
-          // after initial layout.
-          //
-          // Note: We have a frame of lag because our inset spacing is based on other
-          //       layout results. As a result, if the content below us animates a height
-          //       change, such as a widget in a `SafeArea` where bottom `padding` animates
-          //       up/down, our content will jitter as it plays catchup one frame behind.
-          //
-          //       The only solution I can think of that might truly solve this is to use
-          //       a Leader and Follower in some way. That way positioning occurs as late
-          //       as possible.
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            setState(() {
-              // Re-run build.
-            });
-          });
-        }
-
+        final bottomInsets = _chooseBottomInsets(safeAreaContext);
         return Padding(
           padding: EdgeInsets.only(bottom: bottomInsets),
           // ^ We inject `bottomInsets` to push content above the keyboard. However, we don't
@@ -1133,6 +1091,70 @@ class _KeyboardScaffoldSafeAreaState extends State<KeyboardScaffoldSafeArea> {
         );
       }),
     );
+  }
+
+  double _chooseBottomInsets(BuildContext safeAreaContext) {
+    // There's no ancestor KeyboardScaffoldSafeArea, but there might be an ancestor
+    // KeyboardScaffoldSafeAreaScope, whose insets we should use.
+    final inheritedGeometry = _ancestorSafeAreaScope?.geometry;
+
+    // Either use the ancestor geometry, or use our own.
+    final keyboardSafeArea = inheritedGeometry ?? KeyboardScaffoldSafeAreaScope.of(safeAreaContext).geometry;
+
+    // Get the current keyboard safe area bottom insets, and then adjust that
+    // value based on our global bottom y-value. When this widget appears at
+    // the very bottom of the screen, this adjustment will be zero (no change),
+    // but when this widget sits somewhere above the bottom of the screen, we
+    // need to account for that extra space between us and the keyboard that's
+    // coming up from the bottom of the screen.
+    var bottomInsets = keyboardSafeArea.bottomInsets;
+    if (_myBoxKey.currentContext != null && _myBoxKey.currentContext!.findRenderObject() != null) {
+      final myBox = _myBoxKey.currentContext!.findRenderObject() as RenderBox;
+      final myGlobalBottom = myBox.localToGlobal(Offset(0, myBox.size.height)).dy;
+      if (myGlobalBottom.isNaN) {
+        // We've found in a client app that under some unknown circumstances we get NaN
+        // from localToGlobal(). We're not sure why. In that case, log a warning and return zero.
+        keyboardPanelLog.warning(
+          "KeyboardScaffoldSafeArea (${widget.debugLabel}) - Tried to measure our global bottom offset on the screen but received NaN from localToGlobal(). If you're able to consistently reproduce this problem, please report it to Super Editor with the repro steps.",
+        );
+        return 0;
+      }
+      if (myGlobalBottom.isNegative) {
+        // We haven't seen negative values here, but if we ever did receive one then our
+        // Padding widget would blow up. Return zero to be base.
+        keyboardPanelLog.warning(
+          "KeyboardScaffoldSafeArea (${widget.debugLabel}) - Tried to measure our global bottom offset on the screen but received a negative y-value from localToGlobal(). If you're able to consistently reproduce this problem, please report it to Super Editor with the repro steps.",
+        );
+        return 0;
+      }
+
+      final spaceBelowMe = MediaQuery.sizeOf(safeAreaContext).height - myGlobalBottom;
+
+      // The bottom insets are measured from the bottom of the screen. But we might not
+      // be sitting at the bottom of the screen. There might be some space beneath us.
+      // In that case, we don't need to push as far up. Remove the space below us from
+      // the bottom insets.
+      bottomInsets = max(bottomInsets - spaceBelowMe, 0);
+    } else {
+      // This is our first widget build and we need to adjust our insets
+      // after initial layout.
+      //
+      // Note: We have a frame of lag because our inset spacing is based on other
+      //       layout results. As a result, if the content below us animates a height
+      //       change, such as a widget in a `SafeArea` where bottom `padding` animates
+      //       up/down, our content will jitter as it plays catchup one frame behind.
+      //
+      //       The only solution I can think of that might truly solve this is to use
+      //       a Leader and Follower in some way. That way positioning occurs as late
+      //       as possible.
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        setState(() {
+          // Re-run build.
+        });
+      });
+    }
+
+    return bottomInsets;
   }
 }
 
