@@ -1,3 +1,7 @@
+## [0.3.0-dev.16] - Jan 24, 2024
+ * FIX: `KeyboardScaffoldSafeArea` in rare circumstances was trying to use `NaN` for bottom insets.
+ * FIX: On Safari/Firefox, double tapping on text closing the IME connection.
+
 ## [0.3.0-dev.15] - Jan 17, 2024
  * FEATURE: Spellcheck for mobile (when using the `super_editor_spellcheck` plugin).
  * ADJUSTMENT: Upgrade to `attributed_text` `v0.4.2` (with some fixes to inline placeholders).
