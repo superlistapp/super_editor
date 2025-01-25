@@ -331,38 +331,42 @@ class _ParagraphComponentState extends State<ParagraphComponent>
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Indent spacing on left.
-        SizedBox(
-          width: widget.viewModel.indentCalculator(
-            widget.viewModel.textStyleBuilder({}),
-            widget.viewModel.indent,
+    return Directionality(
+      textDirection: widget.viewModel.textDirection,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Indent spacing on left.
+          SizedBox(
+            width: widget.viewModel.indentCalculator(
+              widget.viewModel.textStyleBuilder({}),
+              widget.viewModel.indent,
+            ),
           ),
-        ),
-        // The actual paragraph UI.
-        Expanded(
-          child: TextComponent(
-            key: _textKey,
-            text: widget.viewModel.text,
-            textAlign: widget.viewModel.textAlignment,
-            textScaler: widget.viewModel.textScaler,
-            textStyleBuilder: widget.viewModel.textStyleBuilder,
-            inlineWidgetBuilders: widget.viewModel.inlineWidgetBuilders,
-            metadata: widget.viewModel.blockType != null
-                ? {
-                    'blockType': widget.viewModel.blockType,
-                  }
-                : {},
-            textSelection: widget.viewModel.selection,
-            selectionColor: widget.viewModel.selectionColor,
-            highlightWhenEmpty: widget.viewModel.highlightWhenEmpty,
-            underlines: widget.viewModel.createUnderlines(),
-            showDebugPaint: widget.showDebugPaint,
+          // The actual paragraph UI.
+          Expanded(
+            child: TextComponent(
+              key: _textKey,
+              text: widget.viewModel.text,
+              textDirection: widget.viewModel.textDirection,
+              textAlign: widget.viewModel.textAlignment,
+              textScaler: widget.viewModel.textScaler,
+              textStyleBuilder: widget.viewModel.textStyleBuilder,
+              inlineWidgetBuilders: widget.viewModel.inlineWidgetBuilders,
+              metadata: widget.viewModel.blockType != null
+                  ? {
+                      'blockType': widget.viewModel.blockType,
+                    }
+                  : {},
+              textSelection: widget.viewModel.selection,
+              selectionColor: widget.viewModel.selectionColor,
+              highlightWhenEmpty: widget.viewModel.highlightWhenEmpty,
+              underlines: widget.viewModel.createUnderlines(),
+              showDebugPaint: widget.showDebugPaint,
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }

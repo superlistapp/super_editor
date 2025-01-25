@@ -90,6 +90,7 @@ class SuperTextState extends ProseTextState<SuperText> with ProseTextBlock {
       text: LayoutAwareRichText(
         text: widget.richText,
         textAlign: widget.textAlign,
+        textDirection: widget.textDirection,
         textScaler: widget.textScaler ?? MediaQuery.textScalerOf(context),
         onMarkNeedsLayout: _invalidateParagraph,
       ),
@@ -295,12 +296,14 @@ class LayoutAwareRichText extends RichText {
     Key? key,
     required InlineSpan text,
     TextAlign textAlign = TextAlign.left,
+    TextDirection textDirection = TextDirection.ltr,
     TextScaler textScaler = TextScaler.noScaling,
     required this.onMarkNeedsLayout,
   }) : super(
           key: key,
           text: text,
           textAlign: textAlign,
+          textDirection: textDirection,
           textScaler: textScaler,
         );
 
