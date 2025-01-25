@@ -9,8 +9,7 @@ import '../supereditor_test_tools.dart';
 
 void main() {
   group('SuperEditor', () {
-    testWidgetsOnIos('keeps current selection and does not show mobile controls when swipping to pop (on iOS)',
-        (tester) async {
+    testWidgetsOnIos('keeps current selection and does not show mobile controls when swipping to pop', (tester) async {
       // Run the test with a fixed size so we know how much we need to swipe
       // to pop the page.
       tester.view
