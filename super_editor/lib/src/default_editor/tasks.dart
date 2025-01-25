@@ -245,7 +245,7 @@ class TaskComponentViewModel extends SingleColumnLayoutComponentViewModel with T
   TextBlockIndentCalculator indentCalculator;
 
   bool isComplete;
-  void Function(bool) setComplete;
+  void Function(bool)? setComplete;
 
   @override
   AttributedText text;
@@ -398,9 +398,11 @@ class _TaskComponentState extends State<TaskComponent> with ProxyDocumentCompone
             child: Checkbox(
               visualDensity: Theme.of(context).visualDensity,
               value: widget.viewModel.isComplete,
-              onChanged: (newValue) {
-                widget.viewModel.setComplete(newValue!);
-              },
+              onChanged: widget.viewModel.setComplete != null
+                  ? (newValue) {
+                      widget.viewModel.setComplete!(newValue!);
+                    }
+                  : null,
             ),
           ),
           Expanded(
