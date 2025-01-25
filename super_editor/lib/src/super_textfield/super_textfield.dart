@@ -60,7 +60,7 @@ class SuperTextField extends StatefulWidget {
     this.tapRegionGroupId,
     this.configuration,
     this.textController,
-    this.textAlign = TextAlign.left,
+    this.textAlign,
     this.textStyleBuilder = defaultTextFieldStyleBuilder,
     this.hintBehavior = HintBehavior.displayHintUntilFocus,
     this.hintBuilder,
@@ -98,7 +98,10 @@ class SuperTextField extends StatefulWidget {
   final AttributedTextEditingController? textController;
 
   /// The alignment of the text in this text field.
-  final TextAlign textAlign;
+  ///
+  /// If `null`, the text alignment is determined by the text direction
+  /// of the content.
+  final TextAlign? textAlign;
 
   /// Text style factory that creates styles for the content in
   /// [textController] based on the attributions in that content.

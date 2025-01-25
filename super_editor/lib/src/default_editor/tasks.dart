@@ -13,6 +13,7 @@ import 'package:super_editor/src/default_editor/blocks/indentation.dart';
 import 'package:super_editor/src/default_editor/multi_node_editing.dart';
 import 'package:super_editor/src/default_editor/paragraph.dart';
 import 'package:super_editor/src/default_editor/text.dart';
+import 'package:super_editor/src/default_editor/text_tools.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/attributed_text_styles.dart';
 import 'package:super_editor/src/infrastructure/composable_text.dart';
@@ -163,6 +164,8 @@ class TaskComponentBuilder implements ComponentBuilder {
       return null;
     }
 
+    final textDirection = getParagraphDirection(node.text.toPlainText());
+
     return TaskComponentViewModel(
       nodeId: node.id,
       padding: EdgeInsets.zero,
@@ -177,6 +180,8 @@ class TaskComponentBuilder implements ComponentBuilder {
         ]);
       },
       text: node.text,
+      textDirection: textDirection,
+      textAlignment: textDirection == TextDirection.ltr ? TextAlign.left : TextAlign.right,
       textStyleBuilder: noStyleBuilder,
       selectionColor: const Color(0x00000000),
     );
@@ -273,6 +278,7 @@ class TaskComponentViewModel extends SingleColumnLayoutComponentViewModel with T
       textStyleBuilder: textStyleBuilder,
       inlineWidgetBuilders: inlineWidgetBuilders,
       textDirection: textDirection,
+      textAlignment: textAlignment,
       selection: selection,
       selectionColor: selectionColor,
       highlightWhenEmpty: highlightWhenEmpty,
@@ -376,39 +382,44 @@ class _TaskComponentState extends State<TaskComponent> with ProxyDocumentCompone
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        SizedBox(
-          width: widget.viewModel.indentCalculator(
-            widget.viewModel.textStyleBuilder({}),
-            widget.viewModel.indent,
+    return Directionality(
+      textDirection: widget.viewModel.textDirection,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: widget.viewModel.indentCalculator(
+              widget.viewModel.textStyleBuilder({}),
+              widget.viewModel.indent,
+            ),
           ),
-        ),
-        Padding(
-          padding: const EdgeInsets.only(left: 16, right: 4),
-          child: Checkbox(
-            visualDensity: Theme.of(context).visualDensity,
-            value: widget.viewModel.isComplete,
-            onChanged: (newValue) {
-              widget.viewModel.setComplete(newValue!);
-            },
+          Padding(
+            padding: const EdgeInsets.only(left: 16, right: 4),
+            child: Checkbox(
+              visualDensity: Theme.of(context).visualDensity,
+              value: widget.viewModel.isComplete,
+              onChanged: (newValue) {
+                widget.viewModel.setComplete(newValue!);
+              },
+            ),
           ),
-        ),
-        Expanded(
-          child: TextComponent(
-            key: _textKey,
-            text: widget.viewModel.text,
-            textStyleBuilder: _computeStyles,
-            inlineWidgetBuilders: widget.viewModel.inlineWidgetBuilders,
-            textSelection: widget.viewModel.selection,
-            selectionColor: widget.viewModel.selectionColor,
-            highlightWhenEmpty: widget.viewModel.highlightWhenEmpty,
-            underlines: widget.viewModel.createUnderlines(),
-            showDebugPaint: widget.showDebugPaint,
+          Expanded(
+            child: TextComponent(
+              key: _textKey,
+              text: widget.viewModel.text,
+              textDirection: widget.viewModel.textDirection,
+              textAlign: widget.viewModel.textAlignment,
+              textStyleBuilder: _computeStyles,
+              inlineWidgetBuilders: widget.viewModel.inlineWidgetBuilders,
+              textSelection: widget.viewModel.selection,
+              selectionColor: widget.viewModel.selectionColor,
+              highlightWhenEmpty: widget.viewModel.highlightWhenEmpty,
+              underlines: widget.viewModel.createUnderlines(),
+              showDebugPaint: widget.showDebugPaint,
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
