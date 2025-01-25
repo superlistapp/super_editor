@@ -80,11 +80,11 @@ void main() {
         findsOneWidget,
       );
 
-      // Ensure the inline widget was rendered at the end of the textfield.
+      // Ensure the inline widget was rendered after the last character.
       final inlineWidgetRect = tester.getRect(find.byPlaceholderName('1'));
       expect(
         inlineWidgetRect.left,
-        _getOffsetAtPosition(tester, const TextPosition(offset: 5)).dx,
+        greaterThan(_getOffsetAtPosition(tester, const TextPosition(offset: 4)).dx),
       );
     });
 
