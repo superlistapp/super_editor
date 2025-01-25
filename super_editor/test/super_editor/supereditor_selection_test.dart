@@ -85,7 +85,7 @@ void main() {
         expect(richText.getSpanForPosition(const TextPosition(offset: 16))!.style!.color, Colors.green);
       });
 
-      testWidgetsOnAllPlatforms("does not crash when placing the selection on an empty paragraph", (tester) async {
+      testWidgetsOnAllPlatforms("does not crash when triple tapping on an empty paragraph", (tester) async {
         // This test is to ensure that the selection color strategy doesn't crash when the paragraph is empty.
         // See https://github.com/superlistapp/super_editor/issues/2253 for more context.
         final stylesheet = defaultStylesheet.copyWith(
