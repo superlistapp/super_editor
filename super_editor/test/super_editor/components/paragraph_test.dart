@@ -3,13 +3,10 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_test_robots/flutter_test_robots.dart';
 import 'package:flutter_test_runners/flutter_test_runners.dart';
-import 'package:super_editor/src/core/editor.dart';
-import 'package:super_editor/src/default_editor/attributions.dart';
-import 'package:super_editor/src/default_editor/paragraph.dart';
-import 'package:super_editor/src/default_editor/text.dart';
 import 'package:super_editor/super_editor.dart';
 import 'package:super_editor/super_editor_test.dart';
 
+import '../../test_runners.dart';
 import '../supereditor_test_tools.dart';
 
 void main() {
@@ -391,10 +388,11 @@ void main() {
         expect(newParagraph.indent, 0);
       });
 
-      testWidgetsOnDesktop("Backspace at start of text un-indents paragraph", (tester) async {
+      testWidgetsOnDesktopAndWeb("Backspace at start of text un-indents paragraph", (tester) async {
         await tester //
             .createDocument()
             .withSingleParagraph()
+            .withInputSource(TextInputSource.ime)
             .pump();
 
         await tester.placeCaretInParagraph("1", 0);
