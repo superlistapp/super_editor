@@ -84,6 +84,27 @@ void main() {
         expect(richText.getSpanForPosition(const TextPosition(offset: 5))!.style!.color, Colors.green);
         expect(richText.getSpanForPosition(const TextPosition(offset: 16))!.style!.color, Colors.green);
       });
+
+      testWidgetsOnAllPlatforms("does not crash when placing the selection on an empty paragraph", (tester) async {
+        // This test is to ensure that the selection color strategy doesn't crash when the paragraph is empty.
+        // See https://github.com/superlistapp/super_editor/issues/2253 for more context.
+        final stylesheet = defaultStylesheet.copyWith(
+          selectedTextColorStrategy: ({required Color originalTextColor, required Color selectionHighlightColor}) {
+            return Colors.white;
+          },
+        );
+
+        await tester //
+            .createDocument()
+            .withSingleEmptyParagraph()
+            .useStylesheet(stylesheet)
+            .pump();
+
+        // Tripple tap on the empty paragraph.
+        await tester.tripleTapInParagraph("1", 0);
+
+        // Reaching this point means the editor didn't crash.
+      });
     });
 
     testWidgetsOnArbitraryDesktop("calculates upstream document selection within a single node", (tester) async {
