@@ -8,6 +8,7 @@ import 'package:super_editor/super_editor.dart';
 import 'package:super_editor/super_editor_test.dart';
 import 'package:super_text_layout/super_text_layout.dart';
 
+import '../../test_runners.dart';
 import '../supereditor_test_tools.dart';
 
 void main() {
@@ -323,6 +324,24 @@ void main() {
 
         // Press SHIFT + TAB to trigger the list unindent command.
         await _pressShiftTab(tester);
+
+        // Ensure the list item has first level of indentation.
+        expect(doc.last.asListItem.indent, 0);
+      });
+
+      testWidgetsOnDesktopAndWeb('unindents with BACKSPACE at the beginning of the text', (tester) async {
+        await _pumpUnorderedListWithTextField(tester);
+
+        final doc = SuperEditorInspector.findDocument()!;
+
+        // Place caret at the last list item, which has two levels of indentation.
+        await tester.placeCaretInParagraph(doc.last.id, 0);
+
+        // Ensure the list item has second level of indentation.
+        expect(doc.last.asListItem.indent, 1);
+
+        // Press BACKSPACE to trigger the list unindent command.
+        await tester.pressBackspace();
 
         // Ensure the list item has first level of indentation.
         expect(doc.last.asListItem.indent, 0);
