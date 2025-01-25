@@ -664,7 +664,7 @@ class SuperEditorState extends State<SuperEditor> {
       widget.keyboardActions ??
       (inputSource == TextInputSource.ime ? defaultImeKeyboardActions : defaultKeyboardActions);
 
-  void _openSoftareKeyboard() {
+  void _openSoftwareKeyboard() {
     if (!_softwareKeyboardController.hasDelegate) {
       // There is no IME connection. It isn't possible to request the keyboard.
       return;
@@ -898,7 +898,7 @@ class SuperEditorState extends State<SuperEditor> {
           getDocumentLayout: () => editContext.documentLayout,
           selection: editContext.composer.selectionNotifier,
           openKeyboardWhenTappingExistingSelection: widget.selectionPolicies.openKeyboardWhenTappingExistingSelection,
-          openSoftwareKeyboard: _openSoftareKeyboard,
+          openSoftwareKeyboard: _openSoftwareKeyboard,
           contentTapHandlers: [
             ..._contentTapHandlers ?? [],
             for (final plugin in widget.plugins) //
@@ -918,7 +918,7 @@ class SuperEditorState extends State<SuperEditor> {
           getDocumentLayout: () => editContext.documentLayout,
           selection: editContext.composer.selectionNotifier,
           openKeyboardWhenTappingExistingSelection: widget.selectionPolicies.openKeyboardWhenTappingExistingSelection,
-          openSoftwareKeyboard: _openSoftareKeyboard,
+          openSoftwareKeyboard: _openSoftwareKeyboard,
           isImeConnected: _isImeConnected,
           contentTapHandlers: [
             ..._contentTapHandlers ?? [],
