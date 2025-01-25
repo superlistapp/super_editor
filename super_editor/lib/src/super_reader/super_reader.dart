@@ -20,6 +20,7 @@ import 'package:super_editor/src/default_editor/layout_single_column/_styler_shy
 import 'package:super_editor/src/default_editor/layout_single_column/_styler_user_selection.dart';
 import 'package:super_editor/src/default_editor/list_items.dart';
 import 'package:super_editor/src/default_editor/paragraph.dart';
+import 'package:super_editor/src/default_editor/tasks.dart';
 import 'package:super_editor/src/default_editor/text.dart';
 import 'package:super_editor/src/default_editor/unknown_component.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
@@ -745,6 +746,7 @@ final readOnlyDefaultComponentBuilders = <ComponentBuilder>[
   const ListItemComponentBuilder(),
   const ImageComponentBuilder(),
   const HorizontalRuleComponentBuilder(),
+  const ReadOnlyTaskComponentBuilder(),
 ];
 
 /// Stylesheet applied to all [SuperReader]s by default.

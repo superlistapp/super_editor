@@ -287,7 +287,7 @@ class TestDocumentConfigurator {
             stylesheet: _stylesheet,
             componentBuilders: [
               ..._addedComponents,
-              ...(_componentBuilders ?? defaultComponentBuilders),
+              ...(_componentBuilders ?? readOnlyDefaultComponentBuilders),
             ],
             scrollController: _scrollController,
             androidToolbarBuilder: _androidToolbarBuilder,
