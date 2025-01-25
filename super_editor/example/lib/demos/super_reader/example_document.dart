@@ -88,6 +88,38 @@ Document createInitialDocument() {
       ),
       ParagraphNode(
         id: Editor.createNodeId(),
+        text: AttributedText('Quickstart 🚀'),
+        metadata: {
+          'blockType': header2Attribution,
+        },
+      ),
+      ParagraphNode(
+        id: Editor.createNodeId(),
+        text: AttributedText('To get started with your own editing experience, take the following steps:'),
+      ),
+      TaskNode(
+        id: Editor.createNodeId(),
+        isComplete: true,
+        text: AttributedText(
+          'Create and configure your document, for example, by creating a new MutableDocument.',
+        ),
+      ),
+      TaskNode(
+        id: Editor.createNodeId(),
+        isComplete: false,
+        text: AttributedText(
+          "If you want programmatic control over the user's selection and styles, create a DocumentComposer.",
+        ),
+      ),
+      TaskNode(
+        id: Editor.createNodeId(),
+        isComplete: false,
+        text: AttributedText(
+          "Build a SuperEditor widget in your widget tree, configured with your Document and (optionally) your DocumentComposer.",
+        ),
+      ),
+      ParagraphNode(
+        id: Editor.createNodeId(),
         text: AttributedText(
           "We hope you enjoy using Super Editor. Let us know what you're building, and please file issues for any bugs that you find.",
         ),
