@@ -445,7 +445,7 @@ void main() {
         );
       });
 
-      testWidgetsOnAndroid('deletes emojis with BACKSPACE (on Android)', (tester) async {
+      testWidgetsOnAndroid('deletes emojis with BACKSPACE', (tester) async {
         await _pumpSuperTextFieldEmojiTest(
           tester,
           configuration: SuperTextFieldPlatformConfiguration.android,
