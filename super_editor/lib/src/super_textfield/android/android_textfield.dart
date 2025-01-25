@@ -1,3 +1,4 @@
+import 'package:attributed_text/attributed_text.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:follow_the_leader/follow_the_leader.dart';
@@ -35,6 +36,7 @@ class SuperAndroidTextField extends StatefulWidget {
     this.textController,
     this.textAlign,
     this.textStyleBuilder = defaultTextFieldStyleBuilder,
+    this.inlineWidgetBuilders = const [],
     this.hintBehavior = HintBehavior.displayHintUntilFocus,
     this.hintBuilder,
     this.minLines,
@@ -72,6 +74,9 @@ class SuperAndroidTextField extends StatefulWidget {
   /// Text style factory that creates styles for the content in
   /// [textController] based on the attributions in that content.
   final AttributionStyleBuilder textStyleBuilder;
+
+  /// {@macro super_text_field_inline_widget_builders}
+  final InlineWidgetBuilderChain inlineWidgetBuilders;
 
   /// Policy for when the hint should be displayed.
   final HintBehavior hintBehavior;
@@ -631,7 +636,7 @@ class SuperAndroidTextFieldState extends State<SuperAndroidTextField>
 
   Widget _buildSelectableText() {
     final textSpan = _textEditingController.text.isNotEmpty
-        ? _textEditingController.text.computeTextSpan(widget.textStyleBuilder)
+        ? _textEditingController.text.computeInlineSpan(context, widget.textStyleBuilder, widget.inlineWidgetBuilders)
         : TextSpan(text: "", style: widget.textStyleBuilder({}));
 
     return Directionality(
