@@ -292,7 +292,7 @@ void main() {
       );
     });
 
-    testWidgetsOnAndroid("auto-scrolls to caret position when dragging the spacebar (on Android)", (tester) async {
+    testWidgetsOnAndroid("auto-scrolls to caret position when dragging the spacebar", (tester) async {
       // Pump an editor with a size that will cause it to be scrollable.
       const windowSize = Size(800, 400);
       tester.view.physicalSize = windowSize;

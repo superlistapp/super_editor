@@ -458,7 +458,7 @@ spans multiple lines.''',
       );
     });
 
-    testWidgetsOnAndroid('configures default gesture mode (on Android)', (tester) async {
+    testWidgetsOnAndroid('configures default gesture mode', (tester) async {
       await tester //
           .createDocument()
           .withSingleParagraph()

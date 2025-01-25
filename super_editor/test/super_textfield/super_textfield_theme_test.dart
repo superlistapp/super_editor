@@ -55,7 +55,7 @@ void main() {
       expect(popoverBrightness, Brightness.light);
     });
 
-    testWidgetsOnAndroid('applies app theme to the popover toolbar (on Android)', (tester) async {
+    testWidgetsOnAndroid('applies app theme to the popover toolbar', (tester) async {
       final controller = ImeAttributedTextEditingController(
         controller: AttributedTextEditingController(
           text: AttributedText('A single line textfield'),

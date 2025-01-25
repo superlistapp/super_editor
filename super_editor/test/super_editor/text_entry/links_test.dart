@@ -155,8 +155,7 @@ void main() {
         expect((textContext.document.getNodeAt(1)! as ParagraphNode).text.toPlainText(), "after link");
       });
 
-      testWidgetsOnAndroid(
-          'when pressing the newline button on the software keyboard at the end of a paragraph (on Android)',
+      testWidgetsOnAndroid('when pressing the newline button on the software keyboard at the end of a paragraph',
           (tester) async {
         final textContext = await tester //
             .createDocument()
@@ -207,8 +206,7 @@ void main() {
         expect((textContext.document.getNodeAt(1)! as ParagraphNode).text.toPlainText(), "");
       });
 
-      testWidgetsOnAndroid(
-          'when pressing the newline button on the software keyboard at the middle of a paragraph (on Android)',
+      testWidgetsOnAndroid('when pressing the newline button on the software keyboard at the middle of a paragraph',
           (tester) async {
         final textContext = await tester //
             .createDocument()
@@ -261,7 +259,7 @@ void main() {
         expect((textContext.document.getNodeAt(1)! as ParagraphNode).text.toPlainText(), "after link");
       });
 
-      testWidgetsOnIos('when pressing the newline button on the software keyboard at the end of a paragraph (on iOS)',
+      testWidgetsOnIos('when pressing the newline button on the software keyboard at the end of a paragraph',
           (tester) async {
         final textContext = await tester //
             .createDocument()
@@ -313,8 +311,7 @@ void main() {
         expect((textContext.document.getNodeAt(1)! as ParagraphNode).text.toPlainText(), "");
       });
 
-      testWidgetsOnIos(
-          'when pressing the newline button on the software keyboard at the middle of a paragraph (on iOS)',
+      testWidgetsOnIos('when pressing the newline button on the software keyboard at the middle of a paragraph',
           (tester) async {
         final textContext = await tester //
             .createDocument()
@@ -470,8 +467,7 @@ void main() {
         expect((textContext.document.getNodeAt(1)! as ListItemNode).text.toPlainText(), "after link");
       });
 
-      testWidgetsOnAndroid(
-          'when pressing the newline button on the software keyboard at the end of a list item (on Android)',
+      testWidgetsOnAndroid('when pressing the newline button on the software keyboard at the end of a list item',
           (tester) async {
         final textContext = await tester //
             .createDocument()
@@ -524,8 +520,7 @@ void main() {
         expect((textContext.document.getNodeAt(1)! as ListItemNode).text.toPlainText(), "");
       });
 
-      testWidgetsOnAndroid(
-          'when pressing the newline button on the software keyboard at the middle of a list item (on Android)',
+      testWidgetsOnAndroid('when pressing the newline button on the software keyboard at the middle of a list item',
           (tester) async {
         final textContext = await tester //
             .createDocument()
@@ -578,7 +573,7 @@ void main() {
         expect((textContext.document.getNodeAt(1)! as ListItemNode).text.toPlainText(), "after link");
       });
 
-      testWidgetsOnIos('when pressing the newline button on the software keyboard at the end of a list item (on iOS)',
+      testWidgetsOnIos('when pressing the newline button on the software keyboard at the end of a list item',
           (tester) async {
         final textContext = await tester //
             .createDocument()
@@ -632,8 +627,7 @@ void main() {
         expect((textContext.document.getNodeAt(1)! as ListItemNode).text.toPlainText(), "");
       });
 
-      testWidgetsOnIos(
-          'when pressing the newline button on the software keyboard at the middle of a list item (on iOS)',
+      testWidgetsOnIos('when pressing the newline button on the software keyboard at the middle of a list item',
           (tester) async {
         final textContext = await tester //
             .createDocument()
@@ -815,8 +809,7 @@ void main() {
         expect((document.getNodeAt(1)! as TaskNode).text.toPlainText(), "after link");
       });
 
-      testWidgetsOnAndroid(
-          'when pressing the newline button on the software keyboard at the end of a task (on Android)',
+      testWidgetsOnAndroid('when pressing the newline button on the software keyboard at the end of a task',
           (tester) async {
         final document = MutableDocument(
           nodes: [
@@ -882,8 +875,7 @@ void main() {
         expect((document.getNodeAt(1)! as TaskNode).text.toPlainText(), "");
       });
 
-      testWidgetsOnAndroid(
-          'when pressing the newline button on the software keyboard at the middle of a task (on Android)',
+      testWidgetsOnAndroid('when pressing the newline button on the software keyboard at the middle of a task',
           (tester) async {
         final document = MutableDocument(
           nodes: [
@@ -949,7 +941,7 @@ void main() {
         expect((document.getNodeAt(1)! as TaskNode).text.toPlainText(), "after link");
       });
 
-      testWidgetsOnIos('when pressing the newline button on the software keyboard at the end of a task (on iOS)',
+      testWidgetsOnIos('when pressing the newline button on the software keyboard at the end of a task',
           (tester) async {
         final document = MutableDocument(
           nodes: [
@@ -1016,7 +1008,7 @@ void main() {
         expect((document.getNodeAt(1)! as TaskNode).text.toPlainText(), "");
       });
 
-      testWidgetsOnIos('when pressing the newline button on the software keyboard at the middle of a task (on iOS)',
+      testWidgetsOnIos('when pressing the newline button on the software keyboard at the middle of a task',
           (tester) async {
         final document = MutableDocument(
           nodes: [
