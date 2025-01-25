@@ -291,7 +291,7 @@ void main() {
           expect(SuperTextFieldInspector.findSelection(), const TextSelection.collapsed(offset: 9));
         });
 
-        testWidgetsOnMac('when NUMPAD ENTER is pressed in middle of text (on MAC)', (tester) async {
+        testWidgetsOnMac('when NUMPAD ENTER is pressed in middle of tex', (tester) async {
           await _pumpSuperTextField(
             tester,
             AttributedTextEditingController(
@@ -322,7 +322,7 @@ void main() {
           expect(SuperTextFieldInspector.findSelection(), const TextSelection.collapsed(offset: 1));
         });
 
-        testWidgetsOnMac('when NUMPAD ENTER is pressed at beginning of text (on MAC)', (tester) async {
+        testWidgetsOnMac('when NUMPAD ENTER is pressed at beginning of text', (tester) async {
           await _pumpSuperTextField(
             tester,
             AttributedTextEditingController(
@@ -353,7 +353,7 @@ void main() {
           expect(SuperTextFieldInspector.findSelection(), const TextSelection.collapsed(offset: 18));
         });
 
-        testWidgetsOnMac('when NUMPAD ENTER is pressed at end of text (on MAC)', (tester) async {
+        testWidgetsOnMac('when NUMPAD ENTER is pressed at end of text', (tester) async {
           await _pumpSuperTextField(
             tester,
             AttributedTextEditingController(
@@ -812,8 +812,7 @@ void main() {
   });
 
   group('SuperTextField on some bad Android software keyboards', () {
-    testWidgetsOnAndroid('handles BACKSPACE key event instead of deletion for a collapsed selection (on Android)',
-        (tester) async {
+    testWidgetsOnAndroid('handles BACKSPACE key event instead of deletion for a collapsed selection', (tester) async {
       final controller = AttributedTextEditingController(
         text: AttributedText('This is a text'),
       );
@@ -835,8 +834,7 @@ void main() {
       expect(controller.text.toPlainText(), 'Thi is a text');
     });
 
-    testWidgetsOnAndroid('handles BACKSPACE key event instead of deletion for a expanded selection (on Android)',
-        (tester) async {
+    testWidgetsOnAndroid('handles BACKSPACE key event instead of deletion for a expanded selection', (tester) async {
       final controller = AttributedTextEditingController(
         text: AttributedText('This is a text'),
       );
