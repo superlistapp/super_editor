@@ -133,7 +133,7 @@ class _AnimatedTaskComponentState extends State<_AnimatedTaskComponent>
               child: Checkbox(
                 value: widget.viewModel.isComplete,
                 onChanged: (newValue) {
-                  widget.viewModel.setComplete(newValue!);
+                  widget.viewModel.setComplete?.call(newValue!);
                 },
               ),
             ),

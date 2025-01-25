@@ -134,6 +134,11 @@ class _SuperReaderDemoState extends State<SuperReaderDemo> {
         selection: _selection,
         overlayController: _overlayController,
         selectionLayerLinks: _selectionLayerLinks,
+        stylesheet: defaultStylesheet.copyWith(
+          addRulesAfter: [
+            taskStyles,
+          ],
+        ),
         androidToolbarBuilder: (_) => AndroidTextEditingFloatingToolbar(
           onCopyPressed: _copy,
           onSelectAllPressed: _selectAll,
