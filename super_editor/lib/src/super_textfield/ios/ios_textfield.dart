@@ -2,6 +2,7 @@ import 'package:attributed_text/attributed_text.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:follow_the_leader/follow_the_leader.dart';
+import 'package:super_editor/src/default_editor/text_tools.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/attributed_text_styles.dart';
 import 'package:super_editor/src/infrastructure/flutter/build_context.dart';
@@ -41,7 +42,7 @@ class SuperIOSTextField extends StatefulWidget {
     this.tapHandlers = const [],
     this.textController,
     this.textStyleBuilder = defaultTextFieldStyleBuilder,
-    this.textAlign = TextAlign.left,
+    this.textAlign,
     this.padding,
     this.hintBehavior = HintBehavior.displayHintUntilFocus,
     this.hintBuilder,
@@ -73,7 +74,10 @@ class SuperIOSTextField extends StatefulWidget {
   final ImeAttributedTextEditingController? textController;
 
   /// The alignment to use for text in this text field.
-  final TextAlign textAlign;
+  ///
+  /// If `null`, the text alignment is determined by the text direction
+  /// of the content.
+  final TextAlign? textAlign;
 
   /// Text style factory that creates styles for the content in
   /// [textController] based on the attributions in that content.
@@ -181,6 +185,22 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField>
   late FocusNode _focusNode;
 
   late ImeAttributedTextEditingController _textEditingController;
+
+  /// The text direction of the first character in the text.
+  ///
+  /// Used to align and position the caret depending on whether
+  /// the text is RTL or LTR.
+  TextDirection? _contentTextDirection;
+
+  /// The text direction applied to the inner text.
+  TextDirection get _textDirection => _contentTextDirection ?? TextDirection.ltr;
+
+  TextAlign get _textAlign =>
+      widget.textAlign ??
+      ((_textDirection == TextDirection.ltr) //
+          ? TextAlign.left
+          : TextAlign.right);
+
   late FloatingCursorController _floatingCursorController;
 
   final _toolbarLeaderLink = LeaderLink();
@@ -236,6 +256,8 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField>
       magnifierFocalPoint: _magnifierLeaderLink,
       overlayController: _overlayController,
     );
+
+    _contentTextDirection = getParagraphDirection(_textEditingController.text.toPlainText());
 
     WidgetsBinding.instance.addObserver(this);
 
@@ -451,6 +473,10 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField>
     if (_textEditingController.selection.isCollapsed) {
       _editingOverlayController.hideToolbar();
     }
+
+    setState(() {
+      _contentTextDirection = getParagraphDirection(_textEditingController.text.toPlainText());
+    });
   }
 
   void _onTextScrollChange() {
@@ -575,7 +601,7 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField>
               textScrollController: _textScrollController,
               textKey: _textContentKey,
               textEditingController: _textEditingController,
-              textAlign: widget.textAlign,
+              textAlign: _textAlign,
               minLines: widget.minLines,
               maxLines: widget.maxLines,
               lineHeight: widget.lineHeight,
@@ -615,70 +641,74 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField>
       caretStyle = caretStyle.copyWith(color: caretColorOverride);
     }
 
-    return SuperText(
-      key: _textContentKey,
-      richText: textSpan,
-      textAlign: widget.textAlign,
-      textScaler: MediaQuery.textScalerOf(context),
-      layerBeneathBuilder: (context, textLayout) {
-        final isTextEmpty = _textEditingController.text.isEmpty;
-        final showHint = widget.hintBuilder != null &&
-            ((isTextEmpty && widget.hintBehavior == HintBehavior.displayHintUntilTextEntered) ||
-                (isTextEmpty && !_focusNode.hasFocus && widget.hintBehavior == HintBehavior.displayHintUntilFocus));
+    return Directionality(
+      textDirection: _textDirection,
+      child: SuperText(
+        key: _textContentKey,
+        richText: textSpan,
+        textAlign: _textAlign,
+        textDirection: _textDirection,
+        textScaler: MediaQuery.textScalerOf(context),
+        layerBeneathBuilder: (context, textLayout) {
+          final isTextEmpty = _textEditingController.text.isEmpty;
+          final showHint = widget.hintBuilder != null &&
+              ((isTextEmpty && widget.hintBehavior == HintBehavior.displayHintUntilTextEntered) ||
+                  (isTextEmpty && !_focusNode.hasFocus && widget.hintBehavior == HintBehavior.displayHintUntilFocus));
 
-        return Stack(
-          clipBehavior: Clip.none,
-          children: [
-            if (_textEditingController.selection.isValid == true)
-              // Selection highlight beneath the text.
-              TextLayoutSelectionHighlight(
-                textLayout: textLayout,
-                style: SelectionHighlightStyle(
-                  color: widget.selectionColor,
-                ),
-                selection: _textEditingController.selection,
-              ),
-            // Underline beneath the composing region.
-            if (_textEditingController.composingRegion.isValid == true && widget.showComposingUnderline)
-              TextUnderlineLayer(
-                textLayout: textLayout,
-                style: StraightUnderlineStyle(
-                  color: widget.textStyleBuilder({}).color ?? //
-                      (Theme.of(context).brightness == Brightness.light ? Colors.black : Colors.white),
-                ),
-                underlines: [
-                  TextLayoutUnderline(
-                    range: _textEditingController.composingRegion,
+          return Stack(
+            clipBehavior: Clip.none,
+            children: [
+              if (_textEditingController.selection.isValid == true)
+                // Selection highlight beneath the text.
+                TextLayoutSelectionHighlight(
+                  textLayout: textLayout,
+                  style: SelectionHighlightStyle(
+                    color: widget.selectionColor,
                   ),
-                ],
-              ),
-            if (showHint) //
-              widget.hintBuilder!(context),
-          ],
-        );
-      },
-      layerAboveBuilder: (context, textLayout) {
-        if (!_focusNode.hasFocus) {
-          return const SizedBox();
-        }
+                  selection: _textEditingController.selection,
+                ),
+              // Underline beneath the composing region.
+              if (_textEditingController.composingRegion.isValid == true && widget.showComposingUnderline)
+                TextUnderlineLayer(
+                  textLayout: textLayout,
+                  style: StraightUnderlineStyle(
+                    color: widget.textStyleBuilder({}).color ?? //
+                        (Theme.of(context).brightness == Brightness.light ? Colors.black : Colors.white),
+                  ),
+                  underlines: [
+                    TextLayoutUnderline(
+                      range: _textEditingController.composingRegion,
+                    ),
+                  ],
+                ),
+              if (showHint) //
+                widget.hintBuilder!(context),
+            ],
+          );
+        },
+        layerAboveBuilder: (context, textLayout) {
+          if (!_focusNode.hasFocus) {
+            return const SizedBox();
+          }
 
-        return Stack(
-          clipBehavior: Clip.none,
-          children: [
-            TextLayoutCaret(
-              textLayout: textLayout,
-              style: widget.caretStyle,
-              position: _textEditingController.selection.isCollapsed //
-                  ? _textEditingController.selection.extent
-                  : null,
-              blinkController: _caretBlinkController,
-            ),
-            IOSFloatingCursor(
-              controller: _floatingCursorController,
-            ),
-          ],
-        );
-      },
+          return Stack(
+            clipBehavior: Clip.none,
+            children: [
+              TextLayoutCaret(
+                textLayout: textLayout,
+                style: widget.caretStyle,
+                position: _textEditingController.selection.isCollapsed //
+                    ? _textEditingController.selection.extent
+                    : null,
+                blinkController: _caretBlinkController,
+              ),
+              IOSFloatingCursor(
+                controller: _floatingCursorController,
+              ),
+            ],
+          );
+        },
+      ),
     );
   }
 
