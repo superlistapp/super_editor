@@ -35,6 +35,7 @@ import 'package:super_editor/src/infrastructure/links.dart';
 import 'package:super_editor/src/infrastructure/platforms/ios/ios_document_controls.dart';
 import 'package:super_editor/src/infrastructure/platforms/ios/toolbar.dart';
 import 'package:super_editor/src/infrastructure/platforms/platform.dart';
+import 'package:super_editor/src/super_reader/tasks.dart';
 
 import '../infrastructure/platforms/mobile_documents.dart';
 import '../infrastructure/text_input.dart';

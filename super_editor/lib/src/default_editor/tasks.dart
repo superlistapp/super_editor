@@ -13,7 +13,6 @@ import 'package:super_editor/src/default_editor/blocks/indentation.dart';
 import 'package:super_editor/src/default_editor/multi_node_editing.dart';
 import 'package:super_editor/src/default_editor/paragraph.dart';
 import 'package:super_editor/src/default_editor/text.dart';
-import 'package:super_editor/src/default_editor/text_tools.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/attributed_text_styles.dart';
 import 'package:super_editor/src/infrastructure/composable_text.dart';
@@ -179,50 +178,6 @@ class TaskComponentBuilder implements ComponentBuilder {
           ),
         ]);
       },
-      text: node.text,
-      textDirection: textDirection,
-      textAlignment: textDirection == TextDirection.ltr ? TextAlign.left : TextAlign.right,
-      textStyleBuilder: noStyleBuilder,
-      selectionColor: const Color(0x00000000),
-    );
-  }
-
-  @override
-  Widget? createComponent(
-      SingleColumnDocumentComponentContext componentContext, SingleColumnLayoutComponentViewModel componentViewModel) {
-    if (componentViewModel is! TaskComponentViewModel) {
-      return null;
-    }
-
-    return TaskComponent(
-      key: componentContext.componentKey,
-      viewModel: componentViewModel,
-    );
-  }
-}
-
-/// Builds [TaskComponentViewModel]s and [TaskComponent]s for every
-/// [TaskNode] in a document.
-///
-/// A [TaskComponent] built by this builder is read-only, meaning that
-/// the user cannot toggle it.
-class ReadOnlyTaskComponentBuilder implements ComponentBuilder {
-  const ReadOnlyTaskComponentBuilder();
-
-  @override
-  TaskComponentViewModel? createViewModel(Document document, DocumentNode node) {
-    if (node is! TaskNode) {
-      return null;
-    }
-
-    final textDirection = getParagraphDirection(node.text.toPlainText());
-
-    return TaskComponentViewModel(
-      nodeId: node.id,
-      padding: EdgeInsets.zero,
-      indent: node.indent,
-      isComplete: node.isComplete,
-      setComplete: null,
       text: node.text,
       textDirection: textDirection,
       textAlignment: textDirection == TextDirection.ltr ? TextAlign.left : TextAlign.right,

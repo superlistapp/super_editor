@@ -6,8 +6,8 @@ import 'package:super_editor/super_editor.dart';
 import '../reader_test_tools.dart';
 
 void main() {
-  group('SuperReader tasks', () {
-    testWidgetsOnAllPlatforms("are rendered without explicit configuration", (tester) async {
+  group('SuperReader tasks >', () {
+    testWidgetsOnAllPlatforms("are displayed in a read-only document", (tester) async {
       await tester //
           .createDocument()
           .withCustomContent(
