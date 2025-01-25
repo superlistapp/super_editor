@@ -329,7 +329,7 @@ void main() {
         expect(doc.last.asListItem.indent, 0);
       });
 
-      testWidgetsOnDesktopAndWeb('unindents with BACKSPACE at the beginning of the text', (tester) async {
+      testWidgetsOnDesktopAndWeb('unindents with BACKSPACE with caret at beginning of list item', (tester) async {
         await _pumpUnorderedListWithTextField(tester);
 
         final doc = SuperEditorInspector.findDocument()!;

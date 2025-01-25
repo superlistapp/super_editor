@@ -1436,12 +1436,15 @@ final defaultImeKeyboardActions = <DocumentKeyboardAction>[
   selectAllWhenCmdAIsPressed,
   cmdBToToggleBold,
   cmdIToToggleItalics,
+  // All handlers that use backspace should be placed before `doNothingWithBackspaceOnWeb`,
+  // otherwise they will not run on web.
   backspaceToUnIndentListItem,
   backspaceToUnIndentParagraph,
   backspaceToUnIndentTask,
   backspaceToConvertTaskToParagraph,
   backspaceToClearParagraphBlockType,
-  // Let the browser IME handle the deletion.
+  // We handled all shortcuts that care about backspace. Let the browser IME handle the
+  // backspace to perform text deletion.
   doNothingWithBackspaceOnWeb,
   doNothingWithCtrlOrCmdAndZOnWeb,
   tabToIndentTask,
