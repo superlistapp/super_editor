@@ -1779,10 +1779,8 @@ class ToggleTextAttributionsCommand extends EditCommand {
           // Create a new AttributedText with updated attribution spans, so that the presentation system can
           // see that we made a change, and re-renders the text in the document.
           node = node.copyTextNodeWith(
-            text: AttributedText(
-              node.text.toPlainText(),
-              node.text.spans.copy(),
-            )..removeAttribution(
+            text: node.text.copy() //
+              ..removeAttribution(
                 attribution,
                 range,
               ),
@@ -1794,16 +1792,12 @@ class ToggleTextAttributionsCommand extends EditCommand {
           // Create a new AttributedText with updated attribution spans, so that the presentation system can
           // see that we made a change, and re-renders the text in the document.
           node = node.copyTextNodeWith(
-            text: AttributedText(
-              node.text.toPlainText(),
-              node.text.spans.copy()
-                ..addAttribution(
-                  newAttribution: attribution,
-                  start: range.start,
-                  end: range.end,
-                  autoMerge: true,
-                ),
-            ),
+            text: node.text.copy() //
+              ..addAttribution(
+                attribution,
+                range,
+                autoMerge: true,
+              ),
           );
         }
 
@@ -2550,6 +2544,77 @@ class InsertAttributedTextCommand extends EditCommand {
         ),
       ),
     ]);
+  }
+}
+
+class InsertStyledTextAtCaretRequest implements EditRequest {
+  const InsertStyledTextAtCaretRequest(this.text);
+
+  final AttributedText text;
+}
+
+class InsertStyledTextAtCaretCommand extends EditCommand {
+  const InsertStyledTextAtCaretCommand(this.text);
+
+  final AttributedText text;
+
+  @override
+  void execute(EditContext context, CommandExecutor executor) {
+    final selection = context.composer.selection;
+    if (selection == null) {
+      // Can't insert at caret if there is no caret.
+      return;
+    }
+    if (!selection.isCollapsed) {
+      // The selection is expanded. There's no caret. Fizzle.
+      // Maybe we want these commands to actually be "at selection" instead of
+      // "at caret" and then delete the selected content.
+      return;
+    }
+
+    executor
+      ..executeCommand(
+        InsertAttributedTextCommand(
+          documentPosition: selection.extent,
+          textToInsert: text,
+        ),
+      )
+      ..executeCommand(
+        ChangeSelectionCommand(
+          DocumentSelection.collapsed(
+            position: selection.extent.copyWith(
+              nodePosition: TextNodePosition(
+                offset: (selection.extent.nodePosition as TextNodePosition).offset + text.length,
+              ),
+            ),
+          ),
+          SelectionChangeType.insertContent,
+          SelectionReason.userInteraction,
+        ),
+      );
+  }
+}
+
+class InsertInlinePlaceholderAtCaretRequest implements EditRequest {
+  const InsertInlinePlaceholderAtCaretRequest(this.placeholder);
+
+  final Object placeholder;
+}
+
+class InsertInlinePlaceholderAtCaretCommand extends EditCommand {
+  const InsertInlinePlaceholderAtCaretCommand(this.placeholder);
+
+  final Object placeholder;
+
+  @override
+  void execute(EditContext context, CommandExecutor executor) {
+    executor.executeCommand(
+      InsertStyledTextAtCaretCommand(
+        AttributedText("", null, {
+          0: placeholder,
+        }),
+      ),
+    );
   }
 }
 
