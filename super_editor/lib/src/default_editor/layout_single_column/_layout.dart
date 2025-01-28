@@ -193,7 +193,7 @@ class _SingleColumnDocumentLayoutState extends State<SingleColumnDocumentLayout>
     }
 
     final selectionAtOffset = DocumentPosition(
-      nodeId: _componentKeysToNodeIds[componentKey]!,
+      documentPath: widget.presenter.getPathToNode(_componentKeysToNodeIds[componentKey]!)!,
       nodePosition: componentPosition,
     );
     editorLayoutLog.info(' - selection at offset: $selectionAtOffset');
@@ -455,11 +455,11 @@ class _SingleColumnDocumentLayoutState extends State<SingleColumnDocumentLayout>
       editorLayoutLog.fine(' - the entire selection sits within a single node: $topNodeId');
       return DocumentSelection(
         base: DocumentPosition(
-          nodeId: topNodeId,
+          documentPath: widget.presenter.getPathToNode(topNodeId)!,
           nodePosition: topNodeBasePosition,
         ),
         extent: DocumentPosition(
-          nodeId: bottomNodeId,
+          documentPath: widget.presenter.getPathToNode(bottomNodeId)!,
           nodePosition: topNodeExtentPosition,
         ),
       );
@@ -473,11 +473,11 @@ class _SingleColumnDocumentLayoutState extends State<SingleColumnDocumentLayout>
 
       return DocumentSelection(
         base: DocumentPosition(
-          nodeId: isDraggingDown ? topNodeId : bottomNodeId,
+          documentPath: widget.presenter.getPathToNode(isDraggingDown ? topNodeId : bottomNodeId)!,
           nodePosition: isDraggingDown ? topNodeBasePosition : bottomNodeBasePosition,
         ),
         extent: DocumentPosition(
-          nodeId: isDraggingDown ? bottomNodeId : topNodeId,
+          documentPath: widget.presenter.getPathToNode(isDraggingDown ? bottomNodeId : topNodeId)!,
           nodePosition: isDraggingDown ? bottomNodeExtentPosition : topNodeExtentPosition,
         ),
       );
@@ -586,7 +586,7 @@ class _SingleColumnDocumentLayoutState extends State<SingleColumnDocumentLayout>
     final component = componentKey.currentState as DocumentComponent;
 
     return DocumentPosition(
-      nodeId: _componentKeysToNodeIds[componentKey]!,
+      documentPath: widget.presenter.getPathToNode(_componentKeysToNodeIds[componentKey]!)!,
       nodePosition: component.getBeginningPosition(),
     );
   }
@@ -601,7 +601,7 @@ class _SingleColumnDocumentLayoutState extends State<SingleColumnDocumentLayout>
     final component = componentKey.currentState as DocumentComponent;
 
     return DocumentPosition(
-      nodeId: _componentKeysToNodeIds[componentKey]!,
+      documentPath: widget.presenter.getPathToNode(_componentKeysToNodeIds[componentKey]!)!,
       nodePosition: component.getEndPosition(),
     );
   }
@@ -696,7 +696,7 @@ class _SingleColumnDocumentLayoutState extends State<SingleColumnDocumentLayout>
     }
 
     return DocumentPosition(
-      nodeId: nodeId!,
+      documentPath: widget.presenter.getPathToNode(nodeId!)!,
       nodePosition: nodePosition,
     );
   }

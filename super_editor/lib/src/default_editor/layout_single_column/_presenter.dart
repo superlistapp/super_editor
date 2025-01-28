@@ -104,6 +104,11 @@ class SingleColumnLayoutPresenter {
     }
   }
 
+  // TODO: check if this is the appropriate place for this method. I added this
+  //       so that the document layout widget could report document positions for
+  //       document components.
+  NodePath? getPathToNode(String nodeId) => _document.getPathByNodeId(nodeId);
+
   void _assemblePipeline() {
     // Add all the phases that were provided by the client.
     for (int i = 0; i < _pipeline.length; i += 1) {

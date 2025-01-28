@@ -1051,7 +1051,7 @@ class InsertNewlineInListItemAtCaretCommand extends BaseInsertNewlineAtCaretComm
         ChangeSelectionCommand(
           DocumentSelection.collapsed(
             position: DocumentPosition(
-              nodeId: newNodeId,
+              documentPath: context.document.getPathByNodeId(newNodeId)!,
               nodePosition: const TextNodePosition(offset: 0),
             ),
           ),

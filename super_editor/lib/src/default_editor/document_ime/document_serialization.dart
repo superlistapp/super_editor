@@ -373,7 +373,7 @@ class DocumentImeSerializer {
         if (nodePath.nodeIds.length == 1) {
           // This is a single node - not a composite node. Return it as-is.
           return DocumentPosition(
-            nodeId: node.id,
+            documentPath: nodePath,
             nodePosition: contentNodePosition,
           );
         }
@@ -387,7 +387,7 @@ class DocumentImeSerializer {
           );
         }
         return DocumentPosition(
-          nodeId: nodePath.nodeIds.first,
+          documentPath: NodePath([nodePath.nodeIds.first]),
           nodePosition: compositeNodePosition,
         );
       }
@@ -485,8 +485,10 @@ class DocumentImeSerializer {
     }
 
     if (nodePosition is CompositeNodePosition) {
-      final innerDocumentPosition =
-          DocumentPosition(nodeId: nodePosition.childNodeId, nodePosition: nodePosition.childNodePosition);
+      final innerDocumentPosition = DocumentPosition(
+        documentPath: docPosition.documentPath.addSubPath(nodePosition.childNodeId),
+        nodePosition: nodePosition.childNodePosition,
+      );
 
       // Recursive call to create the IME text position for the content within the composite node.
       return _documentToImePosition(innerDocumentPosition);

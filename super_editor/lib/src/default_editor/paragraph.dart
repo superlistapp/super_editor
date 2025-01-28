@@ -750,7 +750,7 @@ class SplitParagraphCommand extends EditCommand {
     final oldComposingRegion = composer.composingRegion.value;
     final newSelection = DocumentSelection.collapsed(
       position: DocumentPosition(
-        nodeId: newNodeId,
+        documentPath: document.getPathByNodeId(newNodeId)!,
         nodePosition: const TextNodePosition(offset: 0),
       ),
     );
@@ -807,12 +807,15 @@ class DeleteUpstreamAtBeginningOfParagraphCommand extends EditCommand {
       return;
     }
 
-    final deletionPosition = DocumentPosition(nodeId: node.id, nodePosition: node.beginningPosition);
+    final document = context.document;
+    final deletionPosition = DocumentPosition(
+      documentPath: document.getPathByNodeId(node.id)!,
+      nodePosition: node.beginningPosition,
+    );
     if (deletionPosition.nodePosition is! TextNodePosition) {
       return;
     }
 
-    final document = context.document;
     final composer = context.find<MutableDocumentComposer>(Editor.composerKey);
     final documentLayoutEditable = context.find<DocumentLayoutEditable>(Editor.layoutKey);
 
@@ -904,7 +907,7 @@ class DeleteUpstreamAtBeginningOfParagraphCommand extends EditCommand {
         ChangeSelectionCommand(
           DocumentSelection.collapsed(
             position: DocumentPosition(
-              nodeId: nodeAbove.id,
+              documentPath: document.getPathByNodeId(nodeAbove.id)!,
               nodePosition: TextNodePosition(offset: aboveParagraphLength),
             ),
           ),
@@ -939,7 +942,7 @@ class DeleteUpstreamAtBeginningOfParagraphCommand extends EditCommand {
       ChangeSelectionCommand(
         DocumentSelection.collapsed(
           position: DocumentPosition(
-            nodeId: nodeBefore.id,
+            documentPath: document.getPathByNodeId(nodeBefore.id)!,
             nodePosition: nodeBefore.endPosition,
           ),
         ),
@@ -1425,7 +1428,7 @@ ExecutionInstruction moveParagraphSelectionUpWhenBackspaceIsPressed({
     return ExecutionInstruction.continueExecution;
   }
   final newDocumentPosition = DocumentPosition(
-    nodeId: nodeAbove.id,
+    documentPath: editContext.document.getPathByNodeId(nodeAbove.id)!,
     nodePosition: nodeAbove.endPosition,
   );
 

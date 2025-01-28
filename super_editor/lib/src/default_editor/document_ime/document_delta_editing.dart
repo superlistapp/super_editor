@@ -316,8 +316,9 @@ class TextDeltasDocumentEditor {
 
       // After inserting a block level new line, the selection changes to another node.
       // Therefore, we need to update the insertion position.
-      insertionNode = document.getNodeById(selection.value!.extent.nodeId)!;
-      insertionPosition = DocumentPosition(nodeId: insertionNode.id, nodePosition: insertionNode.endPosition);
+      final insertionPath = selection.value!.extent.documentPath;
+      insertionNode = document.getNodeAtPath(insertionPath)!;
+      insertionPosition = DocumentPosition(documentPath: insertionPath, nodePosition: insertionNode.endPosition);
     }
 
     if (insertionNode is! TextNode || insertionPosition.nodePosition is! TextNodePosition) {

@@ -26,6 +26,19 @@ abstract class Document implements Iterable<DocumentNode> {
   @override
   bool get isEmpty;
 
+  // FIXME: Started defining these, but not sure if there's an unambiguous definition or not.
+  // /// Returns the first [DocumentPosition] within the document.
+  // ///
+  // /// This is the position for which attempting to move backward in content
+  // /// order would fail to move the caret.
+  // DocumentPosition get beginning;
+  //
+  // /// Returns the last [DocumentPosition] within the document.
+  // ///
+  // /// This is the position for which attempting to move forward in content
+  // /// order would fail to move the caret.
+  // DocumentPosition get end;
+
   /// Returns the first [DocumentNode] in this [Document], or `null` if this
   /// [Document] is empty.
   DocumentNode? get firstOrNull;
@@ -37,6 +50,19 @@ abstract class Document implements Iterable<DocumentNode> {
   /// Returns the [DocumentNode] with the given [nodeId], or [null]
   /// if no such node exists.
   DocumentNode? getNodeById(String nodeId);
+
+  /// Returns the [DocumentNode] at the given [path] within this [Document],
+  /// or `null` if no such node exists.
+  DocumentNode? getNodeAtPath(NodePath path);
+
+  /// Returns the [NodePath] for the node with the given [nodeId].
+  NodePath? getPathByNodeId(String nodeId);
+
+  /// Returns the index of the given node, within the node's parent.
+  ///
+  /// Every parent node has a list of children. That list of children imposes
+  /// an order.
+  int getNodeIndexInParent(String nodeId);
 
   /// Returns the [DocumentNode] at the given [index], or [null]
   /// if no such node exists.
@@ -271,14 +297,24 @@ class DocumentPosition {
   /// );
   /// ```
   const DocumentPosition({
-    required this.nodeId,
+    required this.documentPath,
     required this.nodePosition,
   });
 
-  /// ID of a [DocumentNode] within a [Document].
-  final String nodeId;
+  /// The node path within the `Document` where this position sits.
+  ///
+  /// Nominally, this path simply refers to the ID of a node in the
+  /// `Document`. However, some nodes contain other nodes, in which
+  /// case this path includes each node along the way.
+  final NodePath documentPath;
 
-  /// Node-specific representation of a position.
+  @Deprecated("Use targetNodeId instead")
+  String get nodeId => targetNodeId;
+
+  /// Returns the ID of the node that this path points to.
+  String get targetNodeId => documentPath.targetNodeId;
+
+  /// The position within the node at the end of the [nodePath].
   ///
   /// For example: a paragraph node might use a [TextNodePosition].
   final NodePosition nodePosition;
@@ -286,9 +322,9 @@ class DocumentPosition {
   /// Whether this position within the document is equivalent to the given
   /// [other] [DocumentPosition].
   ///
-  /// Equivalency is determined by the [NodePosition]. For example, given two
-  /// [TextNodePosition]s, if both of them point to the same character, but one
-  /// has an upstream affinity and the other a downstream affinity, the two
+  /// The difference between equality and equivalency is determined by the [NodePosition].
+  /// For example, given two [TextNodePosition]s, if both of them point to the same character,
+  /// but one has an upstream affinity and the other a downstream affinity, the two
   /// [TextNodePosition]s are considered "non-equal", but they're considered
   /// "equivalent" because both [TextNodePosition]s point to the same location
   /// within the document.
@@ -306,18 +342,18 @@ class DocumentPosition {
   /// Creates a new [DocumentPosition] based on the current position, with the
   /// provided parameters overridden.
   DocumentPosition copyWith({
-    String? nodeId,
+    NodePath? documentPath,
     NodePosition? nodePosition,
   }) {
     return DocumentPosition(
-      nodeId: nodeId ?? this.nodeId,
+      documentPath: documentPath ?? this.documentPath,
       nodePosition: nodePosition ?? this.nodePosition,
     );
   }
 
   @override
   String toString() {
-    return '[DocumentPosition] - node: "$nodeId", position: ($nodePosition)';
+    return '[DocumentPosition] - path: "$nodeId", position: ($nodePosition)';
   }
 }
 
@@ -488,33 +524,28 @@ extension InspectNodeAffinity on DocumentNode {
 /// For a composite node, the node path includes every node ID in the composite
 /// hierarchy.
 class NodePath {
-  factory NodePath.forDocumentPosition(DocumentPosition position) {
-    var nodePosition = position.nodePosition;
-    if (nodePosition is CompositeNodePosition) {
-      // This node position is a hierarchy of nodes. Encode all nodes
-      // along that path into the node path.
-      final nodeIds = [position.nodeId];
-
-      while (nodePosition is CompositeNodePosition) {
-        nodeIds.add(nodePosition.childNodeId);
-        nodePosition = nodePosition.childNodePosition;
-      }
-
-      return NodePath(nodeIds);
-    }
-
-    // This position refers to a singular node. Build a node path that only
-    // contains this node's ID.
-    return NodePath([position.nodeId]);
-  }
-
   factory NodePath.forNode(String nodeId) {
     return NodePath([nodeId]);
   }
 
   const NodePath(this.nodeIds);
 
+  /// All node IDs along this path, ordered from the root node within the
+  /// `Document`, to the [targetNodeId].
   final List<String> nodeIds;
+
+  /// The depth of this node in the document tree, with root nodes having
+  /// a depth of zero.
+  int get depth => nodeIds.length - 1;
+
+  /// Returns `true` if this path is at least [depth] deep.
+  bool hasDepth(int depth) => depth < nodeIds.length;
+
+  /// Returns the node ID within this path at the given [depth].
+  String atDepth(int depth) => nodeIds[depth];
+
+  /// The [DocumentNode] to which this path points.
+  String get targetNodeId => nodeIds.last;
 
   NodePath addSubPath(String nodeId) => NodePath([...nodeIds, nodeId]);
 

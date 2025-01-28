@@ -677,7 +677,7 @@ class InsertNewlineInTaskAtCaretCommand extends BaseInsertNewlineAtCaretCommand 
         ChangeSelectionCommand(
           DocumentSelection.collapsed(
             position: DocumentPosition(
-              nodeId: newNodeId,
+              documentPath: context.document.getPathByNodeId(newNodeId)!,
               nodePosition: const TextNodePosition(offset: 0),
             ),
           ),
@@ -914,7 +914,7 @@ class SplitExistingTaskCommand extends EditCommand {
     final oldComposingRegion = composer.composingRegion.value;
     final newSelection = DocumentSelection.collapsed(
       position: DocumentPosition(
-        nodeId: newTaskNode.id,
+        documentPath: document.getPathByNodeId(newTaskNode.id)!,
         nodePosition: const TextNodePosition(offset: 0),
       ),
     );
