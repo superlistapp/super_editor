@@ -1738,11 +1738,19 @@ void _expectTextEditingValue({
   required String expectedTextWithSelection,
   required TextEditingValue actualTextEditingValue,
 }) {
+  print("Expected text with selection: '$expectedTextWithSelection'");
+  print("Actual text editing value: '${actualTextEditingValue.text}'");
+  print("Actual selection: ${actualTextEditingValue.selection}");
   final selectionStartIndex = expectedTextWithSelection.indexOf("|");
-  final selectionEndIndex =
-      expectedTextWithSelection.indexOf("|", selectionStartIndex + 1) - 1; // -1 to account for the selection start "|"
+  final selectionEndIndex = expectedTextWithSelection.characters.where((c) => c == "|").length > 1
+      ? expectedTextWithSelection.indexOf("|", selectionStartIndex + 1) - 1 // -1 to account for the selection start "|"
+      : selectionStartIndex;
   final expectedText = expectedTextWithSelection.replaceAll("|", "");
+  print("selectionStartIndex: $selectionStartIndex, selectionEndIndex: $selectionEndIndex");
   final expectedSelection = TextSelection(baseOffset: selectionStartIndex, extentOffset: selectionEndIndex);
+
+  // expect(expectedText, actualTextEditingValue.text);
+  // expect(expectedSelection, actualTextEditingValue.selection);
 
   expect(
     actualTextEditingValue,

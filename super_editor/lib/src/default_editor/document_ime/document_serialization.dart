@@ -141,6 +141,7 @@ class DocumentImeSerializer {
   }
 
   int _serializeCompositeNode(NodePath nodePath, CompositeDocumentNode node, StringBuffer buffer) {
+    print("Serializing a composite node: $nodePath");
     int characterCount = 0;
     for (final innerNode in node.nodes) {
       final innerNodePath = nodePath.addSubPath(innerNode.id);
@@ -149,7 +150,7 @@ class DocumentImeSerializer {
         continue;
       }
 
-      characterCount += _serializeNonCompositeNode(innerNodePath, node, buffer, characterCount);
+      characterCount += _serializeNonCompositeNode(innerNodePath, innerNode, buffer, characterCount);
 
       if (innerNode != node.nodes.last) {
         buffer.write('\n');
@@ -161,7 +162,10 @@ class DocumentImeSerializer {
   }
 
   int _serializeNonCompositeNode(NodePath nodePath, DocumentNode node, StringBuffer buffer, int characterCount) {
+    print("Serializing a non-composite node: $nodePath");
+    print("Node: $node");
     if (node is! TextNode) {
+      print("This node isn't a text node. Serializing to ~");
       buffer.write('~');
 
       final imeRange = TextRange(start: characterCount - 1, end: characterCount);
@@ -174,7 +178,8 @@ class DocumentImeSerializer {
     // Cache mappings between the IME text range and the document position
     // so that we can easily convert between the two, when requested.
     final imeRange = TextRange(start: characterCount, end: characterCount + node.text.length);
-    editorImeLog.finer("IME range $imeRange -> text node content '${node.text.text}'");
+    editorImeLog.finer("IME range $imeRange -> text node content '${node.text.toPlainText()}'");
+    print("IME range for TextNode: $imeRange. Content: ${node.text.toPlainText()}");
     imeRangesToDocTextNodes[imeRange] = nodePath;
     docTextNodesToImeRanges[nodePath] = imeRange;
 
@@ -453,13 +458,14 @@ class DocumentImeSerializer {
 
   TextPosition _documentToImePosition(DocumentPosition docPosition) {
     editorImeLog.fine("Converting DocumentPosition to IME TextPosition: $docPosition");
-    // FIXME: don't assume top-level node
-    final nodePath = NodePath.forNode(docPosition.nodeId);
+    print("_documentToImePosition() - position: $docPosition");
+    final nodePath = _doc.getPathByNodeId(docPosition.targetNodeId);
+    print("Looking up IME range for node path: $nodePath");
     final imeRange = docTextNodesToImeRanges[nodePath];
     if (imeRange == null) {
       print("Available node paths in mapping:");
       for (final entry in docTextNodesToImeRanges.entries) {
-        print(" - ${entry.key}");
+        print(" - ${entry.key}: ${entry.value}");
       }
       throw Exception("No such node path in the IME content: $nodePath");
     }

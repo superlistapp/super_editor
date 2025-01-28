@@ -38,6 +38,13 @@ abstract class Document implements Iterable<DocumentNode> {
   /// if no such node exists.
   DocumentNode? getNodeById(String nodeId);
 
+  /// Returns the [DocumentNode] at the given [path] within this [Document],
+  /// or `null` if no such node exists.
+  DocumentNode? getNodeAtPath(NodePath path);
+
+  /// Returns the [NodePath] for the node with the given [nodeId].
+  NodePath? getPathByNodeId(String nodeId);
+
   /// Returns the [DocumentNode] at the given [index], or [null]
   /// if no such node exists.
   DocumentNode? getNodeAt(int index);
@@ -283,6 +290,25 @@ class DocumentPosition {
   /// For example: a paragraph node might use a [TextNodePosition].
   final NodePosition nodePosition;
 
+  /// The most specific node (i.e., deepest descendant node) that this [DocumentPosition]
+  /// points to.
+  ///
+  /// For a [Document] that contains a list of nodes, [targetNodeId] is the same
+  /// as [nodeId].
+  ///
+  /// For a [Document] that contains a tree of nodes, a [DocumentPosition] might
+  /// point down a branch. For example, a [DocumentPosition] might point to a table,
+  /// and to a cell in that table, and to a character of text within that cell. In
+  /// that case, the [targetNodeId] would be the ID of the `TextNode`, within the
+  /// cell, within the table.
+  String get targetNodeId {
+    if (nodePosition is! CompositeNodePosition) {
+      return nodeId;
+    }
+
+    return (nodePosition as CompositeNodePosition).targetNodeId;
+  }
+
   /// Whether this position within the document is equivalent to the given
   /// [other] [DocumentPosition].
   ///
@@ -488,33 +514,28 @@ extension InspectNodeAffinity on DocumentNode {
 /// For a composite node, the node path includes every node ID in the composite
 /// hierarchy.
 class NodePath {
-  factory NodePath.forDocumentPosition(DocumentPosition position) {
-    var nodePosition = position.nodePosition;
-    if (nodePosition is CompositeNodePosition) {
-      // This node position is a hierarchy of nodes. Encode all nodes
-      // along that path into the node path.
-      final nodeIds = [position.nodeId];
-
-      while (nodePosition is CompositeNodePosition) {
-        nodeIds.add(nodePosition.childNodeId);
-        nodePosition = nodePosition.childNodePosition;
-      }
-
-      return NodePath(nodeIds);
-    }
-
-    // This position refers to a singular node. Build a node path that only
-    // contains this node's ID.
-    return NodePath([position.nodeId]);
-  }
-
   factory NodePath.forNode(String nodeId) {
     return NodePath([nodeId]);
   }
 
   const NodePath(this.nodeIds);
 
+  /// All node IDs along this path, ordered from the root node within the
+  /// `Document`, to the [targetNodeId].
   final List<String> nodeIds;
+
+  /// The depth of this node in the document tree, with root nodes having
+  /// a depth of zero.
+  int get depth => nodeIds.length - 1;
+
+  /// Returns `true` if this path is at least [depth] deep.
+  bool hasDepth(int depth) => depth < nodeIds.length;
+
+  /// Returns the node ID within this path at the given [depth].
+  String atDepth(int depth) => nodeIds[depth];
+
+  /// The [DocumentNode] to which this path points.
+  String get targetNodeId => nodeIds.last;
 
   NodePath addSubPath(String nodeId) => NodePath([...nodeIds, nodeId]);
 
@@ -531,6 +552,57 @@ class NodePath {
   @override
   int get hashCode => const ListEquality().hash(nodeIds);
 }
+
+// /// The path to a [DocumentNode] within a [Document].
+// ///
+// /// In the average case, the [NodePath] is effectively the same as a node's
+// /// ID. However, some nodes are [CompositeDocumentNode]s, which have a hierarchy.
+// /// For a composite node, the node path includes every node ID in the composite
+// /// hierarchy.
+// class NodePath {
+//   factory NodePath.forDocumentPosition(DocumentPosition position) {
+//     var nodePosition = position.nodePosition;
+//     if (nodePosition is CompositeNodePosition) {
+//       // This node position is a hierarchy of nodes. Encode all nodes
+//       // along that path into the node path.
+//       final nodeIds = [position.nodeId];
+//
+//       while (nodePosition is CompositeNodePosition) {
+//         nodeIds.add(nodePosition.childNodeId);
+//         nodePosition = nodePosition.childNodePosition;
+//       }
+//
+//       return NodePath(nodeIds);
+//     }
+//
+//     // This position refers to a singular node. Build a node path that only
+//     // contains this node's ID.
+//     return NodePath([position.nodeId]);
+//   }
+//
+//   factory NodePath.forNode(String nodeId) {
+//     return NodePath([nodeId]);
+//   }
+//
+//   const NodePath(this.nodeIds);
+//
+//   final List<String> nodeIds;
+//
+//   NodePath addSubPath(String nodeId) => NodePath([...nodeIds, nodeId]);
+//
+//   @override
+//   String toString() => "[NodePath] - ${nodeIds.join(" > ")}";
+//
+//   @override
+//   bool operator ==(Object other) =>
+//       identical(this, other) ||
+//       other is NodePath &&
+//           runtimeType == other.runtimeType &&
+//           const DeepCollectionEquality().equals(nodeIds, other.nodeIds);
+//
+//   @override
+//   int get hashCode => const ListEquality().hash(nodeIds);
+// }
 
 /// A [DocumentNode] that contains other [DocumentNode]s in a hierarchy.
 ///
@@ -795,6 +867,15 @@ class CompositeNodePosition implements NodePosition {
   final String childNodeId;
   final NodePosition childNodePosition;
 
+  /// The ID of the deepest node that this position points to.
+  String get targetNodeId {
+    if (childNodePosition is! CompositeNodePosition) {
+      return childNodeId;
+    }
+
+    return (childNodePosition as CompositeNodePosition).targetNodeId;
+  }
+
   @override
   bool isEquivalentTo(NodePosition other) {
     if (other is! CompositeNodePosition) {
@@ -807,6 +888,9 @@ class CompositeNodePosition implements NodePosition {
 
     return childNodePosition.isEquivalentTo(other.childNodePosition);
   }
+
+  @override
+  String toString() => "[CompositeNodePosition] -> $childNodePosition";
 
   @override
   bool operator ==(Object other) =>
