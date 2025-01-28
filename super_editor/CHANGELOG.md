@@ -1,3 +1,11 @@
+## [0.3.0-dev.17] - Jan 28, 2024
+ * FEATURE: Inline widgets for `SuperTextField`.
+ * FIX: `SuperEditor`: Selecting text with inline widgets and toggling styles deleted the inline widgets.
+ * FIX: Caret place wrong with RTL languages.
+ * FIX: Crash when selecting in an empty paragraph with a selection color strategy.
+ * FIX: Backspace to un-indent on Web.
+ * ADJUSTMENT: Tasks are rendered by default in `SuperReader`.
+
 ## [0.3.0-dev.16] - Jan 24, 2024
  * FIX: `KeyboardScaffoldSafeArea` in rare circumstances was trying to use `NaN` for bottom insets.
  * FIX: On Safari/Firefox, double tapping on text closing the IME connection.
