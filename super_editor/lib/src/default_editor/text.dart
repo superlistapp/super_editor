@@ -1797,6 +1797,11 @@ class ToggleTextAttributionsCommand extends EditCommand {
                 attribution,
                 range,
                 autoMerge: true,
+                // FIXME: I noticed that the default value for overwriteConflictingSpans on
+                //        AttributedText.addAttribution is `false`, but the default on AttributedSpans.addAttribution()
+                //        is `true`. This seems like a likely bug. Should they actually be different? If not,
+                //        update one of them. If so, add a comment to both places mentioning why.
+                overwriteConflictingSpans: true,
               ),
           );
         }
