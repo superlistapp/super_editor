@@ -1,3 +1,7 @@
+## [0.4.3] - Jan, 2024
+ * [FIX] - Accessing individual characters in `AttributedText` no longer tries to access indices
+           out of bounds.
+
 ## [0.4.2] - Jan, 2024
  * [FIX] - A few `AttributedText` methods weren't updated to account for full length with placeholders.
 
