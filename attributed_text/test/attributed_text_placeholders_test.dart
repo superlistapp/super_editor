@@ -81,6 +81,26 @@ void main() {
       });
     });
 
+    test("reports characters and placeholders at indices", () {
+      final text1 = AttributedText("HelloWorld", null, {
+        0: const _FakePlaceholder("one"),
+        6: const _FakePlaceholder("two"),
+        12: const _FakePlaceholder("three"),
+      });
+
+      expect(text1.first, const _FakePlaceholder("one"));
+      expect(text1[1], "H");
+      expect(text1[6], const _FakePlaceholder("two"));
+      expect(text1[11], "d");
+      expect(text1.last, const _FakePlaceholder("three"));
+
+      final text2 = AttributedText("Hello World", null, {
+        0: const _FakePlaceholder("one"),
+      });
+      expect(text2[11], "d");
+      expect(text2.last, "d");
+    });
+
     test("reports plain text value", () {
       expect(
         AttributedText("", null, {
