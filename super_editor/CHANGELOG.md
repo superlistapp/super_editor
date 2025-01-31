@@ -1,3 +1,6 @@
+## [0.3.0-dev.18] - Jan 30, 2024
+ * ADJUSTMENT: Upgrade to `attributed_text` `v0.4.3` (with fixes to per-character lookup).
+
 ## [0.3.0-dev.17] - Jan 28, 2024
  * FEATURE: Inline widgets for `SuperTextField`.
  * FIX: `SuperEditor`: Selecting text with inline widgets and toggling styles deleted the inline widgets.
