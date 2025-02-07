@@ -120,11 +120,7 @@ class SpellingAndGrammarStyler extends SingleColumnLayoutStylePhase {
       // Apply it.
       viewModel.spellingErrorUnderlineStyle = _spellingErrorUnderlineStyle!;
     }
-    viewModel.spellingErrors
-      ..clear()
-      ..addAll([
-        for (final spellingError in spellingErrors) spellingError.range,
-      ]);
+    viewModel.spellingErrors = spellingErrors.map((error) => error.range).toList();
 
     if (_overrideSelectionColor && selectionHighlightColor != null) {
       viewModel.selectionColor = selectionHighlightColor!;
@@ -136,11 +132,7 @@ class SpellingAndGrammarStyler extends SingleColumnLayoutStylePhase {
       // Apply it.
       viewModel.grammarErrorUnderlineStyle = _grammarErrorUnderlineStyle!;
     }
-    viewModel.grammarErrors
-      ..clear()
-      ..addAll([
-        for (final grammarError in grammarErrors) grammarError.range,
-      ]);
+    viewModel.grammarErrors = grammarErrors.map((error) => error.range).toList();
 
     return viewModel;
   }
