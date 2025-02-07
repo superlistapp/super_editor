@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:ui';
 
+import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -33,6 +34,9 @@ class SpellingAndGrammarPlugin extends SuperEditorPlugin {
   ///   is required when running on Android.
   /// - [iosControlsController]: the controls controller to use when running on iOS. This is
   ///   required when running on iOS.
+  /// - [ignoreRules]: a list of rules that determine ranges that should be ignored from spellchecking.
+  ///   It can be used,  for example, to ignore links or text with specific attributions. See [SpellingIgnoreRules]
+  ///   for a list of built-in rules.
   SpellingAndGrammarPlugin({
     bool isSpellingCheckEnabled = true,
     UnderlineStyle spellingErrorUnderlineStyle = defaultSpellingErrorUnderlineStyle,
@@ -42,6 +46,7 @@ class SpellingAndGrammarPlugin extends SuperEditorPlugin {
     Color? selectedWordHighlightColor,
     SuperEditorAndroidControlsController? androidControlsController,
     SuperEditorIosControlsController? iosControlsController,
+    List<SpellingIgnoreRule> ignoreRules = const [],
   })  : _isSpellCheckEnabled = isSpellingCheckEnabled,
         _isGrammarCheckEnabled = isGrammarCheckEnabled {
     assert(defaultTargetPlatform != TargetPlatform.android || androidControlsController != null,
@@ -66,6 +71,8 @@ class SpellingAndGrammarPlugin extends SuperEditorPlugin {
               : null),
     );
 
+    _ignoreRules = ignoreRules;
+
     _contentTapHandler = switch (defaultTargetPlatform) {
       TargetPlatform.android => SuperEditorAndroidSpellCheckerTapHandler(
           popoverController: _popoverController,
@@ -88,6 +95,8 @@ class SpellingAndGrammarPlugin extends SuperEditorPlugin {
   /// Leader attached to an invisible rectangle around the currently selected
   /// misspelled word.
   final _selectedWordLink = LeaderLink();
+
+  late final List<SpellingIgnoreRule> _ignoreRules;
 
   late final SpellingAndGrammarReaction _reaction;
 
@@ -138,7 +147,7 @@ class SpellingAndGrammarPlugin extends SuperEditorPlugin {
     editor.context.put(spellingErrorSuggestionsKey, _spellingErrorSuggestions);
     _contentTapHandler?.editor = editor;
 
-    _reaction = SpellingAndGrammarReaction(_spellingErrorSuggestions, _styler);
+    _reaction = SpellingAndGrammarReaction(_spellingErrorSuggestions, _styler, _ignoreRules);
     editor.reactionPipeline.add(_reaction);
 
     // Do initial spelling and grammar analysis, in case the document already
@@ -245,11 +254,13 @@ extension SpellingAndGrammarEditorExtensions on Editor {
 /// An [EditReaction] that runs spelling and grammar checks on all [TextNode]s
 /// in a given [Document].
 class SpellingAndGrammarReaction implements EditReaction {
-  SpellingAndGrammarReaction(this._suggestions, this._styler);
+  SpellingAndGrammarReaction(this._suggestions, this._styler, this._ignoreRules);
 
   final SpellingErrorSuggestions _suggestions;
 
   final SpellingAndGrammarStyler _styler;
+
+  final List<SpellingIgnoreRule> _ignoreRules;
 
   bool isSpellCheckEnabled = true;
 
@@ -274,12 +285,13 @@ class SpellingAndGrammarReaction implements EditReaction {
   /// Checks every [TextNode] in the given document for spelling and grammar
   /// errors and stores them for visual styling.
   void analyzeWholeDocument(EditContext editorContext) {
+    final document = editorContext.document;
     for (final node in editorContext.document) {
       if (node is! TextNode) {
         continue;
       }
 
-      _findSpellingAndGrammarErrors(node);
+      _findSpellingAndGrammarErrors(node, document);
     }
   }
 
@@ -351,19 +363,19 @@ class SpellingAndGrammarReaction implements EditReaction {
         continue;
       }
 
-      _findSpellingAndGrammarErrors(textNode);
+      _findSpellingAndGrammarErrors(textNode, document);
     }
   }
 
-  Future<void> _findSpellingAndGrammarErrors(TextNode textNode) async {
+  Future<void> _findSpellingAndGrammarErrors(TextNode textNode, Document document) async {
     if (defaultTargetPlatform == TargetPlatform.macOS) {
-      await _findSpellingAndGrammarErrorsOnMac(textNode);
+      await _findSpellingAndGrammarErrorsOnMac(textNode, document);
     } else if (defaultTargetPlatform == TargetPlatform.android || defaultTargetPlatform == TargetPlatform.iOS) {
-      await _findSpellingAndGrammarErrorsOnMobile(textNode);
+      await _findSpellingAndGrammarErrorsOnMobile(textNode, document);
     }
   }
 
-  Future<void> _findSpellingAndGrammarErrorsOnMac(TextNode textNode) async {
+  Future<void> _findSpellingAndGrammarErrorsOnMac(TextNode textNode, Document document) async {
     // TODO: Investigate whether we can parallelize spelling and grammar checks
     //       for a given node (and whether it's worth the complexity).
     final textErrors = <TextError>{};
@@ -374,6 +386,8 @@ class SpellingAndGrammarReaction implements EditReaction {
     final requestId = _asyncRequestIds[textNode.id]! + 1;
     _asyncRequestIds[textNode.id] = requestId;
 
+    final plainText = _filterIgnoredRanges(textNode, document);
+
     int startingOffset = 0;
     TextRange prevError = TextRange.empty;
     final locale = PlatformDispatcher.instance.locale;
@@ -382,16 +396,16 @@ class SpellingAndGrammarReaction implements EditReaction {
     if (isSpellCheckEnabled) {
       do {
         prevError = await _macSpellChecker.checkSpelling(
-          stringToCheck: textNode.text.text,
+          stringToCheck: plainText,
           startingOffset: startingOffset,
           language: language,
         );
 
         if (prevError.isValid) {
-          final word = textNode.text.text.substring(prevError.start, prevError.end);
+          final word = plainText.substring(prevError.start, prevError.end);
 
           // Ask platform for spelling correction guesses.
-          final guesses = await _macSpellChecker.guesses(range: prevError, text: textNode.text.text);
+          final guesses = await _macSpellChecker.guesses(range: prevError, text: plainText);
 
           textErrors.add(
             TextError.spelling(
@@ -419,7 +433,7 @@ class SpellingAndGrammarReaction implements EditReaction {
       prevError = TextRange.empty;
       do {
         final result = await _macSpellChecker.checkGrammar(
-          stringToCheck: textNode.text.text,
+          stringToCheck: plainText,
           startingOffset: startingOffset,
           language: language,
         );
@@ -428,7 +442,7 @@ class SpellingAndGrammarReaction implements EditReaction {
         if (prevError.isValid) {
           for (final grammarError in result.details) {
             final errorRange = grammarError.range;
-            final text = textNode.text.text.substring(errorRange.start, errorRange.end);
+            final text = plainText.substring(errorRange.start, errorRange.end);
             textErrors.add(
               TextError.grammar(
                 nodeId: textNode.id,
@@ -461,7 +475,7 @@ class SpellingAndGrammarReaction implements EditReaction {
     _suggestions.putSuggestions(textNode.id, spellingSuggestions);
   }
 
-  Future<void> _findSpellingAndGrammarErrorsOnMobile(TextNode textNode) async {
+  Future<void> _findSpellingAndGrammarErrorsOnMobile(TextNode textNode, Document document) async {
     final textErrors = <TextError>{};
     final spellingSuggestions = <TextRange, SpellingError>{};
 
@@ -471,16 +485,18 @@ class SpellingAndGrammarReaction implements EditReaction {
     final requestId = _asyncRequestIds[textNode.id]! + 1;
     _asyncRequestIds[textNode.id] = requestId;
 
+    final plainText = _filterIgnoredRanges(textNode, document);
+
     final suggestions = await _mobileSpellChecker.fetchSpellCheckSuggestions(
       PlatformDispatcher.instance.locale,
-      textNode.text.toPlainText(),
+      plainText,
     );
     if (suggestions == null) {
       return;
     }
 
     for (final suggestion in suggestions) {
-      final misspelledWord = textNode.text.substring(suggestion.range.start, suggestion.range.end);
+      final misspelledWord = plainText.substring(suggestion.range.start, suggestion.range.end);
       spellingSuggestions[suggestion.range] = SpellingError(
         word: misspelledWord,
         nodeId: textNode.id,
@@ -513,6 +529,83 @@ class SpellingAndGrammarReaction implements EditReaction {
     // Update the shared repository of spelling suggestions so that the user can
     // see suggestions and select them.
     _suggestions.putSuggestions(textNode.id, spellingSuggestions);
+  }
+
+  /// Filters out ranges that should be ignored from spellchecking.
+  ///
+  /// This method replaces the ignored ranges with whitespaces so that the spellchecker
+  /// doesn't see them.
+  String _filterIgnoredRanges(TextNode node, Document document) {
+    final ranges = _ignoreRules //
+        .map((rule) => rule(node, document))
+        .expand((listOfRanges) => listOfRanges)
+        .toList();
+
+    final text = node.text.toPlainText();
+
+    if (ranges.isEmpty) {
+      // We don't have any ranges to remove, short circuit.
+      return text;
+    }
+
+    final buffer = StringBuffer();
+
+    final mergedRanges = _mergeOverlappingRanges(ranges);
+    int currentOffset = 0;
+    for (final range in mergedRanges) {
+      if (range.start > currentOffset) {
+        // We have text before the ignored range. Add it.
+        buffer.write(text.substring(currentOffset, range.start));
+      }
+
+      // Fill the ignored range with whitespaces.
+      buffer.write(' ' * (range.end - range.start));
+
+      currentOffset = range.end;
+    }
+
+    // Add the remaining text, after the last ignored range, if any.
+    if (currentOffset < text.length) {
+      buffer.write(text.substring(currentOffset));
+    }
+
+    return buffer.toString();
+  }
+
+  /// Merges overlapping ranges in the given list of [ranges].
+  ///
+  /// Returns a new sorted list of ranges where overlapping ranges are merged.
+  List<TextRange> _mergeOverlappingRanges(List<TextRange> ranges) {
+    final sortedRanges = ranges.sorted((a, b) {
+      if (a.start < b.start) {
+        return -1;
+      } else if (a.start > b.start) {
+        return 1;
+      }
+
+      return a.end - b.end;
+    });
+
+    TextRange currentRange = sortedRanges.first;
+
+    final mergedRanges = <TextRange>[];
+    for (int i = 1; i < sortedRanges.length; i++) {
+      final nextRange = sortedRanges[i];
+      if (currentRange.end >= nextRange.start) {
+        // The ranges overlap, merge them.
+        currentRange = TextRange(
+          start: currentRange.start,
+          end: nextRange.end,
+        );
+      } else {
+        // The ranges don't overlap.
+        mergedRanges.add(currentRange);
+        currentRange = nextRange;
+      }
+    }
+    mergedRanges.add(currentRange);
+
+    return mergedRanges;
   }
 }
 
@@ -784,4 +877,39 @@ class _SpellCheckerContentTapDelegate extends ContentTapDelegate {
   _SpellCheckerContentTapDelegate();
 
   Editor? editor;
+}
+
+/// A function that determines ranges to be ignored from spellchecking.
+typedef SpellingIgnoreRule = List<TextRange> Function(TextNode node, Document document);
+
+/// A collection of built-in rules for ignoring spans of text from spellchecking.
+class SpellingIgnoreRules {
+  /// Creates a rule that ignores text spans that match the given [pattern].
+  static SpellingIgnoreRule byPattern(Pattern pattern) {
+    return (TextNode node, Document document) {
+      return pattern
+          .allMatches(node.text.toPlainText())
+          .map((match) => TextRange(start: match.start, end: match.end))
+          .toList();
+    };
+  }
+
+  /// Creates a rule that ignores text spans that have the given [attribution].
+  static SpellingIgnoreRule byAttribution(Attribution attribution) {
+    return byAttributionFilter((candidate) => candidate == attribution);
+  }
+
+  /// Creates a rule that ignore text spans that have at least one atribution that matches the given [filter].
+  static SpellingIgnoreRule byAttributionFilter(AttributionFilter filter) {
+    return (TextNode node, Document document) {
+      return node.text.spans
+          .getAttributionSpansInRange(
+            attributionFilter: filter,
+            start: 0,
+            end: node.text.toPlainText().length - 1, // -1 to make end of range inclusive.
+          )
+          .map((span) => TextRange(start: span.start, end: span.end + 1)) // +1 to make the end exclusive.
+          .toList();
+    };
+  }
 }
