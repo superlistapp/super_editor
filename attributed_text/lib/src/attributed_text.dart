@@ -427,17 +427,16 @@ class AttributedText {
 
     // Note: -1 because copyText() uses an exclusive `start` and `end` but
     // _copyAttributionRegion() uses an inclusive `start` and `end`.
-    final spansStartCopyOffset =
-        startOffset < textWithPlaceholders.length ? startOffset : textWithPlaceholders.length - 1;
-    int spansEndCopyOffset;
+    final startCopyOffset = startOffset < textWithPlaceholders.length ? startOffset : textWithPlaceholders.length - 1;
+    int endCopyOffset;
     if (endOffset == startOffset) {
-      spansEndCopyOffset = spansStartCopyOffset;
+      endCopyOffset = startCopyOffset;
     } else if (endOffset != null) {
-      spansEndCopyOffset = endOffset - 1;
+      endCopyOffset = endOffset - 1;
     } else {
-      spansEndCopyOffset = textWithPlaceholders.length - 1;
+      endCopyOffset = textWithPlaceholders.length - 1;
     }
-    _log.fine('offsets, start: $spansStartCopyOffset, end: $spansEndCopyOffset');
+    _log.fine('offsets, start: $startCopyOffset, end: $endCopyOffset');
 
     // Create placeholders for the copied region. The indices of the placeholders
     // need to be reduced based on the text/placeholders cut out from the
@@ -449,7 +448,7 @@ class AttributedText {
 
     return AttributedText(
       _text.substring(textStartCopyOffset, textEndCopyOffset),
-      spans.copyAttributionRegion(spansStartCopyOffset, spansEndCopyOffset),
+      spans.copyAttributionRegion(startCopyOffset, endCopyOffset),
       copiedPlaceholders,
     );
   }
