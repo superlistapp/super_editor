@@ -285,13 +285,12 @@ class SpellingAndGrammarReaction implements EditReaction {
   /// Checks every [TextNode] in the given document for spelling and grammar
   /// errors and stores them for visual styling.
   void analyzeWholeDocument(EditContext editorContext) {
-    final document = editorContext.document;
     for (final node in editorContext.document) {
       if (node is! TextNode) {
         continue;
       }
 
-      _findSpellingAndGrammarErrors(node, document);
+      _findSpellingAndGrammarErrors(node);
     }
   }
 
@@ -363,19 +362,19 @@ class SpellingAndGrammarReaction implements EditReaction {
         continue;
       }
 
-      _findSpellingAndGrammarErrors(textNode, document);
+      _findSpellingAndGrammarErrors(textNode);
     }
   }
 
-  Future<void> _findSpellingAndGrammarErrors(TextNode textNode, Document document) async {
+  Future<void> _findSpellingAndGrammarErrors(TextNode textNode) async {
     if (defaultTargetPlatform == TargetPlatform.macOS) {
-      await _findSpellingAndGrammarErrorsOnMac(textNode, document);
+      await _findSpellingAndGrammarErrorsOnMac(textNode);
     } else if (defaultTargetPlatform == TargetPlatform.android || defaultTargetPlatform == TargetPlatform.iOS) {
-      await _findSpellingAndGrammarErrorsOnMobile(textNode, document);
+      await _findSpellingAndGrammarErrorsOnMobile(textNode);
     }
   }
 
-  Future<void> _findSpellingAndGrammarErrorsOnMac(TextNode textNode, Document document) async {
+  Future<void> _findSpellingAndGrammarErrorsOnMac(TextNode textNode) async {
     // TODO: Investigate whether we can parallelize spelling and grammar checks
     //       for a given node (and whether it's worth the complexity).
     final textErrors = <TextError>{};
@@ -386,7 +385,7 @@ class SpellingAndGrammarReaction implements EditReaction {
     final requestId = _asyncRequestIds[textNode.id]! + 1;
     _asyncRequestIds[textNode.id] = requestId;
 
-    final plainText = _filterIgnoredRanges(textNode, document);
+    final plainText = _filterIgnoredRanges(textNode);
 
     int startingOffset = 0;
     TextRange prevError = TextRange.empty;
@@ -475,7 +474,7 @@ class SpellingAndGrammarReaction implements EditReaction {
     _suggestions.putSuggestions(textNode.id, spellingSuggestions);
   }
 
-  Future<void> _findSpellingAndGrammarErrorsOnMobile(TextNode textNode, Document document) async {
+  Future<void> _findSpellingAndGrammarErrorsOnMobile(TextNode textNode) async {
     final textErrors = <TextError>{};
     final spellingSuggestions = <TextRange, SpellingError>{};
 
@@ -485,7 +484,7 @@ class SpellingAndGrammarReaction implements EditReaction {
     final requestId = _asyncRequestIds[textNode.id]! + 1;
     _asyncRequestIds[textNode.id] = requestId;
 
-    final plainText = _filterIgnoredRanges(textNode, document);
+    final plainText = _filterIgnoredRanges(textNode);
 
     final suggestions = await _mobileSpellChecker.fetchSpellCheckSuggestions(
       PlatformDispatcher.instance.locale,
@@ -535,9 +534,9 @@ class SpellingAndGrammarReaction implements EditReaction {
   ///
   /// This method replaces the ignored ranges with whitespaces so that the spellchecker
   /// doesn't see them.
-  String _filterIgnoredRanges(TextNode node, Document document) {
+  String _filterIgnoredRanges(TextNode node) {
     final ranges = _ignoreRules //
-        .map((rule) => rule(node, document))
+        .map((rule) => rule(node))
         .expand((listOfRanges) => listOfRanges)
         .toList();
 
@@ -880,13 +879,13 @@ class _SpellCheckerContentTapDelegate extends ContentTapDelegate {
 }
 
 /// A function that determines ranges to be ignored from spellchecking.
-typedef SpellingIgnoreRule = List<TextRange> Function(TextNode node, Document document);
+typedef SpellingIgnoreRule = List<TextRange> Function(TextNode node);
 
 /// A collection of built-in rules for ignoring spans of text from spellchecking.
 class SpellingIgnoreRules {
   /// Creates a rule that ignores text spans that match the given [pattern].
   static SpellingIgnoreRule byPattern(Pattern pattern) {
-    return (TextNode node, Document document) {
+    return (TextNode node) {
       return pattern
           .allMatches(node.text.toPlainText())
           .map((match) => TextRange(start: match.start, end: match.end))
@@ -901,7 +900,7 @@ class SpellingIgnoreRules {
 
   /// Creates a rule that ignore text spans that have at least one atribution that matches the given [filter].
   static SpellingIgnoreRule byAttributionFilter(AttributionFilter filter) {
-    return (TextNode node, Document document) {
+    return (TextNode node) {
       return node.text.spans
           .getAttributionSpansInRange(
             attributionFilter: filter,
