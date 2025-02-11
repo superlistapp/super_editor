@@ -519,8 +519,7 @@ spans multiple lines.''',
         )),
       );
 
-      // Drag the scrollbar down.
-      await tester.dragScrollbar(300);
+      await tester.dragScrollbarDown(300);
 
       // Ensure the content scrolled to the end of the document.
       expect(scrollController.position.pixels, moreOrLessEquals(770.0));
@@ -559,8 +558,7 @@ spans multiple lines.''',
       scrollController.jumpTo(scrollController.position.maxScrollExtent);
       await tester.pump();
 
-      // Drag the scrollbar up.
-      await tester.dragScrollbar(-300);
+      await tester.dragScrollbarUp(300);
 
       // Ensure the content scrolled to the beginning of the document.
       expect(scrollController.position.pixels, 0);
