@@ -421,16 +421,20 @@ class AttributedText {
     final textEndCopyOffset =
         (endOffset ?? length) - placeholdersBeforeStartOffset.length - placeholdersAfterStartBeforeEndOffset.length;
 
+    // The span marker offsets are based on the text with placeholders, so we need
+    // to copy the text with placeholders to ensure the span markers are correct.
+    final textWithPlaceholders = toPlainText();
+
     // Note: -1 because copyText() uses an exclusive `start` and `end` but
     // _copyAttributionRegion() uses an inclusive `start` and `end`.
-    final startCopyOffset = startOffset < _text.length ? startOffset : _text.length - 1;
+    final startCopyOffset = startOffset < textWithPlaceholders.length ? startOffset : textWithPlaceholders.length - 1;
     int endCopyOffset;
     if (endOffset == startOffset) {
       endCopyOffset = startCopyOffset;
     } else if (endOffset != null) {
       endCopyOffset = endOffset - 1;
     } else {
-      endCopyOffset = _text.length - 1;
+      endCopyOffset = textWithPlaceholders.length - 1;
     }
     _log.fine('offsets, start: $startCopyOffset, end: $endCopyOffset');
 
