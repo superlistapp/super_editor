@@ -82,6 +82,11 @@ class _SuperEditorSpellcheckScreenState extends State<_SuperEditorSpellcheckScre
     _spellingAndGrammarPlugin = SpellingAndGrammarPlugin(
       iosControlsController: _iosControlsController,
       androidControlsController: _androidControlsController,
+      ignoreRules: [
+        SpellingIgnoreRules.byAttribution(boldAttribution),
+        SpellingIgnoreRules.byAttributionFilter((attr) => attr is LinkAttribution),
+        SpellingIgnoreRules.byPattern(RegExp(r'#\w+')),
+      ],
     );
 
     _editor = createDefaultDocumentEditor(
@@ -119,6 +124,58 @@ class _SuperEditorSpellcheckScreenState extends State<_SuperEditorSpellcheckScre
           attributions: {},
         ),
       ]);
+      _editor.execute([
+        InsertNodeAfterNodeRequest(
+          existingNodeId: _editor.context.document.last.id,
+          newNode: ParagraphNode(id: Editor.createNodeId(), text: AttributedText('')),
+        )
+      ]);
+      _editor.execute([
+        InsertAttributedTextRequest(
+          DocumentPosition(
+            nodeId: _editor.context.document.last.id,
+            nodePosition: _editor.context.document.last.endPosition,
+          ),
+          AttributedText(
+            'The spellchecking can be configured to ignore spelling errors for some situation, like links: https://www.populr.com, '
+            'tags: #framwork, or text with specific attributions, like bold attbution.',
+            AttributedSpans(
+              attributions: [
+                const SpanMarker(
+                  attribution: LinkAttribution('https://www.populr.com'),
+                  offset: 94,
+                  markerType: SpanMarkerType.start,
+                ),
+                const SpanMarker(
+                  attribution: LinkAttribution('https://www.populr.com'),
+                  offset: 115,
+                  markerType: SpanMarkerType.end,
+                ),
+                const SpanMarker(
+                  attribution: PatternTagAttribution(),
+                  offset: 124,
+                  markerType: SpanMarkerType.start,
+                ),
+                const SpanMarker(
+                  attribution: PatternTagAttribution(),
+                  offset: 132,
+                  markerType: SpanMarkerType.end,
+                ),
+                const SpanMarker(
+                  attribution: boldAttribution,
+                  offset: 176,
+                  markerType: SpanMarkerType.start,
+                ),
+                const SpanMarker(
+                  attribution: boldAttribution,
+                  offset: 189,
+                  markerType: SpanMarkerType.end,
+                ),
+              ],
+            ),
+          ),
+        )
+      ]);
     });
   }
 
@@ -133,6 +190,17 @@ class _SuperEditorSpellcheckScreenState extends State<_SuperEditorSpellcheckScre
             autofocus: true,
             editor: _editor,
             stylesheet: defaultStylesheet.copyWith(
+              inlineTextStyler: (attributions, existingStyle) {
+                TextStyle style = defaultInlineTextStyler(attributions, existingStyle);
+
+                if (attributions.whereType<PatternTagAttribution>().isNotEmpty) {
+                  style = style.copyWith(
+                    color: Colors.orange,
+                  );
+                }
+
+                return style;
+              },
               addRulesAfter: [
                 if (Theme.of(context).brightness == Brightness.dark) ..._darkModeStyles,
               ],
