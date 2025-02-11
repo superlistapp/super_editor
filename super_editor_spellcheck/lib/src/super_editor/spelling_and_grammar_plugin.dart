@@ -37,6 +37,9 @@ class SpellingAndGrammarPlugin extends SuperEditorPlugin {
   /// - [ignoreRules]: a list of rules that determine ranges that should be ignored from spellchecking.
   ///   It can be used,  for example, to ignore links or text with specific attributions. See [SpellingIgnoreRules]
   ///   for a list of built-in rules.
+  /// - [spellCheckService]: a custom spell check service to use for spell checking. If this is provided,
+  ///   the plugin will use this service instead of the default spell check service. This is intended to
+  ///   be used in tests.
   SpellingAndGrammarPlugin({
     bool isSpellingCheckEnabled = true,
     UnderlineStyle spellingErrorUnderlineStyle = defaultSpellingErrorUnderlineStyle,
@@ -47,6 +50,7 @@ class SpellingAndGrammarPlugin extends SuperEditorPlugin {
     SuperEditorAndroidControlsController? androidControlsController,
     SuperEditorIosControlsController? iosControlsController,
     List<SpellingIgnoreRule> ignoreRules = const [],
+    SpellCheckService? spellCheckService,
   })  : _isSpellCheckEnabled = isSpellingCheckEnabled,
         _isGrammarCheckEnabled = isGrammarCheckEnabled {
     assert(defaultTargetPlatform != TargetPlatform.android || androidControlsController != null,
@@ -54,6 +58,8 @@ class SpellingAndGrammarPlugin extends SuperEditorPlugin {
 
     assert(defaultTargetPlatform != TargetPlatform.iOS || iosControlsController != null,
         'The iosControlsController must be provided when running on iOS.');
+
+    _spellCheckService = spellCheckService;
 
     documentOverlayBuilders = <SuperEditorLayerBuilder>[
       SpellingErrorSuggestionOverlayBuilder(
@@ -87,6 +93,8 @@ class SpellingAndGrammarPlugin extends SuperEditorPlugin {
       _ => _SuperEditorDesktopSpellCheckerTapHandler(popoverController: _popoverController),
     };
   }
+
+  late final SpellCheckService? _spellCheckService;
 
   final _spellingErrorSuggestions = SpellingErrorSuggestions();
 
@@ -147,7 +155,7 @@ class SpellingAndGrammarPlugin extends SuperEditorPlugin {
     editor.context.put(spellingErrorSuggestionsKey, _spellingErrorSuggestions);
     _contentTapHandler?.editor = editor;
 
-    _reaction = SpellingAndGrammarReaction(_spellingErrorSuggestions, _styler, _ignoreRules);
+    _reaction = SpellingAndGrammarReaction(_spellingErrorSuggestions, _styler, _ignoreRules, _spellCheckService);
     editor.reactionPipeline.add(_reaction);
 
     // Do initial spelling and grammar analysis, in case the document already
@@ -254,13 +262,15 @@ extension SpellingAndGrammarEditorExtensions on Editor {
 /// An [EditReaction] that runs spelling and grammar checks on all [TextNode]s
 /// in a given [Document].
 class SpellingAndGrammarReaction implements EditReaction {
-  SpellingAndGrammarReaction(this._suggestions, this._styler, this._ignoreRules);
+  SpellingAndGrammarReaction(this._suggestions, this._styler, this._ignoreRules, this._customSpellCheckService);
 
   final SpellingErrorSuggestions _suggestions;
 
   final SpellingAndGrammarStyler _styler;
 
   final List<SpellingIgnoreRule> _ignoreRules;
+
+  final SpellCheckService? _customSpellCheckService;
 
   bool isSpellCheckEnabled = true;
 
@@ -367,10 +377,12 @@ class SpellingAndGrammarReaction implements EditReaction {
   }
 
   Future<void> _findSpellingAndGrammarErrors(TextNode textNode) async {
-    if (defaultTargetPlatform == TargetPlatform.macOS) {
+    if (_customSpellCheckService != null) {
+      await _findSpellingAndGrammarErrorsWithSpellCheckService(_customSpellCheckService!, textNode);
+    } else if (defaultTargetPlatform == TargetPlatform.macOS) {
       await _findSpellingAndGrammarErrorsOnMac(textNode);
     } else if (defaultTargetPlatform == TargetPlatform.android || defaultTargetPlatform == TargetPlatform.iOS) {
-      await _findSpellingAndGrammarErrorsOnMobile(textNode);
+      await _findSpellingAndGrammarErrorsWithSpellCheckService(_mobileSpellChecker, textNode);
     }
   }
 
@@ -474,7 +486,8 @@ class SpellingAndGrammarReaction implements EditReaction {
     _suggestions.putSuggestions(textNode.id, spellingSuggestions);
   }
 
-  Future<void> _findSpellingAndGrammarErrorsOnMobile(TextNode textNode) async {
+  Future<void> _findSpellingAndGrammarErrorsWithSpellCheckService(
+      SpellCheckService spellCheckService, TextNode textNode) async {
     final textErrors = <TextError>{};
     final spellingSuggestions = <TextRange, SpellingError>{};
 
@@ -486,7 +499,7 @@ class SpellingAndGrammarReaction implements EditReaction {
 
     final plainText = _filterIgnoredRanges(textNode);
 
-    final suggestions = await _mobileSpellChecker.fetchSpellCheckSuggestions(
+    final suggestions = await spellCheckService.fetchSpellCheckSuggestions(
       PlatformDispatcher.instance.locale,
       plainText,
     );
