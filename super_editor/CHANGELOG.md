@@ -1,3 +1,7 @@
+## [0.3.0-dev.19] - Feb 11, 2024
+ * FIX: Immutability error in the spelling and grammar styler.
+ * ADJUSTMENT: Upgrade to `attributed_text` `v0.4.4` (with some fixes to inline placeholders).
+
 ## [0.3.0-dev.18] - Jan 30, 2024
  * ADJUSTMENT: Upgrade to `attributed_text` `v0.4.3` (with fixes to per-character lookup).
 
