@@ -1,3 +1,6 @@
+## [0.4.4] - Feb, 2024
+ * [FIX] - `toggleAttribution()` error with inline placeholders.
+
 ## [0.4.3] - Jan, 2024
  * [FIX] - Accessing individual characters in `AttributedText` no longer tries to access indices
            out of bounds.
