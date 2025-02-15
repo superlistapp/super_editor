@@ -37,7 +37,7 @@ class SpellingAndGrammarPlugin extends SuperEditorPlugin {
   /// - [ignoreRules]: a list of rules that determine ranges that should be ignored from spellchecking.
   ///   It can be used,  for example, to ignore links or text with specific attributions. See [SpellingIgnoreRules]
   ///   for a list of built-in rules.
-  /// - [spellCheckService]: a custom spell check service to use for spell checking. If this is provided,
+  /// - [spellCheckService]: a spell check service to use for spell checking. If this is provided,
   ///   the plugin will use this service instead of the default spell check service. This is intended to
   ///   be used in tests.
   SpellingAndGrammarPlugin({
@@ -94,6 +94,11 @@ class SpellingAndGrammarPlugin extends SuperEditorPlugin {
     };
   }
 
+  /// A service that provides spell checking functionality.
+  ///
+  /// If provided, the plugin uses this service instead of the default spell check
+  /// service. This is intended to be used in tests, or for platforms that
+  /// don't have a built-in spellcheck plugin.
   late final SpellCheckService? _spellCheckService;
 
   final _spellingErrorSuggestions = SpellingErrorSuggestions();
@@ -262,7 +267,7 @@ extension SpellingAndGrammarEditorExtensions on Editor {
 /// An [EditReaction] that runs spelling and grammar checks on all [TextNode]s
 /// in a given [Document].
 class SpellingAndGrammarReaction implements EditReaction {
-  SpellingAndGrammarReaction(this._suggestions, this._styler, this._ignoreRules, this._customSpellCheckService);
+  SpellingAndGrammarReaction(this._suggestions, this._styler, this._ignoreRules, this._spellCheckService);
 
   final SpellingErrorSuggestions _suggestions;
 
@@ -270,7 +275,7 @@ class SpellingAndGrammarReaction implements EditReaction {
 
   final List<SpellingIgnoreRule> _ignoreRules;
 
-  final SpellCheckService? _customSpellCheckService;
+  final SpellCheckService? _spellCheckService;
 
   bool isSpellCheckEnabled = true;
 
@@ -377,8 +382,8 @@ class SpellingAndGrammarReaction implements EditReaction {
   }
 
   Future<void> _findSpellingAndGrammarErrors(TextNode textNode) async {
-    if (_customSpellCheckService != null) {
-      await _findSpellingAndGrammarErrorsWithSpellCheckService(_customSpellCheckService!, textNode);
+    if (_spellCheckService != null) {
+      await _findSpellingAndGrammarErrorsWithSpellCheckService(_spellCheckService!, textNode);
     } else if (defaultTargetPlatform == TargetPlatform.macOS) {
       await _findSpellingAndGrammarErrorsOnMac(textNode);
     } else if (defaultTargetPlatform == TargetPlatform.android || defaultTargetPlatform == TargetPlatform.iOS) {
