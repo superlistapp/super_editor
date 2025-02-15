@@ -762,9 +762,9 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
 
     // Cancel any on-going long-press.
     if (_isLongPressInProgress) {
+      _onLongPressEnd();
       _longPressStrategy = null;
       _magnifierGlobalOffset.value = null;
-      _onLongPressEnd();
       return;
     }
 
@@ -1171,7 +1171,7 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
   }
 
   void _onLongPressEnd() {
-    _longPressStrategy?.onLongPressEnd();
+    _longPressStrategy!.onLongPressEnd();
 
     // Cancel any on-going long-press.
     _longPressStrategy = null;
@@ -1181,12 +1181,10 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
 
     _controlsController!.hideMagnifier();
     if (!widget.selection.value!.isCollapsed) {
-      _controlsController!.showExpandedHandles();
+      _controlsController!
+        ..showExpandedHandles()
+        ..showToolbar();
     }
-
-    // Show the toolbar even the selection is collapsed, because the user might
-    // be long-pressing on an empty paragraph or on a whitespace.
-    _controlsController!.showToolbar();
   }
 
   void _onCaretDragEnd() {

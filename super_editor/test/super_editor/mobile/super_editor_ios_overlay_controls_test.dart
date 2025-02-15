@@ -151,7 +151,7 @@ void main() {
 
       // Release the finger.
       await gesture.up();
-      await tester.pumpAndSettle();
+      await tester.pump();
 
       // Ensure the toolbar is visible.
       expect(SuperEditorInspector.isMobileToolbarVisible(), isTrue);
