@@ -4,6 +4,7 @@ import 'package:flutter_test_robots/flutter_test_robots.dart';
 import 'package:flutter_test_runners/flutter_test_runners.dart';
 import 'package:super_editor/super_editor.dart';
 import 'package:super_editor/super_editor_test.dart';
+import 'package:super_keyboard/test/keyboard_simulator.dart';
 import 'package:super_text_layout/super_text_layout.dart';
 
 import '../../test_runners.dart';
@@ -139,6 +140,11 @@ void main() {
           .createDocument()
           .withSingleEmptyParagraph()
           .pump();
+
+      // The decision about showing the toolbar depends on the keyboard visibility.
+      // Simulate the keyboard being visible immediately after the IME is connected.
+      TestSuperKeyboard.install(tester, keyboardAnimationTime: Duration.zero);
+      addTearDown(() => TestSuperKeyboard.uninstall());
 
       // Ensure the toolbar is not visible.
       expect(SuperEditorInspector.isMobileToolbarVisible(), isFalse);
