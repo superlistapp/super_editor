@@ -258,15 +258,45 @@ class TextDeltasDocumentEditor {
     if (docSelection != null) {
       // We got a selection from the platform.
       // This could happen in some software keyboards, like GBoard,
-      // where the user can swipe over the spacebar to change the selection.
-      editor.execute([
-        ChangeSelectionRequest(
-          docSelection,
-          docSelection.isCollapsed ? SelectionChangeType.placeCaret : SelectionChangeType.expandSelection,
-          SelectionReason.userInteraction,
-        ),
-        ChangeComposingRegionRequest(docComposingRegion),
-      ]);
+      // where the user can swipe over the spacebar to change the selection. This also happens
+      // when the app uses the native iOS text selection toolbar and the user presses "Select all".
+
+      final extentNode = document.getNodeById(docSelection.extent.nodeId)!;
+      final isWholeNodeSelected = docSelection.start.nodeId == docSelection.end.nodeId &&
+          docSelection.start.nodePosition == extentNode.beginningPosition &&
+          docSelection.end.nodePosition == extentNode.endPosition;
+      if (defaultTargetPlatform == TargetPlatform.iOS && isWholeNodeSelected) {
+        // On iOS, when the app uses the native text selection toolbar and the user presses "Select all",
+        // Flutter sends us a non-text delta with the selection change. However, since we only send to the IME the text
+        // of the currently selected nodes, the delta reports the node being selected, not the entire
+        // document. To workaroud this, whenever iOS reports a selection change that selects an entire node,
+        // we select the entire document instead.
+        editor.execute([
+          ChangeSelectionRequest(
+            DocumentSelection(
+              base: DocumentPosition(
+                nodeId: document.first.id,
+                nodePosition: document.first.beginningPosition,
+              ),
+              extent: DocumentPosition(
+                nodeId: document.last.id,
+                nodePosition: document.last.endPosition,
+              ),
+            ),
+            SelectionChangeType.expandSelection,
+            SelectionReason.userInteraction,
+          ),
+        ]);
+      } else {
+        editor.execute([
+          ChangeSelectionRequest(
+            docSelection,
+            docSelection.isCollapsed ? SelectionChangeType.placeCaret : SelectionChangeType.expandSelection,
+            SelectionReason.userInteraction,
+          ),
+          ChangeComposingRegionRequest(docComposingRegion),
+        ]);
+      }
     }
 
     // Update the local IME value that changes with each delta.
