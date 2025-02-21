@@ -37,6 +37,12 @@ class SpellingAndGrammarPlugin extends SuperEditorPlugin {
   /// - [ignoreRules]: a list of rules that determine ranges that should be ignored from spellchecking.
   ///   It can be used,  for example, to ignore links or text with specific attributions. See [SpellingIgnoreRules]
   ///   for a list of built-in rules.
+  /// - [spellCheckService]: a spell check service to use for spell checking. If this is provided,
+  ///   the plugin will use this service instead of the default spell check service. The default spell checker
+  ///   supports macOS, Android, and iOS.
+  /// - [grammarCheckService]: a grammar check service to use for grammar checking. If this is provided,
+  ///   the plugin will use this service instead of the default grammar check service. The default grammar checker
+  ///   supports macOS only.
   SpellingAndGrammarPlugin({
     bool isSpellingCheckEnabled = true,
     UnderlineStyle spellingErrorUnderlineStyle = defaultSpellingErrorUnderlineStyle,
@@ -47,6 +53,8 @@ class SpellingAndGrammarPlugin extends SuperEditorPlugin {
     SuperEditorAndroidControlsController? androidControlsController,
     SuperEditorIosControlsController? iosControlsController,
     List<SpellingIgnoreRule> ignoreRules = const [],
+    SpellCheckService? spellCheckService,
+    GrammarCheckService? grammarCheckService,
   })  : _isSpellCheckEnabled = isSpellingCheckEnabled,
         _isGrammarCheckEnabled = isGrammarCheckEnabled {
     assert(defaultTargetPlatform != TargetPlatform.android || androidControlsController != null,
@@ -54,6 +62,19 @@ class SpellingAndGrammarPlugin extends SuperEditorPlugin {
 
     assert(defaultTargetPlatform != TargetPlatform.iOS || iosControlsController != null,
         'The iosControlsController must be provided when running on iOS.');
+
+    _spellCheckService = spellCheckService ??
+        switch (defaultTargetPlatform) {
+          TargetPlatform.macOS => MacSpellCheckService(),
+          TargetPlatform.android || TargetPlatform.iOS => DefaultSpellCheckService(),
+          _ => null,
+        };
+
+    _grammarCheckService = grammarCheckService ??
+        switch (defaultTargetPlatform) {
+          TargetPlatform.macOS => MacGrammarCheckService(),
+          _ => null,
+        };
 
     documentOverlayBuilders = <SuperEditorLayerBuilder>[
       SpellingErrorSuggestionOverlayBuilder(
@@ -87,6 +108,12 @@ class SpellingAndGrammarPlugin extends SuperEditorPlugin {
       _ => _SuperEditorDesktopSpellCheckerTapHandler(popoverController: _popoverController),
     };
   }
+
+  /// A service that provides spell checking functionality.
+  late final SpellCheckService? _spellCheckService;
+
+  /// A service that provides grammar checking functionality.
+  late final GrammarCheckService? _grammarCheckService;
 
   final _spellingErrorSuggestions = SpellingErrorSuggestions();
 
@@ -147,7 +174,8 @@ class SpellingAndGrammarPlugin extends SuperEditorPlugin {
     editor.context.put(spellingErrorSuggestionsKey, _spellingErrorSuggestions);
     _contentTapHandler?.editor = editor;
 
-    _reaction = SpellingAndGrammarReaction(_spellingErrorSuggestions, _styler, _ignoreRules);
+    _reaction = SpellingAndGrammarReaction(
+        _spellingErrorSuggestions, _styler, _ignoreRules, _spellCheckService!, _grammarCheckService);
     editor.reactionPipeline.add(_reaction);
 
     // Do initial spelling and grammar analysis, in case the document already
@@ -254,13 +282,18 @@ extension SpellingAndGrammarEditorExtensions on Editor {
 /// An [EditReaction] that runs spelling and grammar checks on all [TextNode]s
 /// in a given [Document].
 class SpellingAndGrammarReaction implements EditReaction {
-  SpellingAndGrammarReaction(this._suggestions, this._styler, this._ignoreRules);
+  SpellingAndGrammarReaction(
+      this._suggestions, this._styler, this._ignoreRules, this._spellCheckService, this._grammarCheckService);
 
   final SpellingErrorSuggestions _suggestions;
 
   final SpellingAndGrammarStyler _styler;
 
   final List<SpellingIgnoreRule> _ignoreRules;
+
+  final SpellCheckService _spellCheckService;
+
+  final GrammarCheckService? _grammarCheckService;
 
   bool isSpellCheckEnabled = true;
 
@@ -278,9 +311,6 @@ class SpellingAndGrammarReaction implements EditReaction {
   /// boundary to the platform to run such checks, removing any guarantee about order
   /// of receipt.
   final _asyncRequestIds = <String, int>{};
-
-  final _mobileSpellChecker = DefaultSpellCheckService();
-  final _macSpellChecker = SuperEditorSpellCheckerPlugin().macSpellChecker;
 
   /// Checks every [TextNode] in the given document for spelling and grammar
   /// errors and stores them for visual styling.
@@ -367,17 +397,8 @@ class SpellingAndGrammarReaction implements EditReaction {
   }
 
   Future<void> _findSpellingAndGrammarErrors(TextNode textNode) async {
-    if (defaultTargetPlatform == TargetPlatform.macOS) {
-      await _findSpellingAndGrammarErrorsOnMac(textNode);
-    } else if (defaultTargetPlatform == TargetPlatform.android || defaultTargetPlatform == TargetPlatform.iOS) {
-      await _findSpellingAndGrammarErrorsOnMobile(textNode);
-    }
-  }
-
-  Future<void> _findSpellingAndGrammarErrorsOnMac(TextNode textNode) async {
-    // TODO: Investigate whether we can parallelize spelling and grammar checks
-    //       for a given node (and whether it's worth the complexity).
     final textErrors = <TextError>{};
+    final spellingSuggestions = <TextRange, SpellingError>{};
 
     // Track this spelling and grammar request to make sure we don't process
     // the response out of order with other requests.
@@ -387,129 +408,51 @@ class SpellingAndGrammarReaction implements EditReaction {
 
     final plainText = _filterIgnoredRanges(textNode);
 
-    int startingOffset = 0;
-    TextRange prevError = TextRange.empty;
-    final locale = PlatformDispatcher.instance.locale;
-    final language = _macSpellChecker.convertDartLocaleToMacLanguageCode(locale)!;
-    final spellingSuggestions = <TextRange, SpellingError>{};
     if (isSpellCheckEnabled) {
-      do {
-        prevError = await _macSpellChecker.checkSpelling(
-          stringToCheck: plainText,
-          startingOffset: startingOffset,
-          language: language,
-        );
-
-        if (prevError.isValid) {
-          final word = plainText.substring(prevError.start, prevError.end);
-
-          // Ask platform for spelling correction guesses.
-          final guesses = await _macSpellChecker.guesses(range: prevError, text: plainText);
-
+      final suggestions = await _spellCheckService.fetchSpellCheckSuggestions(
+        PlatformDispatcher.instance.locale,
+        plainText,
+      );
+      if (suggestions != null) {
+        for (final suggestion in suggestions) {
+          final misspelledWord = plainText.substring(suggestion.range.start, suggestion.range.end);
+          spellingSuggestions[suggestion.range] = SpellingError(
+            word: misspelledWord,
+            nodeId: textNode.id,
+            range: suggestion.range,
+            suggestions: suggestion.suggestions,
+          );
           textErrors.add(
             TextError.spelling(
               nodeId: textNode.id,
-              range: prevError,
-              value: word,
-              suggestions: guesses,
+              range: suggestion.range,
+              value: misspelledWord,
+              suggestions: suggestion.suggestions,
             ),
           );
+        }
+      }
+    }
 
-          spellingSuggestions[prevError] = SpellingError(
-            word: word,
-            nodeId: textNode.id,
-            range: prevError,
-            suggestions: guesses,
+    if (isGrammarCheckEnabled && _grammarCheckService != null) {
+      final grammarErrors = await _grammarCheckService!.checkGrammar(
+        PlatformDispatcher.instance.locale,
+        plainText,
+      );
+
+      if (grammarErrors != null) {
+        for (final grammarError in grammarErrors) {
+          final errorRange = grammarError.range;
+          final text = plainText.substring(errorRange.start, errorRange.end);
+          textErrors.add(
+            TextError.grammar(
+              nodeId: textNode.id,
+              range: errorRange,
+              value: text,
+            ),
           );
-
-          startingOffset = prevError.end;
         }
-      } while (prevError.isValid);
-    }
-
-    if (isGrammarCheckEnabled) {
-      startingOffset = 0;
-      prevError = TextRange.empty;
-      do {
-        final result = await _macSpellChecker.checkGrammar(
-          stringToCheck: plainText,
-          startingOffset: startingOffset,
-          language: language,
-        );
-        prevError = result.firstError ?? TextRange.empty;
-
-        if (prevError.isValid) {
-          for (final grammarError in result.details) {
-            final errorRange = grammarError.range;
-            final text = plainText.substring(errorRange.start, errorRange.end);
-            textErrors.add(
-              TextError.grammar(
-                nodeId: textNode.id,
-                range: errorRange,
-                value: text,
-              ),
-            );
-          }
-
-          startingOffset = prevError.end;
-        }
-      } while (prevError.isValid);
-    }
-
-    if (requestId != _asyncRequestIds[textNode.id]) {
-      // Another request was started for this node while we were running our
-      // request. Fizzle.
-      return;
-    }
-    // Reset the request ID counter to zero so that we avoid increasing infinitely.
-    _asyncRequestIds[textNode.id] = 0;
-
-    // Display underlines on spelling and grammar errors.
-    _styler
-      ..clearErrorsForNode(textNode.id)
-      ..addErrors(textNode.id, textErrors);
-
-    // Update the shared repository of spelling suggestions so that the user can
-    // see suggestions and select them.
-    _suggestions.putSuggestions(textNode.id, spellingSuggestions);
-  }
-
-  Future<void> _findSpellingAndGrammarErrorsOnMobile(TextNode textNode) async {
-    final textErrors = <TextError>{};
-    final spellingSuggestions = <TextRange, SpellingError>{};
-
-    // Track this spelling and grammar request to make sure we don't process
-    // the response out of order with other requests.
-    _asyncRequestIds[textNode.id] ??= 0;
-    final requestId = _asyncRequestIds[textNode.id]! + 1;
-    _asyncRequestIds[textNode.id] = requestId;
-
-    final plainText = _filterIgnoredRanges(textNode);
-
-    final suggestions = await _mobileSpellChecker.fetchSpellCheckSuggestions(
-      PlatformDispatcher.instance.locale,
-      plainText,
-    );
-    if (suggestions == null) {
-      return;
-    }
-
-    for (final suggestion in suggestions) {
-      final misspelledWord = plainText.substring(suggestion.range.start, suggestion.range.end);
-      spellingSuggestions[suggestion.range] = SpellingError(
-        word: misspelledWord,
-        nodeId: textNode.id,
-        range: suggestion.range,
-        suggestions: suggestion.suggestions,
-      );
-      textErrors.add(
-        TextError.spelling(
-          nodeId: textNode.id,
-          range: suggestion.range,
-          value: misspelledWord,
-          suggestions: suggestion.suggestions,
-        ),
-      );
+      }
     }
 
     if (requestId != _asyncRequestIds[textNode.id]) {
@@ -911,4 +854,103 @@ class SpellingIgnoreRules {
           .toList();
     };
   }
+}
+
+/// A [SpellCheckService] that uses a macOS plugin to check spelling.
+class MacSpellCheckService implements SpellCheckService {
+  final _macSpellChecker = SuperEditorSpellCheckerPlugin().macSpellChecker;
+
+  @override
+  Future<List<SuggestionSpan>?> fetchSpellCheckSuggestions(Locale locale, String text) async {
+    // TODO: Investigate whether we can parallelize spelling and grammar checks
+    //       for a given node (and whether it's worth the complexity).
+
+    final suggestionSpans = <SuggestionSpan>[];
+
+    int startingOffset = 0;
+    TextRange prevError = TextRange.empty;
+    final locale = PlatformDispatcher.instance.locale;
+    final language = _macSpellChecker.convertDartLocaleToMacLanguageCode(locale)!;
+    do {
+      prevError = await _macSpellChecker.checkSpelling(
+        stringToCheck: text,
+        startingOffset: startingOffset,
+        language: language,
+      );
+
+      if (prevError.isValid) {
+        final guesses = await _macSpellChecker.guesses(range: prevError, text: text);
+        suggestionSpans.add(SuggestionSpan(prevError, guesses));
+        startingOffset = prevError.end;
+      }
+    } while (prevError.isValid);
+
+    return suggestionSpans;
+  }
+}
+
+/// A service that knows how to check grammar on a text.
+abstract class GrammarCheckService {
+  /// Checks the given [text] for grammar errors with the given [locale].
+  ///
+  /// Returns a list of [GrammarError]s where each item represents a sentence
+  /// that has a grammatical error, with details about the error.
+  ///
+  /// Returns an empty list if no grammar errors are found or if the [locale]
+  /// isn't supported by the grammar checker.
+  ///
+  /// Returns `null` if the check was unsucessful.
+  Future<List<GrammarError>?> checkGrammar(Locale locale, String text);
+}
+
+/// A [GrammarCheckService] that uses a macOS plugin to check grammar.
+class MacGrammarCheckService implements GrammarCheckService {
+  final _macSpellChecker = SuperEditorSpellCheckerPlugin().macSpellChecker;
+
+  @override
+  Future<List<GrammarError>?> checkGrammar(Locale locale, String text) async {
+    final errors = <GrammarError>[];
+
+    final language = _macSpellChecker.convertDartLocaleToMacLanguageCode(locale)!;
+
+    int startingOffset = 0;
+    TextRange prevError = TextRange.empty;
+    do {
+      final result = await _macSpellChecker.checkGrammar(
+        stringToCheck: text,
+        startingOffset: startingOffset,
+        language: language,
+      );
+      prevError = result.firstError ?? TextRange.empty;
+
+      if (prevError.isValid) {
+        errors.addAll(
+          result.details.map(
+            (detail) => GrammarError(
+              range: detail.range,
+              description: detail.userDescription,
+            ),
+          ),
+        );
+
+        startingOffset = prevError.end;
+      }
+    } while (prevError.isValid);
+
+    return errors;
+  }
+}
+
+/// A grammatical error found in a text at [range].
+class GrammarError {
+  GrammarError({
+    required this.range,
+    required this.description,
+  });
+
+  /// The range of text that has a grammatical error.
+  final TextRange range;
+
+  /// The description of the grammatical error.
+  final String description;
 }
