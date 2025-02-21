@@ -137,6 +137,26 @@ jobs:
       # Run all tests
       - run: flutter test
 
+  test_super_editor_spellcheck:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./super_editor_spellcheck
+    steps:
+      # Checkout the PR branch
+      - uses: actions/checkout@v3
+
+      # Setup Flutter environment
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: "master"
+
+      # Download all the packages that the app uses
+      - run: flutter pub get
+
+      # Run all tests
+      - run: flutter test
+
   analyze_super_keyboard:
     runs-on: ubuntu-latest
     defaults:
@@ -176,7 +196,6 @@ jobs:
 
       # Run all tests
       - run: flutter test
-
 
   analyze_super_text_layout:
     runs-on: ubuntu-latest
