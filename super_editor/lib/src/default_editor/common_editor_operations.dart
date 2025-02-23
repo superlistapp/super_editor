@@ -346,7 +346,7 @@ class CommonEditorOperations {
           composer.selection!.expandTo(
             newExtent,
           ),
-          SelectionChangeType.pushExtent,
+          SelectionChangeType.pushExtentUpstream,
           SelectionReason.userInteraction,
         ),
       ]);
@@ -357,7 +357,7 @@ class CommonEditorOperations {
           DocumentSelection.collapsed(
             position: newExtent,
           ),
-          SelectionChangeType.pushCaret,
+          SelectionChangeType.pushCaretUpstream,
           SelectionReason.userInteraction,
         ),
       ]);
@@ -454,7 +454,7 @@ class CommonEditorOperations {
           composer.selection!.expandTo(
             newExtent,
           ),
-          SelectionChangeType.pushExtent,
+          SelectionChangeType.pushExtentDownstream,
           SelectionReason.userInteraction,
         ),
       ]);
@@ -465,7 +465,7 @@ class CommonEditorOperations {
           DocumentSelection.collapsed(
             position: newExtent,
           ),
-          SelectionChangeType.pushCaret,
+          SelectionChangeType.pushCaretDownstream,
           SelectionReason.userInteraction,
         ),
       ]);
@@ -513,6 +513,8 @@ class CommonEditorOperations {
 
     String newExtentNodeId = nodeId;
     NodePosition? newExtentNodePosition = extentComponent.movePositionUp(currentExtent.nodePosition);
+    SelectionChangeType selectionChangeType =
+        expand ? SelectionChangeType.pushExtentUp : SelectionChangeType.pushCaretUp;
 
     if (newExtentNodePosition == null) {
       // Move to next node
@@ -530,6 +532,7 @@ class CommonEditorOperations {
         // We're at the top of the document. Move the cursor to the
         // beginning of the current node.
         newExtentNodePosition = extentComponent.getBeginningPosition();
+        selectionChangeType = expand ? SelectionChangeType.pushExtentUpstream : SelectionChangeType.pushCaretUpstream;
       }
     }
 
@@ -538,7 +541,11 @@ class CommonEditorOperations {
       nodePosition: newExtentNodePosition,
     );
 
-    _updateSelectionExtent(position: newExtent, expandSelection: expand);
+    _updateSelectionExtent(
+      position: newExtent,
+      expandSelection: expand,
+      selectionChangeType: selectionChangeType,
+    );
 
     return true;
   }
@@ -582,6 +589,8 @@ class CommonEditorOperations {
 
     String newExtentNodeId = nodeId;
     NodePosition? newExtentNodePosition = extentComponent.movePositionDown(currentExtent.nodePosition);
+    SelectionChangeType selectionChangeType =
+        expand ? SelectionChangeType.pushExtentDown : SelectionChangeType.pushCaretDown;
 
     if (newExtentNodePosition == null) {
       // Move to next node
@@ -599,6 +608,8 @@ class CommonEditorOperations {
         // We're at the bottom of the document. Move the cursor to the
         // end of the current node.
         newExtentNodePosition = extentComponent.getEndPosition();
+        selectionChangeType =
+            expand ? SelectionChangeType.pushExtentDownstream : SelectionChangeType.pushCaretDownstream;
       }
     }
 
@@ -607,7 +618,11 @@ class CommonEditorOperations {
       nodePosition: newExtentNodePosition,
     );
 
-    _updateSelectionExtent(position: newExtent, expandSelection: expand);
+    _updateSelectionExtent(
+      position: newExtent,
+      expandSelection: expand,
+      selectionChangeType: selectionChangeType,
+    );
 
     return true;
   }
@@ -658,7 +673,11 @@ class CommonEditorOperations {
       nodeId: newNodeId,
       nodePosition: newPosition,
     );
-    _updateSelectionExtent(position: newExtent, expandSelection: expand);
+    _updateSelectionExtent(
+      position: newExtent,
+      expandSelection: expand,
+      selectionChangeType: SelectionChangeType.placeCaret,
+    );
 
     return true;
   }
@@ -794,13 +813,14 @@ class CommonEditorOperations {
   void _updateSelectionExtent({
     required DocumentPosition position,
     required bool expandSelection,
+    required SelectionChangeType selectionChangeType,
   }) {
     if (expandSelection) {
       // Selection should be expanded.
       editor.execute([
         ChangeSelectionRequest(
           composer.selection!.expandTo(position),
-          SelectionChangeType.expandSelection,
+          selectionChangeType,
           SelectionReason.userInteraction,
         ),
       ]);
@@ -809,7 +829,7 @@ class CommonEditorOperations {
       editor.execute([
         ChangeSelectionRequest(
           DocumentSelection.collapsed(position: position),
-          SelectionChangeType.collapseSelection,
+          selectionChangeType,
           SelectionReason.userInteraction,
         ),
       ]);
@@ -967,7 +987,7 @@ class CommonEditorOperations {
             nodePosition: nodeAfter.beginningPosition,
           ),
         ),
-        SelectionChangeType.pushCaret,
+        SelectionChangeType.pushCaretDownstream,
         SelectionReason.userInteraction,
       ),
     ]);
