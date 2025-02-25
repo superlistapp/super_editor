@@ -31,6 +31,7 @@ import 'package:super_editor/src/infrastructure/platforms/mobile_documents.dart'
 import 'package:super_editor/src/infrastructure/signal_notifier.dart';
 import 'package:super_editor/src/infrastructure/sliver_hybrid_stack.dart';
 import 'package:super_editor/src/infrastructure/touch_controls.dart';
+import 'package:super_keyboard/super_keyboard.dart';
 
 import '../infrastructure/document_gestures.dart';
 import '../infrastructure/document_gestures_interaction_overrides.dart';
@@ -671,6 +672,9 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
   }
 
   void _onDocumentChange(_) {
+    // The user might start typing when the toolbar is visible. Hide it.
+    _controlsController!.hideToolbar();
+
     onNextFrame((_) {
       _ensureSelectionExtentIsVisible();
     });
@@ -749,9 +753,9 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
 
     // Cancel any on-going long-press.
     if (_isLongPressInProgress) {
+      _onLongPressEnd();
       _longPressStrategy = null;
       _magnifierGlobalOffset.value = null;
-      _showAndHideEditingControlsAfterTapSelection(didTapOnExistingSelection: false);
       return;
     }
 
@@ -985,7 +989,7 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
         ..hideMagnifier()
         ..blinkCaret();
 
-      if (didTapOnExistingSelection && _isKeyboardOpen) {
+      if (didTapOnExistingSelection && SuperKeyboard.instance.state.value == KeyboardState.open) {
         // Toggle the toolbar display when the user taps on the collapsed caret,
         // or on top of an existing selection.
         //
@@ -998,16 +1002,6 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
         _controlsController!.hideToolbar();
       }
     }
-  }
-
-  /// Returns `true` if we *think* the software keyboard is currently open, or
-  /// `false` otherwise.
-  ///
-  /// We say "think" because Flutter doesn't report this info to us. Instead, we
-  /// inspect the bottom insets on the window, and we assume any insets greater than
-  /// zero means a keyboard is visible.
-  bool get _isKeyboardOpen {
-    return MediaQuery.viewInsetsOf(context).bottom > 0;
   }
 
   void _onPanStart(DragStartDetails details) {
