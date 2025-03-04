@@ -850,7 +850,6 @@ class RenderMessagePageScaffold extends RenderBox {
 
   @override
   void performLayout() {
-    print("MessagePageScaffold - performLayout()");
     messagePageLayoutLog.info('---------- LAYOUT -------------');
     messagePageLayoutLog.info('Laying out RenderChatScaffold');
     messagePageLayoutLog.info('Sheet mode: ${_controller.desiredSheetMode}');

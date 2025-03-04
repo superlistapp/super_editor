@@ -14,6 +14,9 @@ export 'src/core/edit_context.dart';
 export 'src/core/editor.dart';
 export 'src/core/styles.dart';
 
+// Chat
+export 'src/chat/message_page_scaffold.dart';
+
 // Super Editor
 export 'src/default_editor/attributions.dart';
 export 'src/default_editor/blocks/indentation.dart';
