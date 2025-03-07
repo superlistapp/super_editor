@@ -1110,7 +1110,22 @@ class _KeyboardScaffoldSafeAreaState extends State<KeyboardScaffoldSafeArea> {
     var bottomInsets = keyboardSafeArea.bottomInsets;
     if (_myBoxKey.currentContext != null && _myBoxKey.currentContext!.findRenderObject() != null) {
       final myBox = _myBoxKey.currentContext!.findRenderObject() as RenderBox;
-      final myGlobalBottom = myBox.localToGlobal(Offset(0, myBox.size.height)).dy;
+
+      late final double myGlobalBottom;
+      try {
+        myGlobalBottom = myBox.localToGlobal(Offset(0, myBox.size.height)).dy;
+      } catch (exception) {
+        // It was found in a client app that there can be situations where at
+        // this moment some render object in the ancestor chain isn't yet laid
+        // out. This results in an exception. The best we can do is return zero.
+        if (isLogActive(keyboardPanelLog)) {
+          keyboardPanelLog.warning(
+            "KeyboardScaffoldSafeArea (${widget.debugLabel}) - Tried to measure our global bottom offset on the screen but caused an exception, likely due to an ancestor not yet being laid out.\nException: $exception\nStacktrace:\n${StackTrace.current}",
+          );
+        }
+        return 0;
+      }
+
       if (myGlobalBottom.isNaN) {
         // We've found in a client app that under some unknown circumstances we get NaN
         // from localToGlobal(). We're not sure why. In that case, log a warning and return zero.
