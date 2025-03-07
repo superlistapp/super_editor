@@ -1314,7 +1314,8 @@ class RenderMessageEditorHeight extends RenderBox
     // if (child != null && child!.size.height >= constraints.maxHeight) {
     childConstraints = constraints.copyWith(
       minWidth: child.size.width,
-      minHeight: child.size.height,
+      minHeight: child.size.height - 1,
+      // ^ -1 to prevent Flutter from inserting a layout boundary.
       maxHeight: constraints.maxHeight,
     );
     child.layout(childConstraints, parentUsesSize: true);
