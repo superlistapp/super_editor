@@ -1,11 +1,14 @@
-## [0.3.0-dev.19] - Feb 11, 2024
+## [0.3.0-dev.20] - Mar 7, 2025
+ * FIX: Keyboard safe area rare layout exception due to dirty ancestor layout.
+
+## [0.3.0-dev.19] - Feb 11, 2025
  * FIX: Immutability error in the spelling and grammar styler.
  * ADJUSTMENT: Upgrade to `attributed_text` `v0.4.4` (with some fixes to inline placeholders).
 
-## [0.3.0-dev.18] - Jan 30, 2024
+## [0.3.0-dev.18] - Jan 30, 2025
  * ADJUSTMENT: Upgrade to `attributed_text` `v0.4.3` (with fixes to per-character lookup).
 
-## [0.3.0-dev.17] - Jan 28, 2024
+## [0.3.0-dev.17] - Jan 28, 2025
  * FEATURE: Inline widgets for `SuperTextField`.
  * FIX: `SuperEditor`: Selecting text with inline widgets and toggling styles deleted the inline widgets.
  * FIX: Caret place wrong with RTL languages.
@@ -13,18 +16,18 @@
  * FIX: Backspace to un-indent on Web.
  * ADJUSTMENT: Tasks are rendered by default in `SuperReader`.
 
-## [0.3.0-dev.16] - Jan 24, 2024
+## [0.3.0-dev.16] - Jan 24, 2025
  * FIX: `KeyboardScaffoldSafeArea` in rare circumstances was trying to use `NaN` for bottom insets.
  * FIX: On Safari/Firefox, double tapping on text closing the IME connection.
 
-## [0.3.0-dev.15] - Jan 17, 2024
+## [0.3.0-dev.15] - Jan 17, 2025
  * FEATURE: Spellcheck for mobile (when using the `super_editor_spellcheck` plugin).
  * ADJUSTMENT: Upgrade to `attributed_text` `v0.4.2` (with some fixes to inline placeholders).
 
-## [0.3.0-dev.14] - Jan 14, 2024
+## [0.3.0-dev.14] - Jan 14, 2025
  * FIX: `KeyboardScaffoldSafeArea` breaks and defers to `MediaQuery` when there's only one in the tree.
 
-## [0.3.0-dev.13] - Jan 10, 2024
+## [0.3.0-dev.13] - Jan 10, 2025
  * BREAKING: All `DocumentNode`s are now immutable. To change a node, it must be copied and replaced.
  * BREAKING: Newline insertion behavior is now configurable.
    * All newlines are inserted with explicit `EditRequest`s, e.g., `InsertNewlineRequest`, `InsertSoftNewlineRequest`.
