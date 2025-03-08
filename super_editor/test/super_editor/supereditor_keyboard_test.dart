@@ -19,128 +19,264 @@ void main() {
           tester, {
           required TextInputSource inputSource,
         }) async {
-          final nodeId = await _pumpSingleLineWithCaret(tester, offset: 2, inputSource: inputSource);
+          final collector = _EditorSelectionChangeEventsCollector();
+          final nodeId = await _pumpSingleLineWithCaret(
+            tester,
+            offset: 2,
+            inputSource: inputSource,
+            selectionChangeCollector: collector,
+          );
 
           await tester.pressLeftArrow();
 
           expect(SuperEditorInspector.findDocumentSelection(), _caretInParagraph(nodeId, 1));
+          expect(collector.events.length, equals(1));
+          expect(collector.events.first.changeType, equals(SelectionChangeType.pushCaretUpstream));
         });
 
         testAllInputsOnDesktop("left by one character and expands when SHIFT + LEFT_ARROW is pressed", (
           tester, {
           required TextInputSource inputSource,
         }) async {
-          final nodeId = await _pumpSingleLineWithCaret(tester, offset: 2, inputSource: inputSource);
+          final collector = _EditorSelectionChangeEventsCollector();
+          final nodeId = await _pumpSingleLineWithCaret(
+            tester,
+            offset: 2,
+            inputSource: inputSource,
+            selectionChangeCollector: collector,
+          );
 
           await tester.pressShiftLeftArrow();
 
           expect(SuperEditorInspector.findDocumentSelection(), _selectionInParagraph(nodeId, from: 2, to: 1));
+          expect(collector.events.length, equals(1));
+          expect(collector.events.first.changeType, equals(SelectionChangeType.pushExtentUpstream));
         });
 
         testAllInputsOnDesktop("right by one character when RIGHT_ARROW is pressed", (
           tester, {
           required TextInputSource inputSource,
         }) async {
-          final nodeId = await _pumpSingleLineWithCaret(tester, offset: 2, inputSource: inputSource);
+          final collector = _EditorSelectionChangeEventsCollector();
+          final nodeId = await _pumpSingleLineWithCaret(
+            tester,
+            offset: 2,
+            inputSource: inputSource,
+            selectionChangeCollector: collector,
+          );
 
           await tester.pressRightArrow();
 
           expect(SuperEditorInspector.findDocumentSelection(), _caretInParagraph(nodeId, 3));
+          expect(collector.events.length, equals(1));
+          expect(collector.events.first.changeType, equals(SelectionChangeType.pushCaretDownstream));
         });
 
         testAllInputsOnDesktop("right by one character and expands when SHIFT + RIGHT_ARROW is pressed", (
           tester, {
           required TextInputSource inputSource,
         }) async {
-          final nodeId = await _pumpSingleLineWithCaret(tester, offset: 2, inputSource: inputSource);
+          final collector = _EditorSelectionChangeEventsCollector();
+          final nodeId = await _pumpSingleLineWithCaret(
+            tester,
+            offset: 2,
+            inputSource: inputSource,
+            selectionChangeCollector: collector,
+          );
 
           await tester.pressShiftRightArrow();
 
           expect(SuperEditorInspector.findDocumentSelection(), _selectionInParagraph(nodeId, from: 2, to: 3));
+          expect(collector.events.length, equals(1));
+          expect(collector.events.first.changeType, equals(SelectionChangeType.pushExtentDownstream));
         });
 
         testAllInputsOnApple("to beginning of word when ALT + LEFT_ARROW is pressed", (
           tester, {
           required TextInputSource inputSource,
         }) async {
-          final nodeId = await _pumpSingleLineWithCaret(tester, offset: 10, inputSource: inputSource);
+          final collector = _EditorSelectionChangeEventsCollector();
+          final nodeId = await _pumpSingleLineWithCaret(
+            tester,
+            offset: 10,
+            inputSource: inputSource,
+            selectionChangeCollector: collector,
+          );
 
           await tester.pressAltLeftArrow();
 
           expect(SuperEditorInspector.findDocumentSelection(), _caretInParagraph(nodeId, 8));
+          expect(collector.events.length, equals(1));
+          expect(collector.events.first.changeType, equals(SelectionChangeType.pushCaretUpstream));
         });
 
         testAllInputsOnApple("to beginning of word and expands when SHIFT + ALT + LEFT_ARROW is pressed", (
           tester, {
           required TextInputSource inputSource,
         }) async {
-          final nodeId = await _pumpSingleLineWithCaret(tester, offset: 10, inputSource: inputSource);
+          final collector = _EditorSelectionChangeEventsCollector();
+          final nodeId = await _pumpSingleLineWithCaret(
+            tester,
+            offset: 10,
+            inputSource: inputSource,
+            selectionChangeCollector: collector,
+          );
 
           await tester.pressShiftAltLeftArrow();
 
           expect(SuperEditorInspector.findDocumentSelection(), _selectionInParagraph(nodeId, from: 10, to: 8));
+          expect(collector.events.length, equals(1));
+          expect(collector.events.first.changeType, equals(SelectionChangeType.pushExtentUpstream));
+        });
+
+        testAllInputsOnDesktop("to beginning of word and collapses when LEFT_ARROW is pressed", (
+          tester, {
+          required TextInputSource inputSource,
+        }) async {
+          final collector = _EditorSelectionChangeEventsCollector();
+          // Pumps the editor with the word "second" selected.
+          final nodeId = await _pumpDoubleLineWithCaret(
+            tester,
+            offset: 45,
+            expandedSelection: true,
+            inputSource: inputSource,
+            selectionChangeCollector: collector,
+          );
+
+          await tester.pressLeftArrow();
+
+          expect(SuperEditorInspector.findDocumentSelection(), _caretInParagraph(nodeId, 41));
+          expect(collector.events.length, equals(1));
+          expect(collector.events.first.changeType, equals(SelectionChangeType.collapseSelection));
         });
 
         testAllInputsOnApple("to end of word when ALT + RIGHT_ARROW is pressed", (
           tester, {
           required TextInputSource inputSource,
         }) async {
-          final nodeId = await _pumpSingleLineWithCaret(tester, offset: 10, inputSource: inputSource);
+          final collector = _EditorSelectionChangeEventsCollector();
+          final nodeId = await _pumpSingleLineWithCaret(
+            tester,
+            offset: 10,
+            inputSource: inputSource,
+            selectionChangeCollector: collector,
+          );
 
           await tester.pressAltRightArrow();
 
           expect(SuperEditorInspector.findDocumentSelection(), _caretInParagraph(nodeId, 12));
+          expect(collector.events.length, equals(1));
+          expect(collector.events.first.changeType, equals(SelectionChangeType.pushCaretDownstream));
         });
 
         testAllInputsOnApple("to end of word and expands when SHIFT + ALT + RIGHT_ARROW is pressed", (
           tester, {
           required TextInputSource inputSource,
         }) async {
-          final nodeId = await _pumpSingleLineWithCaret(tester, offset: 10, inputSource: inputSource);
+          final collector = _EditorSelectionChangeEventsCollector();
+          final nodeId = await _pumpSingleLineWithCaret(
+            tester,
+            offset: 10,
+            inputSource: inputSource,
+            selectionChangeCollector: collector,
+          );
 
           await tester.pressShiftAltRightArrow();
 
           expect(SuperEditorInspector.findDocumentSelection(), _selectionInParagraph(nodeId, from: 10, to: 12));
+          expect(collector.events.length, equals(1));
+          expect(collector.events.first.changeType, equals(SelectionChangeType.pushExtentDownstream));
+        });
+
+        testAllInputsOnDesktop("to end of word and collapses when RIGHT_ARROW is pressed", (
+          tester, {
+          required TextInputSource inputSource,
+        }) async {
+          final collector = _EditorSelectionChangeEventsCollector();
+          // Pumps the editor with the word "second" selected.
+          final nodeId = await _pumpDoubleLineWithCaret(
+            tester,
+            offset: 45,
+            expandedSelection: true,
+            inputSource: inputSource,
+            selectionChangeCollector: collector,
+          );
+
+          await tester.pressRightArrow();
+
+          expect(SuperEditorInspector.findDocumentSelection(), _caretInParagraph(nodeId, 47));
+          expect(collector.events.length, equals(1));
+          expect(collector.events.first.changeType, equals(SelectionChangeType.collapseSelection));
         });
 
         testAllInputsOnApple("to beginning of line when CMD + LEFT_ARROW is pressed", (
           tester, {
           required TextInputSource inputSource,
         }) async {
-          final nodeId = await _pumpSingleLineWithCaret(tester, offset: 10, inputSource: inputSource);
+          final collector = _EditorSelectionChangeEventsCollector();
+          final nodeId = await _pumpSingleLineWithCaret(
+            tester,
+            offset: 10,
+            inputSource: inputSource,
+            selectionChangeCollector: collector,
+          );
 
           await tester.pressCmdLeftArrow();
 
           expect(SuperEditorInspector.findDocumentSelection(), _caretInParagraph(nodeId, 0));
+          expect(collector.events.length, equals(1));
+          expect(collector.events.first.changeType, equals(SelectionChangeType.pushCaretUpstream));
         });
 
         testAllInputsOnApple("to beginning of line and expands when SHIFT + CMD + LEFT_ARROW is pressed", (
           tester, {
           required TextInputSource inputSource,
         }) async {
-          final nodeId = await _pumpSingleLineWithCaret(tester, offset: 10, inputSource: inputSource);
+          final collector = _EditorSelectionChangeEventsCollector();
+          final nodeId = await _pumpSingleLineWithCaret(
+            tester,
+            offset: 10,
+            inputSource: inputSource,
+            selectionChangeCollector: collector,
+          );
 
           await tester.pressShiftCmdLeftArrow();
 
           expect(SuperEditorInspector.findDocumentSelection(), _selectionInParagraph(nodeId, from: 10, to: 0));
+          expect(collector.events.length, equals(1));
+          expect(collector.events.first.changeType, equals(SelectionChangeType.pushExtentUpstream));
         });
 
         testAllInputsOnApple("to end of line when CMD + RIGHT_ARROW is pressed", (
           tester, {
           required TextInputSource inputSource,
         }) async {
-          final nodeId = await _pumpSingleLineWithCaret(tester, offset: 10, inputSource: inputSource);
+          final collector = _EditorSelectionChangeEventsCollector();
+          final nodeId = await _pumpSingleLineWithCaret(
+            tester,
+            offset: 10,
+            inputSource: inputSource,
+            selectionChangeCollector: collector,
+          );
 
           await tester.pressCmdRightArrow();
 
           expect(SuperEditorInspector.findDocumentSelection(), _caretInParagraph(nodeId, 26, TextAffinity.upstream));
+          expect(collector.events.length, equals(1));
+          expect(collector.events.first.changeType, equals(SelectionChangeType.pushCaretDownstream));
         });
 
         testAllInputsOnApple("to end of line and expands when SHIFT + CMD + RIGHT_ARROW is pressed", (
           tester, {
           required TextInputSource inputSource,
         }) async {
-          final nodeId = await _pumpSingleLineWithCaret(tester, offset: 10, inputSource: inputSource);
+          final collector = _EditorSelectionChangeEventsCollector();
+          final nodeId = await _pumpSingleLineWithCaret(
+            tester,
+            offset: 10,
+            inputSource: inputSource,
+            selectionChangeCollector: collector,
+          );
 
           await tester.pressShiftCmdRightArrow();
 
@@ -148,144 +284,290 @@ void main() {
             SuperEditorInspector.findDocumentSelection(),
             _selectionInParagraph(nodeId, from: 10, to: 26, toAffinity: TextAffinity.upstream),
           );
+          expect(collector.events.length, equals(1));
+          expect(collector.events.first.changeType, equals(SelectionChangeType.pushExtentDownstream));
         });
 
         testAllInputsOnWindowsAndLinux("to beginning of word when CTL + LEFT_ARROW is pressed", (
           tester, {
           required TextInputSource inputSource,
         }) async {
-          final nodeId = await _pumpSingleLineWithCaret(tester, offset: 10, inputSource: inputSource);
+          final collector = _EditorSelectionChangeEventsCollector();
+          final nodeId = await _pumpSingleLineWithCaret(
+            tester,
+            offset: 10,
+            inputSource: inputSource,
+            selectionChangeCollector: collector,
+          );
 
           await tester.pressCtlLeftArrow();
 
           expect(SuperEditorInspector.findDocumentSelection(), _caretInParagraph(nodeId, 8));
+          expect(collector.events.length, equals(1));
+          expect(collector.events.first.changeType, equals(SelectionChangeType.pushCaretUpstream));
         });
 
         testAllInputsOnWindowsAndLinux("to beginning of word and expands when SHIFT + CTL + LEFT_ARROW is pressed", (
           tester, {
           required TextInputSource inputSource,
         }) async {
-          final nodeId = await _pumpSingleLineWithCaret(tester, offset: 10, inputSource: inputSource);
+          final collector = _EditorSelectionChangeEventsCollector();
+          final nodeId = await _pumpSingleLineWithCaret(
+            tester,
+            offset: 10,
+            inputSource: inputSource,
+            selectionChangeCollector: collector,
+          );
 
           await tester.pressShiftCtlLeftArrow();
 
           expect(SuperEditorInspector.findDocumentSelection(), _selectionInParagraph(nodeId, from: 10, to: 8));
+          expect(collector.events.length, equals(1));
+          expect(collector.events.first.changeType, equals(SelectionChangeType.pushExtentUpstream));
         });
 
         testAllInputsOnWindowsAndLinux("to end of word when CTL + Right_ARROW is pressed", (
           tester, {
           required TextInputSource inputSource,
         }) async {
-          final nodeId = await _pumpSingleLineWithCaret(tester, offset: 10, inputSource: inputSource);
+          final collector = _EditorSelectionChangeEventsCollector();
+          final nodeId = await _pumpSingleLineWithCaret(
+            tester,
+            offset: 10,
+            inputSource: inputSource,
+            selectionChangeCollector: collector,
+          );
 
           await tester.pressCtlRightArrow();
 
           expect(SuperEditorInspector.findDocumentSelection(), _caretInParagraph(nodeId, 12));
+          expect(collector.events.length, equals(1));
+          expect(collector.events.first.changeType, equals(SelectionChangeType.pushCaretDownstream));
         });
 
         testAllInputsOnWindowsAndLinux("to end of word and expands when SHIFT + CTL + RIGHT_ARROW is pressed", (
           tester, {
           required TextInputSource inputSource,
         }) async {
-          final nodeId = await _pumpSingleLineWithCaret(tester, offset: 10, inputSource: inputSource);
+          final collector = _EditorSelectionChangeEventsCollector();
+          final nodeId = await _pumpSingleLineWithCaret(
+            tester,
+            offset: 10,
+            inputSource: inputSource,
+            selectionChangeCollector: collector,
+          );
 
           await tester.pressShiftCtlRightArrow();
 
           expect(SuperEditorInspector.findDocumentSelection(), _selectionInParagraph(nodeId, from: 10, to: 12));
+          expect(collector.events.length, equals(1));
+          expect(collector.events.first.changeType, equals(SelectionChangeType.pushExtentDownstream));
         });
 
         testAllInputsOnDesktop("up one line when UP_ARROW is pressed", (
           tester, {
           required TextInputSource inputSource,
         }) async {
-          final nodeId = await _pumpDoubleLineWithCaret(tester, offset: 41, inputSource: inputSource);
+          final collector = _EditorSelectionChangeEventsCollector();
+          final nodeId = await _pumpDoubleLineWithCaret(
+            tester,
+            offset: 41,
+            inputSource: inputSource,
+            selectionChangeCollector: collector,
+          );
 
           await tester.pressUpArrow();
 
           expect(SuperEditorInspector.findDocumentSelection(), _caretInParagraph(nodeId, 12));
+          expect(collector.events.length, equals(1));
+          expect(collector.events.first.changeType, equals(SelectionChangeType.pushCaretUp));
         });
 
         testAllInputsOnDesktop("up one line and expands when SHIFT + UP_ARROW is pressed", (
           tester, {
           required TextInputSource inputSource,
         }) async {
-          final nodeId = await _pumpDoubleLineWithCaret(tester, offset: 41, inputSource: inputSource);
+          final collector = _EditorSelectionChangeEventsCollector();
+          final nodeId = await _pumpDoubleLineWithCaret(
+            tester,
+            offset: 41,
+            inputSource: inputSource,
+            selectionChangeCollector: collector,
+          );
 
           await tester.pressShiftUpArrow();
 
           expect(SuperEditorInspector.findDocumentSelection(), _selectionInParagraph(nodeId, from: 41, to: 12));
+          expect(collector.events.length, equals(1));
+          expect(collector.events.first.changeType, equals(SelectionChangeType.pushExtentUp));
+        });
+
+        testAllInputsOnDesktop("up one line and collapses when UP_ARROW is pressed", (
+          tester, {
+          required TextInputSource inputSource,
+        }) async {
+          final collector = _EditorSelectionChangeEventsCollector();
+          // Pumps the editor with the word "second" selected.
+          final nodeId = await _pumpDoubleLineWithCaret(
+            tester,
+            offset: 44,
+            expandedSelection: true,
+            inputSource: inputSource,
+            selectionChangeCollector: collector,
+          );
+
+          await tester.pressUpArrow();
+
+          expect(SuperEditorInspector.findDocumentSelection(), _caretInParagraph(nodeId, 18));
+          expect(collector.events.length, equals(1));
+          expect(collector.events.first.changeType, equals(SelectionChangeType.pushCaretUp));
         });
 
         testAllInputsOnDesktop("down one line when DOWN_ARROW is pressed", (
           tester, {
           required TextInputSource inputSource,
         }) async {
-          final nodeId = await _pumpDoubleLineWithCaret(tester, offset: 12, inputSource: inputSource);
+          final collector = _EditorSelectionChangeEventsCollector();
+          final nodeId = await _pumpDoubleLineWithCaret(
+            tester,
+            offset: 12,
+            inputSource: inputSource,
+            selectionChangeCollector: collector,
+          );
 
           await tester.pressDownArrow();
 
           expect(SuperEditorInspector.findDocumentSelection(), _caretInParagraph(nodeId, 41));
+          expect(collector.events.length, equals(1));
+          expect(collector.events.first.changeType, equals(SelectionChangeType.pushCaretDown));
         });
 
         testAllInputsOnDesktop("down one line and expands when SHIFT + DOWN_ARROW is pressed", (
           tester, {
           required TextInputSource inputSource,
         }) async {
-          final nodeId = await _pumpDoubleLineWithCaret(tester, offset: 12, inputSource: inputSource);
+          final collector = _EditorSelectionChangeEventsCollector();
+          final nodeId = await _pumpDoubleLineWithCaret(
+            tester,
+            offset: 12,
+            inputSource: inputSource,
+            selectionChangeCollector: collector,
+          );
 
           await tester.pressShiftDownArrow();
 
           expect(SuperEditorInspector.findDocumentSelection(), _selectionInParagraph(nodeId, from: 12, to: 41));
+          expect(collector.events.length, equals(1));
+          expect(collector.events.first.changeType, equals(SelectionChangeType.pushExtentDown));
+        });
+
+        testAllInputsOnDesktop("down one line and collapses when DOWN_ARROW is pressed", (
+          tester, {
+          required TextInputSource inputSource,
+        }) async {
+          final collector = _EditorSelectionChangeEventsCollector();
+          // Pumps the editor with the word "first" selected.
+          final nodeId = await _pumpDoubleLineWithCaret(
+            tester,
+            offset: 15,
+            expandedSelection: true,
+            inputSource: inputSource,
+            selectionChangeCollector: collector,
+          );
+
+          await tester.pressDownArrow();
+
+          expect(SuperEditorInspector.findDocumentSelection(), _caretInParagraph(nodeId, 46));
+          expect(collector.events.length, equals(1));
+          expect(collector.events.first.changeType, equals(SelectionChangeType.pushCaretDown));
         });
 
         testAllInputsOnDesktop("to beginning of line when UP_ARROW is pressed at top of document", (
           tester, {
           required TextInputSource inputSource,
         }) async {
-          final nodeId = await _pumpDoubleLineWithCaret(tester, offset: 12, inputSource: inputSource);
+          final collector = _EditorSelectionChangeEventsCollector();
+          final nodeId = await _pumpDoubleLineWithCaret(
+            tester,
+            offset: 12,
+            inputSource: inputSource,
+            selectionChangeCollector: collector,
+          );
 
           await tester.pressUpArrow();
 
           expect(SuperEditorInspector.findDocumentSelection(), _caretInParagraph(nodeId, 0));
+          expect(collector.events.length, equals(1));
+          expect(collector.events.first.changeType, equals(SelectionChangeType.pushCaretUpstream));
         });
 
         testAllInputsOnDesktop("to beginning of line and expands when SHIFT + UP_ARROW is pressed at top of document", (
           tester, {
           required TextInputSource inputSource,
         }) async {
-          final nodeId = await _pumpDoubleLineWithCaret(tester, offset: 12, inputSource: inputSource);
+          final collector = _EditorSelectionChangeEventsCollector();
+          final nodeId = await _pumpDoubleLineWithCaret(
+            tester,
+            offset: 12,
+            inputSource: inputSource,
+            selectionChangeCollector: collector,
+          );
 
           await tester.pressShiftUpArrow();
 
           expect(SuperEditorInspector.findDocumentSelection(), _selectionInParagraph(nodeId, from: 12, to: 0));
+          expect(collector.events.length, equals(1));
+          expect(collector.events.first.changeType, equals(SelectionChangeType.pushExtentUpstream));
         });
 
         testAllInputsOnDesktop("to end of line when DOWN_ARROW is pressed at end of document", (
           tester, {
           required TextInputSource inputSource,
         }) async {
-          final nodeId = await _pumpDoubleLineWithCaret(tester, offset: 41, inputSource: inputSource);
+          final collector = _EditorSelectionChangeEventsCollector();
+          final nodeId = await _pumpDoubleLineWithCaret(
+            tester,
+            offset: 41,
+            inputSource: inputSource,
+            selectionChangeCollector: collector,
+          );
 
           await tester.pressDownArrow();
 
           expect(SuperEditorInspector.findDocumentSelection(), _caretInParagraph(nodeId, 58));
+          expect(collector.events.length, equals(1));
+          expect(collector.events.first.changeType, equals(SelectionChangeType.pushCaretDownstream));
         });
 
         testAllInputsOnDesktop("end of line and expands when SHIFT + DOWN_ARROW is pressed at end of document", (
           tester, {
           required TextInputSource inputSource,
         }) async {
-          final nodeId = await _pumpDoubleLineWithCaret(tester, offset: 41, inputSource: inputSource);
+          final collector = _EditorSelectionChangeEventsCollector();
+          final nodeId = await _pumpDoubleLineWithCaret(
+            tester,
+            offset: 41,
+            inputSource: inputSource,
+            selectionChangeCollector: collector,
+          );
 
           await tester.pressShiftDownArrow();
 
           expect(SuperEditorInspector.findDocumentSelection(), _selectionInParagraph(nodeId, from: 41, to: 58));
+          expect(collector.events.length, equals(1));
+          expect(collector.events.first.changeType, equals(SelectionChangeType.pushExtentDownstream));
         });
       });
     });
 
-    testWidgetsOnMacWeb("on web moves caret to beginning of line when CMD + LEFT_ARROW is pressed", (tester) async {
-      final nodeId = await _pumpSingleLineWithCaret(tester, offset: 10, inputSource: TextInputSource.ime);
+    testWidgetsOnMacWeb("moves caret to beginning of line when CMD + LEFT_ARROW is pressed", (tester) async {
+      final collector = _EditorSelectionChangeEventsCollector();
+      final nodeId = await _pumpSingleLineWithCaret(
+        tester,
+        offset: 10,
+        inputSource: TextInputSource.ime,
+        selectionChangeCollector: collector,
+      );
 
       // Simulate the user pressing CMD + LEFT ARROW, which generates a delta moving
       // the selection to the beginning of the line.
@@ -314,6 +596,8 @@ void main() {
           end: DocumentPosition(nodeId: nodeId, nodePosition: const TextNodePosition(offset: 0)),
         ),
       );
+      expect(collector.events.length, equals(1));
+      expect(collector.events.first.changeType, equals(SelectionChangeType.pushCaretUpstream));
     });
 
     testAllInputsOnAllPlatforms('does nothing without primary focus', (
@@ -872,6 +1156,7 @@ Future<String> _pumpSingleLineWithCaret(
   WidgetTester tester, {
   required int offset,
   required TextInputSource inputSource,
+  _EditorSelectionChangeEventsCollector? selectionChangeCollector,
 }) async {
   final testContext = await tester //
       .createDocument()
@@ -883,11 +1168,20 @@ Future<String> _pumpSingleLineWithCaret(
 
   await tester.placeCaretInParagraph(nodeId, offset);
 
+  if (selectionChangeCollector != null) {
+    testContext.editor.addListener(selectionChangeCollector);
+  }
+
   return nodeId;
 }
 
-Future<String> _pumpDoubleLineWithCaret(WidgetTester tester,
-    {required int offset, required TextInputSource inputSource}) async {
+Future<String> _pumpDoubleLineWithCaret(
+  WidgetTester tester, {
+  required int offset,
+  bool expandedSelection = false,
+  required TextInputSource inputSource,
+  _EditorSelectionChangeEventsCollector? selectionChangeCollector,
+}) async {
   final testContext = await tester //
       .createDocument()
       // Text indices:
@@ -896,10 +1190,17 @@ Future<String> _pumpDoubleLineWithCaret(WidgetTester tester,
       // - second line: [30, 58]
       .fromMarkdown("This is the first paragraph.\nThis is the second paragraph.")
       .pump();
-
   final nodeId = testContext.findEditContext().document.first.id;
 
-  await tester.placeCaretInParagraph(nodeId, offset);
+  if (expandedSelection) {
+    await tester.doubleTapInParagraph(nodeId, offset);
+  } else {
+    await tester.placeCaretInParagraph(nodeId, offset);
+  }
+
+  if (selectionChangeCollector != null) {
+    testContext.editor.addListener(selectionChangeCollector);
+  }
 
   return nodeId;
 }
@@ -970,5 +1271,15 @@ class _CloseKeyboardOnDisposeState extends State<_CloseKeyboardOnDispose> {
   @override
   Widget build(BuildContext context) {
     return widget.child;
+  }
+}
+
+/// An [EditListener] that collects all [SelectionChangeEvent]s reported.
+class _EditorSelectionChangeEventsCollector implements EditListener {
+  final List<SelectionChangeEvent> events = [];
+
+  @override
+  void onEdit(List<EditEvent> changeList) {
+    events.addAll(changeList.whereType<SelectionChangeEvent>());
   }
 }

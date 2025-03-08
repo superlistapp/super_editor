@@ -255,8 +255,8 @@ class PushCaretRequest extends ChangeSelectionRequest {
   PushCaretRequest(
     DocumentPosition newPosition,
     this.direction,
-  ) : super(DocumentSelection.collapsed(position: newPosition), SelectionChangeType.pushCaret,
-            SelectionReason.userInteraction);
+    SelectionChangeType changeType,
+  ) : super(DocumentSelection.collapsed(position: newPosition), changeType, SelectionReason.userInteraction);
 
   final TextAffinity direction;
 
@@ -483,12 +483,33 @@ enum SelectionChangeType {
   /// dragging with the mouse.
   placeExtent,
 
-  /// Place the caret based on a desire to move the previous caret position upstream or downstream.
-  pushCaret,
+  /// Place the caret based on a desire to move the previous caret position downstream.
+  pushCaretDownstream,
 
-  /// Expand/contract a selection by pushing the extent upstream or downstream, such as by pressing
+  /// Place the caret based on a desire to move the previous caret position upstream.
+  pushCaretUpstream,
+
+  /// Place the caret based on a desire to move the previous caret position down.
+  pushCaretDown,
+
+  /// Place the caret based on a desire to move the previous caret position up.
+  pushCaretUp,
+
+  /// Expand/contract a selection by pushing the extent downstream, such as by pressing
+  /// SHIFT + RIGHT ARROW.
+  pushExtentDownstream,
+
+  /// Expand/contract a selection by pushing the extent upstream, such as by pressing
   /// SHIFT + LEFT ARROW.
-  pushExtent,
+  pushExtentUpstream,
+
+  /// Expand/contract a selection by pushing the extent down, such as by pressing
+  /// SHIFT + DOWN ARROW.
+  pushExtentDown,
+
+  /// Expand/contract a selection by pushing the extent up, such as by pressing
+  /// SHIFT + UP ARROW.
+  pushExtentUp,
 
   /// Expand a caret to an expanded selection, or move the base or extent of an already expanded selection.
   expandSelection,

@@ -70,7 +70,10 @@ class UpdateComposerTextStylesReaction extends EditReaction {
 
     switch (lastSelectionChange.changeType) {
       case SelectionChangeType.placeCaret:
-      case SelectionChangeType.pushCaret:
+      case SelectionChangeType.pushCaretDownstream:
+      case SelectionChangeType.pushCaretUpstream:
+      case SelectionChangeType.pushCaretUp:
+      case SelectionChangeType.pushCaretDown:
       case SelectionChangeType.collapseSelection:
       case SelectionChangeType.deleteContent:
         _updateComposerStylesAtCaret(editContext);

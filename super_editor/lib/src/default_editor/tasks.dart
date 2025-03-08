@@ -942,7 +942,7 @@ class SplitExistingTaskCommand extends EditCommand {
       SelectionChangeEvent(
         oldSelection: oldSelection,
         newSelection: newSelection,
-        changeType: SelectionChangeType.pushCaret,
+        changeType: SelectionChangeType.pushCaretDownstream,
         reason: SelectionReason.userInteraction,
       ),
       ComposingRegionChangeEvent(
