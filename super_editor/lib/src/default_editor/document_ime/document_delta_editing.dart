@@ -124,10 +124,10 @@ class TextDeltasDocumentEditor {
     editorImeLog.fine('Old text: "${delta.oldText}"');
 
     if (delta.textInserted == "\n") {
-      // On iOS, newlines are reported here and also to performAction().
-      // On Android, newlines are only reported here. So, on Android,
+      // On iOS and Android Web, newlines are reported here and also to performAction().
+      // On Android native, newlines are only reported here. So, on Android native,
       // we forward the newline action to performAction.
-      if (defaultTargetPlatform == TargetPlatform.android) {
+      if (defaultTargetPlatform == TargetPlatform.android && !CurrentPlatform.isWeb) {
         editorImeLog.fine("Received a newline insertion on Android. Forwarding to newline input action.");
         onPerformAction(TextInputAction.newline);
       } else {
@@ -197,10 +197,10 @@ class TextDeltasDocumentEditor {
     editorImeLog.fine('Old text: "${delta.oldText}"');
 
     if (delta.replacementText == "\n") {
-      // On iOS, newlines are reported here and also to performAction().
-      // On Android, newlines are only reported here. So, on Android,
+      // On iOS and Android Web, newlines are reported here and also to performAction().
+      // On Android native, newlines are only reported here. So, on Android native,
       // we forward the newline action to performAction.
-      if (defaultTargetPlatform == TargetPlatform.android) {
+      if (defaultTargetPlatform == TargetPlatform.android && !CurrentPlatform.isWeb) {
         editorImeLog.fine("Received a newline replacement on Android. Forwarding to newline input action.");
         onPerformAction(TextInputAction.newline);
       } else {
