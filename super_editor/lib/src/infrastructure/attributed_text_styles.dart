@@ -63,13 +63,26 @@ extension ComputeTextSpan on AttributedText {
         }
       } else {
         // This section is text. The end of this text is either the
-        // end of the AttributedText, or the index of the next placeholder.
+        // end of the current span, or the index of the next placeholder.
         contentEnd = span.end + 1;
+
+        final nextSpan = spanIndex + 1 < collapsedSpans.length //
+            ? collapsedSpans[spanIndex + 1]
+            : null;
         for (final entry in placeholders.entries) {
-          if (entry.key > start) {
-            contentEnd = entry.key;
+          if (entry.key <= start) {
+            // This placeholder is before the current span.
+            continue;
+          }
+
+          if (nextSpan != null && entry.key >= nextSpan.start) {
+            // This placeholder is beyond the next span.
             break;
           }
+
+          // This placeholder is within the current span.
+          contentEnd = entry.key;
+          break;
         }
 
         inlineSpans.add(
