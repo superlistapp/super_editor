@@ -77,9 +77,7 @@ void main() {
         const MaterialApp(),
       );
 
-      // Create an AttributedText with the word "Welcome" in bold and with a trailing placeholder.
-      // Create an AttributedText with the words "Welcome" and "SuperEditor" in bold and with a
-      // placeholder after the word "to".
+      // Create an AttributedText with the words "Welcome" and "SuperEditor" in bold and a trailing placeholder.
       final text = AttributedText(
         'Welcome to SuperEditor',
         AttributedSpans(
