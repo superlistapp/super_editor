@@ -1214,12 +1214,18 @@ class AdjustSelectionAroundTagReaction extends EditReaction {
         // Move the caret to the nearest edge of the tag.
         _moveCaretToNearestTagEdge(requestDispatcher, selectionChangeEvent, textNode.id, tagAroundCaret);
         break;
-      case SelectionChangeType.pushCaret:
+      case SelectionChangeType.pushCaretDownstream:
+      case SelectionChangeType.pushCaretUpstream:
+      case SelectionChangeType.pushCaretUp:
+      case SelectionChangeType.pushCaretDown:
         // Move the caret to the side of the tag in the direction of push motion.
         _pushCaretToOppositeTagEdge(editContext, requestDispatcher, selectionChangeEvent, textNode.id, tagAroundCaret);
         break;
       case SelectionChangeType.placeExtent:
-      case SelectionChangeType.pushExtent:
+      case SelectionChangeType.pushExtentDownstream:
+      case SelectionChangeType.pushExtentUpstream:
+      case SelectionChangeType.pushExtentUp:
+      case SelectionChangeType.pushExtentDown:
       case SelectionChangeType.expandSelection:
         throw AssertionError(
             "A collapsed selection reported a SelectionChangeType for an expanded selection: ${selectionChangeEvent.changeType}\n${selectionChangeEvent.newSelection}");
@@ -1267,7 +1273,10 @@ class AdjustSelectionAroundTagReaction extends EditReaction {
         // Move the caret to the nearest edge of the tag.
         _moveCaretToNearestTagEdge(requestDispatcher, selectionChangeEvent, extentNode.id, tagAroundCaret);
         break;
-      case SelectionChangeType.pushExtent:
+      case SelectionChangeType.pushExtentDownstream:
+      case SelectionChangeType.pushExtentUpstream:
+      case SelectionChangeType.pushExtentUp:
+      case SelectionChangeType.pushExtentDown:
         if (tagAroundCaret == null) {
           return;
         }
@@ -1299,7 +1308,10 @@ class AdjustSelectionAroundTagReaction extends EditReaction {
         );
         break;
       case SelectionChangeType.placeCaret:
-      case SelectionChangeType.pushCaret:
+      case SelectionChangeType.pushCaretDownstream:
+      case SelectionChangeType.pushCaretUpstream:
+      case SelectionChangeType.pushCaretUp:
+      case SelectionChangeType.pushCaretDown:
       case SelectionChangeType.collapseSelection:
         throw AssertionError(
             "An expanded selection reported a SelectionChangeType for a collapsed selection: ${selectionChangeEvent.changeType}\n${selectionChangeEvent.newSelection}");
@@ -1353,6 +1365,8 @@ class AdjustSelectionAroundTagReaction extends EditReaction {
     TagAroundPosition tagAroundCaret,
   ) {
     DocumentSelection? newSelection;
+    late SelectionChangeType newSelectionChangeType;
+
     editorStableTagsLog.info("oldCaret is null. Pushing caret to end of tag.");
     // The caret was placed directly in the token without a previous selection. This might
     // be a user tap, or programmatic placement. Move the caret to the nearest edge of the
@@ -1360,6 +1374,7 @@ class AdjustSelectionAroundTagReaction extends EditReaction {
     if ((tagAroundCaret.searchOffset - tagAroundCaret.indexedTag.startOffset).abs() <
         (tagAroundCaret.searchOffset - tagAroundCaret.indexedTag.endOffset).abs()) {
       // Move the caret to the start of the tag.
+      newSelectionChangeType = SelectionChangeType.pushCaretUpstream;
       newSelection = DocumentSelection.collapsed(
         position: DocumentPosition(
           nodeId: textNodeId,
@@ -1368,6 +1383,7 @@ class AdjustSelectionAroundTagReaction extends EditReaction {
       );
     } else {
       // Move the caret to the end of the tag.
+      newSelectionChangeType = SelectionChangeType.pushCaretDownstream;
       newSelection = DocumentSelection.collapsed(
         position: DocumentPosition(
           nodeId: textNodeId,
@@ -1379,7 +1395,7 @@ class AdjustSelectionAroundTagReaction extends EditReaction {
     requestDispatcher.execute([
       ChangeSelectionRequest(
         newSelection,
-        newSelection.isCollapsed ? SelectionChangeType.pushCaret : SelectionChangeType.expandSelection,
+        newSelection.isCollapsed ? newSelectionChangeType : SelectionChangeType.expandSelection,
         SelectionReason.contentChange,
       ),
     ]);
@@ -1401,15 +1417,19 @@ class AdjustSelectionAroundTagReaction extends EditReaction {
       extent: selectionChangeEvent.newSelection!.extent,
     );
 
+    late SelectionChangeType selectionChangeType;
     late int textOffset;
     switch (pushDirection) {
       case TextAffinity.upstream:
         // Move to starting edge.
         textOffset = tagAroundCaret.indexedTag.startOffset;
+        selectionChangeType = expand ? SelectionChangeType.pushExtentUpstream : SelectionChangeType.pushCaretUpstream;
         break;
       case TextAffinity.downstream:
         // Move to ending edge.
         textOffset = tagAroundCaret.indexedTag.endOffset;
+        selectionChangeType =
+            expand ? SelectionChangeType.pushExtentDownstream : SelectionChangeType.pushCaretDownstream;
         break;
     }
 
@@ -1435,7 +1455,7 @@ class AdjustSelectionAroundTagReaction extends EditReaction {
     requestDispatcher.execute([
       ChangeSelectionRequest(
         newSelection,
-        SelectionChangeType.pushCaret,
+        selectionChangeType,
         SelectionReason.contentChange,
       ),
     ]);
