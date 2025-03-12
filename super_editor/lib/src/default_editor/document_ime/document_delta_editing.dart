@@ -261,7 +261,7 @@ class TextDeltasDocumentEditor {
       // where the user can swipe over the spacebar to change the selection. This also happens
       // when the app uses the native iOS text selection toolbar and the user presses "Select all".
 
-      docSelection = _ajustWholeDocumentSelectionOnIos(docSelection);
+      docSelection = _maybeSelectAllOnIos(docSelection);
 
       editor.execute([
         ChangeSelectionRequest(
@@ -286,7 +286,7 @@ class TextDeltasDocumentEditor {
   ///
   /// To workaroud this, whenever iOS reports a selection change that selects an entire node,
   /// we select the entire document instead.
-  DocumentSelection _ajustWholeDocumentSelectionOnIos(DocumentSelection documentSelection) {
+  DocumentSelection _maybeSelectAllOnIos(DocumentSelection documentSelection) {
     if (defaultTargetPlatform != TargetPlatform.iOS) {
       return documentSelection;
     }
