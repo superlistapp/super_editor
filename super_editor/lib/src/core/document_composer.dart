@@ -483,32 +483,28 @@ enum SelectionChangeType {
   /// dragging with the mouse.
   placeExtent,
 
-  /// Place the caret based on a desire to move the previous caret position downstream.
+  /// Move the caret one unit downstream.
   pushCaretDownstream,
 
-  /// Place the caret based on a desire to move the previous caret position upstream.
+  /// Move the caret one unit upstream.
   pushCaretUpstream,
 
-  /// Place the caret based on a desire to move the previous caret position down.
+  /// Move the caret one unit down.
   pushCaretDown,
 
-  /// Place the caret based on a desire to move the previous caret position up.
+  /// Move the caret one unit up.
   pushCaretUp,
 
-  /// Expand/contract a selection by pushing the extent downstream, such as by pressing
-  /// SHIFT + RIGHT ARROW.
+  /// Expand/contract a selection downstream, such as by pressing SHIFT + RIGHT ARROW.
   pushExtentDownstream,
 
-  /// Expand/contract a selection by pushing the extent upstream, such as by pressing
-  /// SHIFT + LEFT ARROW.
+  /// Expand/contract a selection upstream, such as by pressing SHIFT + LEFT ARROW.
   pushExtentUpstream,
 
-  /// Expand/contract a selection by pushing the extent down, such as by pressing
-  /// SHIFT + DOWN ARROW.
+  /// Expand/contract a selection down, such as by pressing SHIFT + DOWN ARROW.
   pushExtentDown,
 
-  /// Expand/contract a selection by pushing the extent up, such as by pressing
-  /// SHIFT + UP ARROW.
+  /// Expand/contract a selection up, such as by pressing SHIFT + UP ARROW.
   pushExtentUp,
 
   /// Expand a caret to an expanded selection, or move the base or extent of an already expanded selection.
