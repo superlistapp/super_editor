@@ -19,7 +19,7 @@ extension ComputeTextSpan on AttributedText {
   /// The given [styleBuilder] interprets the meaning of every attribution
   /// and constructs [TextStyle]s accordingly.
   ///
-  /// The given [inlineWidgetBuilder] interprets every placeholder `Object`
+  /// The given [inlineWidgetBuilders] interprets every placeholder `Object`
   /// and builds a corresponding inline widget.
   InlineSpan computeInlineSpan(
     BuildContext context,
@@ -34,79 +34,62 @@ extension ComputeTextSpan on AttributedText {
     final inlineSpans = <InlineSpan>[];
 
     final collapsedSpans = spans.collapseSpans(contentLength: length);
-    var spanIndex = 0;
-    var span = collapsedSpans.first;
 
-    int start = 0;
-    while (start < length) {
-      late int contentEnd;
-      if (placeholders[start] != null) {
-        // This section is a placeholder.
-        contentEnd = start + 1;
+    for (final span in collapsedSpans) {
+      final textStyle = styleBuilder(span.attributions);
 
-        final textStyle = styleBuilder({});
-        Widget? inlineWidget;
-        for (final builder in inlineWidgetBuilders) {
-          inlineWidget = builder(context, textStyle, placeholders[start]!);
+      // A single span might be divided in multiple inline spans if there are placeholders.
+      // Keep track of the start of the current inline span.
+      int startOfInlineSpan = span.start;
+
+      // Look for placeholders within the current span and split the span accordingly.
+      int characterIndex = span.start;
+      while (characterIndex <= span.end) {
+        if (placeholders[characterIndex] != null) {
+          // We found a placeholder. Build a widget for it.
+
+          if (characterIndex > startOfInlineSpan) {
+            // There is text before the placeholder.
+            inlineSpans.add(
+              TextSpan(
+                text: substring(startOfInlineSpan, characterIndex),
+                style: textStyle,
+              ),
+            );
+          }
+
+          Widget? inlineWidget;
+          for (final builder in inlineWidgetBuilders) {
+            inlineWidget = builder(context, textStyle, placeholders[characterIndex]!);
+            if (inlineWidget != null) {
+              break;
+            }
+          }
+
           if (inlineWidget != null) {
-            break;
-          }
-        }
-
-        if (inlineWidget != null) {
-          inlineSpans.add(
-            _LayoutOptimizedWidgetSpan(
-              alignment: PlaceholderAlignment.middle,
-              child: inlineWidget,
-            ),
-          );
-        }
-      } else {
-        // This section is text. The end of this text is either the
-        // end of the current span, or the index of the next placeholder.
-        contentEnd = span.end + 1;
-
-        final nextSpan = spanIndex + 1 < collapsedSpans.length //
-            ? collapsedSpans[spanIndex + 1]
-            : null;
-        for (final entry in placeholders.entries) {
-          if (entry.key <= start) {
-            // This placeholder is before the current span.
-            continue;
+            inlineSpans.add(
+              _LayoutOptimizedWidgetSpan(
+                alignment: PlaceholderAlignment.middle,
+                child: inlineWidget,
+              ),
+            );
           }
 
-          if (nextSpan != null && entry.key >= nextSpan.start) {
-            // This placeholder is beyond the next span.
-            break;
-          }
-
-          // This placeholder is within the current span.
-          contentEnd = entry.key;
-          break;
+          // Start another inline span after the placeholder.
+          startOfInlineSpan = characterIndex + 1;
         }
 
+        characterIndex += 1;
+      }
+
+      if (startOfInlineSpan <= span.end) {
+        // There is text after the last placeholder or there is no placeholder at all.
         inlineSpans.add(
           TextSpan(
-            text: substring(start, contentEnd),
-            style: styleBuilder(span.attributions),
+            text: substring(startOfInlineSpan, span.end + 1),
+            style: textStyle,
           ),
         );
-      }
-
-      if (contentEnd == span.end + 1) {
-        // The content and span end at the same place.
-        start = contentEnd;
-      } else if (contentEnd < span.end + 1) {
-        // The content ends before the span.
-        start = contentEnd;
-      } else {
-        // The span ends before the content.
-        start = span.end + 1;
-      }
-
-      if (start > span.end && start < length) {
-        spanIndex += 1;
-        span = collapsedSpans[spanIndex];
       }
     }
 
