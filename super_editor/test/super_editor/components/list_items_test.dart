@@ -443,6 +443,54 @@ void main() {
         );
       });
 
+      testWidgetsOnWebAndroid("inserts new item upon new line insertion at end of existing item", (tester) async {
+        final context = await tester //
+            .createDocument()
+            .fromMarkdown('* Item 1')
+            .pump();
+
+        final document = context.findEditContext().document;
+
+        // Place the caret at the end of the list item.
+        await tester.placeCaretInParagraph(document.first.id, 6);
+
+        // Type at the end of the list item to generate a composing region,
+        // simulating the Samsung keyboard.
+        await tester.typeImeText('2');
+        await tester.ime.sendDeltas(const [
+          TextEditingDeltaNonTextUpdate(
+            oldText: '. Item 12',
+            selection: TextSelection.collapsed(offset: 9),
+            composing: TextRange.collapsed(9),
+          ),
+        ], getter: imeClientGetter);
+
+        // On Android Web, pressing ENTER generates both a "\n" insertion and a newline input action.
+        await tester.pressEnterWithIme(getter: imeClientGetter);
+
+        // Ensure that a new, empty list item was created.
+        expect(document.nodeCount, 2);
+
+        // Ensure the existing item remains the same.
+        expect(document.first, isA<ListItemNode>());
+        expect((document.first as ListItemNode).text.toPlainText(), "Item 12");
+
+        // Ensure the new item has the correct list item type and indentation.
+        expect(document.last, isA<ListItemNode>());
+        expect((document.last as ListItemNode).text.toPlainText(), "");
+        expect((document.last as ListItemNode).type, ListItemType.unordered);
+        expect((document.last as ListItemNode).indent, 0);
+        expect(
+          SuperEditorInspector.findDocumentSelection(),
+          DocumentSelection.collapsed(
+            position: DocumentPosition(
+              nodeId: document.last.id,
+              nodePosition: const TextNodePosition(offset: 0),
+            ),
+          ),
+        );
+      });
+
       testWidgetsOnMobile("inserts new item upon new line input action at end of existing item", (tester) async {
         final context = await tester //
             .createDocument()
@@ -538,6 +586,40 @@ void main() {
 
         // On Android, pressing ENTER generates a "\n" insertion.
         await tester.typeImeText("\n");
+
+        // Ensure that a new item was created with part of the previous item.
+        expect(document.nodeCount, 2);
+        expect(document.first, isA<ListItemNode>());
+        expect((document.first as ListItemNode).text.toPlainText(), "List ");
+        expect(document.last, isA<ListItemNode>());
+        expect((document.last as ListItemNode).text.toPlainText(), "Item");
+        expect((document.last as ListItemNode).type, ListItemType.unordered);
+        expect((document.last as ListItemNode).indent, 0);
+        expect(
+          SuperEditorInspector.findDocumentSelection(),
+          DocumentSelection.collapsed(
+            position: DocumentPosition(
+              nodeId: document.last.id,
+              nodePosition: const TextNodePosition(offset: 0),
+            ),
+          ),
+        );
+      });
+
+      testWidgetsOnWebAndroid("splits list item into two upon new line insertion in middle of existing item",
+          (tester) async {
+        final context = await tester //
+            .createDocument()
+            .fromMarkdown('* List Item')
+            .pump();
+
+        final document = context.findEditContext().document;
+
+        // Place the caret at "List |Item"
+        await tester.placeCaretInParagraph(document.first.id, 5);
+
+        // On Android Web, pressing ENTER generates both a "\n" insertion and a newline input action.
+        await tester.pressEnterWithIme(getter: imeClientGetter);
 
         // Ensure that a new item was created with part of the previous item.
         expect(document.nodeCount, 2);
@@ -939,6 +1021,43 @@ A paragraph
         );
       });
 
+      testWidgetsOnWebAndroid("inserts new item upon new line insertion at end of existing item", (tester) async {
+        final context = await tester //
+            .createDocument()
+            .fromMarkdown('1. Item 1')
+            .pump();
+
+        final document = context.findEditContext().document;
+
+        // Place the caret at the end of the list item.
+        await tester.placeCaretInParagraph(document.first.id, 6);
+
+        // On Android Web, pressing ENTER generates both a "\n" insertion and a newline input action.
+        await tester.pressEnterWithIme(getter: imeClientGetter);
+
+        // Ensure that a new, empty list item was created.
+        expect(document.nodeCount, 2);
+
+        // Ensure the existing item remains the same.
+        expect(document.first, isA<ListItemNode>());
+        expect((document.first as ListItemNode).text.toPlainText(), "Item 1");
+
+        // Ensure the new item has the correct list item type and indentation.
+        expect(document.last, isA<ListItemNode>());
+        expect((document.last as ListItemNode).text.toPlainText(), "");
+        expect((document.last as ListItemNode).type, ListItemType.ordered);
+        expect((document.last as ListItemNode).indent, 0);
+        expect(
+          SuperEditorInspector.findDocumentSelection(),
+          DocumentSelection.collapsed(
+            position: DocumentPosition(
+              nodeId: document.last.id,
+              nodePosition: const TextNodePosition(offset: 0),
+            ),
+          ),
+        );
+      });
+
       testWidgetsOnMobile("inserts new item upon new line input action at end of existing item", (tester) async {
         final context = await tester //
             .createDocument()
@@ -1023,6 +1142,40 @@ A paragraph
 
         // On Android, pressing ENTER generates a "\n" insertion.
         await tester.typeImeText("\n");
+
+        // Ensure that a new item was created with part of the previous item.
+        expect(document.nodeCount, 2);
+        expect(document.first, isA<ListItemNode>());
+        expect((document.first as ListItemNode).text.toPlainText(), "List ");
+        expect(document.last, isA<ListItemNode>());
+        expect((document.last as ListItemNode).text.toPlainText(), "Item");
+        expect((document.last as ListItemNode).type, ListItemType.ordered);
+        expect((document.last as ListItemNode).indent, 0);
+        expect(
+          SuperEditorInspector.findDocumentSelection(),
+          DocumentSelection.collapsed(
+            position: DocumentPosition(
+              nodeId: document.last.id,
+              nodePosition: const TextNodePosition(offset: 0),
+            ),
+          ),
+        );
+      });
+
+      testWidgetsOnWebAndroid("splits list item into two upon new line insertion in middle of existing item",
+          (tester) async {
+        final context = await tester //
+            .createDocument()
+            .fromMarkdown('1. List Item')
+            .pump();
+
+        final document = context.findEditContext().document;
+
+        // Place the caret at "List |Item"
+        await tester.placeCaretInParagraph(document.first.id, 5);
+
+        // On Android Web, pressing ENTER generates both a "\n" insertion and a newline input action.
+        await tester.pressEnterWithIme(getter: imeClientGetter);
 
         // Ensure that a new item was created with part of the previous item.
         expect(document.nodeCount, 2);
