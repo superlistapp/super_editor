@@ -850,6 +850,8 @@ class RenderMessagePageScaffold extends RenderBox {
 
   @override
   void performLayout() {
+    print('---------- LAYOUT -------------');
+    print('Sheet mode: ${_controller.desiredSheetMode}, collapsed mode: ${_controller.collapsedMode}');
     messagePageLayoutLog.info('---------- LAYOUT -------------');
     messagePageLayoutLog.info('Laying out RenderChatScaffold');
     messagePageLayoutLog.info('Sheet mode: ${_controller.desiredSheetMode}');
@@ -870,16 +872,22 @@ class RenderMessagePageScaffold extends RenderBox {
     // Do a throw-away layout pass to get the preview height of the bottom
     // sheet, bounded within its min/max height.
     _overrideSheetMode = BottomSheetMode.preview;
-    _bottomSheet!.layout(
-      // FIXME: I added a max height so that the constraints for measuring
-      //        preview are different from intrinsic, because when they're the
-      //        same, layout doesn't run again. But we can't have a hard coded
-      //        value here. Do something about that.
-      constraints.copyWith(minHeight: 0, maxHeight: 200),
-      parentUsesSize: true,
-    );
+
+    // TODO: This was here before going to dry layout. Delete it when working.
+    // _bottomSheet!.layout(
+    //   // FIXME: I added a max height so that the constraints for measuring
+    //   //        preview are different from intrinsic, because when they're the
+    //   //        same, layout doesn't run again. But we can't have a hard coded
+    //   //        value here. Do something about that.
+    //   constraints.copyWith(minHeight: 0, maxHeight: 200),
+    //   parentUsesSize: true,
+    // );
+    // _previewHeight = _bottomSheet!.size.height;
+    // print(" - Measuring preview height...");
+    _previewHeight = _bottomSheet!.computeDryLayout(constraints.copyWith(minHeight: 0)).height;
+    // print("   - New preview height: $_previewHeight");
+
     _overrideSheetMode = null;
-    _previewHeight = _bottomSheet!.size.height;
     messagePageLayoutLog.info(
       ' - Bottom sheet bounded preview height: $_previewHeight, min height: $_bottomSheetMinimumHeight, max height: $_bottomSheetMaximumHeight',
     );
@@ -889,38 +897,51 @@ class RenderMessagePageScaffold extends RenderBox {
     );
     // Do a throw-away layout pass to get the intrinsic height of the bottom
     // sheet, bounded within its min/max height.
+    // print(" - Measuring intrinsic height...");
     _intrinsicHeight = _calculateBoundedIntrinsicHeight(
       constraints.copyWith(minHeight: 0),
     );
+    // print("   - new intrinsic height: $_intrinsicHeight");
     messagePageLayoutLog.info(
       ' - Bottom sheet bounded intrinsic height: $_intrinsicHeight, min height: $_bottomSheetMinimumHeight, max height: $_bottomSheetMaximumHeight',
     );
 
     final isDragging = !_isExpandingOrCollapsing && _desiredDragHeight != null;
-    final minimizedHeight = !isDragging
-        ? switch (_controller.collapsedMode) {
-            MessagePageSheetCollapsedMode.preview => _previewHeight,
-            MessagePageSheetCollapsedMode.intrinsic => _intrinsicHeight,
-          }
-        // Note: In theory, the switch statement above should always be the
-        // right decision. However, when the user drags the handle down to
-        // collapse the sheet, there are a few frames in which the collapsed
-        // mode is "preview" but the keyboard bottom spacing hasn't yet removed
-        // itself. This results in a height that can't fit the sheet content,
-        // resulting in a vertical layout overflow. When these problematic
-        // frames pump, we're still reporting a user drag. Therefore, whenever
-        // the user is dragging, we use the "intrinsic" sizing to avoid this
-        // problem.
-        // TODO: Figure out what the nuanced timing issue is when the user drags
-        //       closed the handle. The following changes are involved with that
-        //       moment in time:
-        //        * Focus removed from the editor
-        //        * Selection removed from the editor
-        //        * Keyboard starts closing
-        //        * Sheet collapsed mode changes from intrinsic to preview
-        //        * For a few frames we still think we're dragging, then it
-        //          switches to preview mode.
-        : _intrinsicHeight;
+
+    final minimizedHeight = switch (_controller.collapsedMode) {
+      MessagePageSheetCollapsedMode.preview => _previewHeight,
+      MessagePageSheetCollapsedMode.intrinsic => _intrinsicHeight,
+    };
+
+    // FIXME: I don't know if I broke the following dragging logic, or if it was always
+    //        wrong, but setting height to intrinsic while dragging doesn't seem to
+    //        make sense. The minimized height while dragging needs to be the preview height.
+    //        I know we had some glitch frames when releasing from a drag, but we can't just
+    //        always use intrinsic height while dragging.
+    // final minimizedHeight = !isDragging
+    //     ? switch (_controller.collapsedMode) {
+    //         MessagePageSheetCollapsedMode.preview => _previewHeight,
+    //         MessagePageSheetCollapsedMode.intrinsic => _intrinsicHeight,
+    //       }
+    //     // Note: In theory, the switch statement above should always be the
+    //     // right decision. However, when the user drags the handle down to
+    //     // collapse the sheet, there are a few frames in which the collapsed
+    //     // mode is "preview" but the keyboard bottom spacing hasn't yet removed
+    //     // itself. This results in a height that can't fit the sheet content,
+    //     // resulting in a vertical layout overflow. When these problematic
+    //     // frames pump, we're still reporting a user drag. Therefore, whenever
+    //     // the user is dragging, we use the "intrinsic" sizing to avoid this
+    //     // problem.
+    //     // TODO: Figure out what the nuanced timing issue is when the user drags
+    //     //       closed the handle. The following changes are involved with that
+    //     //       moment in time:
+    //     //        * Focus removed from the editor
+    //     //        * Selection removed from the editor
+    //     //        * Keyboard starts closing
+    //     //        * Sheet collapsed mode changes from intrinsic to preview
+    //     //        * For a few frames we still think we're dragging, then it
+    //     //          switches to preview mode.
+    //     : _intrinsicHeight;
     final bottomSheetConstraints = constraints.copyWith(
       minHeight: minimizedHeight,
       maxHeight: _bottomSheetMaximumHeight,
@@ -948,7 +969,7 @@ class RenderMessagePageScaffold extends RenderBox {
 
       _bottomSheet!.layout(
         bottomSheetConstraints.copyWith(
-          minHeight: _animatedHeight,
+          minHeight: _animatedHeight - 1,
           maxHeight: _animatedHeight,
         ),
         parentUsesSize: true,
@@ -959,35 +980,39 @@ class RenderMessagePageScaffold extends RenderBox {
         ' - drag height: $_desiredDragHeight, minimized height: $minimizedHeight',
       );
       final strictHeight = _desiredDragHeight!.clamp(minimizedHeight, _bottomSheetMaximumHeight);
+      // print(" - is dragging - desired height: $_desiredDragHeight, forcing strict height: $strictHeight");
       messagePageLayoutLog.info(' - bounded drag height: $strictHeight');
       _bottomSheet!.layout(
         bottomSheetConstraints.copyWith(
-          minHeight: strictHeight,
+          minHeight: strictHeight - 1,
           maxHeight: strictHeight,
         ),
         parentUsesSize: true,
       );
+      // print(" - dragging bottom sheet height: ${_bottomSheet!.size.height}");
     } else if (_controller.desiredSheetMode == MessagePageSheetMode.expanded) {
       messagePageLayoutLog.info('>>>>>>>> Stationary expanded');
       messagePageLayoutLog.info(
         'Running layout and forcing editor height to the max: $_expandedHeight',
       );
-      // FIXME: This extra layout call is here because Flutter seems to think
-      //        the _messageEditor layout from up above will produce the same
-      //        results down below and doesn't run layout. So we pass slightly
-      //        different constraints here to invalidate, then we do the real
-      //        layout down below.
-      _bottomSheet!.layout(
-        bottomSheetConstraints.copyWith(
-          minHeight: _expandedHeight - 1,
-          maxHeight: _expandedHeight - 1,
-        ),
-        parentUsesSize: true,
-      );
+      // TODO: Commented out when adding dry layout. Delete if not needed.
+      // // FIXME: This extra layout call is here because Flutter seems to think
+      // //        the _messageEditor layout from up above will produce the same
+      // //        results down below and doesn't run layout. So we pass slightly
+      // //        different constraints here to invalidate, then we do the real
+      // //        layout down below.
+      // _bottomSheet!.layout(
+      //   bottomSheetConstraints.copyWith(
+      //     minHeight: _expandedHeight - 1,
+      //     maxHeight: _expandedHeight - 1,
+      //   ),
+      //   parentUsesSize: true,
+      // );
 
       _bottomSheet!.layout(
         bottomSheetConstraints.copyWith(
-          minHeight: _expandedHeight,
+          minHeight: _expandedHeight - 1,
+          // ^ Prevent a layout boundary.
           maxHeight: _expandedHeight,
         ),
         parentUsesSize: true,
@@ -1020,25 +1045,41 @@ class RenderMessagePageScaffold extends RenderBox {
     _runningLayout = false;
     messagePageLayoutLog.info('Done laying out RenderChatScaffold');
     messagePageLayoutLog.info('---------- END LAYOUT ---------');
+
+    // print('---------- END LAYOUT ---------\n\n');
   }
 
   double _calculateBoundedIntrinsicHeight(BoxConstraints constraints) {
-    messagePageLayoutLog.info('Running layout on bottom sheet content to find the intrinsic height...');
+    messagePageLayoutLog.info('Running dry layout on bottom sheet content to find the intrinsic height...');
     messagePageLayoutLog.info(' - Bottom sheet constraints: $constraints');
     messagePageLayoutLog.info(' - Controller desired sheet mode: ${_controller.collapsedMode}');
     _overrideSheetMode = BottomSheetMode.intrinsic;
     messagePageLayoutLog.info(' - Override sheet mode: $_overrideSheetMode');
-    _bottomSheet!.layout(
-      constraints.copyWith(maxHeight: double.infinity),
-      parentUsesSize: true,
-    );
+    // TODO: This was removed when changing to dry layout. Delete when working.
+    // _bottomSheet!.layout(
+    //   constraints.copyWith(maxHeight: double.infinity),
+    //   parentUsesSize: true,
+    // );
+    final bottomSheetHeight = _bottomSheet!
+        .computeDryLayout(
+          constraints.copyWith(minHeight: 0, maxHeight: double.infinity),
+        )
+        .height;
+    // print(" - bottom sheet intrinsic height: $bottomSheetHeight");
+    // print(" - bottom sheet min height: $_bottomSheetMinimumHeight, max height: $_bottomSheetMaximumHeight");
+
     _overrideSheetMode = null;
-    messagePageLayoutLog.info(" - Child's self-chosen height is: ${_bottomSheet!.size.height}");
+    // messagePageLayoutLog.info(" - Child's self-chosen height is: ${_bottomSheet!.size.height}");
+    messagePageLayoutLog.info(" - Child's self-chosen height is: $bottomSheetHeight");
     messagePageLayoutLog.info(
       " - Clamping child's height within [$_bottomSheetMinimumHeight, $_bottomSheetMaximumHeight]",
     );
 
-    final boundedIntrinsicHeight = _bottomSheet!.size.height.clamp(
+    // final boundedIntrinsicHeight = _bottomSheet!.size.height.clamp(
+    //   _bottomSheetMinimumHeight,
+    //   _bottomSheetMaximumHeight,
+    // );
+    final boundedIntrinsicHeight = bottomSheetHeight.clamp(
       _bottomSheetMinimumHeight,
       _bottomSheetMaximumHeight,
     );
@@ -1195,6 +1236,60 @@ class RenderMessageEditorHeight extends RenderBox
   }
 
   @override
+  Size computeDryLayout(BoxConstraints constraints) {
+    // print('      MessageEditorHeight - computeDryLayout()');
+    // print('       - Constraints: $constraints');
+
+    messageEditorHeightLog.info('MessageEditorHeight - computeDryLayout()');
+    messageEditorHeightLog.info(' - Constraints: $constraints');
+
+    final ancestorChatScaffold = _findAncestorMessagePageScaffold();
+    messageEditorHeightLog.info(' - Ancestor chat scaffold: $ancestorChatScaffold');
+
+    final heightMode = ancestorChatScaffold?.bottomSheetMode;
+    // print('       - Height mode: $heightMode');
+    if (heightMode == null) {
+      messageEditorHeightLog.info(
+        " - Couldn't find an ancestor chat scaffold. Deferring to natural layout.",
+      );
+      return _doIntrinsicLayout(constraints, doDryLayout: true);
+    }
+
+    messageEditorHeightLog.info(
+      ' - Bottom sheet mode from chat scaffold: $heightMode',
+    );
+
+    switch (heightMode) {
+      case BottomSheetMode.preview:
+        // Preview mode imposes a specific height on the bottom sheet.
+        messageEditorHeightLog.info(' - Forcing bottom sheet to preview height: $_previewHeight');
+
+        // We want to be a specific height. Get as close as we can.
+        // print(
+        //     '       - Forcing bottom sheet to preview height: $_previewHeight: ${constraints.constrainDimensions(double.infinity, _previewHeight)}');
+        return constraints.constrainDimensions(
+          double.infinity,
+          _previewHeight,
+        );
+      case BottomSheetMode.dragging:
+      case BottomSheetMode.settling:
+      case BottomSheetMode.expanded:
+        // Whether dragging, animating, or fully expanded, these conditions
+        // want to stipulate exactly how tall the bottom sheet should be.
+        final intrinsicSize = _doIntrinsicLayout(constraints, doDryLayout: true);
+        // print('       - Final intrinsic size: $intrinsicSize');
+        return intrinsicSize;
+      case BottomSheetMode.intrinsic:
+        // Intrinsic height is implemented below. It's used both for this
+        // explicit mode, as well as for "fill" when we aren't given a
+        // bounded height.
+        final intrinsicSize = _doIntrinsicLayout(constraints, doDryLayout: true);
+        // print('       - Final intrinsic size: $intrinsicSize');
+        return intrinsicSize;
+    }
+  }
+
+  @override
   void performLayout() {
     messageEditorHeightLog.info('MessageEditorHeight - performLayout()');
     messageEditorHeightLog.info(' - Constraints: $constraints');
@@ -1207,7 +1302,8 @@ class RenderMessageEditorHeight extends RenderBox
       messageEditorHeightLog.info(
         " - Couldn't find an ancestor chat scaffold. Deferring to natural layout.",
       );
-      _doIntrinsicLayout();
+      size = _doIntrinsicLayout(constraints, doDryLayout: true);
+      messageEditorHeightLog.info(' - Our reported size: $size');
       return;
     }
 
@@ -1230,7 +1326,7 @@ class RenderMessageEditorHeight extends RenderBox
         );
         child?.layout(
           constraints.copyWith(
-            minHeight: size.height,
+            minHeight: size.height - 1,
             maxHeight: size.height,
           ),
           parentUsesSize: true,
@@ -1248,7 +1344,8 @@ class RenderMessageEditorHeight extends RenderBox
         messageEditorHeightLog.info(' - Mode $heightMode - Filling available height');
         if (!constraints.hasBoundedHeight) {
           messageEditorHeightLog.info('   - No bounded height was provided. Deferring to child');
-          _doIntrinsicLayout();
+          size = _doIntrinsicLayout(constraints);
+          messageEditorHeightLog.info(' - Our reported size: $size');
           return;
         }
 
@@ -1259,7 +1356,8 @@ class RenderMessageEditorHeight extends RenderBox
         size = constraints.biggest;
         child?.layout(
           constraints.copyWith(
-            minHeight: size.height,
+            minHeight: size.height - 1,
+            // ^ Prevent a layout boundary.
             maxHeight: size.height,
           ),
           parentUsesSize: true,
@@ -1270,7 +1368,8 @@ class RenderMessageEditorHeight extends RenderBox
         // Intrinsic height is implemented below. It's used both for this
         // explicit mode, as well as for "fill" when we aren't given a
         // bounded height.
-        _doIntrinsicLayout();
+        size = _doIntrinsicLayout(constraints);
+        messageEditorHeightLog.info(' - Our reported size: $size');
         return;
 
       // size = constraints.constrainDimensions(
@@ -1294,35 +1393,50 @@ class RenderMessageEditorHeight extends RenderBox
     }
   }
 
-  void _doIntrinsicLayout() {
+  Size _doIntrinsicLayout(
+    BoxConstraints constraints, {
+    bool doDryLayout = false,
+  }) {
     messageEditorHeightLog.info(' - Measuring child intrinsic height. Constraints: $constraints');
 
     final child = this.child;
     if (child == null) {
-      size = Size(constraints.constrainWidth(), 0);
-      return;
+      return constraints.constrain(Size(constraints.constrainWidth(), 0));
     }
 
-    var childConstraints = constraints.copyWith(
-      minWidth: constraints.hasBoundedWidth ? constraints.maxWidth : null,
-      // minHeight: constraints.hasBoundedHeight ? constraints.maxHeight : null,
-      maxHeight: constraints.maxHeight,
-    );
-    messageEditorHeightLog.info(' - Child constraints: $childConstraints');
-    child.layout(childConstraints, parentUsesSize: true);
+    // TODO: Why is this here?
+    // var childConstraints = constraints.copyWith(
+    //   minWidth: constraints.hasBoundedWidth ? constraints.maxWidth : null,
+    //   // minHeight: constraints.hasBoundedHeight ? constraints.maxHeight : null,
+    //   maxHeight: constraints.maxHeight,
+    // );
+    // messageEditorHeightLog.info(' - Child constraints: $childConstraints');
+    // if (doDryLayout) {
+    //   // TODO:
+    // } else {
+    //   child.layout(childConstraints, parentUsesSize: true);
+    // }
 
-    // if (child != null && child!.size.height >= constraints.maxHeight) {
-    childConstraints = constraints.copyWith(
-      minWidth: child.size.width,
-      minHeight: child.size.height - 1,
+    var childConstraints = constraints.copyWith(
+      // minWidth: child.size.width,
+      minWidth: constraints.maxWidth,
+      // minHeight: child.size.height > 0 ? child.size.height - 1 : 0,
+      minHeight: 0,
       // ^ -1 to prevent Flutter from inserting a layout boundary.
       maxHeight: constraints.maxHeight,
     );
-    child.layout(childConstraints, parentUsesSize: true);
 
-    messageEditorHeightLog.info(' - Child intrinsic height: ${child.size.height}');
-    size = child.size;
-    messageEditorHeightLog.info(' - Our reported size: $size');
+    late final Size intrinsicSize;
+    if (doDryLayout) {
+      intrinsicSize = child.computeDryLayout(childConstraints);
+      // print("       - Constraints: $childConstraints, intrinsic size: $intrinsicSize");
+    } else {
+      child.layout(childConstraints, parentUsesSize: true);
+      intrinsicSize = child.size;
+    }
+
+    messageEditorHeightLog.info(' - Child intrinsic height: ${intrinsicSize.height}');
+    return constraints.constrain(intrinsicSize);
   }
 
   RenderMessagePageScaffold? _findAncestorMessagePageScaffold() {
