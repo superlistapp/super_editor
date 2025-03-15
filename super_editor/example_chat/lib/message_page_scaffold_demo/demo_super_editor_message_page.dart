@@ -1,4 +1,3 @@
-import 'package:example_chat/message_page_scaffold_demo/super_editor_unsliverizer.dart';
 import 'package:flutter/material.dart';
 import 'package:super_editor/super_editor.dart';
 
@@ -393,13 +392,12 @@ class _ChatEditorState extends State<_ChatEditor> {
       contentBuilder: (BuildContext context, _Panel? openPanel) {
         print("Building bottom sheet with scroll controller: ${widget.scrollController}");
 
-        // Super Editor with unsliverizer.
         return SuperEditorFocusOnTap(
           editorFocusNode: _editorFocusNode,
           editor: widget.editor,
-          child: Unsliverizer(
-            scrollController: widget.scrollController,
-            child: SuperEditor(
+          child: SuperEditorDryLayout(
+            controller: widget.scrollController,
+            superEditor: SuperEditor(
               key: _editorKey,
               focusNode: _editorFocusNode,
               editor: widget.editor,
@@ -407,7 +405,7 @@ class _ChatEditorState extends State<_ChatEditor> {
               isImeConnected: _isImeConnected,
               imePolicies: SuperEditorImePolicies(),
               selectionPolicies: SuperEditorSelectionPolicies(),
-              shrinkWrap: true,
+              shrinkWrap: false,
               stylesheet: _chatStylesheet,
               componentBuilders: [
                 const HintComponentBuilder("Send a message...", _hintTextStyleBuilder),
@@ -416,27 +414,6 @@ class _ChatEditorState extends State<_ChatEditor> {
             ),
           ),
         );
-
-        // Super Editor directly.
-        // return SuperEditorFocusOnTap(
-        //   editorFocusNode: _editorFocusNode,
-        //   editor: widget.editor,
-        //   child: SuperEditor(
-        //     key: _editorKey,
-        //     focusNode: _editorFocusNode,
-        //     editor: widget.editor,
-        //     softwareKeyboardController: _softwareKeyboardController,
-        //     isImeConnected: _isImeConnected,
-        //     imePolicies: SuperEditorImePolicies(),
-        //     selectionPolicies: SuperEditorSelectionPolicies(),
-        //     shrinkWrap: true,
-        //     stylesheet: _chatStylesheet,
-        //     componentBuilders: [
-        //       const HintComponentBuilder("Send a message...", _hintTextStyleBuilder),
-        //       ...defaultComponentBuilders,
-        //     ],
-        //   ),
-        // );
       },
     );
   }
