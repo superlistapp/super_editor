@@ -810,11 +810,10 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
 
     _showAndHideEditingControlsAfterTapSelection(didTapOnExistingSelection: didTapOnExistingSelection);
 
-    if (didTapOnExistingSelection && widget.openKeyboardWhenTappingExistingSelection) {
-      // The user tapped on the existing selection. Show the software keyboard.
-      //
-      // If the user didn't tap on an existing selection, the software keyboard will
-      // already be visible.
+    if (!didTapOnExistingSelection || widget.openKeyboardWhenTappingExistingSelection) {
+      // Either the user tapped somewhere other than the current selection, or
+      // the user tapped on the existing selection and we want to open the keyboard.
+      // when tapping on existing selection. Show the software keyboard.
       widget.openSoftwareKeyboard();
     }
 

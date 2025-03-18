@@ -717,6 +717,9 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
           // Place the document selection at the location where the
           // user tapped.
           _selectPosition(adjustedSelectionPosition);
+
+          // Ensure the keyboard is visible.
+          widget.openSoftwareKeyboard();
         }
       }
     } else {
