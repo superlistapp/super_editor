@@ -209,6 +209,7 @@ class ListItemComponentBuilder implements ComponentBuilder {
         selectionColor: componentViewModel.selectionColor,
         highlightWhenEmpty: componentViewModel.highlightWhenEmpty,
         underlines: componentViewModel.createUnderlines(),
+        inlineWidgetBuilders: componentViewModel.inlineWidgetBuilders,
       );
     } else if (componentViewModel is OrderedListItemComponentViewModel) {
       return OrderedListItemComponent(
@@ -224,6 +225,7 @@ class ListItemComponentBuilder implements ComponentBuilder {
         selectionColor: componentViewModel.selectionColor,
         highlightWhenEmpty: componentViewModel.highlightWhenEmpty,
         underlines: componentViewModel.createUnderlines(),
+        inlineWidgetBuilders: componentViewModel.inlineWidgetBuilders,
       );
     }
 
@@ -378,6 +380,7 @@ class UnorderedListItemComponentViewModel extends ListItemComponentViewModel {
       spellingErrors: List.from(spellingErrors),
       grammarErrorUnderlineStyle: grammarErrorUnderlineStyle,
       grammarErrors: List.from(grammarErrors),
+      inlineWidgetBuilders: inlineWidgetBuilders,
     );
   }
 
@@ -447,6 +450,7 @@ class OrderedListItemComponentViewModel extends ListItemComponentViewModel {
       spellingErrors: List.from(spellingErrors),
       grammarErrorUnderlineStyle: grammarErrorUnderlineStyle,
       grammarErrors: List.from(grammarErrors),
+      inlineWidgetBuilders: inlineWidgetBuilders,
     );
   }
 
