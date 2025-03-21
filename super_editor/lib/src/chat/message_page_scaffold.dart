@@ -1262,22 +1262,25 @@ class RenderMessageEditorHeight extends RenderBox
     switch (heightMode) {
       case BottomSheetMode.preview:
         // Preview mode imposes a specific height on the bottom sheet.
-        messageEditorHeightLog.info(' - Forcing bottom sheet to preview height: $_previewHeight');
+        messageEditorHeightLog.info(' - Desired bottom sheet preview height: $_previewHeight');
 
         // We want to be a specific height. Get as close as we can.
         // print(
         //     '       - Forcing bottom sheet to preview height: $_previewHeight: ${constraints.constrainDimensions(double.infinity, _previewHeight)}');
-        return constraints.constrainDimensions(
+        final constrainedHeight = constraints.constrainDimensions(
           double.infinity,
           _previewHeight,
         );
+
+        messageEditorHeightLog.info(' - Constrained bottom sheet preview height: $constrainedHeight');
+        return constrainedHeight;
       case BottomSheetMode.dragging:
       case BottomSheetMode.settling:
       case BottomSheetMode.expanded:
         // Whether dragging, animating, or fully expanded, these conditions
         // want to stipulate exactly how tall the bottom sheet should be.
         final intrinsicSize = _doIntrinsicLayout(constraints, doDryLayout: true);
-        // print('       - Final intrinsic size: $intrinsicSize');
+        // print('       - Final expanded size: $intrinsicSize');
         return intrinsicSize;
       case BottomSheetMode.intrinsic:
         // Intrinsic height is implemented below. It's used both for this

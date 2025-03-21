@@ -457,7 +457,8 @@ class _KeyboardPanelScaffoldState<PanelType> extends State<KeyboardPanelScaffold
   /// the current software keyboard height.
   void _updateKeyboardHeightForCurrentViewInsets() {
     final newBottomInset = MediaQuery.viewInsetsOf(context).bottom;
-    _currentKeyboardHeight = newBottomInset;
+    print(
+        "_updateKeyboardHeightForCurrentViewInsets(): state: $_keyboardState, new insets: $newBottomInset, previous: $_currentKeyboardHeight");
 
     switch (_keyboardState) {
       case KeyboardState.open:
@@ -491,8 +492,16 @@ class _KeyboardPanelScaffoldState<PanelType> extends State<KeyboardPanelScaffold
         // receive a message that the keyboard was closed, but still have bottom insets that reported
         // the height of the minimized keyboard. To hack around that, we explicitly set the keyboard
         // height to zero, when closed.
-        if (_currentKeyboardHeight > 0) {
+        if (newBottomInset > 0) {
+          print(" - keyboard is closed and reported insets are > 0 -> will update safe area next frame");
           _currentKeyboardHeight = 0.0;
+          onNextFrame((_) => _updateSafeArea());
+          break;
+        }
+
+        if (newBottomInset != _currentKeyboardHeight) {
+          print(" - closed state - insets changed. Scheduling safe area update.");
+          // Update the safe area to account for the new height value.
           onNextFrame((_) => _updateSafeArea());
         }
         break;
@@ -514,6 +523,7 @@ class _KeyboardPanelScaffoldState<PanelType> extends State<KeyboardPanelScaffold
         break;
     }
 
+    _currentKeyboardHeight = newBottomInset;
     _currentBottomSpacing.value = max(_panelHeight.value, _currentKeyboardHeight);
 
     setState(() {
@@ -541,6 +551,7 @@ class _KeyboardPanelScaffoldState<PanelType> extends State<KeyboardPanelScaffold
 
   /// Update the bottom insets of the enclosing [KeyboardScaffoldSafeArea].
   void _updateSafeArea() {
+    print("_updateSafeArea()");
     if (_ancestorSafeArea == null) {
       return;
     }
@@ -554,6 +565,7 @@ class _KeyboardPanelScaffoldState<PanelType> extends State<KeyboardPanelScaffold
     final toolbarSize = (_toolbarKey.currentContext?.findRenderObject() as RenderBox?)?.size;
     final bottomInsets = _currentBottomSpacing.value + (toolbarSize?.height ?? 0);
 
+    print("Setting geometry to have insets: $bottomInsets");
     _ancestorSafeArea!.geometry = _ancestorSafeArea!.geometry.copyWith(
       bottomInsets: bottomInsets,
       bottomPadding: bottomPadding,
@@ -562,6 +574,7 @@ class _KeyboardPanelScaffoldState<PanelType> extends State<KeyboardPanelScaffold
 
   @override
   Widget build(BuildContext context) {
+    print("Building KeyboardPanelScaffold - bottom insets: $_currentKeyboardHeight");
     final shouldShowKeyboardPanel = wantsToShowKeyboardPanel ||
         // The keyboard panel should be kept visible while the software keyboard is expanding
         // and the keyboard panel was previously visible. Otherwise, there will be an empty
@@ -969,6 +982,7 @@ class _KeyboardScaffoldSafeAreaScopeState extends State<KeyboardScaffoldSafeArea
 
   @override
   set geometry(KeyboardSafeAreaGeometry geometry) {
+    print("set geometry - insets: ${geometry.bottomInsets}");
     _isSafeAreaFromMediaQuery = false;
     if (geometry == _keyboardSafeAreaData) {
       return;
@@ -977,7 +991,10 @@ class _KeyboardScaffoldSafeAreaScopeState extends State<KeyboardScaffoldSafeArea
     // Propagate this geometry to any ancestor keyboard safe areas.
     _ancestorSafeArea?.geometry = geometry;
 
+    print(" - setting state as soon as possible...");
     setStateAsSoonAsPossible(() {
+      print(
+          "Inside of setStateAsSoonAsPossible() - setting _keyboardSafeAreaData to have insets: ${geometry.bottomInsets}");
       _keyboardSafeAreaData = geometry;
     });
   }
@@ -999,6 +1016,8 @@ class _KeyboardScaffoldSafeAreaScopeState extends State<KeyboardScaffoldSafeArea
       return widget.child;
     }
 
+    print(
+        "Building KeyboardScaffoldSafeAreaScope - is from media query: $_isSafeAreaFromMediaQuery, insets: ${_keyboardSafeAreaData?.bottomInsets}");
     return _InheritedKeyboardScaffoldSafeArea(
       keyboardSafeAreaData: _keyboardSafeAreaData!,
       child: widget.child,
@@ -1078,6 +1097,7 @@ class _KeyboardScaffoldSafeAreaState extends State<KeyboardScaffoldSafeArea> {
         }
 
         final bottomInsets = _chooseBottomInsets(safeAreaContext);
+        print("NEW BOTTOM INSETS: $bottomInsets");
         return Padding(
           padding: EdgeInsets.only(bottom: bottomInsets),
           // ^ We inject `bottomInsets` to push content above the keyboard. However, we don't
@@ -1187,6 +1207,9 @@ class _InheritedKeyboardScaffoldSafeArea extends InheritedWidget {
 
   @override
   bool updateShouldNotify(covariant _InheritedKeyboardScaffoldSafeArea oldWidget) {
+    print(
+        "_InheritedKeyboardScaffoldSafeArea - old insets: ${oldWidget.keyboardSafeAreaData.bottomInsets}, new insets: ${keyboardSafeAreaData.bottomInsets}");
+    print(" - notifying: ${oldWidget.keyboardSafeAreaData != keyboardSafeAreaData}");
     return oldWidget.keyboardSafeAreaData != keyboardSafeAreaData;
   }
 }
