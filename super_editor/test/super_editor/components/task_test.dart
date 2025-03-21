@@ -157,6 +157,38 @@ void main() {
         );
       });
 
+      testWidgetsOnWebAndroid("new task upon new line insertion at end of existing task", (tester) async {
+        final document = MutableDocument(
+          nodes: [
+            TaskNode(id: "1", text: AttributedText("This is a task"), isComplete: false),
+          ],
+        );
+        final task = document.getNodeAt(0) as TaskNode;
+        await _pumpScaffold(tester, document: document);
+
+        // Place the caret at the end of the task.
+        await tester.placeCaretInParagraph("1", task.text.length);
+
+        // On Android Web, pressing ENTER generates both a "\n" insertion and a newline input action.
+        await tester.pressEnterWithIme(getter: imeClientGetter);
+
+        // Ensure that a new, empty task was created.
+        expect(document.nodeCount, 2);
+        expect(document.first, isA<TaskNode>());
+        expect((document.first as TaskNode).text.toPlainText(), "This is a task");
+        expect(document.last, isA<TaskNode>());
+        expect((document.last as TaskNode).text.toPlainText(), "");
+        expect(
+          SuperEditorInspector.findDocumentSelection(),
+          DocumentSelection.collapsed(
+            position: DocumentPosition(
+              nodeId: document.last.id,
+              nodePosition: const TextNodePosition(offset: 0),
+            ),
+          ),
+        );
+      });
+
       testWidgetsOnMobile("new task upon new line input action at end of existing task", (tester) async {
         final document = MutableDocument(
           nodes: [
@@ -235,6 +267,37 @@ void main() {
 
         // On Android, pressing ENTER generates a "\n" insertion.
         await tester.typeImeText("\n");
+
+        // Ensure that a new task was created with part of the previous task.
+        expect(document.nodeCount, 2);
+        expect(document.first, isA<TaskNode>());
+        expect((document.first as TaskNode).text.toPlainText(), "This is ");
+        expect(document.last, isA<TaskNode>());
+        expect((document.last as TaskNode).text.toPlainText(), "a task");
+        expect(
+          SuperEditorInspector.findDocumentSelection(),
+          DocumentSelection.collapsed(
+            position: DocumentPosition(
+              nodeId: document.last.id,
+              nodePosition: const TextNodePosition(offset: 0),
+            ),
+          ),
+        );
+      });
+
+      testWidgetsOnWebAndroid("task into two upon new line insertion in middle of existing task", (tester) async {
+        final document = MutableDocument(
+          nodes: [
+            TaskNode(id: "1", text: AttributedText("This is a task"), isComplete: false),
+          ],
+        );
+        await _pumpScaffold(tester, document: document);
+
+        // Place the caret at "This is |a task"
+        await tester.placeCaretInParagraph("1", 8);
+
+        // On Android Web, pressing ENTER generates both a "\n" insertion and a newline input action.
+        await tester.pressEnterWithIme(getter: imeClientGetter);
 
         // Ensure that a new task was created with part of the previous task.
         expect(document.nodeCount, 2);
