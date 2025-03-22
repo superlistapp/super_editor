@@ -1166,7 +1166,7 @@ class TextComponentState extends State<TextComponent> with DocumentComponent imp
                   child: TextLayoutSelectionHighlight(
                     textLayout: textLayout,
                     style: SelectionHighlightStyle(
-                      color: Colors.red,
+                      color: widget.selectionColor,
                     ),
                     selection: widget.textSelection ?? const TextSelection.collapsed(offset: -1),
                   ),
