@@ -849,7 +849,7 @@ class SuperEditorState extends State<SuperEditor> {
           getDocumentLayout: () => _docLayoutKey.currentState as DocumentLayout,
           selection: _composer.selectionNotifier,
           setSelection: (newSelection) => editContext.editor.execute([
-            ChangeSelectionRequest(newSelection, SelectionChangeType.pushCaret, SelectionReason.userInteraction),
+            ChangeSelectionRequest(newSelection, SelectionChangeType.placeCaret, SelectionReason.userInteraction),
           ]),
           scrollChangeSignal: _scrollChangeSignal,
           dragHandleAutoScroller: _dragHandleAutoScroller,
