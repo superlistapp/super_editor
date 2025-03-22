@@ -660,14 +660,14 @@ Building keyboard scaffold
 /// Shows and hides the keyboard panel and software keyboard.
 class KeyboardPanelController<PanelType> {
   KeyboardPanelController(
-    this._softwareKeyboardController,
+    this.softwareKeyboardController,
   );
 
   void dispose() {
     detach();
   }
 
-  final SoftwareKeyboardController _softwareKeyboardController;
+  final SoftwareKeyboardController softwareKeyboardController;
 
   KeyboardPanelScaffoldDelegate<PanelType>? _delegate;
 
@@ -681,7 +681,7 @@ class KeyboardPanelController<PanelType> {
   void attach(KeyboardPanelScaffoldDelegate<PanelType> delegate) {
     editorImeLog.finer("[KeyboardPanelController] - Attaching to delegate: $delegate");
     _delegate = delegate;
-    _delegate!.onAttached(_softwareKeyboardController);
+    _delegate!.onAttached(softwareKeyboardController);
   }
 
   /// Detaches this controller from its delegate.
@@ -982,7 +982,6 @@ class _KeyboardScaffoldSafeAreaScopeState extends State<KeyboardScaffoldSafeArea
 
   @override
   set geometry(KeyboardSafeAreaGeometry geometry) {
-    print("set geometry - insets: ${geometry.bottomInsets}");
     _isSafeAreaFromMediaQuery = false;
     if (geometry == _keyboardSafeAreaData) {
       return;
@@ -991,10 +990,7 @@ class _KeyboardScaffoldSafeAreaScopeState extends State<KeyboardScaffoldSafeArea
     // Propagate this geometry to any ancestor keyboard safe areas.
     _ancestorSafeArea?.geometry = geometry;
 
-    print(" - setting state as soon as possible...");
     setStateAsSoonAsPossible(() {
-      print(
-          "Inside of setStateAsSoonAsPossible() - setting _keyboardSafeAreaData to have insets: ${geometry.bottomInsets}");
       _keyboardSafeAreaData = geometry;
     });
   }
@@ -1016,8 +1012,6 @@ class _KeyboardScaffoldSafeAreaScopeState extends State<KeyboardScaffoldSafeArea
       return widget.child;
     }
 
-    print(
-        "Building KeyboardScaffoldSafeAreaScope - is from media query: $_isSafeAreaFromMediaQuery, insets: ${_keyboardSafeAreaData?.bottomInsets}");
     return _InheritedKeyboardScaffoldSafeArea(
       keyboardSafeAreaData: _keyboardSafeAreaData!,
       child: widget.child,
@@ -1097,7 +1091,6 @@ class _KeyboardScaffoldSafeAreaState extends State<KeyboardScaffoldSafeArea> {
         }
 
         final bottomInsets = _chooseBottomInsets(safeAreaContext);
-        print("NEW BOTTOM INSETS: $bottomInsets");
         return Padding(
           padding: EdgeInsets.only(bottom: bottomInsets),
           // ^ We inject `bottomInsets` to push content above the keyboard. However, we don't
@@ -1207,9 +1200,6 @@ class _InheritedKeyboardScaffoldSafeArea extends InheritedWidget {
 
   @override
   bool updateShouldNotify(covariant _InheritedKeyboardScaffoldSafeArea oldWidget) {
-    print(
-        "_InheritedKeyboardScaffoldSafeArea - old insets: ${oldWidget.keyboardSafeAreaData.bottomInsets}, new insets: ${keyboardSafeAreaData.bottomInsets}");
-    print(" - notifying: ${oldWidget.keyboardSafeAreaData != keyboardSafeAreaData}");
     return oldWidget.keyboardSafeAreaData != keyboardSafeAreaData;
   }
 }

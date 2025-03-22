@@ -7,6 +7,7 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/widgets.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
+import 'package:super_keyboard/super_keyboard.dart';
 
 /// A scaffold for a chat experience in which a conversation thread is displayed,
 /// with a message editor mounted to the bottom of the chat area.

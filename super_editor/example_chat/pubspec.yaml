@@ -17,6 +17,7 @@ dependencies:
 
   super_editor:
     path: ../
+  super_keyboard: ^0.1.0
 
 dev_dependencies:
   flutter_test:

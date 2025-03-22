@@ -11,7 +11,7 @@ class MessagePageScaffoldDemo extends StatefulWidget {
 }
 
 class _MessagePageScaffoldDemoState extends State<MessagePageScaffoldDemo> {
-  var _demo = _Demo.chaosMonkey;
+  var _demo = _Demo.superEditor;
 
   void _showChaosMonkeyDemo() {
     setState(() {

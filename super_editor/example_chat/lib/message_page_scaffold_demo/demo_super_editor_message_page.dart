@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:super_editor/super_editor.dart';
+import 'package:super_keyboard/super_keyboard.dart';
 
 /// A chat experience, which includes a simulated list of comments, as well as
 /// a bottom-mounted message editor, which uses `SuperEditor` for writing messages.
@@ -326,6 +327,8 @@ class _ChatEditorState extends State<_ChatEditor> {
     });
 
     _isImeConnected.addListener(_onImeConnectionChange);
+
+    SuperKeyboardAndroid.instance.keyboardState.addListener(_onKeyboardStateChange);
   }
 
   @override
@@ -340,6 +343,8 @@ class _ChatEditorState extends State<_ChatEditor> {
 
   @override
   void dispose() {
+    SuperKeyboardAndroid.instance.keyboardState.removeListener(_onKeyboardStateChange);
+
     widget.messagePageController.removeListener(_onMessagePageControllerChange);
 
     widget.scrollController.dispose();
@@ -348,6 +353,23 @@ class _ChatEditorState extends State<_ChatEditor> {
     _isImeConnected.dispose();
 
     super.dispose();
+  }
+
+  void _onKeyboardStateChange() {
+    // On Android, we've found that when swiping to go back, the keyboard often
+    // closes without Flutter reporting the closure of the IME connection.
+    // Therefore, the keyboard closes, but editors and text fields retain focus,
+    // selection, and a supposedly open IME connection.
+    //
+    // Flutter issue: https://github.com/flutter/flutter/issues/165734
+    //
+    // To hack around this bug in Flutter, when super_keyboard reports keyboard
+    // closure, and this controller thinks the keyboard is open, we give up
+    // focus so that our app state synchronizes with the closed IME connection.
+    final keyboardState = SuperKeyboardAndroid.instance.keyboardState.value;
+    if (_isImeConnected.value && (keyboardState == KeyboardState.closing || keyboardState == KeyboardState.closed)) {
+      _editorFocusNode.unfocus();
+    }
   }
 
   void _onImeConnectionChange() {
@@ -390,8 +412,6 @@ class _ChatEditorState extends State<_ChatEditor> {
         return SizedBox();
       },
       contentBuilder: (BuildContext context, _Panel? openPanel) {
-        print("Building bottom sheet with scroll controller: ${widget.scrollController}");
-
         return SuperEditorFocusOnTap(
           editorFocusNode: _editorFocusNode,
           editor: widget.editor,
