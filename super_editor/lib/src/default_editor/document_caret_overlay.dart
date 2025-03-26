@@ -191,11 +191,19 @@ class CaretDocumentOverlayState extends DocumentLayoutLayerState<CaretDocumentOv
     // `displayOnAllPlatforms` to true.
     final platform = widget.platformOverride ?? defaultTargetPlatform;
     if (!widget.displayOnAllPlatforms && (platform == TargetPlatform.android || platform == TargetPlatform.iOS)) {
-      return const SizedBox();
+      return const SizedBox(
+        child: ColoredBox(
+          color: Colors.transparent,
+        ),
+      );
     }
 
     if (_shouldHideCaretForExpandedSelection) {
-      return const SizedBox();
+      return const SizedBox(
+        child: ColoredBox(
+          color: Colors.transparent,
+        ),
+      );
     }
 
     // Use a RepaintBoundary so that caret flashing doesn't invalidate our
