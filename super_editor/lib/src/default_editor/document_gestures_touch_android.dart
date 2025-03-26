@@ -34,6 +34,8 @@ import 'package:super_editor/src/infrastructure/touch_controls.dart';
 
 import '../infrastructure/document_gestures.dart';
 import '../infrastructure/document_gestures_interaction_overrides.dart';
+import '../infrastructure/flutter/build_nothing_box.dart';
+import 'document_gestures_touch_ios.dart';
 import 'selection_upstream_downstream.dart';
 
 /// An [InheritedWidget] that provides shared access to a [SuperEditorAndroidControlsController],
@@ -366,12 +368,7 @@ class SuperEditorAndroidToolbarFocalPointDocumentLayerBuilder implements SuperEd
         SuperEditorAndroidControlsScope.maybeNearestOf(context) == null) {
       // There's no controls scope. This probably means SuperEditor is configured with
       // a non-Android gesture mode. Build nothing.
-      return const ContentLayerProxyWidget(
-          child: SizedBox(
-        child: ColoredBox(
-          color: Colors.transparent,
-        ),
-      ));
+      return const ContentLayerProxyWidget(child: BuildNothingBox());
     }
 
     return AndroidToolbarFocalPointDocumentLayer(
@@ -404,12 +401,7 @@ class SuperEditorAndroidHandlesDocumentLayerBuilder implements SuperEditorLayerB
         SuperEditorAndroidControlsScope.maybeNearestOf(context) == null) {
       // There's no controls scope. This probably means SuperEditor is configured with
       // a non-Android gesture mode. Build nothing.
-      return const ContentLayerProxyWidget(
-          child: SizedBox(
-        child: ColoredBox(
-          color: Colors.transparent,
-        ),
-      ));
+      return const ContentLayerProxyWidget(child: BuildNothingBox());
     }
 
     return AndroidHandlesDocumentLayer(

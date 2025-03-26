@@ -7,6 +7,9 @@ import 'package:super_editor/src/infrastructure/documents/document_layers.dart';
 import 'package:super_editor/src/infrastructure/platforms/mobile_documents.dart';
 import 'package:super_text_layout/super_text_layout.dart';
 
+import '../infrastructure/flutter/build_nothing_box.dart';
+import 'document_gestures_touch_ios.dart';
+
 /// Document overlay that paints a caret with the given [caretStyle].
 class CaretDocumentOverlay extends DocumentLayoutLayerStatefulWidget {
   const CaretDocumentOverlay({
@@ -191,19 +194,11 @@ class CaretDocumentOverlayState extends DocumentLayoutLayerState<CaretDocumentOv
     // `displayOnAllPlatforms` to true.
     final platform = widget.platformOverride ?? defaultTargetPlatform;
     if (!widget.displayOnAllPlatforms && (platform == TargetPlatform.android || platform == TargetPlatform.iOS)) {
-      return const SizedBox(
-        child: ColoredBox(
-          color: Colors.transparent,
-        ),
-      );
+      return const BuildNothingBox();
     }
 
     if (_shouldHideCaretForExpandedSelection) {
-      return const SizedBox(
-        child: ColoredBox(
-          color: Colors.transparent,
-        ),
-      );
+      return const BuildNothingBox();
     }
 
     // Use a RepaintBoundary so that caret flashing doesn't invalidate our

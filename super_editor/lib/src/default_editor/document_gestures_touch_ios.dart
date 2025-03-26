@@ -4,6 +4,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:follow_the_leader/follow_the_leader.dart';
 import 'package:super_editor/src/core/document.dart';
 import 'package:super_editor/src/core/document_composer.dart';
@@ -34,6 +35,7 @@ import 'package:super_editor/src/infrastructure/touch_controls.dart';
 
 import '../infrastructure/document_gestures.dart';
 import '../infrastructure/document_gestures_interaction_overrides.dart';
+import '../infrastructure/flutter/build_nothing_box.dart';
 import 'selection_upstream_downstream.dart';
 
 /// An [InheritedWidget] that provides shared access to a [SuperEditorIosControlsController],
@@ -1943,12 +1945,7 @@ class SuperEditorIosToolbarFocalPointDocumentLayerBuilder implements SuperEditor
     if (defaultTargetPlatform != TargetPlatform.iOS || SuperEditorIosControlsScope.maybeNearestOf(context) == null) {
       // There's no controls scope. This probably means SuperEditor is configured with
       // a non-iOS gesture mode. Build nothing.
-      return const ContentLayerProxyWidget(
-          child: SizedBox(
-        child: ColoredBox(
-          color: Colors.transparent,
-        ),
-      ));
+      return const ContentLayerProxyWidget(child: BuildNothingBox());
     }
 
     return IosToolbarFocalPointDocumentLayer(
@@ -1981,12 +1978,7 @@ class SuperEditorIosHandlesDocumentLayerBuilder implements SuperEditorLayerBuild
     if (defaultTargetPlatform != TargetPlatform.iOS || SuperEditorIosControlsScope.maybeNearestOf(context) == null) {
       // There's no controls scope. This probably means SuperEditor is configured with
       // a non-iOS gesture mode. Build nothing.
-      return const ContentLayerProxyWidget(
-          child: SizedBox(
-        child: ColoredBox(
-          color: Colors.transparent,
-        ),
-      ));
+      return const ContentLayerProxyWidget(child: BuildNothingBox());
     }
 
     final controlsController = SuperEditorIosControlsScope.rootOf(context);
