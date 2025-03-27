@@ -449,7 +449,6 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
   }
 
   void _ensureSelectionExtentIsVisible() {
-    print("_ensureSelectionExtentIsVisible()");
     editorGesturesLog.fine("Ensuring selection extent is visible");
     final selection = widget.selection.value;
     if (selection == null) {
@@ -465,8 +464,6 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
         ? _documentOffsetToViewportOffset(selectionRectInDocumentLayout.bottomCenter)
         : _documentOffsetToViewportOffset(selectionRectInDocumentLayout.topCenter);
 
-    print(
-        " - selection rect in doc: $selectionRectInDocumentLayout, selection offset in viewport: $extentOffsetInViewport");
     widget.dragHandleAutoScroller.value?.ensureOffsetIsVisible(extentOffsetInViewport);
   }
 
@@ -508,13 +505,6 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
   RenderBox get viewportBox => context.findViewportBox();
 
   Offset _documentOffsetToViewportOffset(Offset documentOffset) {
-    print("_documentOffsetToViewportOffset() - doc offset: $documentOffset");
-    print(" - viewport origin: ${viewportBox.localToGlobal(Offset.zero)}");
-    print(" - doc origin: ${_docLayout.getGlobalOffsetFromDocumentOffset(Offset.zero)}");
-    print(
-        " - doc within viewport: ${viewportBox.globalToLocal(_docLayout.getGlobalOffsetFromDocumentOffset(Offset.zero))}");
-    print("---");
-
     final globalOffset = _docLayout.getGlobalOffsetFromDocumentOffset(documentOffset);
     return viewportBox.globalToLocal(globalOffset);
   }
@@ -525,13 +515,6 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
   /// Converts the given [interactorOffset] from the [DocumentInteractor]'s coordinate
   /// space to the [DocumentLayout]'s coordinate space.
   Offset _interactorOffsetToDocumentOffset(Offset interactorOffset) {
-    print("_interactorOffsetToDocumentOffset()");
-    print(" - viewport origin: ${viewportBox.localToGlobal(Offset.zero)}");
-    print(" - doc origin: ${_docLayout.getGlobalOffsetFromDocumentOffset(Offset.zero)}");
-    print(
-        " - doc within viewport: ${viewportBox.globalToLocal(_docLayout.getGlobalOffsetFromDocumentOffset(Offset.zero))}");
-    print("---");
-
     final globalOffset = interactorBox.localToGlobal(interactorOffset);
     return _docLayout.getDocumentOffsetFromAncestorOffset(globalOffset);
   }

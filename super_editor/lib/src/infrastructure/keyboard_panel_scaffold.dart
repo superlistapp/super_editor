@@ -457,8 +457,6 @@ class _KeyboardPanelScaffoldState<PanelType> extends State<KeyboardPanelScaffold
   /// the current software keyboard height.
   void _updateKeyboardHeightForCurrentViewInsets() {
     final newBottomInset = MediaQuery.viewInsetsOf(context).bottom;
-    print(
-        "_updateKeyboardHeightForCurrentViewInsets(): state: $_keyboardState, new insets: $newBottomInset, previous: $_currentKeyboardHeight");
 
     switch (_keyboardState) {
       case KeyboardState.open:
@@ -493,14 +491,12 @@ class _KeyboardPanelScaffoldState<PanelType> extends State<KeyboardPanelScaffold
         // the height of the minimized keyboard. To hack around that, we explicitly set the keyboard
         // height to zero, when closed.
         if (newBottomInset > 0) {
-          print(" - keyboard is closed and reported insets are > 0 -> will update safe area next frame");
           _currentKeyboardHeight = 0.0;
           onNextFrame((_) => _updateSafeArea());
           break;
         }
 
         if (newBottomInset != _currentKeyboardHeight) {
-          print(" - closed state - insets changed. Scheduling safe area update.");
           // Update the safe area to account for the new height value.
           onNextFrame((_) => _updateSafeArea());
         }
@@ -551,7 +547,6 @@ class _KeyboardPanelScaffoldState<PanelType> extends State<KeyboardPanelScaffold
 
   /// Update the bottom insets of the enclosing [KeyboardScaffoldSafeArea].
   void _updateSafeArea() {
-    print("_updateSafeArea()");
     if (_ancestorSafeArea == null) {
       return;
     }
@@ -565,7 +560,6 @@ class _KeyboardPanelScaffoldState<PanelType> extends State<KeyboardPanelScaffold
     final toolbarSize = (_toolbarKey.currentContext?.findRenderObject() as RenderBox?)?.size;
     final bottomInsets = _currentBottomSpacing.value + (toolbarSize?.height ?? 0);
 
-    print("Setting geometry to have insets: $bottomInsets");
     _ancestorSafeArea!.geometry = _ancestorSafeArea!.geometry.copyWith(
       bottomInsets: bottomInsets,
       bottomPadding: bottomPadding,
@@ -574,7 +568,6 @@ class _KeyboardPanelScaffoldState<PanelType> extends State<KeyboardPanelScaffold
 
   @override
   Widget build(BuildContext context) {
-    print("Building KeyboardPanelScaffold - bottom insets: $_currentKeyboardHeight");
     final shouldShowKeyboardPanel = wantsToShowKeyboardPanel ||
         // The keyboard panel should be kept visible while the software keyboard is expanding
         // and the keyboard panel was previously visible. Otherwise, there will be an empty

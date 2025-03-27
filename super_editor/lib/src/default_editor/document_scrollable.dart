@@ -183,7 +183,6 @@ class _DocumentScrollableState extends State<DocumentScrollable> with SingleTick
 
   @override
   Widget build(BuildContext context) {
-    print("Building DocumentScrollable - scroll controller: ${_scrollController.hashCode}");
     final ancestorScrollable = context.findAncestorScrollableWithVerticalScroll;
     _ancestorScrollPosition = ancestorScrollable?.position;
     if (ancestorScrollable != null) {
@@ -206,7 +205,6 @@ class _DocumentScrollableState extends State<DocumentScrollable> with SingleTick
     required Widget child,
   }) {
     final scrollBehavior = ScrollConfiguration.of(context);
-    print("Connecting CustomScrollView to scroll controller: $_scrollController");
     return _maybeBuildScrollbar(
       behavior: scrollBehavior,
       child: ScrollConfiguration(
