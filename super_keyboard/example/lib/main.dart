@@ -5,17 +5,21 @@ import 'package:flutter/material.dart';
 import 'package:super_keyboard/super_keyboard.dart';
 
 void main() {
-  runApp(const MyApp());
+  runApp(const SuperKeyboardDemoApp());
 }
 
-class MyApp extends StatefulWidget {
-  const MyApp({super.key});
+class SuperKeyboardDemoApp extends StatefulWidget {
+  const SuperKeyboardDemoApp({super.key});
 
   @override
-  State<MyApp> createState() => _MyAppState();
+  State<SuperKeyboardDemoApp> createState() => _SuperKeyboardDemoAppState();
 }
 
-class _MyAppState extends State<MyApp> {
+class _SuperKeyboardDemoAppState extends State<SuperKeyboardDemoApp> {
+  bool _closeOnOutsideTap = true;
+  bool _isFlutterLoggingEnabled = false;
+  bool _isPlatformLoggingEnabled = false;
+
   @override
   void initState() {
     super.initState();
@@ -24,7 +28,9 @@ class _MyAppState extends State<MyApp> {
   }
 
   Future<void> initSuperKeyboard() async {
-    SuperKeyboard.initLogs();
+    if (_isFlutterLoggingEnabled) {
+      SuperKeyboard.startLogging();
+    }
   }
 
   @override
@@ -34,30 +40,17 @@ class _MyAppState extends State<MyApp> {
         resizeToAvoidBottomInset: defaultTargetPlatform != TargetPlatform.android,
         body: Center(
           child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 250),
+            constraints: const BoxConstraints(maxWidth: 300),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                ValueListenableBuilder(
-                  valueListenable: SuperKeyboard.instance.state,
-                  builder: (context, value, child) {
-                    final icon = switch (value) {
-                      KeyboardState.closed => Icons.border_bottom,
-                      KeyboardState.opening => Icons.upload_sharp,
-                      KeyboardState.open => Icons.border_top,
-                      KeyboardState.closing => Icons.download_sharp,
-                    };
-
-                    return Icon(
-                      icon,
-                      size: 24,
-                    );
+                _buildKeyboardStateIcon(),
+                const SizedBox(height: 12),
+                SuperKeyboardBuilder(
+                  builder: (context, keyboardState) {
+                    return Text("Keyboard state: $_keyboardState");
                   },
                 ),
-                const SizedBox(height: 12),
-                SuperKeyboardBuilder(builder: (context, keyboardState) {
-                  return Text("Keyboard state: $_keyboardState");
-                }),
                 const SizedBox(height: 12),
                 ValueListenableBuilder(
                   valueListenable: SuperKeyboard.instance.keyboardHeight,
@@ -71,9 +64,15 @@ class _MyAppState extends State<MyApp> {
                     hintText: "Type some text",
                   ),
                   onTapOutside: (_) {
-                    FocusManager.instance.primaryFocus?.unfocus();
+                    if (_closeOnOutsideTap) {
+                      FocusManager.instance.primaryFocus?.unfocus();
+                    }
                   },
                 ),
+                const SizedBox(height: 16),
+                _buildCloseOnFocusOption(),
+                _buildFlutterLoggingOption(),
+                _buildPlatformLoggingOption(),
                 ValueListenableBuilder(
                   valueListenable: SuperKeyboard.instance.keyboardHeight,
                   builder: (context, value, child) {
@@ -92,6 +91,25 @@ class _MyAppState extends State<MyApp> {
     );
   }
 
+  Widget _buildKeyboardStateIcon() {
+    return ValueListenableBuilder(
+      valueListenable: SuperKeyboard.instance.state,
+      builder: (context, value, child) {
+        final icon = switch (value) {
+          KeyboardState.closed => Icons.border_bottom,
+          KeyboardState.opening => Icons.upload_sharp,
+          KeyboardState.open => Icons.border_top,
+          KeyboardState.closing => Icons.download_sharp,
+        };
+
+        return Icon(
+          icon,
+          size: 24,
+        );
+      },
+    );
+  }
+
   String get _keyboardState {
     return switch (SuperKeyboard.instance.state.value) {
       KeyboardState.closed => "Closed",
@@ -99,5 +117,69 @@ class _MyAppState extends State<MyApp> {
       KeyboardState.open => "Open",
       KeyboardState.closing => "Closing",
     };
+  }
+
+  Widget _buildCloseOnFocusOption() {
+    return Row(
+      spacing: 8,
+      children: [
+        const Expanded(
+          child: Text('Close keyboard on outside tap'),
+        ),
+        Switch(
+          value: _closeOnOutsideTap,
+          onChanged: (newValue) {
+            setState(() {
+              _closeOnOutsideTap = newValue;
+            });
+          },
+        ),
+      ],
+    );
+  }
+
+  Widget _buildFlutterLoggingOption() {
+    return Row(
+      spacing: 8,
+      children: [
+        const Expanded(
+          child: Text('Enable flutter logs'),
+        ),
+        Switch(
+          value: _isFlutterLoggingEnabled,
+          onChanged: (newValue) {
+            setState(() {
+              _isFlutterLoggingEnabled = newValue;
+
+              if (_isFlutterLoggingEnabled) {
+                SuperKeyboard.startLogging();
+              } else {
+                SuperKeyboard.stopLogging();
+              }
+            });
+          },
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPlatformLoggingOption() {
+    return Row(
+      spacing: 8,
+      children: [
+        const Expanded(
+          child: Text('Enable platform logs'),
+        ),
+        Switch(
+          value: _isPlatformLoggingEnabled,
+          onChanged: (newValue) {
+            setState(() {
+              _isPlatformLoggingEnabled = newValue;
+              SuperKeyboard.instance.enablePlatformLogging(_isPlatformLoggingEnabled);
+            });
+          },
+        ),
+      ],
+    );
   }
 }
