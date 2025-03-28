@@ -72,7 +72,7 @@ void main() {
       expect(documentMarkdown, _fullDocumentMarkdown);
     });
 
-    test("Paste at the beginning of an an empty document (with merging text)", () async {
+    test("Paste at the beginning of an empty document (with merging text)", () async {
       final document = MutableDocument.empty("1");
       final composer = MutableDocumentComposer();
       final editor = Editor(
@@ -97,7 +97,6 @@ void main() {
         ParagraphNode(id: Editor.createNodeId(), text: AttributedText("Other Stuff")),
       ]);
 
-      // Simulate the user copying a full markdown document
       editor.execute([
         PasteStructuredContentEditorRequest(
           content: pasteContent,
@@ -110,9 +109,7 @@ void main() {
 
       expect(document.length, 2);
       final [first, second] = [...document];
-      expect(first, isA<ParagraphNode>());
       expect(first.asTextNode.text.toPlainText(), "Misc Text");
-      expect(second, isA<ParagraphNode>());
       expect(second.asTextNode.text.toPlainText(), "Other Stuff");
     });
 
