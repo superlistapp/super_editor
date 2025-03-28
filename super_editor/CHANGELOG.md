@@ -1,3 +1,8 @@
+## [0.3.0-dev.21] - Mar 27, 2025
+ * FEATURE: Chat - Added a `MessagePageScaffold` to create chat pages with a bottom mounted editor.
+ * FEATURE: List items support inline widgets.
+ * FIX: Super Reader - Crash when rotating phone with an expanded selection.
+
 ## [0.3.0-dev.20] - Mar 7, 2025
  * FIX: Keyboard safe area rare layout exception due to dirty ancestor layout.
 
