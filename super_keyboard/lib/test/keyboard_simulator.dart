@@ -238,6 +238,11 @@ class TestSuperKeyboard implements SuperKeyboard {
     _keyboardHeightController.dispose();
   }
 
+  @override
+  Future<void> enablePlatformLogging(bool isEnabled) async {
+    // no-op
+  }
+
   final WidgetTester tester;
   final double fakeKeyboardHeight;
 
