@@ -72,6 +72,50 @@ void main() {
       expect(documentMarkdown, _fullDocumentMarkdown);
     });
 
+    test("Paste at the beginning of an an empty document (with merging text)", () async {
+      final document = MutableDocument.empty("1");
+      final composer = MutableDocumentComposer();
+      final editor = Editor(
+        editables: {
+          Editor.documentKey: document,
+          Editor.composerKey: composer,
+        },
+        requestHandlers: [
+          (editor, request) => request is PasteStructuredContentEditorRequest
+              ? PasteStructuredContentEditorCommand(
+                  content: request.content,
+                  pastePosition: request.pastePosition,
+                )
+              : null,
+          ...defaultRequestHandlers,
+        ],
+        reactionPipeline: List.from(defaultEditorReactions),
+      );
+
+      final pasteContent = MutableDocument(nodes: [
+        ParagraphNode(id: Editor.createNodeId(), text: AttributedText("Misc Text")),
+        ParagraphNode(id: Editor.createNodeId(), text: AttributedText("Other Stuff")),
+      ]);
+
+      // Simulate the user copying a full markdown document
+      editor.execute([
+        PasteStructuredContentEditorRequest(
+          content: pasteContent,
+          pastePosition: DocumentPosition(
+            nodeId: document.first.id,
+            nodePosition: const TextNodePosition(offset: 0),
+          ),
+        )
+      ]);
+
+      expect(document.length, 2);
+      final [first, second] = [...document];
+      expect(first, isA<ParagraphNode>());
+      expect(first.asTextNode.text.toPlainText(), "Misc Text");
+      expect(second, isA<ParagraphNode>());
+      expect(second.asTextNode.text.toPlainText(), "Other Stuff");
+    });
+
     testWidgetsOnArbitraryDesktop("can paste at the beginning of a document (without merging text)", (tester) async {
       final (editor, document, composer) = await _pumpSuperEditor(
         tester,
