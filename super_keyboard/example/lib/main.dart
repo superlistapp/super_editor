@@ -17,6 +17,8 @@ class SuperKeyboardDemoApp extends StatefulWidget {
 
 class _SuperKeyboardDemoAppState extends State<SuperKeyboardDemoApp> {
   bool _closeOnOutsideTap = true;
+  bool _isFlutterLoggingEnabled = false;
+  bool _isPlatformLoggingEnabled = false;
 
   @override
   void initState() {
@@ -26,7 +28,9 @@ class _SuperKeyboardDemoAppState extends State<SuperKeyboardDemoApp> {
   }
 
   Future<void> initSuperKeyboard() async {
-    SuperKeyboard.initLogs();
+    if (_isFlutterLoggingEnabled) {
+      SuperKeyboard.startLogging();
+    }
   }
 
   @override
@@ -67,6 +71,8 @@ class _SuperKeyboardDemoAppState extends State<SuperKeyboardDemoApp> {
                 ),
                 const SizedBox(height: 16),
                 _buildCloseOnFocusOption(),
+                _buildFlutterLoggingOption(),
+                _buildPlatformLoggingOption(),
                 ValueListenableBuilder(
                   valueListenable: SuperKeyboard.instance.keyboardHeight,
                   builder: (context, value, child) {
@@ -115,15 +121,61 @@ class _SuperKeyboardDemoAppState extends State<SuperKeyboardDemoApp> {
 
   Widget _buildCloseOnFocusOption() {
     return Row(
-      mainAxisSize: MainAxisSize.min,
       spacing: 8,
       children: [
-        const Text('Close keyboard on outside tap'),
+        const Expanded(
+          child: Text('Close keyboard on outside tap'),
+        ),
         Switch(
           value: _closeOnOutsideTap,
           onChanged: (newValue) {
             setState(() {
               _closeOnOutsideTap = newValue;
+            });
+          },
+        ),
+      ],
+    );
+  }
+
+  Widget _buildFlutterLoggingOption() {
+    return Row(
+      spacing: 8,
+      children: [
+        const Expanded(
+          child: Text('Enable flutter logs'),
+        ),
+        Switch(
+          value: _isFlutterLoggingEnabled,
+          onChanged: (newValue) {
+            setState(() {
+              _isFlutterLoggingEnabled = newValue;
+
+              if (_isFlutterLoggingEnabled) {
+                SuperKeyboard.startLogging();
+              } else {
+                SuperKeyboard.stopLogging();
+              }
+            });
+          },
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPlatformLoggingOption() {
+    return Row(
+      spacing: 8,
+      children: [
+        const Expanded(
+          child: Text('Enable platform logs'),
+        ),
+        Switch(
+          value: _isPlatformLoggingEnabled,
+          onChanged: (newValue) {
+            setState(() {
+              _isPlatformLoggingEnabled = newValue;
+              SuperKeyboard.instance.enablePlatformLogging(_isPlatformLoggingEnabled);
             });
           },
         ),
