@@ -4,8 +4,7 @@ import 'package:super_editor/super_editor.dart';
 
 void main() {
   group('Message page scaffold >', () {
-    testWidgets('can add and remove ancestor inherited widgets',
-        (tester) async {
+    testWidgets('can add and remove ancestor inherited widgets', (tester) async {
       double? mostRecentTextSize;
 
       final messagePageScaffold = MessagePageScaffold(
@@ -51,8 +50,7 @@ void main() {
       expect(mostRecentTextSize, 14);
     });
 
-    testWidgets('re-runs child builder functions when inherited widget changes',
-        (tester) async {
+    testWidgets('re-runs child builder functions when inherited widget changes', (tester) async {
       final textDirection = ValueNotifier(TextDirection.ltr);
       TextDirection? mostRecentContentTextDirection;
       TextDirection? mostRecentBottomSheetTextDirection;
@@ -68,8 +66,7 @@ void main() {
                   return const SizedBox();
                 },
                 bottomSheetBuilder: (context) {
-                  mostRecentBottomSheetTextDirection =
-                      Directionality.of(context);
+                  mostRecentBottomSheetTextDirection = Directionality.of(context);
                   return const SizedBox();
                 },
               ),
@@ -91,8 +88,7 @@ void main() {
       expect(mostRecentBottomSheetTextDirection, TextDirection.ltr);
     });
 
-    testWidgets('rebuilds stateful child widgets when inherited widget changes',
-        (tester) async {
+    testWidgets('rebuilds stateful child widgets when inherited widget changes', (tester) async {
       final textDirection = ValueNotifier(TextDirection.ltr);
       TextDirection? mostRecentContentTextDirection;
       TextDirection? mostRecentBottomSheetTextDirection;
@@ -105,15 +101,13 @@ void main() {
               child: MessagePageScaffold(
                 contentBuilder: (context, __) {
                   return _StatefulWidgetThatUsesInheritedWidget(
-                    onBuildWithTextDirection: (newDirection) =>
-                        mostRecentContentTextDirection = newDirection,
+                    onBuildWithTextDirection: (newDirection) => mostRecentContentTextDirection = newDirection,
                     child: const SizedBox(),
                   );
                 },
                 bottomSheetBuilder: (context) {
                   return _StatefulWidgetThatUsesInheritedWidget(
-                    onBuildWithTextDirection: (newDirection) =>
-                        mostRecentBottomSheetTextDirection = newDirection,
+                    onBuildWithTextDirection: (newDirection) => mostRecentBottomSheetTextDirection = newDirection,
                     child: const SizedBox(),
                   );
                 },
@@ -162,7 +156,7 @@ void main() {
       );
       expect(find.text('Home'), findsOne);
 
-      await navigatorKey.currentState!.pushNamed('message-scaffold');
+      navigatorKey.currentState!.pushNamed('message-scaffold');
       await tester.pumpAndSettle();
       expect(find.text('Home'), findsNothing);
 
@@ -212,12 +206,10 @@ class _StatefulWidgetThatUsesInheritedWidget extends StatefulWidget {
   final Widget child;
 
   @override
-  State<_StatefulWidgetThatUsesInheritedWidget> createState() =>
-      _StatefulWidgetThatUsesInheritedWidgetState();
+  State<_StatefulWidgetThatUsesInheritedWidget> createState() => _StatefulWidgetThatUsesInheritedWidgetState();
 }
 
-class _StatefulWidgetThatUsesInheritedWidgetState
-    extends State<_StatefulWidgetThatUsesInheritedWidget> {
+class _StatefulWidgetThatUsesInheritedWidgetState extends State<_StatefulWidgetThatUsesInheritedWidget> {
   @override
   Widget build(BuildContext context) {
     widget.onBuildWithTextDirection(Directionality.of(context));
