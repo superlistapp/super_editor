@@ -84,6 +84,11 @@ class SuperKeyboardAndroid {
 
   final _methodChannel = const MethodChannel('super_keyboard_android');
 
+  /// Enable/disable platform-side logging, e.g., Android logs.
+  Future<void> enablePlatformLogging(bool isEnabled) async {
+    await _methodChannel.invokeMethod(isEnabled ? "startLogging" : "stopLogging");
+  }
+
   ValueListenable<KeyboardState> get keyboardState => _keyboardState;
   final _keyboardState = ValueNotifier(KeyboardState.closed);
 

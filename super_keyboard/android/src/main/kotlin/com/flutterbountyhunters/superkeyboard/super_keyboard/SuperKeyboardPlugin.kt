@@ -46,25 +46,38 @@ class SuperKeyboardPlugin: FlutterPlugin, ActivityAware, DefaultLifecycleObserve
   private var keyboardState: KeyboardState = KeyboardState.Closed
 
   override fun onAttachedToEngine(flutterPluginBinding: FlutterPlugin.FlutterPluginBinding) {
-    Log.d("super_keyboard", "Attached to Flutter engine")
+    SuperKeyboardLog.d("super_keyboard", "Attached to Flutter engine")
     channel = MethodChannel(flutterPluginBinding.binaryMessenger, "super_keyboard_android")
+
+    channel.setMethodCallHandler { call, result ->
+      when (call.method) {
+        "startLogging" -> {
+          SuperKeyboardLog.isLoggingEnabled = true
+          result.success(null)
+        }
+        "stopLogging" -> {
+          SuperKeyboardLog.isLoggingEnabled = false
+          result.success(null)
+        }
+        else -> result.notImplemented()
+      }
+    }
   }
 
   override fun onAttachedToActivity(binding: ActivityPluginBinding) {
-    Log.d("super_keyboard", "Attached to Flutter Activity")
+    SuperKeyboardLog.d("super_keyboard", "Attached to Flutter Activity")
     this.binding = binding
     startListeningToActivityLifecycle()
   }
 
   override fun onResume(owner: LifecycleOwner) {
-    Log.d("super_keyboard", "Activity Resumed - keyboard state: $keyboardState")
+    SuperKeyboardLog.d("super_keyboard", "Activity Resumed - keyboard state: $keyboardState")
     startListeningForKeyboardChanges(binding!!)
-    sendLatestKeyboardStateToApp()
-  }
 
-  private fun sendLatestKeyboardStateToApp() {
+    // Specifically in the case of an app resuming, it's possible that the keyboard
+    // went from open to closed without us getting a chance to report it. Check if we're
+    // closed and if we are, tell the app.
     val insets = ViewCompat.getRootWindowInsets(mainView!!) ?: return
-
     if (insets.getInsets(WindowInsetsCompat.Type.ime()).bottom == 0 && keyboardState != KeyboardState.Closed) {
       keyboardState = KeyboardState.Closed
       channel.invokeMethod("keyboardClosed", null)
@@ -72,7 +85,7 @@ class SuperKeyboardPlugin: FlutterPlugin, ActivityAware, DefaultLifecycleObserve
   }
 
   override fun onPause(owner: LifecycleOwner) {
-    Log.d("super_keyboard", "Activity Paused - keyboard state: $keyboardState")
+    SuperKeyboardLog.d("super_keyboard", "Activity Paused - keyboard state: $keyboardState")
     stopListeningForKeyboardChanges()
   }
 
@@ -87,13 +100,13 @@ class SuperKeyboardPlugin: FlutterPlugin, ActivityAware, DefaultLifecycleObserve
   }
 
   override fun onDetachedFromActivity() {
-    Log.d("super_keyboard", "Detached from Flutter activity")
+    SuperKeyboardLog.d("super_keyboard", "Detached from Flutter activity")
     stopListeningToActivityLifecycle()
     this.binding = null
   }
 
   override fun onDetachedFromEngine(binding: FlutterPlugin.FlutterPluginBinding) {
-    Log.d("super_keyboard", "Detached from Flutter engine")
+    SuperKeyboardLog.d("super_keyboard", "Detached from Flutter engine")
     this.binding = null
   }
 
@@ -167,14 +180,14 @@ class SuperKeyboardPlugin: FlutterPlugin, ActivityAware, DefaultLifecycleObserve
   }
 
   override fun onApplyWindowInsets(v: View, insets: WindowInsetsCompat): WindowInsetsCompat {
-    Log.d("super_keyboard", "onApplyWindowInsets()")
+    SuperKeyboardLog.d("super_keyboard", "onApplyWindowInsets()")
     if (lifecycle!!.currentState == Lifecycle.State.CREATED) {
       // For at least Android API 34, we receive conflicting reports about IME visibility
       // when the app is being backgrounded. First we're told the IME isn't visible, then
       // we're told that it is. In theory, the IME should never be visible when in the CREATED
       // state, so we explicitly tell the app that the keyboard is closed here.
       if (keyboardState != KeyboardState.Closed) {
-        Log.d("super_keyboard", "Activity is in CREATED state - telling app that keyboard is closed")
+        SuperKeyboardLog.d("super_keyboard", "Activity is in CREATED state - telling app that keyboard is closed")
         keyboardState = KeyboardState.Closed
         channel.invokeMethod("keyboardClosed", null)
       }
@@ -183,10 +196,10 @@ class SuperKeyboardPlugin: FlutterPlugin, ActivityAware, DefaultLifecycleObserve
     }
 
     val imeVisible = insets.isVisible(WindowInsetsCompat.Type.ime())
-    Log.d("super_keyboard", "Is IME visible? $imeVisible")
-    Log.d("super_keyboard", "Lifecycle state: ${lifecycle!!.currentState}")
+    SuperKeyboardLog.d("super_keyboard", "Is IME visible? $imeVisible")
+    SuperKeyboardLog.d("super_keyboard", "Lifecycle state: ${lifecycle!!.currentState}")
 
-    Log.d("super_keyboard", "Insets: ${insets.getInsets(WindowInsetsCompat.Type.ime()).bottom}")
+    SuperKeyboardLog.d("super_keyboard", "Insets: ${insets.getInsets(WindowInsetsCompat.Type.ime()).bottom}")
 
     // Note: We primarily only identify opening/closing here. The opened/closed completion
     //       is identified by the window insets animation callback.
@@ -194,16 +207,16 @@ class SuperKeyboardPlugin: FlutterPlugin, ActivityAware, DefaultLifecycleObserve
     //       The exception is that when the Activity resumes, the keyboard might jump immediately
     //       to "closed". We catch that situation by looking for a `0` bottom inset.
     if (imeVisible && keyboardState != KeyboardState.Opening && keyboardState != KeyboardState.Open) {
-      Log.d("super_keyboard", "Setting keyboard state to Opening")
+      SuperKeyboardLog.d("super_keyboard", "Setting keyboard state to Opening")
       channel.invokeMethod("keyboardOpening", null)
       keyboardState = KeyboardState.Opening
     } else if (!imeVisible && keyboardState != KeyboardState.Closing && keyboardState != KeyboardState.Closed) {
       if (insets.getInsets(WindowInsetsCompat.Type.ime()).bottom == 0) {
-        Log.d("super_keyboard", "Setting keyboard state to Closed")
+        SuperKeyboardLog.d("super_keyboard", "Setting keyboard state to Closed")
         channel.invokeMethod("keyboardClosed", null)
         keyboardState = KeyboardState.Closed
       } else {
-        Log.d("super_keyboard", "Setting keyboard state to Closing")
+        SuperKeyboardLog.d("super_keyboard", "Setting keyboard state to Closing")
         channel.invokeMethod("keyboardClosing", null)
         keyboardState = KeyboardState.Closing
       }
