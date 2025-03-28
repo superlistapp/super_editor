@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_test_robots/flutter_test_robots.dart';
 import 'package:flutter_test_runners/flutter_test_runners.dart';
 import 'package:super_editor/super_editor.dart';
+import 'package:super_text_layout/super_text_layout.dart';
 
 import 'super_textfield_inspector.dart';
 import 'super_textfield_robot.dart';
@@ -317,6 +318,73 @@ void main() {
         SuperTextFieldInspector.findText().toPlainText(),
         'before  after',
       );
+    });
+
+    testWidgetsOnAllPlatforms('selects inline widget upon double tap', (tester) async {
+      // This test ensures that SuperTextField does not crash upon double tap
+      // when there is an inline widget in the text.
+      // See https://github.com/superlistapp/super_editor/issues/2611 for more details.
+
+      final controller = AttributedTextEditingController(
+        text: AttributedText(
+          '< inline',
+          null,
+          {
+            0: const _NamedPlaceHolder('1'),
+          },
+        ),
+      );
+
+      await _pumpTestApp(tester, controller: controller);
+
+      // Double tap at the inline widget.
+      final inlineWidgetCenter = tester.getCenter(find.byPlaceholderName('1'));
+      await tester.tapAt(inlineWidgetCenter);
+      await tester.pump(kDoubleTapMinTime);
+      await tester.tapAt(inlineWidgetCenter);
+      // Wait for the double tap to be recognized.
+      await tester.pump(kTapMinTime);
+
+      // Ensure the inline widget was selected.
+      expect(
+        SuperTextFieldInspector.findSelection(),
+        const TextSelection(baseOffset: 0, extentOffset: 1),
+      );
+    });
+
+    testWidgetsOnAllPlatforms('does not invalidate layout when selection changes', (tester) async {
+      final controller = AttributedTextEditingController(
+        text: AttributedText(
+          'Hello',
+          null,
+          {
+            5: const _NamedPlaceHolder('1'),
+          },
+        ),
+      );
+
+      await _pumpTestApp(tester, controller: controller);
+
+      // Place the caret at the beginning of the textfield.
+      await tester.placeCaretInSuperTextField(0);
+
+      // Keep track of whether of not the layout was invalidated.
+      bool wasLayoutInvalidated = false;
+
+      final renderParagraph = find
+          .byType(LayoutAwareRichText) //
+          .evaluate()
+          .first
+          .findRenderObject() as RenderLayoutAwareParagraph;
+      renderParagraph.onMarkNeedsLayout = () {
+        wasLayoutInvalidated = true;
+      };
+
+      // Place the selection somewhere else.
+      await tester.placeCaretInSuperTextField(1);
+
+      // Ensure the layout was not invalidated.
+      expect(wasLayoutInvalidated, isFalse);
     });
   });
 }
