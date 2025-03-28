@@ -59,13 +59,17 @@ class SuperKeyboard {
 
   static final log = Logger("super_keyboard");
 
-  static void initLogs([Level level = Level.ALL]) {
+  static void startLogging([Level level = Level.ALL]) {
     hierarchicalLoggingEnabled = true;
     log.level = level;
     log.onRecord.listen((record) {
       // ignore: avoid_print
       print('${record.level.name}: ${record.time.toLogTime()}: ${record.message}');
     });
+  }
+
+  static void stopLogging() {
+    log.level = Level.OFF;
   }
 
   SuperKeyboard._() {
@@ -81,6 +85,19 @@ class SuperKeyboard {
       log.fine("SuperKeyboard - Initializing for Android");
       SuperKeyboardAndroid.instance.keyboardState.addListener(_onAndroidKeyboardChange);
       SuperKeyboardAndroid.instance.keyboardHeight.addListener(_onAndroidKeyboardHeightChange);
+    }
+  }
+
+  /// Enable/disable platform-side logging, e.g., Android or iOS logs.
+  ///
+  /// These logs are distinct from Flutter-side logs, which are controlled
+  /// by [startLogging].
+  Future<void> enablePlatformLogging(bool isEnabled) async {
+    if (defaultTargetPlatform == TargetPlatform.iOS) {
+      log.fine("SuperKeyboard - Tried to start logging for iOS, but it's not implemented yet.");
+    } else if (defaultTargetPlatform == TargetPlatform.android) {
+      log.fine("SuperKeyboard - ${isEnabled ? "Enabling" : "Disabling"} logs for Android.");
+      await SuperKeyboardAndroid.instance.enablePlatformLogging(isEnabled);
     }
   }
 
