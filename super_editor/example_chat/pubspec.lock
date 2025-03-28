@@ -482,7 +482,7 @@ packages:
     source: path
     version: "0.3.0-dev.19"
   super_keyboard:
-    dependency: transitive
+    dependency: "direct main"
     description:
       name: super_keyboard
       sha256: c8e303cd7bc1fc62732213f0f2660273a078be23eae7a4219d0ab3dd0b0ccb9a
