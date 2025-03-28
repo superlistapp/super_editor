@@ -1,3 +1,6 @@
+## [0.3.0-dev.22] - Mar 28, 2025
+ * FIX: `MessagePageScaffold` - Prevent possible negative layout constraints on bottom sheet.
+
 ## [0.3.0-dev.21] - Mar 27, 2025
  * FEATURE: Chat - Added a `MessagePageScaffold` to create chat pages with a bottom mounted editor.
  * FEATURE: List items support inline widgets.
