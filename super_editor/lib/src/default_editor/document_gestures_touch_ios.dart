@@ -265,6 +265,7 @@ class IosDocumentTouchInteractor extends StatefulWidget {
     required this.getDocumentLayout,
     required this.selection,
     this.openKeyboardWhenTappingExistingSelection = true,
+    this.openKeyboardOnSelectionChange = true,
     required this.openSoftwareKeyboard,
     required this.isImeConnected,
     required this.scrollController,
@@ -285,6 +286,9 @@ class IosDocumentTouchInteractor extends StatefulWidget {
 
   /// {@macro openKeyboardWhenTappingExistingSelection}
   final bool openKeyboardWhenTappingExistingSelection;
+
+  /// {@macro openKeyboardOnSelectionChange}
+  final bool openKeyboardOnSelectionChange;
 
   /// A callback that should open the software keyboard when invoked.
   final VoidCallback openSoftwareKeyboard;
@@ -702,7 +706,9 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
           _selectPosition(adjustedSelectionPosition);
 
           // Ensure the keyboard is visible.
-          widget.openSoftwareKeyboard();
+          if (widget.openKeyboardOnSelectionChange) {
+            widget.openSoftwareKeyboard();
+          }
         }
       }
     } else {

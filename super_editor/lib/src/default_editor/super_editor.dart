@@ -898,6 +898,7 @@ class SuperEditorState extends State<SuperEditor> {
           getDocumentLayout: () => editContext.documentLayout,
           selection: editContext.composer.selectionNotifier,
           openKeyboardWhenTappingExistingSelection: widget.selectionPolicies.openKeyboardWhenTappingExistingSelection,
+          openKeyboardOnSelectionChange: widget.imePolicies.openKeyboardOnSelectionChange,
           openSoftwareKeyboard: _openSoftwareKeyboard,
           contentTapHandlers: [
             ..._contentTapHandlers ?? [],
@@ -918,6 +919,7 @@ class SuperEditorState extends State<SuperEditor> {
           getDocumentLayout: () => editContext.documentLayout,
           selection: editContext.composer.selectionNotifier,
           openKeyboardWhenTappingExistingSelection: widget.selectionPolicies.openKeyboardWhenTappingExistingSelection,
+          openKeyboardOnSelectionChange: widget.imePolicies.openKeyboardOnSelectionChange,
           openSoftwareKeyboard: _openSoftwareKeyboard,
           isImeConnected: _isImeConnected,
           contentTapHandlers: [

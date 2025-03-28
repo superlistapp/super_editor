@@ -528,7 +528,7 @@ class SuperEditorImeInteractorState extends State<SuperEditorImeInteractor> impl
               child: SoftwareKeyboardOpener(
                 controller: widget.softwareKeyboardController,
                 imeConnection: _imeConnection,
-                createImeClient: () => _documentImeClient,
+                createImeClient: () => _imeClient,
                 createImeConfiguration: () => _textInputConfiguration,
                 child: widget.child,
               ),
@@ -809,6 +809,7 @@ class SuperEditorImePolicies {
   /// Defaults to `true`.
   final bool closeImeOnNonPrimaryFocusLost;
 
+  /// {@template openKeyboardOnSelectionChange}
   /// Whether the software keyboard should be raised whenever the editor's selection
   /// changes, such as when a user taps to place the caret.
   ///
@@ -816,6 +817,7 @@ class SuperEditorImePolicies {
   /// needs to be closed and opened to reveal special editing controls. In those cases
   /// this property should probably be `false`, and the app should take responsibility
   /// for opening and closing the keyboard.
+  /// {@endtemplate}
   final bool openKeyboardOnSelectionChange;
 
   /// Whether the software keyboard should be closed whenever the editor goes from
