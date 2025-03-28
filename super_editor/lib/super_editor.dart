@@ -14,6 +14,9 @@ export 'src/core/edit_context.dart';
 export 'src/core/editor.dart';
 export 'src/core/styles.dart';
 
+// Chat
+export 'src/chat/message_page_scaffold.dart';
+
 // Super Editor
 export 'src/default_editor/attributions.dart';
 export 'src/default_editor/blocks/indentation.dart';
@@ -37,6 +40,7 @@ export 'src/default_editor/document_hardware_keyboard/document_input_keyboard.da
 export 'src/default_editor/horizontal_rule.dart';
 export 'src/default_editor/image.dart';
 export 'src/default_editor/layout_single_column/layout_single_column.dart';
+export 'src/default_editor/layout_single_column/super_editor_dry_layout.dart';
 export 'src/default_editor/list_items.dart';
 export 'src/default_editor/multi_node_editing.dart';
 export 'src/default_editor/paragraph.dart';

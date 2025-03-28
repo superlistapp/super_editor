@@ -457,7 +457,6 @@ class _KeyboardPanelScaffoldState<PanelType> extends State<KeyboardPanelScaffold
   /// the current software keyboard height.
   void _updateKeyboardHeightForCurrentViewInsets() {
     final newBottomInset = MediaQuery.viewInsetsOf(context).bottom;
-    _currentKeyboardHeight = newBottomInset;
 
     switch (_keyboardState) {
       case KeyboardState.open:
@@ -491,8 +490,14 @@ class _KeyboardPanelScaffoldState<PanelType> extends State<KeyboardPanelScaffold
         // receive a message that the keyboard was closed, but still have bottom insets that reported
         // the height of the minimized keyboard. To hack around that, we explicitly set the keyboard
         // height to zero, when closed.
-        if (_currentKeyboardHeight > 0) {
+        if (newBottomInset > 0) {
           _currentKeyboardHeight = 0.0;
+          onNextFrame((_) => _updateSafeArea());
+          break;
+        }
+
+        if (newBottomInset != _currentKeyboardHeight) {
+          // Update the safe area to account for the new height value.
           onNextFrame((_) => _updateSafeArea());
         }
         break;
@@ -514,6 +519,7 @@ class _KeyboardPanelScaffoldState<PanelType> extends State<KeyboardPanelScaffold
         break;
     }
 
+    _currentKeyboardHeight = newBottomInset;
     _currentBottomSpacing.value = max(_panelHeight.value, _currentKeyboardHeight);
 
     setState(() {
@@ -647,14 +653,14 @@ Building keyboard scaffold
 /// Shows and hides the keyboard panel and software keyboard.
 class KeyboardPanelController<PanelType> {
   KeyboardPanelController(
-    this._softwareKeyboardController,
+    this.softwareKeyboardController,
   );
 
   void dispose() {
     detach();
   }
 
-  final SoftwareKeyboardController _softwareKeyboardController;
+  final SoftwareKeyboardController softwareKeyboardController;
 
   KeyboardPanelScaffoldDelegate<PanelType>? _delegate;
 
@@ -668,7 +674,7 @@ class KeyboardPanelController<PanelType> {
   void attach(KeyboardPanelScaffoldDelegate<PanelType> delegate) {
     editorImeLog.finer("[KeyboardPanelController] - Attaching to delegate: $delegate");
     _delegate = delegate;
-    _delegate!.onAttached(_softwareKeyboardController);
+    _delegate!.onAttached(softwareKeyboardController);
   }
 
   /// Detaches this controller from its delegate.
