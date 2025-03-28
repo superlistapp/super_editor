@@ -137,6 +137,10 @@ class SuperKeyboardAndroid {
 
         _keyboardState.value = KeyboardState.closed;
 
+        // Just in case the height got out of sync, perhaps due to Activity
+        // lifecycle changes, explicitly set the keyboard height to zero.
+        _keyboardHeight.value = 0;
+
         for (final listener in _listeners) {
           listener.onKeyboardClosed();
         }
