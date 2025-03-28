@@ -165,7 +165,7 @@ class PasteStructuredContentEditorCommand extends EditCommand {
       nodesToInsert.removeAt(0);
     }
 
-    // get the initial node with selection again, as it may have been modified
+    // Get the initial node with selection again, as it may have been modified.
     final latestCurrentNodeWithSelection = document.getNodeById(currentNodeWithSelection.id);
 
     if (latestCurrentNodeWithSelection is TextNode && latestCurrentNodeWithSelection.text.length == 0) {
