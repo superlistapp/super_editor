@@ -262,7 +262,7 @@ class TextDeltasDocumentEditor {
       editor.execute([
         ChangeSelectionRequest(
           docSelection,
-          docSelection.isCollapsed ? SelectionChangeType.placeCaret : SelectionChangeType.expandSelection,
+          _identifySelectionChangeType(selection.value, docSelection),
           SelectionReason.userInteraction,
         ),
         ChangeComposingRegionRequest(docComposingRegion),
@@ -271,6 +271,29 @@ class TextDeltasDocumentEditor {
 
     // Update the local IME value that changes with each delta.
     _previousImeValue = delta.apply(_previousImeValue);
+  }
+
+  SelectionChangeType _identifySelectionChangeType(DocumentSelection? oldSelection, DocumentSelection newSelection) {
+    if (!newSelection.isCollapsed) {
+      // The selection is expanded.
+      return SelectionChangeType.expandSelection;
+    }
+
+    if (oldSelection != null && !oldSelection.isCollapsed) {
+      // The selection was expanded before, but now it's collapsed.
+      return SelectionChangeType.collapseSelection;
+    }
+
+    if (oldSelection != null) {
+      // The selection was collapsed before and still is. Check the direction of the caret movement.
+      final affinity = document.getAffinityBetween(base: oldSelection.extent, extent: newSelection.extent);
+      return affinity == TextAffinity.downstream
+          ? SelectionChangeType.pushCaretDownstream
+          : SelectionChangeType.pushCaretUpstream;
+    }
+
+    // The selection is collapsed and there was no previous selection.
+    return SelectionChangeType.placeCaret;
   }
 
   void insert(DocumentSelection insertionSelection, String textInserted) {
