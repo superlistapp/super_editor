@@ -1159,12 +1159,17 @@ class TextComponentState extends State<TextComponent> with DocumentComponent imp
             children: [
               // Selection highlight beneath the text.
               if (widget.text.length > 0)
-                TextLayoutSelectionHighlight(
-                  textLayout: textLayout,
-                  style: SelectionHighlightStyle(
-                    color: widget.selectionColor,
+                // this should fix the Highlight align in RTL languages
+                Positioned(
+                  left: 0,
+                  right: 0,
+                  child: TextLayoutSelectionHighlight(
+                    textLayout: textLayout,
+                    style: SelectionHighlightStyle(
+                      color: widget.selectionColor,
+                    ),
+                    selection: widget.textSelection ?? const TextSelection.collapsed(offset: -1),
                   ),
-                  selection: widget.textSelection ?? const TextSelection.collapsed(offset: -1),
                 )
               else if (widget.highlightWhenEmpty)
                 TextLayoutEmptyHighlight(
