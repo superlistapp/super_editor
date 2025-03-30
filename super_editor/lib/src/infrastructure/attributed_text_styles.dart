@@ -55,7 +55,7 @@ extension ComputeTextSpan on AttributedText {
 
         if (inlineWidget != null) {
           inlineSpans.add(
-            WidgetSpan(
+            _LayoutOptimizedWidgetSpan(
               alignment: PlaceholderAlignment.middle,
               child: inlineWidget,
             ),
@@ -154,3 +154,46 @@ typedef InlineWidgetBuilder = Widget? Function(
   TextStyle textStyle,
   Object placeholder,
 );
+
+/// A [WidgetSpan] that does not re-layout its child changed.
+///
+/// The [WidgetSpan] class always invalidates its layout when the child
+/// widget changes. However, this shouldn't happen, since invalidating
+/// the layout should happen at `RenderObject` level.
+///
+/// When the child widget do change its layout, i.e., by changing its size,
+/// the build pipeline will already mark the layout as dirty.
+class _LayoutOptimizedWidgetSpan extends WidgetSpan {
+  const _LayoutOptimizedWidgetSpan({
+    required Widget child,
+    required PlaceholderAlignment alignment,
+  }) : super(child: child, alignment: alignment);
+
+  @override
+  RenderComparison compareTo(InlineSpan other) {
+    if (identical(this, other)) {
+      return RenderComparison.identical;
+    }
+    if (other.runtimeType != runtimeType) {
+      return RenderComparison.layout;
+    }
+    if ((style == null) != (other.style == null)) {
+      return RenderComparison.layout;
+    }
+    final typedOther = other as WidgetSpan;
+    if (alignment != typedOther.alignment) {
+      return RenderComparison.layout;
+    }
+    RenderComparison result = RenderComparison.identical;
+    if (style != null) {
+      final candidate = style!.compareTo(other.style!);
+      if (candidate.index > result.index) {
+        result = candidate;
+      }
+      if (result == RenderComparison.layout) {
+        return result;
+      }
+    }
+    return result;
+  }
+}

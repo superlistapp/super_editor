@@ -573,14 +573,6 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField>
 
   @override
   Widget build(BuildContext context) {
-    return OverlayPortal(
-      controller: _popoverController,
-      overlayChildBuilder: _buildOverlayIosControls,
-      child: _buildTextField(),
-    );
-  }
-
-  Widget _buildTextField() {
     return TapRegion(
       groupId: widget.tapRegionGroupId,
       child: Focus(
@@ -694,21 +686,25 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField>
             return const SizedBox();
           }
 
-          return Stack(
-            clipBehavior: Clip.none,
-            children: [
-              TextLayoutCaret(
-                textLayout: textLayout,
-                style: widget.caretStyle,
-                position: _textEditingController.selection.isCollapsed //
-                    ? _textEditingController.selection.extent
-                    : null,
-                blinkController: _caretBlinkController,
-              ),
-              IOSFloatingCursor(
-                controller: _floatingCursorController,
-              ),
-            ],
+          return OverlayPortal(
+            controller: _popoverController,
+            overlayChildBuilder: _buildOverlayIosControls,
+            child: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                TextLayoutCaret(
+                  textLayout: textLayout,
+                  style: widget.caretStyle,
+                  position: _textEditingController.selection.isCollapsed //
+                      ? _textEditingController.selection.extent
+                      : null,
+                  blinkController: _caretBlinkController,
+                ),
+                IOSFloatingCursor(
+                  controller: _floatingCursorController,
+                ),
+              ],
+            ),
           );
         },
       ),
