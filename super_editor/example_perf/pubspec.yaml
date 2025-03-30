@@ -40,6 +40,7 @@ dependencies:
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.6
+  flutter_gen: ^5.10.0
 
 dependency_overrides:
   # Override to local mono-repo path so devs can test this repo
