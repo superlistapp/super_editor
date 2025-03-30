@@ -994,10 +994,10 @@ class _IosSpellingSuggestionToolbarState extends State<IosSpellingSuggestionTool
         foregroundColor: _getTextColor(brightness),
       ),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12.0),
+        padding: const EdgeInsets.symmetric(horizontal: 16.0),
         child: Text(
           title,
-          style: const TextStyle(fontSize: 12),
+          style: const TextStyle(fontSize: 14),
         ),
       ),
     );
