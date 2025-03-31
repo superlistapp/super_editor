@@ -4,10 +4,10 @@ import 'package:flutter/scheduler.dart';
 import 'package:super_editor/src/core/document_composer.dart';
 import 'package:super_editor/src/core/document_layout.dart';
 import 'package:super_editor/src/infrastructure/documents/document_layers.dart';
+import 'package:super_editor/src/infrastructure/flutter/empty_box.dart';
 import 'package:super_editor/src/infrastructure/platforms/mobile_documents.dart';
 import 'package:super_text_layout/super_text_layout.dart';
 
-import '../infrastructure/flutter/build_nothing_box.dart';
 import 'document_gestures_touch_ios.dart';
 
 /// Document overlay that paints a caret with the given [caretStyle].
