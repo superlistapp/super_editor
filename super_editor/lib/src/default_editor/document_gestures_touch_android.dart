@@ -368,7 +368,7 @@ class SuperEditorAndroidToolbarFocalPointDocumentLayerBuilder implements SuperEd
         SuperEditorAndroidControlsScope.maybeNearestOf(context) == null) {
       // There's no controls scope. This probably means SuperEditor is configured with
       // a non-Android gesture mode. Build nothing.
-      return const ContentLayerProxyWidget(child: BuildNothingBox());
+      return const ContentLayerProxyWidget(child: EmptyBox());
     }
 
     return AndroidToolbarFocalPointDocumentLayer(
@@ -401,7 +401,7 @@ class SuperEditorAndroidHandlesDocumentLayerBuilder implements SuperEditorLayerB
         SuperEditorAndroidControlsScope.maybeNearestOf(context) == null) {
       // There's no controls scope. This probably means SuperEditor is configured with
       // a non-Android gesture mode. Build nothing.
-      return const ContentLayerProxyWidget(child: BuildNothingBox());
+      return const ContentLayerProxyWidget(child: EmptyBox());
     }
 
     return AndroidHandlesDocumentLayer(

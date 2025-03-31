@@ -1945,7 +1945,7 @@ class SuperEditorIosToolbarFocalPointDocumentLayerBuilder implements SuperEditor
     if (defaultTargetPlatform != TargetPlatform.iOS || SuperEditorIosControlsScope.maybeNearestOf(context) == null) {
       // There's no controls scope. This probably means SuperEditor is configured with
       // a non-iOS gesture mode. Build nothing.
-      return const ContentLayerProxyWidget(child: BuildNothingBox());
+      return const ContentLayerProxyWidget(child: EmptyBox());
     }
 
     return IosToolbarFocalPointDocumentLayer(
@@ -1978,7 +1978,7 @@ class SuperEditorIosHandlesDocumentLayerBuilder implements SuperEditorLayerBuild
     if (defaultTargetPlatform != TargetPlatform.iOS || SuperEditorIosControlsScope.maybeNearestOf(context) == null) {
       // There's no controls scope. This probably means SuperEditor is configured with
       // a non-iOS gesture mode. Build nothing.
-      return const ContentLayerProxyWidget(child: BuildNothingBox());
+      return const ContentLayerProxyWidget(child: EmptyBox());
     }
 
     final controlsController = SuperEditorIosControlsScope.rootOf(context);
