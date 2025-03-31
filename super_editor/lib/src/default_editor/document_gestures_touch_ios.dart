@@ -4,7 +4,6 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
 import 'package:follow_the_leader/follow_the_leader.dart';
 import 'package:super_editor/src/core/document.dart';
 import 'package:super_editor/src/core/document_composer.dart';

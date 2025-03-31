@@ -8,8 +8,6 @@ import 'package:super_editor/src/infrastructure/flutter/empty_box.dart';
 import 'package:super_editor/src/infrastructure/platforms/mobile_documents.dart';
 import 'package:super_text_layout/super_text_layout.dart';
 
-import 'document_gestures_touch_ios.dart';
-
 /// Document overlay that paints a caret with the given [caretStyle].
 class CaretDocumentOverlay extends DocumentLayoutLayerStatefulWidget {
   const CaretDocumentOverlay({

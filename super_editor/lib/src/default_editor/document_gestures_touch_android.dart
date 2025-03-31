@@ -35,7 +35,6 @@ import 'package:super_editor/src/infrastructure/touch_controls.dart';
 
 import '../infrastructure/document_gestures.dart';
 import '../infrastructure/document_gestures_interaction_overrides.dart';
-import 'document_gestures_touch_ios.dart';
 import 'selection_upstream_downstream.dart';
 
 /// An [InheritedWidget] that provides shared access to a [SuperEditorAndroidControlsController],
