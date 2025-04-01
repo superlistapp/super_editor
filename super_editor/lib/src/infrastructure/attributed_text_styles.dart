@@ -40,19 +40,18 @@ extension ComputeTextSpan on AttributedText {
 
       // A single span might be divided in multiple inline spans if there are placeholders.
       // Keep track of the start of the current inline span.
-      int startOfInlineSpan = span.start;
+      int startOfMostRecentTextRun = span.start;
 
       // Look for placeholders within the current span and split the span accordingly.
-      int characterIndex = span.start;
-      while (characterIndex <= span.end) {
-        if (placeholders[characterIndex] != null) {
+      for (int i = span.start; i <= span.end; i++) {
+        if (placeholders[i] != null) {
           // We found a placeholder. Build a widget for it.
 
-          if (characterIndex > startOfInlineSpan) {
-            // There is text before the placeholder.
+          if (i > startOfMostRecentTextRun) {
+            // There is text before the placeholder. Add the current text run to the span.
             inlineSpans.add(
               TextSpan(
-                text: substring(startOfInlineSpan, characterIndex),
+                text: substring(startOfMostRecentTextRun, i),
                 style: textStyle,
               ),
             );
@@ -60,7 +59,7 @@ extension ComputeTextSpan on AttributedText {
 
           Widget? inlineWidget;
           for (final builder in inlineWidgetBuilders) {
-            inlineWidget = builder(context, textStyle, placeholders[characterIndex]!);
+            inlineWidget = builder(context, textStyle, placeholders[i]!);
             if (inlineWidget != null) {
               break;
             }
@@ -76,17 +75,15 @@ extension ComputeTextSpan on AttributedText {
           }
 
           // Start another inline span after the placeholder.
-          startOfInlineSpan = characterIndex + 1;
+          startOfMostRecentTextRun = i + 1;
         }
-
-        characterIndex += 1;
       }
 
-      if (startOfInlineSpan <= span.end) {
+      if (startOfMostRecentTextRun <= span.end) {
         // There is text after the last placeholder or there is no placeholder at all.
         inlineSpans.add(
           TextSpan(
-            text: substring(startOfInlineSpan, span.end + 1),
+            text: substring(startOfMostRecentTextRun, span.end + 1),
             style: textStyle,
           ),
         );
