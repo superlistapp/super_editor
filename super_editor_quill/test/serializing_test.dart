@@ -10,6 +10,23 @@ import 'test_documents.dart';
 
 void main() {
   group("Delta document serializing >", () {
+    test("empty document", () {
+      final deltas = MutableDocument(
+        nodes: [
+          ParagraphNode(
+            id: "1",
+            text: AttributedText(""),
+          ),
+        ],
+      ).toQuillDeltas();
+
+      final expectedDeltas = Delta.fromJson([
+        {"insert": "\n"},
+      ]);
+
+      expect(deltas, quillDocumentEquivalentTo(expectedDeltas));
+    });
+
     group("text >", () {
       test("multiline header", () {
         // Note: The official Quill editor doesn't seem to support multiline
