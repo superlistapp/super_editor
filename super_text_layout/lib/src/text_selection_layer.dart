@@ -22,12 +22,14 @@ class TextLayoutSelectionHighlight extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return CustomPaint(
-      painter: TextSelectionPainter(
-        textLayout: textLayout,
-        selectionColor: style.color,
-        borderRadius: style.borderRadius,
-        textSelection: selection,
+    return SizedBox.shrink(
+      child: CustomPaint(
+        painter: TextSelectionPainter(
+          textLayout: textLayout,
+          selectionColor: style.color,
+          borderRadius: style.borderRadius,
+          textSelection: selection,
+        ),
       ),
     );
   }
