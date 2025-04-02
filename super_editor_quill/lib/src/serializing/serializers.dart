@@ -232,8 +232,8 @@ class TextBlockDeltaSerializer implements DeltaSerializer {
     // We didn't have a natural trailing newline. Insert a newline as per the
     // Delta spec.
     final newlineDelta = Operation.insert("\n", blockFormats.isNotEmpty ? blockFormats : null);
-    final previousDelta = deltas.operations[deltas.operations.length - 1];
-    if (newlineDelta.canMergeWith(previousDelta)) {
+    final previousDelta = deltas.operations.isNotEmpty ? deltas.operations[deltas.operations.length - 1] : null;
+    if (previousDelta != null && newlineDelta.canMergeWith(previousDelta)) {
       deltas.operations[deltas.operations.length - 1] = newlineDelta.mergeWith(previousDelta);
     } else {
       deltas.operations.add(newlineDelta);
