@@ -22,7 +22,8 @@ class TextLayoutSelectionHighlight extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox.shrink(
+    return SizedBox(
+      width: double.infinity,
       child: CustomPaint(
         painter: TextSelectionPainter(
           textLayout: textLayout,
