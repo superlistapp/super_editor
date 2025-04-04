@@ -4,6 +4,7 @@ import 'package:flutter/scheduler.dart';
 import 'package:super_editor/src/core/document_composer.dart';
 import 'package:super_editor/src/core/document_layout.dart';
 import 'package:super_editor/src/infrastructure/documents/document_layers.dart';
+import 'package:super_editor/src/infrastructure/flutter/empty_box.dart';
 import 'package:super_editor/src/infrastructure/platforms/mobile_documents.dart';
 import 'package:super_text_layout/super_text_layout.dart';
 
@@ -191,11 +192,11 @@ class CaretDocumentOverlayState extends DocumentLayoutLayerState<CaretDocumentOv
     // `displayOnAllPlatforms` to true.
     final platform = widget.platformOverride ?? defaultTargetPlatform;
     if (!widget.displayOnAllPlatforms && (platform == TargetPlatform.android || platform == TargetPlatform.iOS)) {
-      return const SizedBox();
+      return const EmptyBox();
     }
 
     if (_shouldHideCaretForExpandedSelection) {
-      return const SizedBox();
+      return const EmptyBox();
     }
 
     // Use a RepaintBoundary so that caret flashing doesn't invalidate our
