@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:super_editor/super_editor.dart';
 import 'package:super_editor_quill/src/content/formatting.dart';
 import 'package:super_editor_quill/src/content/multimedia.dart';
+import 'package:super_editor_quill/src/parsing/inline_formats.dart';
 
 /// A [DeltaSerializer] that serializes [ParagraphNode]s into deltas.
 const paragraphDeltaSerializer = ParagraphDeltaSerializer();
@@ -189,12 +190,13 @@ class TextBlockDeltaSerializer implements DeltaSerializer {
 
     for (int i = 0; i < spans.length; i += 1) {
       final span = spans[i];
-      final text = line.toPlainText().substring(span.start, line.isNotEmpty ? span.end + 1 : span.end);
+      final spanText = line.copyText(span.start, line.isNotEmpty ? span.end + 1 : span.end);
+      final spanPlainText = line.toPlainText().substring(span.start, line.isNotEmpty ? span.end + 1 : span.end);
 
       // Attempt to serialize this text span as an inline embed.
       bool didSerializeAsInlineEmbed = false;
       for (final inlineEmbedSerializer in inlineEmbedDeltaSerializers) {
-        didSerializeAsInlineEmbed = inlineEmbedSerializer.serialize(text, span.attributions, deltas);
+        didSerializeAsInlineEmbed = inlineEmbedSerializer.serializeText(spanPlainText, span.attributions, deltas);
         if (didSerializeAsInlineEmbed) {
           // This span was successfully serialized as an inline embed. Skip remaining
           // inline embed serializers.
@@ -209,19 +211,57 @@ class TextBlockDeltaSerializer implements DeltaSerializer {
 
       // This span doesn't refer to an inline embed - it's just inline text with some styles.
       // Serialize the text and styles.
-      final inlineAttributes = getInlineAttributesFor(span.attributions);
-      final newDelta = Operation.insert(
-        text,
-        inlineAttributes.isNotEmpty ? inlineAttributes : null,
-      );
+      final placeholderIndices = spanText.placeholders.keys.toList();
+      final textRunsAndPlaceholders = <Object>[];
+      int start = 0;
+      for (final placeholderIndex in placeholderIndices) {
+        if (placeholderIndex >= spanText.length) {
+          continue;
+        }
 
-      final previousDelta = deltas.operations.lastOrNull;
-      if (previousDelta != null && !previousDelta.hasBlockFormats && newDelta.canMergeWith(previousDelta)) {
-        deltas.operations[deltas.operations.length - 1] = newDelta.mergeWith(previousDelta);
-        continue;
+        final textRun = spanText.substring(start, placeholderIndex);
+        if (textRun.isNotEmpty) {
+          textRunsAndPlaceholders.add(textRun);
+        }
+        textRunsAndPlaceholders.add(spanText.placeholders[placeholderIndex]!);
+
+        start = placeholderIndex + 1;
+      }
+      if (start != spanText.length) {
+        textRunsAndPlaceholders.add(spanText.substring(start));
       }
 
-      deltas.operations.add(newDelta);
+      final inlineAttributes = getInlineAttributesFor(span.attributions);
+      for (final item in textRunsAndPlaceholders) {
+        if (item is! String) {
+          // This is an inline placeholder. Try to embed it.
+          for (final inlineSerializer in inlineEmbedDeltaSerializers) {
+            final didSerialize = inlineSerializer.serializeInlinePlaceholder(item, inlineAttributes, deltas);
+            if (didSerialize) {
+              // We successfully serialized the placeholder. We're done with this item.
+              continue;
+            }
+          }
+
+          // We failed to serialize this placeholder. Ignore it and continue
+          // processing items.
+          continue;
+        }
+
+        // This is a text run.
+        final newDelta = Operation.insert(
+          item,
+          inlineAttributes.isNotEmpty ? inlineAttributes : null,
+        );
+
+        final previousDelta = deltas.operations.lastOrNull;
+        if (previousDelta != null && !previousDelta.hasBlockFormats && newDelta.canMergeWith(previousDelta)) {
+          deltas.operations[deltas.operations.length - 1] = newDelta.mergeWith(previousDelta);
+          continue;
+        }
+
+        deltas.operations.add(newDelta);
+      }
     }
 
     if (line.isNotEmpty && line.last == "\n") {
@@ -401,8 +441,13 @@ abstract interface class DeltaSerializer {
 abstract interface class InlineEmbedDeltaSerializer {
   /// Tries to serialize the given [text] into the given [deltas].
   ///
-  /// If this serializer doesn't apply to the given [text], the behavior is a no-op.
-  bool serialize(String text, Set<Attribution> attributions, Delta deltas);
+  /// If this serializer doesn't apply to the given [text], nothing happens.
+  bool serializeText(String text, Set<Attribution> attributions, Delta deltas);
+
+  /// Tries to serialize the given inline [placeholder] into the given [deltas].
+  ///
+  /// If this serialize doesn't apply to the given [placeholder], nothing happens.
+  bool serializeInlinePlaceholder(Object placeholder, Map<String, dynamic> attributes, Delta deltas);
 }
 
 extension DeltaSerialization on Operation {
