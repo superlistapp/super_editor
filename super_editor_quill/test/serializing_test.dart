@@ -244,7 +244,7 @@ void main() {
     });
 
     group("custom serializers >", () {
-      test("can serialize inline embeds", () {
+      test("can serialize inline embeds from attributions", () {
         const userMentionAttribution = _UserTagAttribution("123456");
 
         final deltas = MutableDocument(
@@ -295,6 +295,164 @@ void main() {
         ]);
 
         expect(deltas, quillDocumentEquivalentTo(expectedDeltas));
+      });
+
+      group("inline placeholders >", () {
+        test("in the middle of text", () {
+          final deltas = MutableDocument(
+            nodes: [
+              ParagraphNode(
+                id: "1",
+                text: AttributedText(
+                  "Before images >< in between images >< after images.",
+                  null,
+                  {
+                    15: const _InlineImage("http://www.somedomain.com/image1.png"),
+                    37: const _InlineImage("http://www.somedomain.com/image2.png"),
+                  },
+                ),
+              ),
+            ],
+          ).toQuillDeltas(
+            serializers: _serializersWithInlineEmbeds,
+          );
+
+          final expectedDeltas = Delta.fromJson([
+            {"insert": "Before images >"},
+            {
+              "insert": {
+                "image": {
+                  "url": "http://www.somedomain.com/image1.png",
+                },
+              },
+            },
+            {"insert": "< in between images >"},
+            {
+              "insert": {
+                "image": {
+                  "url": "http://www.somedomain.com/image2.png",
+                },
+              },
+            },
+            {"insert": "< after images.\n"},
+          ]);
+
+          expect(deltas, quillDocumentEquivalentTo(expectedDeltas));
+        });
+
+        test("at the start and end of text", () {
+          final deltas = MutableDocument(
+            nodes: [
+              ParagraphNode(
+                id: "1",
+                text: AttributedText(
+                  " < Text between images > ",
+                  null,
+                  {
+                    0: const _InlineImage("http://www.somedomain.com/image1.png"),
+                    26: const _InlineImage("http://www.somedomain.com/image2.png"),
+                  },
+                ),
+              ),
+            ],
+          ).toQuillDeltas(
+            serializers: _serializersWithInlineEmbeds,
+          );
+
+          final expectedDeltas = Delta.fromJson([
+            {
+              "insert": {
+                "image": {
+                  "url": "http://www.somedomain.com/image1.png",
+                },
+              },
+            },
+            {"insert": " < Text between images > "},
+            {
+              "insert": {
+                "image": {
+                  "url": "http://www.somedomain.com/image2.png",
+                },
+              },
+            },
+            {"insert": "\n"},
+          ]);
+
+          expect(deltas, quillDocumentEquivalentTo(expectedDeltas));
+        });
+
+        test("within attribution spans", () {
+          final deltas = MutableDocument(
+            nodes: [
+              ParagraphNode(
+                id: "1",
+                text: AttributedText(
+                  "Before attribution |< text >< text >| after attribution.",
+                  AttributedSpans(
+                    attributions: [
+                      const SpanMarker(
+                        attribution: boldAttribution,
+                        offset: 20,
+                        markerType: SpanMarkerType.start,
+                      ),
+                      const SpanMarker(
+                        attribution: boldAttribution,
+                        offset: 38,
+                        markerType: SpanMarkerType.end,
+                      ),
+                    ],
+                  ),
+                  {
+                    20: const _InlineImage("http://www.somedomain.com/image1.png"),
+                    29: const _InlineImage("http://www.somedomain.com/image2.png"),
+                    38: const _InlineImage("http://www.somedomain.com/image3.png"),
+                  },
+                ),
+              ),
+            ],
+          ).toQuillDeltas(
+            serializers: _serializersWithInlineEmbeds,
+          );
+
+          final expectedDeltas = Delta.fromJson([
+            {"insert": "Before attribution |"},
+            {
+              "insert": {
+                "image": {
+                  "url": "http://www.somedomain.com/image1.png",
+                },
+              },
+              "attributes": {"bold": true},
+            },
+            {
+              "insert": "< text >",
+              "attributes": {"bold": true},
+            },
+            {
+              "insert": {
+                "image": {
+                  "url": "http://www.somedomain.com/image2.png",
+                },
+              },
+              "attributes": {"bold": true},
+            },
+            {
+              "insert": "< text >",
+              "attributes": {"bold": true},
+            },
+            {
+              "insert": {
+                "image": {
+                  "url": "http://www.somedomain.com/image3.png",
+                },
+              },
+              "attributes": {"bold": true},
+            },
+            {"insert": "| after attribution.\n"},
+          ]);
+
+          expect(deltas, quillDocumentEquivalentTo(expectedDeltas));
+        });
       });
 
       test("doesn't merge custom block with previous delta", () {
@@ -349,13 +507,49 @@ const _serializersWithInlineEmbeds = [
   fileDeltaSerializer,
 ];
 
-const _inlineEmbedSerializers = [_UserTagInlineEmbedSerializer()];
+const _inlineEmbedSerializers = [
+  _InlineImageEmbedSerializer(),
+  _UserTagInlineEmbedSerializer(),
+];
+
+class _InlineImageEmbedSerializer implements InlineEmbedDeltaSerializer {
+  const _InlineImageEmbedSerializer();
+
+  @override
+  bool serializeText(String text, Set<Attribution> attributions, Delta deltas) => false;
+
+  @override
+  bool serializeInlinePlaceholder(Object placeholder, Map<String, dynamic> attributes, Delta deltas) {
+    if (placeholder is! _InlineImage) {
+      return false;
+    }
+
+    deltas.operations.add(
+      Operation.insert(
+        {
+          "image": {
+            "url": placeholder.url,
+          },
+        },
+        attributes.isNotEmpty ? attributes : null,
+      ),
+    );
+
+    return true;
+  }
+}
+
+class _InlineImage {
+  const _InlineImage(this.url);
+
+  final String url;
+}
 
 class _UserTagInlineEmbedSerializer implements InlineEmbedDeltaSerializer {
   const _UserTagInlineEmbedSerializer();
 
   @override
-  bool serialize(String text, Set<Attribution> attributions, Delta deltas) {
+  bool serializeText(String text, Set<Attribution> attributions, Delta deltas) {
     final userTag = attributions.whereType<_UserTagAttribution>().firstOrNull;
     if (userTag == null) {
       return false;
@@ -373,6 +567,9 @@ class _UserTagInlineEmbedSerializer implements InlineEmbedDeltaSerializer {
 
     return true;
   }
+
+  @override
+  bool serializeInlinePlaceholder(Object placeholder, Map<String, dynamic> attributes, Delta deltas) => false;
 }
 
 class _UserTagAttribution implements Attribution {
