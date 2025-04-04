@@ -1,3 +1,6 @@
+## [0.1.19] - Apr, 2025
+ * Improve right-to-left (RTL) text layout support.
+
 ## [0.1.18] - Jan, 2024
  * Upgrade `attributed_text` dependency to `v0.4.1`.
 
