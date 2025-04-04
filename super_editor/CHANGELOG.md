@@ -1,3 +1,9 @@
+## [0.3.0-dev.23] - Apr 3, 2025
+ * FIX: iOS native toolbar "select all" now selects all document content instead of just the paragraph.
+ * FIX: Pressing `enter` to split list items works again.
+ * ADJUSTMENT: Prevent Flutter's invalidation of widget span layout just because the widget
+   changes - instead we delegate to Flutter's standard render object layout invalidation mechanism.
+
 ## [0.3.0-dev.22] - Mar 28, 2025
  * FIX: `MessagePageScaffold` - Prevent possible negative layout constraints on bottom sheet.
 
