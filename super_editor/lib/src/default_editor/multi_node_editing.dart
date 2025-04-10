@@ -164,7 +164,11 @@ class PasteStructuredContentEditorCommand extends EditCommand {
       // We've pasted the first new node. Remove it from the nodes to insert.
       nodesToInsert.removeAt(0);
     }
-    if (currentNodeWithSelection.text.length == 0) {
+
+    // Get the initial node with selection again, as it may have been modified.
+    final latestCurrentNodeWithSelection = document.getNodeById(currentNodeWithSelection.id);
+
+    if (latestCurrentNodeWithSelection is TextNode && latestCurrentNodeWithSelection.text.length == 0) {
       // The node with the selection is an empty text node. After we use that node's
       // position to insert other nodes, we want to delete that first node, as if the
       // pasted content replaced it.
