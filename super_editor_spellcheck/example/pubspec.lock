@@ -37,10 +37,10 @@ packages:
     dependency: transitive
     description:
       name: attributed_text
-      sha256: d16c10850371421a778474ac24c24b4ab8708e3e53f3796f8d9ea2a41a25a59a
+      sha256: "9d8bdc6e54387f31e52d2dcc3d93d656072582a44bcaa855c9ea8b3b2fa7abd3"
       url: "https://pub.dev"
     source: hosted
-    version: "0.4.2"
+    version: "0.4.4"
   boolean_selector:
     dependency: transitive
     description:
@@ -147,6 +147,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "3.0.2"
+  flutter_plugin_android_lifecycle:
+    dependency: transitive
+    description:
+      name: flutter_plugin_android_lifecycle
+      sha256: "5a1e6fb2c0561958d7e4c33574674bda7b77caaca7a33b758876956f2902eea3"
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.0.27"
   flutter_test:
     dependency: "direct dev"
     description: flutter
@@ -498,7 +506,7 @@ packages:
       path: "../../super_editor"
       relative: true
     source: path
-    version: "0.3.0-dev.15"
+    version: "0.3.0-dev.23"
   super_editor_spellcheck:
     dependency: "direct main"
     description:
@@ -510,10 +518,10 @@ packages:
     dependency: transitive
     description:
       name: super_keyboard
-      sha256: c8e303cd7bc1fc62732213f0f2660273a078be23eae7a4219d0ab3dd0b0ccb9a
+      sha256: "06662d12c88f0d0f0979d1a27729007a9b5e389e3b9a8adf2531e4c562df2540"
       url: "https://pub.dev"
     source: hosted
-    version: "0.1.0"
+    version: "0.1.1"
   super_text_layout:
     dependency: transitive
     description:
@@ -707,5 +715,5 @@ packages:
     source: hosted
     version: "3.1.2"
 sdks:
-  dart: ">=3.5.0 <4.0.0"
-  flutter: ">=3.19.0"
+  dart: ">=3.6.0 <4.0.0"
+  flutter: ">=3.27.0"
