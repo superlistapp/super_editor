@@ -400,19 +400,36 @@ class SpellingAndGrammarReaction implements EditReaction {
     final textErrors = <TextError>{};
     final spellingSuggestions = <TextRange, SpellingError>{};
 
+    final plainText = _filterIgnoredRanges(textNode);
+    if (plainText.isEmpty) {
+      // On Android it appears that running spell check on an empty string breaks
+      // spell check for the remainder of the app session, so don't even try.
+      // https://github.com/superlistapp/super_editor/issues/2640
+      return;
+    }
+
     // Track this spelling and grammar request to make sure we don't process
     // the response out of order with other requests.
     _asyncRequestIds[textNode.id] ??= 0;
     final requestId = _asyncRequestIds[textNode.id]! + 1;
     _asyncRequestIds[textNode.id] = requestId;
 
-    final plainText = _filterIgnoredRanges(textNode);
-
     if (isSpellCheckEnabled) {
-      final suggestions = await _spellCheckService.fetchSpellCheckSuggestions(
-        PlatformDispatcher.instance.locale,
-        plainText,
-      );
+      // Android can't execute concurrent spell checks and returns `null` when we try to run a 2nd+ spell check
+      // at the same time. We'll retry our spell check up to this number of times before giving up.
+      // https://github.com/superlistapp/super_editor/issues/2640
+      const maxTryCount = 5;
+
+      List<SuggestionSpan>? suggestions;
+      int tryCount = 0;
+      do {
+        suggestions = await _spellCheckService.fetchSpellCheckSuggestions(
+          PlatformDispatcher.instance.locale,
+          plainText,
+        );
+        tryCount += 1;
+      } while (suggestions == null && tryCount < maxTryCount);
+
       if (suggestions != null) {
         for (final suggestion in suggestions) {
           final misspelledWord = plainText.substring(suggestion.range.start, suggestion.range.end);
