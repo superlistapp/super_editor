@@ -599,7 +599,7 @@ packages:
       path: ".."
       relative: true
     source: path
-    version: "0.3.0-dev.20"
+    version: "0.3.0-dev.22"
   super_editor_markdown:
     dependency: "direct overridden"
     description:

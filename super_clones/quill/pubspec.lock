@@ -157,6 +157,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "3.0.2"
+  flutter_plugin_android_lifecycle:
+    dependency: transitive
+    description:
+      name: flutter_plugin_android_lifecycle
+      sha256: "5a1e6fb2c0561958d7e4c33574674bda7b77caaca7a33b758876956f2902eea3"
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.0.27"
   flutter_test:
     dependency: "direct dev"
     description: flutter
@@ -506,7 +514,7 @@ packages:
       path: "../.."
       relative: true
     source: path
-    version: "0.3.0-dev.20"
+    version: "0.3.0-dev.22"
   super_editor_markdown:
     dependency: "direct main"
     description:
@@ -525,10 +533,10 @@ packages:
     dependency: transitive
     description:
       name: super_keyboard
-      sha256: c8e303cd7bc1fc62732213f0f2660273a078be23eae7a4219d0ab3dd0b0ccb9a
+      sha256: "06662d12c88f0d0f0979d1a27729007a9b5e389e3b9a8adf2531e4c562df2540"
       url: "https://pub.dev"
     source: hosted
-    version: "0.1.0"
+    version: "0.1.1"
   super_text_layout:
     dependency: "direct main"
     description:
@@ -714,4 +722,4 @@ packages:
     version: "3.1.2"
 sdks:
   dart: ">=3.7.0-0 <4.0.0"
-  flutter: ">=3.19.0"
+  flutter: ">=3.27.0"

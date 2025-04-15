@@ -459,7 +459,7 @@ packages:
       path: "../super_editor"
       relative: true
     source: path
-    version: "0.3.0-dev.20"
+    version: "0.3.0-dev.22"
   super_keyboard:
     dependency: transitive
     description:
