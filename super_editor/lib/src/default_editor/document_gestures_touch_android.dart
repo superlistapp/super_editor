@@ -19,6 +19,7 @@ import 'package:super_editor/src/document_operations/selection_operations.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/content_layers.dart';
 import 'package:super_editor/src/infrastructure/flutter/build_context.dart';
+import 'package:super_editor/src/infrastructure/flutter/empty_box.dart';
 import 'package:super_editor/src/infrastructure/flutter/eager_pan_gesture_recognizer.dart';
 import 'package:super_editor/src/infrastructure/flutter/flutter_scheduler.dart';
 import 'package:super_editor/src/infrastructure/multi_tap_gesture.dart';
@@ -363,7 +364,7 @@ class SuperEditorAndroidToolbarFocalPointDocumentLayerBuilder implements SuperEd
         SuperEditorAndroidControlsScope.maybeNearestOf(context) == null) {
       // There's no controls scope. This probably means SuperEditor is configured with
       // a non-Android gesture mode. Build nothing.
-      return const ContentLayerProxyWidget(child: SizedBox());
+      return const ContentLayerProxyWidget(child: EmptyBox());
     }
 
     return AndroidToolbarFocalPointDocumentLayer(
@@ -396,7 +397,7 @@ class SuperEditorAndroidHandlesDocumentLayerBuilder implements SuperEditorLayerB
         SuperEditorAndroidControlsScope.maybeNearestOf(context) == null) {
       // There's no controls scope. This probably means SuperEditor is configured with
       // a non-Android gesture mode. Build nothing.
-      return const ContentLayerProxyWidget(child: SizedBox());
+      return const ContentLayerProxyWidget(child: EmptyBox());
     }
 
     return AndroidHandlesDocumentLayer(
