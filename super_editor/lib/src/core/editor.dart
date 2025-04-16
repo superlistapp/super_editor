@@ -1122,6 +1122,49 @@ class MutableDocument with Iterable<DocumentNode> implements Document, Editable 
   }
 
   @override
+  DocumentNode? getNodeAtPath(NodePath path) {
+    return _nodesById[path.targetNodeId];
+  }
+
+  @override
+  NodePath? getPathByNodeId(String nodeId) {
+    print("getPathByNodeId(): $nodeId");
+    // FIXME: Instead of crawling the tree every call, create a cache that takes
+    //        a node ID as the key, and holds each node's path as the value.
+
+    print("Root nodes: ${_nodes.map((node) => node.id).join(", ")}");
+    final queue = <(NodePath, List<DocumentNode>)>[
+      (const NodePath([]), [..._nodes])
+    ];
+    while (queue.isNotEmpty) {
+      final (parentNodePath, children) = queue.removeAt(0);
+      print("Looking within the path: $parentNodePath, children: ${children.map((node) => node.id).join(", ")}");
+
+      for (final child in children) {
+        if (child.id == nodeId) {
+          print("Found a node we're searching for: $nodeId");
+          print(" - parent node path before finding this one: $parentNodePath");
+          print(" - returning new path: ${parentNodePath.addSubPath(nodeId)}");
+          // This `child` is the node we're searching for. It's path is its
+          // parent path + itself.
+          return parentNodePath.addSubPath(nodeId);
+        }
+
+        if (child is CompositeDocumentNode) {
+          print(" - this is a composite node. Adding another level to the search queue.");
+          print(" - adding subpath: ${parentNodePath.addSubPath(nodeId)}");
+          print(" - subpath has children: ${child.nodes.map((node) => node.id).join(", ")}");
+          // This child might also have children. Add them to the visit queue.
+          queue.add((parentNodePath.addSubPath(child.id), [...child.nodes]));
+        }
+      }
+    }
+
+    // We never found the node.
+    return null;
+  }
+
+  @override
   DocumentNode? getNodeAt(int index) {
     if (index < 0 || index >= _nodes.length) {
       return null;
