@@ -9,3 +9,4 @@ android_text_example/
 
 # FVM Version Cache
 .fvm/
+.fvmrc/
