@@ -35,7 +35,7 @@ void main() {
           ]))
           .withInputSource(TextInputSource.ime)
           .useStylesheet(defaultStylesheet.copyWith(
-            inlineWidgetBuilders: [inlineWidgetBuilder],
+            inlineWidgetBuilders: [_inlineWidgetBuilder],
           ))
           .pump();
 
@@ -79,7 +79,7 @@ void main() {
   });
 }
 
-Widget? inlineWidgetBuilder(BuildContext context, TextStyle textStyle, Object placeholder) {
+Widget? _inlineWidgetBuilder(BuildContext context, TextStyle textStyle, Object placeholder) {
   if (placeholder is! _ExamplePlaceholder) {
     return null;
   }
