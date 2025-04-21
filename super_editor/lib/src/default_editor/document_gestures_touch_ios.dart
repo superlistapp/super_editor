@@ -736,7 +736,7 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
     final adjustedSelectionOffset = IosHeuristics.adjustTapOffset(text.toPlainText(), tapOffset);
 
     return DocumentPosition(
-      nodeId: docPosition.nodeId,
+      documentPath: docPosition.documentPath,
       nodePosition: TextNodePosition(offset: adjustedSelectionOffset),
     );
   }
@@ -817,11 +817,11 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
       ChangeSelectionRequest(
         DocumentSelection(
           base: DocumentPosition(
-            nodeId: position.nodeId,
+            documentPath: position.documentPath,
             nodePosition: const UpstreamDownstreamNodePosition.upstream(),
           ),
           extent: DocumentPosition(
-            nodeId: position.nodeId,
+            documentPath: position.documentPath,
             nodePosition: const UpstreamDownstreamNodePosition.downstream(),
           ),
         ),

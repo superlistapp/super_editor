@@ -81,12 +81,7 @@ void main() {
         expect((document.last as TaskNode).text.toPlainText(), "");
         expect(
           SuperEditorInspector.findDocumentSelection(),
-          DocumentSelection.collapsed(
-            position: DocumentPosition(
-              nodeId: document.last.id,
-              nodePosition: const TextNodePosition(offset: 0),
-            ),
-          ),
+          TextNode.caretAt([document.last.id], 0),
         );
       });
 
@@ -116,12 +111,7 @@ void main() {
         expect((document.last as TaskNode).text.toPlainText(), "");
         expect(
           SuperEditorInspector.findDocumentSelection(),
-          DocumentSelection.collapsed(
-            position: DocumentPosition(
-              nodeId: document.last.id,
-              nodePosition: const TextNodePosition(offset: 0),
-            ),
-          ),
+          TextNode.caretAt([document.last.id], 0),
         );
       });
 
@@ -148,12 +138,7 @@ void main() {
         expect((document.last as TaskNode).text.toPlainText(), "");
         expect(
           SuperEditorInspector.findDocumentSelection(),
-          DocumentSelection.collapsed(
-            position: DocumentPosition(
-              nodeId: document.last.id,
-              nodePosition: const TextNodePosition(offset: 0),
-            ),
-          ),
+          TextNode.caretAt([document.last.id], 0),
         );
       });
 
@@ -212,12 +197,7 @@ void main() {
         expect((document.last as TaskNode).text.toPlainText(), "");
         expect(
           SuperEditorInspector.findDocumentSelection(),
-          DocumentSelection.collapsed(
-            position: DocumentPosition(
-              nodeId: document.last.id,
-              nodePosition: const TextNodePosition(offset: 0),
-            ),
-          ),
+          TextNode.caretAt([document.last.id], 0),
         );
       });
     });
@@ -245,12 +225,7 @@ void main() {
         expect((document.last as TaskNode).text.toPlainText(), "a task");
         expect(
           SuperEditorInspector.findDocumentSelection(),
-          DocumentSelection.collapsed(
-            position: DocumentPosition(
-              nodeId: document.last.id,
-              nodePosition: const TextNodePosition(offset: 0),
-            ),
-          ),
+          TextNode.caretAt([document.last.id], 0),
         );
       });
 
@@ -276,12 +251,7 @@ void main() {
         expect((document.last as TaskNode).text.toPlainText(), "a task");
         expect(
           SuperEditorInspector.findDocumentSelection(),
-          DocumentSelection.collapsed(
-            position: DocumentPosition(
-              nodeId: document.last.id,
-              nodePosition: const TextNodePosition(offset: 0),
-            ),
-          ),
+          TextNode.caretAt([document.last.id], 0),
         );
       });
 
@@ -338,12 +308,7 @@ void main() {
         expect((document.last as TaskNode).text.toPlainText(), "a task");
         expect(
           SuperEditorInspector.findDocumentSelection(),
-          DocumentSelection.collapsed(
-            position: DocumentPosition(
-              nodeId: document.last.id,
-              nodePosition: const TextNodePosition(offset: 0),
-            ),
-          ),
+          TextNode.caretAt([document.last.id], 0),
         );
       });
     });

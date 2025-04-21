@@ -177,15 +177,15 @@ void main() {
 
         // Select from the list item across the HR.
         editContext.editor.execute([
-          const ChangeSelectionRequest(
+          ChangeSelectionRequest(
             DocumentSelection(
               base: DocumentPosition(
-                nodeId: "1",
-                nodePosition: TextNodePosition(offset: 5),
+                documentPath: NodePath.forNode("1"),
+                nodePosition: const TextNodePosition(offset: 5),
               ),
               extent: DocumentPosition(
-                nodeId: "2",
-                nodePosition: UpstreamDownstreamNodePosition.downstream(),
+                documentPath: NodePath.forNode("2"),
+                nodePosition: const UpstreamDownstreamNodePosition.downstream(),
               ),
             ),
             SelectionChangeType.expandSelection,
@@ -239,7 +239,7 @@ void main() {
         // exact caret positioning might change and we don't want that to break this test.
         final caretOffsetBeforeIndent = SuperEditorInspector.findCaretOffsetInDocument();
         final firstCharacterRectBeforeIndent = SuperEditorInspector.findDocumentLayout().getRectForPosition(
-          DocumentPosition(nodeId: doc.first.id, nodePosition: const TextNodePosition(offset: 0)),
+          DocumentPosition(documentPath: NodePath([doc.first.id]), nodePosition: const TextNodePosition(offset: 0)),
         )!;
         expect(caretOffsetBeforeIndent.dx, moreOrLessEquals(firstCharacterRectBeforeIndent.left, epsilon: 5));
 
@@ -258,7 +258,7 @@ void main() {
         final caretOffsetAfterIndent = SuperEditorInspector.findCaretOffsetInDocument();
         expect(caretOffsetAfterIndent.dx, greaterThan(caretOffsetBeforeIndent.dx));
         final firstCharacterRectAfterIndent = SuperEditorInspector.findDocumentLayout().getRectForPosition(
-          DocumentPosition(nodeId: doc.first.id, nodePosition: const TextNodePosition(offset: 0)),
+          DocumentPosition(documentPath: NodePath([doc.first.id]), nodePosition: const TextNodePosition(offset: 0)),
         )!;
         expect(caretOffsetAfterIndent.dx, moreOrLessEquals(firstCharacterRectAfterIndent.left, epsilon: 5));
       });
@@ -284,7 +284,7 @@ void main() {
         // exact caret positioning might change and we don't want that to break this test.
         final caretOffsetBeforeUnIndent = SuperEditorInspector.findCaretOffsetInDocument();
         final firstCharacterRectBeforeUnIndent = SuperEditorInspector.findDocumentLayout().getRectForPosition(
-          DocumentPosition(nodeId: doc.last.id, nodePosition: const TextNodePosition(offset: 0)),
+          DocumentPosition(documentPath: NodePath([doc.last.id]), nodePosition: const TextNodePosition(offset: 0)),
         )!;
         expect(caretOffsetBeforeUnIndent.dx, moreOrLessEquals(firstCharacterRectBeforeUnIndent.left, epsilon: 5));
 
@@ -303,7 +303,7 @@ void main() {
         final caretOffsetAfterUnIndent = SuperEditorInspector.findCaretOffsetInDocument();
         expect(caretOffsetAfterUnIndent.dx, lessThan(caretOffsetBeforeUnIndent.dx));
         final firstCharacterRectAfterUnIndent = SuperEditorInspector.findDocumentLayout().getRectForPosition(
-          DocumentPosition(nodeId: doc.last.id, nodePosition: const TextNodePosition(offset: 0)),
+          DocumentPosition(documentPath: NodePath([doc.last.id]), nodePosition: const TextNodePosition(offset: 0)),
         )!;
         expect(caretOffsetAfterUnIndent.dx, moreOrLessEquals(firstCharacterRectAfterUnIndent.left, epsilon: 5));
       });
@@ -386,12 +386,7 @@ void main() {
         expect((document.last as ListItemNode).indent, 0);
         expect(
           SuperEditorInspector.findDocumentSelection(),
-          DocumentSelection.collapsed(
-            position: DocumentPosition(
-              nodeId: document.last.id,
-              nodePosition: const TextNodePosition(offset: 0),
-            ),
-          ),
+          TextNode.caretAt([document.last.id], 0),
         );
       });
 
@@ -434,12 +429,7 @@ void main() {
         expect((document.last as ListItemNode).indent, 0);
         expect(
           SuperEditorInspector.findDocumentSelection(),
-          DocumentSelection.collapsed(
-            position: DocumentPosition(
-              nodeId: document.last.id,
-              nodePosition: const TextNodePosition(offset: 0),
-            ),
-          ),
+          TextNode.caretAt([document.last.id], 0),
         );
       });
 
@@ -530,12 +520,7 @@ void main() {
         expect((document.last as ListItemNode).indent, 0);
         expect(
           SuperEditorInspector.findDocumentSelection(),
-          DocumentSelection.collapsed(
-            position: DocumentPosition(
-              nodeId: document.last.id,
-              nodePosition: const TextNodePosition(offset: 0),
-            ),
-          ),
+          TextNode.caretAt([document.last.id], 0),
         );
       });
 
@@ -563,12 +548,7 @@ void main() {
         expect((document.last as ListItemNode).indent, 0);
         expect(
           SuperEditorInspector.findDocumentSelection(),
-          DocumentSelection.collapsed(
-            position: DocumentPosition(
-              nodeId: document.last.id,
-              nodePosition: const TextNodePosition(offset: 0),
-            ),
-          ),
+          TextNode.caretAt([document.last.id], 0),
         );
       });
 
@@ -597,12 +577,7 @@ void main() {
         expect((document.last as ListItemNode).indent, 0);
         expect(
           SuperEditorInspector.findDocumentSelection(),
-          DocumentSelection.collapsed(
-            position: DocumentPosition(
-              nodeId: document.last.id,
-              nodePosition: const TextNodePosition(offset: 0),
-            ),
-          ),
+          TextNode.caretAt([document.last.id], 0),
         );
       });
 
@@ -665,12 +640,7 @@ void main() {
         expect((document.last as ListItemNode).indent, 0);
         expect(
           SuperEditorInspector.findDocumentSelection(),
-          DocumentSelection.collapsed(
-            position: DocumentPosition(
-              nodeId: document.last.id,
-              nodePosition: const TextNodePosition(offset: 0),
-            ),
-          ),
+          TextNode.caretAt([document.last.id], 0),
         );
       });
     });
@@ -857,7 +827,7 @@ A paragraph
         // exact caret positioning might change and we don't want that to break this test.
         final caretOffsetBeforeIndent = SuperEditorInspector.findCaretOffsetInDocument();
         final firstCharacterRectBeforeIndent = SuperEditorInspector.findDocumentLayout().getRectForPosition(
-          DocumentPosition(nodeId: doc.first.id, nodePosition: const TextNodePosition(offset: 0)),
+          DocumentPosition(documentPath: NodePath([doc.first.id]), nodePosition: const TextNodePosition(offset: 0)),
         )!;
         expect(caretOffsetBeforeIndent.dx, moreOrLessEquals(firstCharacterRectBeforeIndent.left, epsilon: 5));
 
@@ -876,7 +846,7 @@ A paragraph
         final caretOffsetAfterIndent = SuperEditorInspector.findCaretOffsetInDocument();
         expect(caretOffsetAfterIndent.dx, greaterThan(caretOffsetBeforeIndent.dx));
         final firstCharacterRectAfterIndent = SuperEditorInspector.findDocumentLayout().getRectForPosition(
-          DocumentPosition(nodeId: doc.first.id, nodePosition: const TextNodePosition(offset: 0)),
+          DocumentPosition(documentPath: NodePath([doc.first.id]), nodePosition: const TextNodePosition(offset: 0)),
         )!;
         expect(caretOffsetAfterIndent.dx, moreOrLessEquals(firstCharacterRectAfterIndent.left, epsilon: 5));
       });
@@ -902,7 +872,7 @@ A paragraph
         // exact caret positioning might change and we don't want that to break this test.
         final caretOffsetBeforeUnIndent = SuperEditorInspector.findCaretOffsetInDocument();
         final firstCharacterRectBeforeUnIndent = SuperEditorInspector.findDocumentLayout().getRectForPosition(
-          DocumentPosition(nodeId: doc.last.id, nodePosition: const TextNodePosition(offset: 0)),
+          DocumentPosition(documentPath: NodePath([doc.last.id]), nodePosition: const TextNodePosition(offset: 0)),
         )!;
         expect(caretOffsetBeforeUnIndent.dx, moreOrLessEquals(firstCharacterRectBeforeUnIndent.left, epsilon: 5));
 
@@ -921,7 +891,7 @@ A paragraph
         final caretOffsetAfterUnIndent = SuperEditorInspector.findCaretOffsetInDocument();
         expect(caretOffsetAfterUnIndent.dx, lessThan(caretOffsetBeforeUnIndent.dx));
         final firstCharacterRectAfterUnIndent = SuperEditorInspector.findDocumentLayout().getRectForPosition(
-          DocumentPosition(nodeId: doc.last.id, nodePosition: const TextNodePosition(offset: 0)),
+          DocumentPosition(documentPath: NodePath([doc.last.id]), nodePosition: const TextNodePosition(offset: 0)),
         )!;
         expect(caretOffsetAfterUnIndent.dx, moreOrLessEquals(firstCharacterRectAfterUnIndent.left, epsilon: 5));
       });
@@ -975,12 +945,7 @@ A paragraph
         expect((document.last as ListItemNode).indent, 0);
         expect(
           SuperEditorInspector.findDocumentSelection(),
-          DocumentSelection.collapsed(
-            position: DocumentPosition(
-              nodeId: document.last.id,
-              nodePosition: const TextNodePosition(offset: 0),
-            ),
-          ),
+          TextNode.caretAt([document.last.id], 0),
         );
       });
 
@@ -1012,12 +977,7 @@ A paragraph
         expect((document.last as ListItemNode).indent, 0);
         expect(
           SuperEditorInspector.findDocumentSelection(),
-          DocumentSelection.collapsed(
-            position: DocumentPosition(
-              nodeId: document.last.id,
-              nodePosition: const TextNodePosition(offset: 0),
-            ),
-          ),
+          TextNode.caretAt([document.last.id], 0),
         );
       });
 
@@ -1086,12 +1046,7 @@ A paragraph
         expect((document.last as ListItemNode).indent, 0);
         expect(
           SuperEditorInspector.findDocumentSelection(),
-          DocumentSelection.collapsed(
-            position: DocumentPosition(
-              nodeId: document.last.id,
-              nodePosition: const TextNodePosition(offset: 0),
-            ),
-          ),
+          TextNode.caretAt([document.last.id], 0),
         );
       });
 
@@ -1119,12 +1074,7 @@ A paragraph
         expect((document.last as ListItemNode).indent, 0);
         expect(
           SuperEditorInspector.findDocumentSelection(),
-          DocumentSelection.collapsed(
-            position: DocumentPosition(
-              nodeId: document.last.id,
-              nodePosition: const TextNodePosition(offset: 0),
-            ),
-          ),
+          TextNode.caretAt([document.last.id], 0),
         );
       });
 
@@ -1153,12 +1103,7 @@ A paragraph
         expect((document.last as ListItemNode).indent, 0);
         expect(
           SuperEditorInspector.findDocumentSelection(),
-          DocumentSelection.collapsed(
-            position: DocumentPosition(
-              nodeId: document.last.id,
-              nodePosition: const TextNodePosition(offset: 0),
-            ),
-          ),
+          TextNode.caretAt([document.last.id], 0),
         );
       });
 
@@ -1221,12 +1166,7 @@ A paragraph
         expect((document.last as ListItemNode).indent, 0);
         expect(
           SuperEditorInspector.findDocumentSelection(),
-          DocumentSelection.collapsed(
-            position: DocumentPosition(
-              nodeId: document.last.id,
-              nodePosition: const TextNodePosition(offset: 0),
-            ),
-          ),
+          TextNode.caretAt([document.last.id], 0),
         );
       });
     });
