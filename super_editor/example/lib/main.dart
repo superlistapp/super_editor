@@ -15,6 +15,7 @@ import 'package:example/demos/flutter_features/demo_inline_widgets.dart';
 import 'package:example/demos/flutter_features/textinputclient/basic_text_input_client.dart';
 import 'package:example/demos/flutter_features/textinputclient/textfield.dart';
 import 'package:example/demos/in_the_lab/feature_action_tags.dart';
+import 'package:example/demos/in_the_lab/feature_ai_fade_in.dart';
 import 'package:example/demos/in_the_lab/feature_ios_native_context_menu.dart';
 import 'package:example/demos/in_the_lab/feature_pattern_tags.dart';
 import 'package:example/demos/in_the_lab/feature_stable_tags.dart';
@@ -331,6 +332,13 @@ final _menu = <_MenuGroup>[
         title: 'Native iOS Toolbar',
         pageBuilder: (context) {
           return const NativeIosContextMenuFeatureDemo();
+        },
+      ),
+      _MenuItem(
+        icon: Icons.task,
+        title: 'AI Text Fade-In',
+        pageBuilder: (context) {
+          return const AiFadeInFeatureDemo();
         },
       ),
     ],

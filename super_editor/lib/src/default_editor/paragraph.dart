@@ -168,9 +168,12 @@ class ParagraphComponentBuilder implements ComponentBuilder {
 
 class ParagraphComponentViewModel extends SingleColumnLayoutComponentViewModel with TextComponentViewModel {
   ParagraphComponentViewModel({
-    required String nodeId,
-    double? maxWidth,
-    EdgeInsetsGeometry padding = EdgeInsets.zero,
+    required super.nodeId,
+    super.maxWidth,
+    super.padding = EdgeInsets.zero,
+    super.opacity = 1.0,
+    super.latestClockTick,
+    super.metadata,
     this.blockType,
     this.indent = 0,
     this.indentCalculator = defaultParagraphIndentCalculator,
@@ -189,7 +192,7 @@ class ParagraphComponentViewModel extends SingleColumnLayoutComponentViewModel w
     List<TextRange> spellingErrors = const <TextRange>[],
     UnderlineStyle grammarErrorUnderlineStyle = const SquiggleUnderlineStyle(color: Colors.blue),
     List<TextRange> grammarErrors = const <TextRange>[],
-  }) : super(nodeId: nodeId, maxWidth: maxWidth, padding: padding) {
+  }) {
     this.composingRegion = composingRegion;
     this.showComposingRegionUnderline = showComposingRegionUnderline;
 
@@ -234,10 +237,13 @@ class ParagraphComponentViewModel extends SingleColumnLayoutComponentViewModel w
       nodeId: nodeId,
       maxWidth: maxWidth,
       padding: padding,
+      opacity: opacity,
+      latestClockTick: latestClockTick,
+      metadata: metadata,
       blockType: blockType,
       indent: indent,
       indentCalculator: indentCalculator,
-      text: text,
+      text: text.copy(),
       textStyleBuilder: textStyleBuilder,
       inlineWidgetBuilders: inlineWidgetBuilders,
       textDirection: textDirection,
@@ -375,6 +381,7 @@ class HintComponentViewModel extends SingleColumnLayoutComponentViewModel with T
       nodeId: viewModel.nodeId,
       maxWidth: viewModel.maxWidth,
       padding: viewModel.padding,
+      opacity: viewModel.opacity,
       blockType: viewModel.blockType,
       text: viewModel.text,
       hintText: hintText,
@@ -393,6 +400,7 @@ class HintComponentViewModel extends SingleColumnLayoutComponentViewModel with T
     required super.nodeId,
     super.maxWidth,
     required super.padding,
+    super.opacity = 1.0,
     this.blockType,
     required this.text,
     required this.hintText,
@@ -437,7 +445,7 @@ class HintComponentViewModel extends SingleColumnLayoutComponentViewModel with T
       nodeId: nodeId,
       maxWidth: maxWidth,
       padding: padding,
-      text: text,
+      text: text.copy(),
       textStyleBuilder: textStyleBuilder,
       textDirection: textDirection,
       inlineWidgetBuilders: inlineWidgetBuilders,

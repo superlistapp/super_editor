@@ -62,6 +62,7 @@ class BlockquoteComponentBuilder implements ComponentBuilder {
       textDirection: textDirection,
       textAlignment: textAlign,
       selectionColor: const Color(0x00000000),
+      metadata: node.metadata,
     );
   }
 
@@ -90,9 +91,12 @@ class BlockquoteComponentBuilder implements ComponentBuilder {
 
 class BlockquoteComponentViewModel extends SingleColumnLayoutComponentViewModel with TextComponentViewModel {
   BlockquoteComponentViewModel({
-    required String nodeId,
-    double? maxWidth,
-    EdgeInsetsGeometry padding = EdgeInsets.zero,
+    required super.nodeId,
+    super.maxWidth,
+    super.padding = EdgeInsets.zero,
+    super.opacity = 1.0,
+    super.latestClockTick,
+    super.metadata,
     required this.text,
     required this.textStyleBuilder,
     this.inlineWidgetBuilders = const [],
@@ -111,7 +115,7 @@ class BlockquoteComponentViewModel extends SingleColumnLayoutComponentViewModel 
     List<TextRange> spellingErrors = const <TextRange>[],
     UnderlineStyle grammarErrorUnderlineStyle = const SquiggleUnderlineStyle(color: Colors.blue),
     List<TextRange> grammarErrors = const <TextRange>[],
-  }) : super(nodeId: nodeId, maxWidth: maxWidth, padding: padding) {
+  }) {
     this.composingRegion = composingRegion;
     this.showComposingRegionUnderline = showComposingRegionUnderline;
 
@@ -159,7 +163,10 @@ class BlockquoteComponentViewModel extends SingleColumnLayoutComponentViewModel 
       nodeId: nodeId,
       maxWidth: maxWidth,
       padding: padding,
-      text: text,
+      opacity: opacity,
+      latestClockTick: latestClockTick,
+      metadata: metadata,
+      text: text.copy(),
       textStyleBuilder: textStyleBuilder,
       inlineWidgetBuilders: inlineWidgetBuilders,
       textDirection: textDirection,

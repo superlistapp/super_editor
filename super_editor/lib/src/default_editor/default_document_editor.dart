@@ -9,6 +9,7 @@ import 'package:super_editor/src/default_editor/multi_node_editing.dart';
 import 'package:super_editor/src/default_editor/paragraph.dart';
 import 'package:super_editor/src/default_editor/tasks.dart';
 import 'package:super_editor/src/default_editor/text.dart';
+import 'package:super_editor/src/default_editor/text_ai.dart';
 
 import 'common_editor_operations.dart';
 import 'default_document_editor_reactions.dart';
@@ -61,23 +62,27 @@ final defaultRequestHandlers = List.unmodifiable(<EditRequestHandler>[
   (editor, request) => request is RemoveComposerPreferenceStylesRequest //
       ? RemoveComposerPreferenceStylesCommand(request.stylesToRemove)
       : null,
+
+  //--- Start text insertion ---
   (editor, request) => request is InsertStyledTextAtCaretRequest //
-      ? InsertStyledTextAtCaretCommand(request.text)
+      ? InsertStyledTextAtCaretCommand(request.text, createdAt: request.createdAt)
       : null,
   (editor, request) => request is InsertInlinePlaceholderAtCaretRequest //
-      ? InsertInlinePlaceholderAtCaretCommand(request.placeholder)
+      ? InsertInlinePlaceholderAtCaretCommand(request.placeholder, createdAt: request.createdAt)
       : null,
   (editor, request) => request is InsertTextRequest
       ? InsertTextCommand(
           documentPosition: request.documentPosition,
           textToInsert: request.textToInsert,
           attributions: request.attributions,
+          createdAt: request.createdAt,
         )
       : null,
   (editor, request) => request is InsertAttributedTextRequest
       ? InsertAttributedTextCommand(
           documentPosition: request.documentPosition,
           textToInsert: request.textToInsert,
+          createdAt: request.createdAt,
         )
       : null,
   (editor, request) => request is InsertSoftNewlineAtCaretRequest //
@@ -141,6 +146,8 @@ final defaultRequestHandlers = List.unmodifiable(<EditRequestHandler>[
   (editor, request) => request is InsertNewlineAtCaretRequest //
       ? DefaultInsertNewlineAtCaretCommand(request.newNodeId)
       : null,
+  //---- End text insertion ----
+
   (editor, request) => request is PasteStructuredContentEditorRequest
       ? PasteStructuredContentEditorCommand(
           content: request.content,

@@ -77,6 +77,7 @@ class HorizontalRuleComponentBuilder implements ComponentBuilder {
       nodeId: node.id,
       selectionColor: const Color(0x00000000),
       caretColor: const Color(0x00000000),
+      metadata: node.metadata,
     );
   }
 
@@ -93,6 +94,7 @@ class HorizontalRuleComponentBuilder implements ComponentBuilder {
       selectionColor: componentViewModel.selectionColor,
       showCaret: componentViewModel.caret != null,
       caretColor: componentViewModel.caretColor,
+      opacity: componentViewModel.opacity,
     );
   }
 }
@@ -102,6 +104,8 @@ class HorizontalRuleComponentViewModel extends SingleColumnLayoutComponentViewMo
     required super.nodeId,
     super.maxWidth,
     super.padding = EdgeInsets.zero,
+    super.opacity = 1.0,
+    super.metadata = const {},
     DocumentNodeSelection? selection,
     Color selectionColor = Colors.transparent,
     this.caret,
@@ -120,6 +124,8 @@ class HorizontalRuleComponentViewModel extends SingleColumnLayoutComponentViewMo
       nodeId: nodeId,
       maxWidth: maxWidth,
       padding: padding,
+      opacity: opacity,
+      metadata: metadata,
       selection: selection,
       selectionColor: selectionColor,
       caret: caret,
@@ -160,6 +166,7 @@ class HorizontalRuleComponent extends StatelessWidget {
     this.selection,
     required this.caretColor,
     this.showCaret = false,
+    this.opacity = 1.0,
   }) : super(key: key);
 
   final GlobalKey componentKey;
@@ -170,6 +177,8 @@ class HorizontalRuleComponent extends StatelessWidget {
   final Color caretColor;
   final bool showCaret;
 
+  final double opacity;
+
   @override
   Widget build(BuildContext context) {
     return IgnorePointer(
@@ -178,6 +187,7 @@ class HorizontalRuleComponent extends StatelessWidget {
         selectionColor: selectionColor,
         child: BoxComponent(
           key: componentKey,
+          opacity: opacity,
           child: Divider(
             color: color,
             thickness: thickness,

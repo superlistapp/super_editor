@@ -1,4 +1,5 @@
 import 'package:attributed_text/attributed_text.dart';
+import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:super_editor/src/core/document.dart';
@@ -207,6 +208,7 @@ class SingleColumnLayoutPresenter {
     required SingleColumnLayoutViewModel newViewModel,
   }) {
     editorLayoutLog.finer("Computing layout view model changes to notify listeners of those changes.");
+    print("NOTIFY LISTENERS OF COMPONENT CHANGES");
 
     final addedComponents = <String>[];
     final movedComponents = <String>[];
@@ -305,6 +307,7 @@ class SingleColumnLayoutPresenter {
     if (addedComponents.isEmpty && movedComponents.isEmpty && changedComponents.isEmpty && removedComponents.isEmpty) {
       // No changes to report.
       editorLayoutLog.fine("Nothing has changed in the view model. Not notifying any listeners.");
+      print("NO CHANGES");
       return;
     }
 
@@ -314,6 +317,7 @@ class SingleColumnLayoutPresenter {
     editorLayoutLog.fine(" - changed: $changedComponents");
     editorLayoutLog.fine(" - removed: $removedComponents");
     for (final listener in _listeners.toList()) {
+      print("Reporting changed components: $changedComponents");
       listener.onViewModelChange(
         addedComponents: addedComponents,
         movedComponents: movedComponents,
@@ -452,6 +456,9 @@ abstract class SingleColumnLayoutComponentViewModel {
     required this.nodeId,
     this.maxWidth,
     required this.padding,
+    this.opacity = 1.0,
+    this.latestClockTick,
+    this.metadata = const {},
   });
 
   final String nodeId;
@@ -463,9 +470,24 @@ abstract class SingleColumnLayoutComponentViewModel {
   /// The padding applied around this component.
   EdgeInsetsGeometry padding;
 
+  /// The opacity of this whole node.
+  double opacity;
+
+  /// The timestamp for the most recent tick of the clock, if this view model is
+  /// animating, or `null` if this view isn't animating.
+  DateTime? latestClockTick;
+
+  /// Whether this view model is currently animating something, e.g., fading in
+  /// some text.
+  bool get isAnimating => latestClockTick != null;
+
+  /// Extra data that might be relevant to the styling of this view model.
+  Map<String, dynamic> metadata;
+
   void applyStyles(Map<String, dynamic> styles) {
     maxWidth = styles[Styles.maxWidth] ?? double.infinity;
     padding = (styles[Styles.padding] as CascadingPadding?)?.toEdgeInsets() ?? EdgeInsets.zero;
+    opacity = styles[Styles.opacity] ?? 1.0;
   }
 
   SingleColumnLayoutComponentViewModel copy();
@@ -477,8 +499,17 @@ abstract class SingleColumnLayoutComponentViewModel {
           runtimeType == other.runtimeType &&
           nodeId == other.nodeId &&
           maxWidth == other.maxWidth &&
-          padding == other.padding;
+          padding == other.padding &&
+          opacity == other.opacity &&
+          latestClockTick == other.latestClockTick &&
+          const DeepCollectionEquality().equals(metadata, other.metadata);
 
   @override
-  int get hashCode => nodeId.hashCode ^ maxWidth.hashCode ^ padding.hashCode;
+  int get hashCode =>
+      nodeId.hashCode ^
+      maxWidth.hashCode ^
+      padding.hashCode ^
+      opacity.hashCode ^
+      latestClockTick.hashCode ^
+      metadata.hashCode;
 }

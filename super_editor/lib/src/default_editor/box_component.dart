@@ -89,10 +89,12 @@ class BoxComponent extends StatefulWidget {
   const BoxComponent({
     Key? key,
     this.isVisuallySelectable = true,
+    this.opacity = 1.0,
     required this.child,
   }) : super(key: key);
 
   final bool isVisuallySelectable;
+  final double opacity;
   final Widget child;
 
   @override
@@ -283,7 +285,10 @@ class _BoxComponentState extends State<BoxComponent> with DocumentComponent {
 
   @override
   Widget build(BuildContext context) {
-    return widget.child;
+    return Opacity(
+      opacity: widget.opacity,
+      child: widget.child,
+    );
   }
 }
 

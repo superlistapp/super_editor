@@ -118,6 +118,7 @@ class ImageComponentBuilder implements ComponentBuilder {
       imageUrl: node.imageUrl,
       expectedSize: node.expectedBitmapSize,
       selectionColor: const Color(0x00000000),
+      metadata: node.metadata,
     );
   }
 
@@ -134,6 +135,7 @@ class ImageComponentBuilder implements ComponentBuilder {
       expectedSize: componentViewModel.expectedSize,
       selection: componentViewModel.selection?.nodeSelection as UpstreamDownstreamNodeSelection?,
       selectionColor: componentViewModel.selectionColor,
+      opacity: componentViewModel.opacity,
     );
   }
 }
@@ -143,6 +145,8 @@ class ImageComponentViewModel extends SingleColumnLayoutComponentViewModel with 
     required super.nodeId,
     super.maxWidth,
     super.padding = EdgeInsets.zero,
+    super.opacity = 1.0,
+    super.metadata = const {},
     required this.imageUrl,
     this.expectedSize,
     DocumentNodeSelection? selection,
@@ -161,6 +165,8 @@ class ImageComponentViewModel extends SingleColumnLayoutComponentViewModel with 
       nodeId: nodeId,
       maxWidth: maxWidth,
       padding: padding,
+      opacity: opacity,
+      metadata: metadata,
       imageUrl: imageUrl,
       expectedSize: expectedSize,
       selection: selection,
@@ -193,6 +199,7 @@ class ImageComponent extends StatelessWidget {
     this.expectedSize,
     this.selectionColor = Colors.blue,
     this.selection,
+    this.opacity = 1.0,
     this.imageBuilder,
   }) : super(key: key);
 
@@ -201,6 +208,8 @@ class ImageComponent extends StatelessWidget {
   final ExpectedSize? expectedSize;
   final Color selectionColor;
   final UpstreamDownstreamNodeSelection? selection;
+
+  final double opacity;
 
   /// Called to obtain the inner image for the given [imageUrl].
   ///
@@ -221,6 +230,7 @@ class ImageComponent extends StatelessWidget {
             selectionColor: selectionColor,
             child: BoxComponent(
               key: componentKey,
+              opacity: opacity,
               child: imageBuilder != null
                   ? imageBuilder!(context, imageUrl)
                   : Image.network(
