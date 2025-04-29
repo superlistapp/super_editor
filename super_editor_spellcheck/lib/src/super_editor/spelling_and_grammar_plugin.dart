@@ -198,6 +198,7 @@ class SpellingAndGrammarPlugin extends SuperEditorPlugin {
   void detach(Editor editor) {
     _styler.clearAllErrors();
     editor.reactionPipeline.remove(_reaction);
+    _reaction.dispose();
     _contentTapHandler?.editor = null;
 
     editor.context.remove(spellingErrorSuggestionsKey);
@@ -301,6 +302,13 @@ class SpellingAndGrammarReaction implements EditReaction {
     this._grammarCheckService, {
     Duration spellCheckDelayAfterEdit = Duration.zero,
   }) : _spellCheckDelayAfterEdit = spellCheckDelayAfterEdit;
+
+  void dispose() {
+    _delayedChecks.clear();
+
+    _delayedChecksTimer?.cancel();
+    _delayedChecksTimer = null;
+  }
 
   final SpellingErrorSuggestions _suggestions;
 
