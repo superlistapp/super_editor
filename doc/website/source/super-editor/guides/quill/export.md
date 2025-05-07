@@ -1,5 +1,5 @@
 ---
-title: Serializing Super Editor to Quill Deltas
+title: Export Super Editor to Quill Deltas
 contentRenderers:
   - jinja
   - markdown

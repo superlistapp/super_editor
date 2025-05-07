@@ -1,5 +1,5 @@
 ---
-title: Parsing Quill Delta Documents
+title: Import Quill Delta Documents
 contentRenderers:
   - jinja
   - markdown

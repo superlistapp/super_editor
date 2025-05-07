@@ -3,9 +3,9 @@ title: Assemble a Document
 ---
 # Assemble a Document
 In Super Editor, a document is typically represented by an instance of `MutableDocument`. The
-easiest way to assemble a `MutableDocument` is by [de-serializing Markdown](/guides/document-from-markdown).
-However, there are situations where you might need to construct a `MutableDocument` directly. This
-guide shows you how.
+easiest way to assemble a `MutableDocument` is by [de-serializing Markdown](/guides/markdown/import), or by
+[de-serializing Quill Deltas](/guides/quill/import). However, there are situations where you might 
+need to construct a `MutableDocument` directly. This guide shows you how.
 
 ## What is a Document?
 In Super Editor, a `Document` is a series of nodes - specifically `DocumentNode`s. Different types of
@@ -51,6 +51,6 @@ You can remove nodes.
 document.deleteNodeAt(2);
 ```
 
-If your goal is to use a `MutableDocument` in an editor experience, consider wrapping the
-`MutableDocument` in an `Editor`, and then use the standard edit pipeline to alter the document's
-content.
+In general you shouldn't directly alter a `MutableDocument` because the intention of a 
+`MutableDocument` is to power an `Editor`. Once you give a `MutableDocument` to an `Editor`,
+it's important that you only alter the document through `EditRequest`s to the `Editor`.

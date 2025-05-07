@@ -1,11 +1,19 @@
+@import url('https://fonts.googleapis.com/css2?family=Merriweather:ital,opsz,wght@0,18..144,300..900;1,18..144,300..900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Konkhmer+Sleokchher&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Fira+Mono:wght@400;500;700&display=swap');
+
 $primary      : #151B1F;
 $primaryLight : #1B2227;
 $primaryLighter : #203035;
 
-$accent       : #FF4444;
+$accent       : #50A7F8;
 $accentLight  : #FF6666;
 
 $staticShockColor : #FFFF00;
+
+$fontHeader: "Konkhmer Sleokchher";
+$fontSerif: "Merriweather";
+$fontCode: "Fira Mono";
 
 @font-face {
   font-family: marketFresh;
