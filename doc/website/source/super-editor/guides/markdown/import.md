@@ -1,5 +1,5 @@
 ---
-title: Parsing Markdown Documents
+title: Import Markdown Documents
 contentRenderers:
   - jinja
   - markdown

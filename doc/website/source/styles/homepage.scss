@@ -1,230 +1,572 @@
 @import "theme";
 @import "base_layout";
 
-#hero {
-  height: 100vh;
-  padding-top: 58px; // push down below navbar
-
-  .featured {
-    margin: auto;
-
-    .supplemental-text {
-      margin-left: 16px;
-
-      color: #989B9D;
-    }
-
-    #activation-command {
-      margin: 12px 0;
-
-      display: flex;
-      align-items: stretch;
-
-      background: $primaryLight;
-      border: 1px solid #2D3236;
-      border-radius: 12px;
-
-      .cli {
-        flex-grow: 1;
-
-        padding: 16px;
-
-        font-family: monospace;
-      }
-
-      .btn.copy {
-        width: 64px;
-
-        background: $accent;
-        border: none;
-        border-radius: 0 12px 12px 0;
-      }
-    }
-  }
-
-  .tagline {
-    margin-bottom: 64px;
-
-    font-size: 64px;
-    font-weight: bold;
-    line-height: 1.0em;
-  }
-
-  .logo {
-    margin-left: 128px;
-  }
-
-  #branding {
-    margin: auto;
-    transform: translateY(-25%);
-  
-    text-align: center;
-  
-    font-family: marketFresh;
-
-    #title {
-      margin-top: 24px;
-    
-      color: WHITE;
-      font-size: 84px;
-      font-weight: bold;
-      letter-spacing: 5px;
-    }
-
-    #tagline {
-      margin-top: 12px;
-    
-      color: #FF0000;
-      font-size: 32px;
-      font-weight: bold;
-      text-transform: uppercase;
-      line-height: 1em;
-      letter-spacing: 0.15em;
-    }
-  }
-
-  .middle {
-    position: absolute;
-    width: 100%;
-    height: 100%;
-
-    display: flex;
-    align-items: center;
-  }
-
-  .bottom {
-    position: absolute;
-    width: 100%;
-    height: 100%;
-
-    display: flex;
-    align-items: end;
-  }
+html, body {
+  background: WHITE;
+  color: #595959;
 }
 
-#banner-built-with-static-shock {
-  display:block;
+#appBar {
+  position: fixed;
   width: 100%;
+  height: 54px;
+  display: relative;
+  z-index: 9999;
 
-  padding: 1em;
-
-  background: $primaryLight;
-
-  text-align: center;
-}
-
-#content {
-  section {
-    margin-top: 72px;
+  // On mobile, take up natural height with title above nav items.
+  @media (max-width: 599px) {
+    height: auto;
   }
-}
 
-#synopsis {
-  .featured-image {
-    width: 200px;
+  background: WHITE;
 
-    display:block;
-    margin: auto;
-    margin-bottom: 24px;
-  }
+  border-bottom: 1px solid #F5F5F5;
+
+  color: BLACK;
+  font-family: $fontSerif;
 
   .title {
-    margin-bottom: 0.25rem;
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    padding-left: 24px;
+    padding-right: 24px;
 
-    color: WHITE;
-    font-size: 24px;
+    text-align: center;
+
+    line-height: 54px;
+    vertical-align: middle;
+
+    font-size: 20px;
     font-weight: bold;
+    text-transform: uppercase;
+
+    // Move title to left when space gets low.
+    @media (max-width: 1000px) {
+      text-align: left;
+    }
+
+    // On mobile, center the title again, and move links below it.
+    @media (max-width: 599px) {
+      position: static;
+      display: block;
+      text-align: center;
+    }
   }
 
-  .description {
-    color: #6D6D6D;
-    font-size: 16px;
-  }
-}
+  nav {
+    position:absolute;
+    right: 0;
 
-section.content {
-  .title-category {
-    color: $accent;
-    font-size: 32px;
-    text-align: center;
-  }
+    // On mobile, display centered, below the title
+    @media (max-width: 599px) {
+      position: static;
 
-  h2 {
-    font-size: 48px;
-    text-align: center;
-  }
+      ul {
+        display: flex;
+        flex-direction: row;
+        justify-content: space-evenly;
+      }
+    }
 
-  .tour-section {
-    margin-top: 96px;
-  }
-
-  p, li {
-    color: rgba(255, 255, 255, 0.6);
-    font-size: 24px;
-    line-height: 1.4em;
-  }
-
-  ul {
-    margin-top: 48px;
-  }
-}
-
-.code-sample {
-  margin-bottom: 96px;
-
-  .info {
-    .title {
-      color: WHITE;
-      font-size: 28px;
+    a {
+      color: #595959;
+      font-size: 14px;
       font-weight: bold;
+      text-decoration: none;
+
+      &:hover {
+        color: $accent;
+      }
     }
 
-    .description {
-      color: #6D6D6D;
-      font-size: 20px;
+    ul, ol {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+
+      li {
+        display: inline;
+        margin: 0;
+        margin-right: 24px;
+        padding: 0;
+
+        // On mobile, space evenly with a parent flex row.
+        @media (max-width: 599px) {
+          margin-right: 0;
+        }
+
+        line-height: 54px;
+        vertical-align: center;
+      }
     }
   }
+}
 
-  .app-window {
-    margin-left: 24px;
+#hero {
+  position: relative; // Allow absolute positioning inside.
 
-    border-radius: 8px;
-    background: #1F262A;
+  height: 100vh;
 
-    .app-bar {
-      height: 42px;
+  // When too short or too thin, don't try to make the height match the viewport height.
+  min-height: 600px;
+  @media (max-width: 800px) {
+    height: auto;
+  }
 
-      border-radius: 8px 8px 0 0;
-      background: #273136;
+  padding-top: 54px; // push down below navbar
+  // When we start running low on space, add more padding to
+  // the top so that the text doesn't touch up against the navbar.
+  @media (max-width: 1000px) {
+    padding-top: 128px;
+  }
+  @media (max-width: 600px) {
+    // ^ mobile
+    padding-top: 200px;
+  }
 
-      .app-bar-button {
-        margin-left: 16px;
-        margin-top: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
 
-        float: left;
-        width: 16px;
-        height: 16px;
+  background: WHITE;
 
-        border-radius: 8px;
-        background: #1F262A;
+  .featured {
+    max-width: 1200px;
+    margin-left: 48px;
+    margin-right: 48px;
+
+    @media (max-width: 600px) {
+      // ^ mobile
+      margin-left: 24px;
+      margin-right: 24px;
+    }
+
+    padding-left: 40px;
+
+    color: #595959;
+
+    border-left: 10px solid #F6F6F6;
+
+    .tagline {
+      margin-bottom: 24px;
+
+      font-family: $fontHeader;
+      font-size: 64px;
+      font-weight: bold;
+      line-height: 1.0em;
+      text-transform: uppercase;
+
+      // Shrink hero text when we don't have enough space.
+      @media (max-width: 1200px) {
+        font-size: 52px;
+      }
+      @media (max-width: 1000px) {
+        font-size: 40px;
+      }
+      @media (max-width: 600px) {
+        // ^ mobile
+        font-size: 30px;
+        line-height: 1.2em;
+      }
+
+      .highlight {
+        display: inline-block; // must be "inline-block" to get the height to work as expected, not "inline".
+        padding-left: 8px;
+        padding-right: 8px;
+        padding-top: 4px;
+
+        background: #50A7F8;
+
+        color: WHITE;
+        line-height: 1
+      }
+
+      .caret {
+        display: inline-block;
+
+        margin-left: 4px;
+
+        width: 4px;
+        height: 1em;
+        background: $accent;
+        border-radius: 6px;
+      }
+    }
+
+    .by-line {
+      font-family: $fontSerif;
+      font-size: 18px;
+      text-transform: uppercase;
+
+      @media (max-width: 600px) {
+        // ^ mobile
+        font-size: 14px;
       }
     }
   }
 
-  pre > code {
-    padding: 1em 2em;
+  nav.sections {
+    margin-top: 100px;
+    margin-bottom: 64px;
+    margin-left: 48px;
+    margin-right: 48px;
 
-    background: none;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 20px 40px; // vertical, horizontal
+
+    a {
+      display: block;
+      width: 150px;
+      line-height: 36px;
+
+      background: #F7F7F7;
+      border-radius: 18px;
+
+      text-align: center;
+      vertical-align: middle;
+
+      color: #7D7D7D;
+      font-family: $fontSerif;
+      text-decoration: none;
+
+      &:hover {
+        background: $accent;
+
+        color: WHITE;
+      }
+    }
+  }
+
+  #banner-built-with-static-shock {
+    display:block;
+
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    // When hero switches from viewport height to intrinsic height, switch from absolute
+    // positioning to standard positioning.
+    @media (max-width: 800px) {
+      position: static;
+      width: 100%;
+    }
+
+    border-top: 1px solid #F5F5F5;
+    border-bottom: 1px solid #F5F5F5;
+
+    padding: 1em;
+
+    color: #BBBBBB;
+    text-align: center;
+
+    a {
+      color: #444444;
+    }
   }
 }
 
-.btn-social {
-  color: WHITE;
+section {
+  h4 {
+    margin-bottom: 24px;
 
-  opacity: 0.5;
-  transition: opacity 150ms;
+    text-align: center;
+
+    color: #595959;
+    font-family: $fontHeader;
+    font-size: 14px;
+    font-weight: normal;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+  }
+}
+
+#Powering {
+  .content {
+    padding-top: 92px;
+    padding-bottom: 92px;
+    padding-left: 24px;
+    padding-right: 24px;
+
+    text-align: center;
+
+    .companies {
+      display: flex;
+      flex-direction: row;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 16px 32px; // vertica, horizontal
+    }
+  }
+}
+
+#Install {
+  .content {
+    padding-top: 92px;
+    padding-bottom: 92px;
+    padding-left: 48px;
+    padding-right: 48px;
+
+    code {
+      display: block;
+
+      max-width: 500px;
+      margin-left: auto;
+      margin-right: auto;
+
+      background: #343434;
+      border-radius: 8px;
+
+      font-family: $fontCode;
+
+      .filename {
+        padding-left: 24px;
+        padding-right: 24px;
+        padding-top: 8px;
+        padding-bottom: 8px;
+
+        border-bottom: 1px solid #414141;
+
+        color: #818181;
+        font-size: 14px;
+      }
+
+      .code-sample {
+        padding-left: 24px;
+        padding-right: 24px;
+        padding-top: 12px;
+        padding-bottom: 12px;
+
+        font-weight: bold;
+
+        .highlight {
+          color: $accent;
+        }
+      }
+    }
+  }
+}
+
+#BuiltBy {
+  .content {
+    max-width: 800px;
+
+    border-top: 1px solid #F5F5F5;
+
+    padding-left: 48px;
+    padding-right: 48px;
+    padding-top: 96px;
+    padding-bottom: 96px;
+
+    .info {
+      max-width: 500px;
+      margin-bottom: 64px;
+    }
+
+    .row {
+      display: flex;
+      flex-direction: row;
+
+      & > * {
+        flex: 1;
+      }
+
+      .companies {
+        margin-top: 8px;
+
+        display: flex;
+        flex-direction: row;
+        flex-wrap: wrap;
+        justify-content: left;
+        gap: 24px;
+      }
+    }
+
+    .button {
+      margin-left: auto;
+      margin-right: auto;
+      margin-top: 48px;
+      margin-bottom: 96px;
+    }
+
+    .contributors {
+      text-align: center;
+    }
+  }
+}
+
+section {
+  .content {
+    max-width: 1000px;
+    margin-left: auto;
+    margin-right: auto;
+
+    h1, h2, h3, h4, h5, h6 {
+      color: #595959;
+      font-family: $fontHeader;
+      text-transform: uppercase;
+    }
+
+    .tagline {
+      margin-bottom: 0.15em;
+
+      color: #595959;
+      font-family: $fontSerif;
+      font-weight: 200;
+    }
+
+    h2 {
+      font-size: 40px;
+    }
+
+    h2 + .tagline {
+      font-size: 24px;
+    }
+
+    h3 {
+      font-size: 24px;
+    }
+
+    h3 + .tagline {
+      font-size: 18px;
+    }
+
+    p {
+      color: #A6A6A6;
+      font-family: $fontSerif;
+      font-size: 16px;
+      font-weight: 100;
+    }
+  }
+}
+
+section.feature {
+  border-top: 1px solid #F5F5F5;
+
+  .content {
+    max-width: 1400px;
+    margin-left: auto;
+    margin-right: auto;
+
+    padding-left: 48px;
+    padding-right: 48px;
+    padding-top: 96px;
+    padding-bottom: 96px;
+
+    text-align: center;
+
+    .info {
+      margin-bottom: 64px;
+
+      h2 {
+        color: #595959;
+        font-family: $fontHeader;
+        font-size: 40px;
+        text-transform: uppercase;
+
+        @media (max-width: 800px) {
+          font-size: 30px;
+        }
+      }
+
+      .tagline {
+        margin-bottom: 0.3em;
+
+        color: #595959;
+        font-family: $fontSerif;
+        font-size: 24px;
+        font-weight: 200;
+        text-wrap: balance;
+        line-height: 1.2em;
+      }
+
+      p {
+        color: #A6A6A6;
+        font-family: $fontSerif;
+        font-size: 16px;
+        font-weight: 100;
+        text-wrap: balance;
+      }
+
+      .button {
+        margin-top: 24px;
+      }
+    }
+
+    .demo-desktop {
+      width: 100%;
+      max-width: 1000px;
+      aspect-ratio: 16 / 9;
+      margin-left: auto;
+      margin-right: auto;
+
+      background: #D9D9D9;
+      border-radius: 12px;
+    }
+
+    .demo-mobile {
+      width: 100%;
+      max-width: 300px;
+      aspect-ratio: 9 / 16;
+      margin-left: 24px;
+
+      background: #D9D9D9;
+      border-radius: 12px;
+
+      // Change to vertical and centered when we don't have enough space.
+      @media (max-width: 800px) {
+        margin-left: auto;
+        margin-right: auto;
+      }
+    }
+  }
+
+  &.left-oriented {
+    .content {
+      max-width: 1000px;
+      display: flex;
+      flex-direction: row;
+
+      text-align: left;
+
+      .info {
+        flex: 1;
+      }
+
+      // Change to vertical and centered when we don't have enough space.
+      @media (max-width: 800px) {
+        flex-direction: column;
+        text-align: center;
+        align-content: center;
+      }
+    }
+  }
+}
+
+a.button {
+  display: inline-block;
+  line-height: 36px;
+
+  padding-left: 24px;
+  padding-right: 24px;
+
+  background: #F7F7F7;
+  border-radius: 18px;
+
+  text-align: center;
+  vertical-align: middle;
+
+  color: #7D7D7D;
+  font-family: $fontSerif;
+  text-decoration: none;
 
   &:hover {
-    opacity: 1.0;
+    background: $accent;
+
+    color: WHITE;
   }
 }

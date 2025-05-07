@@ -1,5 +1,5 @@
 ---
-title: Serializing Super Editor Document to Markdown
+title: Export Super Editor Document to Markdown
 contentRenderers:
   - jinja
   - markdown
