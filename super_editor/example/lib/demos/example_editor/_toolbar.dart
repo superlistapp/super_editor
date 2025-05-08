@@ -1,9 +1,9 @@
 import 'dart:math';
 
 import 'package:example/demos/infrastructure/super_editor_item_selector.dart';
+import 'package:example/l10n/app_localizations.dart';
 import 'package:example/logging.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:follow_the_leader/follow_the_leader.dart';
 import 'package:overlord/follow_the_leader.dart';
 import 'package:super_editor/super_editor.dart';
