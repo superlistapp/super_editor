@@ -33,35 +33,50 @@
   <body>
     <nav class="navbar navbar-expand-lg">
       <div class="container">
-        <a class="navbar-brand" href="/"><img src="/images/branding/logo.png" height="32"><span class="name">{{  package.title  }}</span></a>
-
         <button class="navbar-toggler" type="button" data-bs-toggle="offcanvas" data-bs-target="#drawerNav" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
           <span class="navbar-toggler-icon"></span>
         </button>
 
         <div class="collapse navbar-collapse" id="navbarSupportedContent">
           <ul class="navbar-nav mb-lg-0 ms-auto align-items-center">
+            <li class="nav-item">
+              <a class="nav-link" href="/super-editor/guides/">Editor</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="/super-reader/guides/">Reader</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="/super-text-field/guides/">Text Field</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="/contributing/">Contributing</a>
+            </li>
+          </ul>
+
+          <a href="/" class="home" title="Home"><span class="fa fa-home"></span></a>
+
+          <ul class="navbar-nav mb-lg-0 ms-auto align-items-center">
             {% if package.is_on_pub %}
             <li class="nav-item">
-              <a class="nav-link" href="https://pub.dev/documentation/{{  package.name  }}/latest/" target="_blank">API Docs</a>
+              <a class="nav-link" title="API Docs" href="https://pub.dev/documentation/{{  package.name  }}/latest/" target="_blank">API Docs</a>
             </li>
             {% endif %}
 
             {% if package.github != null %}
             <li class="nav-item">
-              <a href="{{  package.github.url  }}" target="_blank"><span class="fa fa-brands fa-github"></span></a>
+              <a title="GitHub" href="{{  package.github.url  }}" target="_blank"><span class="fa fa-brands fa-github"></span></a>
             </li>
             {% endif %}
 
             {% if package.discord != null %}
             <li class="nav-item">
-              <a href="{{  package.discord  }}" target="_blank"><span class="fa fa-brands fa-discord"></span></a>
+              <a title="Discord" href="{{  package.discord  }}" target="_blank"><span class="fa fa-brands fa-discord"></span></a>
             </li>
             {% endif %}
 
             {% if package.sponsorship != null %}
             <li class="nav-item">
-              <a class="nav-link" href="{{  package.sponsorship  }}" target="_blank"><span class="fa fa-dollar-sign"></span></a>
+              <a title="Sponsorship" class="nav-link" href="{{  package.sponsorship  }}" target="_blank"><span class="fa fa-dollar-sign"></span></a>
             </li>
             {% endif %}
 
@@ -105,14 +120,35 @@
          {{   content   }}
         </main>
 
-        <!-- Table of contents for the page/article on desktop -->
-        <nav class="table-of-contents col col-2 d-none d-xl-block">
-          {% if tableOfContents is defined and tableOfContents.linkCountBeyondLevel(0) > 1 %}
-          <div class="table-of-contents">
-           {{  tableOfContents.renderHtmlList(startingLevel = 1)  }}
+        <!-- Right pane. Includes table of contents for the page/article, top-level nav, socials on desktop -->
+        <div class="right-pane col col-2 d-none d-xl-block">
+          <div class="content">
+            <nav class="table-of-contents">
+              {% if tableOfContents is defined and tableOfContents.linkCountBeyondLevel(0) > 1 %}
+              <div class="table-of-contents">
+                <h3>Table of Contents</h3>
+                {{  tableOfContents.renderHtmlList(startingLevel = 1)  }}
+              </div>
+              {% endif %}
+            </nav>
+
+            <!-- Socials and Funding button -->
+            <ol class="organization-links">
+              <!-- Hard-coded, specific top-level menu items -->
+              {% if package.github != null %}
+              <a href="{{ package.github.url }}" target="_blank" role="button" class="btn"><span class="fa fa-brands fa-github"></span>&nbsp;&nbsp;GitHub</a>
+              {% endif %}
+
+              {% if package.discord != null %}
+              <a href="{{ package.discord }}" target="_blank" role="button" class="btn"><span class="fa fa-brands fa-discord"></span>&nbsp;&nbsp;Discord</a>
+              {% endif %}
+
+              {% if package.sponsorship != null %}
+              <a href="{{ package.sponsorship }}" target="_blank" role="button" class="btn"><span class="fa fa-dollar-sign"></span>&nbsp;&nbsp;Sponsor</a>
+              {% endif %}
+            </ol>
           </div>
-          {% endif %}
-        </nav>
+        </div>
       </div>
     </div>
 

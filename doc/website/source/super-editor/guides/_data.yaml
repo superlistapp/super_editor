@@ -12,22 +12,51 @@ navigation:
       items:
         - title: Quickstart
           url: super-editor/guides/getting-started/quickstart
-        - title: Assemble a Document
-          url: super-editor/guides/getting-started/assemble-a-document
-        - title: Built-In Content
-          url: super-editor/guides/getting-started/built-in-content
-        - title: Show a Hint
-          url: super-editor/guides/getting-started/show-a-hint
+        - title: Tour
+          url: super-editor/guides/getting-started/tour
+
+    - title: Document Editors
+      items:
+        - title: Overview
+          url: super-editor/guides/document-editors/overview
 
     - title: Chat
       items:
         - title: Overview
           url: super-editor/guides/chat/overview
+        - title: Screen Scaffold
+          url: super-editor/guides/chat/screen-scaffold
+        - title: Keyboard Toolbar
+          url: super-editor/guides/chat/keyboard-toolbar
 
     - title: AI / GPT
       items:
         - title: Overview
           url: super-editor/guides/ai/overview
+
+    - title: Basics
+      items:
+        - title: Build an Editor
+          url: super-editor/guides/basics/build-an-editor
+        - title: Show a Hint
+          url: super-editor/guides/basics/show-a-hint
+
+    - title: Built-In Content
+      items:
+        - title: Paragraphs
+          url: super-editor/guides/built-in-content/paragraphs
+        - title: Headers
+          url: super-editor/guides/built-in-content/headers
+        - title: Blockquotes
+          url: super-editor/guides/built-in-content/blockquotes
+        - title: List Items
+          url: super-editor/guides/built-in-content/list-items
+        - title: Tasks
+          url: super-editor/guides/built-in-content/tasks
+        - title: Images
+          url: super-editor/guides/built-in-content/images
+        - title: Horizontal Rules
+          url: super-editor/guides/built-in-content/horizontal-rules
 
     - title: Markdown
       items:

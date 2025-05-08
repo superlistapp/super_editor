@@ -1,7 +1,6 @@
 ---
-title: Assemble a Document
+title: Build an Editor
 ---
-# Assemble a Document
 In Super Editor, a document is typically represented by an instance of `MutableDocument`. The
 easiest way to assemble a `MutableDocument` is by [de-serializing Markdown](/guides/markdown/import), or by
 [de-serializing Quill Deltas](/guides/quill/import). However, there are situations where you might 

@@ -1,0 +1,12 @@
+layout: layouts/docs_page.jinja
+
+navigation:
+  show_contributors: false
+
+  header: Super Text Field
+
+  items:
+    - title: Getting Started
+      items:
+        - title: Quickstart
+          url: super-text-field/quickstart
