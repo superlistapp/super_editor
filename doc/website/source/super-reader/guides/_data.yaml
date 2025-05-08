@@ -9,4 +9,4 @@ navigation:
     - title: Getting Started
       items:
         - title: Quickstart
-          url: super-reader-guides/quickstart
+          url: super-reader/quickstart

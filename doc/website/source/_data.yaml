@@ -22,6 +22,6 @@ navigation:
     - title: Super Editor
       url: /super-editor/guides
     - title: Super Reader
-      url: /super-reader-guides
+      url: /super-reader
     - title: Super Text Field
-      url: /super-text-field-guides
+      url: /super-text-field
