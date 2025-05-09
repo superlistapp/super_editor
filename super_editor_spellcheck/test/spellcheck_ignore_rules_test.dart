@@ -1,5 +1,6 @@
 import 'dart:collection';
 
+import 'package:clock/clock.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -154,9 +155,18 @@ void main() {
       testWidgetsOnArbitraryDesktop(
         'does not run spell check when converting from paragraph to ignored block type (with delay)',
         (tester) async {
+          final startTime = DateTime.now();
+          var runDuration = Duration.zero;
+          final clock = Clock(() {
+            print("Get time - start time: $startTime, duration: $runDuration");
+            return startTime.add(runDuration);
+          });
+
+          print("1");
           final spellCheckerService = _FakeSpellChecker();
 
-          final editor = await _pumpTestApp(
+          print("2");
+          await _pumpTestApp(
             tester,
             document: MutableDocument(
               nodes: [
@@ -172,22 +182,35 @@ void main() {
               SpellingIgnoreRules.byBlockType(blockquoteAttribution),
             ],
             spellCheckerService: spellCheckerService,
+            clock: clock,
           );
 
           // Place the caret in the paragraph.
+          print("3");
           await tester.placeCaretInParagraph("1", 0);
 
           // Type text that should be spell checked after a delay.
+          print("4");
           await tester.typeImeText("H");
+          runDuration = runDuration + const Duration(milliseconds: 50);
 
           // Ensure spell check doesn't run immediately.
+          print("5");
           expect(spellCheckerService.queriedTexts, [
             // empty.
           ]);
 
           // Let any ongoing spell check timer expire.
-          await tester.pump(Duration(seconds: 5));
+          print("6");
+          runDuration = runDuration + const Duration(seconds: 1);
+          await tester.pump(const Duration(seconds: 1));
           await tester.pumpAndSettle();
+
+          // Ensure spell check was run after delay.
+          print("7");
+          expect(spellCheckerService.queriedTexts, [
+            "H",
+          ]);
         },
       );
 
@@ -366,6 +389,7 @@ Future<Editor> _pumpTestApp(
   List<SpellingIgnoreRule> ignoreRules = const [],
   SpellCheckService? spellCheckerService,
   Duration spellCheckDelay = Duration.zero,
+  Clock? clock,
 }) async {
   final editor = createDefaultDocumentEditor(
     document: document,
@@ -376,6 +400,8 @@ Future<Editor> _pumpTestApp(
     ignoreRules: ignoreRules,
     spellCheckService: spellCheckerService,
     spellCheckDelayAfterEdit: spellCheckDelay,
+    clock: clock ?? const Clock(),
+    timerProvider: TickerTimerProvider(tester),
   );
 
   await tester.pumpWidget(
