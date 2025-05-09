@@ -44,7 +44,7 @@ class _MobileChatDemoState extends State<MobileChatDemo> {
   void initState() {
     super.initState();
 
-    SuperKeyboard.initLogs();
+    SuperKeyboard.startLogging();
     initLoggers(Level.ALL, {keyboardPanelLog});
 
     final document = MutableDocument.empty();
