@@ -48,6 +48,7 @@ class SpellingAndGrammarPlugin extends SuperEditorPlugin {
     UnderlineStyle spellingErrorUnderlineStyle = defaultSpellingErrorUnderlineStyle,
     bool isGrammarCheckEnabled = true,
     UnderlineStyle grammarErrorUnderlineStyle = defaultGrammarErrorUnderlineStyle,
+    Duration spellCheckDelayAfterEdit = Duration.zero,
     SpellingErrorSuggestionToolbarBuilder toolbarBuilder = defaultSpellingSuggestionToolbarBuilder,
     Color? selectedWordHighlightColor,
     SuperEditorAndroidControlsController? androidControlsController,
@@ -56,7 +57,8 @@ class SpellingAndGrammarPlugin extends SuperEditorPlugin {
     SpellCheckService? spellCheckService,
     GrammarCheckService? grammarCheckService,
   })  : _isSpellCheckEnabled = isSpellingCheckEnabled,
-        _isGrammarCheckEnabled = isGrammarCheckEnabled {
+        _isGrammarCheckEnabled = isGrammarCheckEnabled,
+        _spellCheckDelayAfterEdit = spellCheckDelayAfterEdit {
     assert(defaultTargetPlatform != TargetPlatform.android || androidControlsController != null,
         'The androidControlsController must be provided when running on Android.');
 
@@ -114,6 +116,9 @@ class SpellingAndGrammarPlugin extends SuperEditorPlugin {
 
   /// A service that provides grammar checking functionality.
   late final GrammarCheckService? _grammarCheckService;
+
+  /// The time to wait after a user edit before running the spelling and grammar check.
+  late final Duration _spellCheckDelayAfterEdit;
 
   final _spellingErrorSuggestions = SpellingErrorSuggestions();
 
@@ -175,7 +180,13 @@ class SpellingAndGrammarPlugin extends SuperEditorPlugin {
     _contentTapHandler?.editor = editor;
 
     _reaction = SpellingAndGrammarReaction(
-        _spellingErrorSuggestions, _styler, _ignoreRules, _spellCheckService!, _grammarCheckService);
+      _spellingErrorSuggestions,
+      _styler,
+      _ignoreRules,
+      _spellCheckService!,
+      _grammarCheckService,
+      spellCheckDelayAfterEdit: _spellCheckDelayAfterEdit,
+    );
     editor.reactionPipeline.add(_reaction);
 
     // Do initial spelling and grammar analysis, in case the document already
@@ -187,6 +198,7 @@ class SpellingAndGrammarPlugin extends SuperEditorPlugin {
   void detach(Editor editor) {
     _styler.clearAllErrors();
     editor.reactionPipeline.remove(_reaction);
+    _reaction.dispose();
     _contentTapHandler?.editor = null;
 
     editor.context.remove(spellingErrorSuggestionsKey);
@@ -283,7 +295,20 @@ extension SpellingAndGrammarEditorExtensions on Editor {
 /// in a given [Document].
 class SpellingAndGrammarReaction implements EditReaction {
   SpellingAndGrammarReaction(
-      this._suggestions, this._styler, this._ignoreRules, this._spellCheckService, this._grammarCheckService);
+    this._suggestions,
+    this._styler,
+    this._ignoreRules,
+    this._spellCheckService,
+    this._grammarCheckService, {
+    Duration spellCheckDelayAfterEdit = Duration.zero,
+  }) : _spellCheckDelayAfterEdit = spellCheckDelayAfterEdit;
+
+  void dispose() {
+    _delayedChecks.clear();
+
+    _delayedChecksTimer?.cancel();
+    _delayedChecksTimer = null;
+  }
 
   final SpellingErrorSuggestions _suggestions;
 
@@ -302,6 +327,24 @@ class SpellingAndGrammarReaction implements EditReaction {
   bool isGrammarCheckEnabled = true;
 
   set grammarErrorUnderlineStyle(UnderlineStyle style) => _styler.grammarErrorUnderlineStyle = style;
+
+  /// An amount of time to wait after a content edit, before running a spell check.
+  ///
+  /// For example, with a delay of 500ms, as the user types, spell check doesn't run
+  /// until the user stops typing for 500ms.
+  final Duration _spellCheckDelayAfterEdit;
+
+  /// The time at which various nodes should be checked for spelling and grammar.
+  ///
+  /// This map is used to orchestrate delayed spelling and grammar checks.
+  final _delayedChecks = <String, (DateTime, TextNode)>{};
+
+  /// A [Timer] that's scheduled when a spelling and grammar check is desired, which
+  /// then runs the actual spelling and grammar check after [_spellCheckDelayAfterEdit].
+  ///
+  /// There may be many waiting checks, each with a different desired check time. This timer
+  /// is scheduled for the nearest desired check time.
+  Timer? _delayedChecksTimer;
 
   /// A map from a document node to the ID of the most recent spelling and grammar
   /// check request ID.
@@ -392,8 +435,67 @@ class SpellingAndGrammarReaction implements EditReaction {
         continue;
       }
 
+      _scheduleSpellingAndGrammarCheck(textNode);
+    }
+  }
+
+  void _scheduleSpellingAndGrammarCheck(TextNode textNode) {
+    if (_spellCheckDelayAfterEdit == Duration.zero) {
+      // The user doesn't want any delay. Run spell and grammar check immediately.
+      _findSpellingAndGrammarErrors(textNode);
+      return;
+    }
+
+    // The user wants a delay before running spelling and grammar checks. Schedule
+    // this node for a check after a delay.
+    _delayedChecks[textNode.id] = (DateTime.now().add(_spellCheckDelayAfterEdit), textNode);
+
+    // Schedule a timer for the next delayed check.
+    _delayedChecksTimer ??= Timer(_spellCheckDelayAfterEdit, _runCheckAfterDelay);
+  }
+
+  void _runCheckAfterDelay() {
+    // Find all nodes that haven't changed in the delayed amount of time.
+    final now = DateTime.now();
+    final waitingNodes = _delayedChecks.keys.toList(growable: false);
+    final nodesToCheck = <TextNode>{};
+    for (final nodeId in waitingNodes) {
+      if (now.isAfter(_delayedChecks[nodeId]!.$1)) {
+        nodesToCheck.add(_delayedChecks[nodeId]!.$2);
+      }
+    }
+
+    // Check each node that has exceeded the delay.
+    for (final textNode in nodesToCheck) {
+      _delayedChecks.remove(textNode.id);
       _findSpellingAndGrammarErrors(textNode);
     }
+
+    // Schedule the next timer if there are still nodes waiting to be checked.
+    if (_delayedChecks.isNotEmpty) {
+      _delayedChecksTimer = Timer(_findNextDelayedCheckDuration(), _runCheckAfterDelay);
+    } else {
+      _delayedChecksTimer = null;
+    }
+  }
+
+  Duration _findNextDelayedCheckDuration() {
+    var nearest = _delayedChecks.entries.first.value.$1;
+    for (final entry in _delayedChecks.entries) {
+      if (entry.value.$1.isBefore(nearest)) {
+        nearest = entry.value.$1;
+      }
+    }
+
+    final timeDifference = nearest.difference(DateTime.now());
+    if (timeDifference <= Duration.zero) {
+      // This shouldn't happen, but the clock has already passed
+      // at least one desired check time. Schedule an immediate
+      // timer.
+      return Duration.zero;
+    }
+
+    return timeDifference;
   }
 
   Future<void> _findSpellingAndGrammarErrors(TextNode textNode) async {
@@ -505,6 +607,10 @@ class SpellingAndGrammarReaction implements EditReaction {
     if (ranges.isEmpty) {
       // We don't have any ranges to remove, short circuit.
       return text;
+    }
+    if (ranges.length == 1 && ranges.first.start == 0 && ranges.first.end >= text.length) {
+      // We want to ignore all of the text in this node.
+      return "";
     }
 
     final buffer = StringBuffer();
@@ -843,6 +949,19 @@ typedef SpellingIgnoreRule = List<TextRange> Function(TextNode node);
 
 /// A collection of built-in rules for ignoring spans of text from spellchecking.
 class SpellingIgnoreRules {
+  /// Creates a rule that ignores an entire text block of the given [blockType].
+  ///
+  /// For example, a rule might ignore a code block or a blockquote.
+  static SpellingIgnoreRule byBlockType(Attribution blockType) {
+    return (TextNode node) {
+      if (node.metadata[NodeMetadata.blockType] == blockType) {
+        return [TextRange(start: 0, end: node.text.length)];
+      }
+
+      return [];
+    };
+  }
+
   /// Creates a rule that ignores text spans that match the given [pattern].
   static SpellingIgnoreRule byPattern(Pattern pattern) {
     return (TextNode node) {
