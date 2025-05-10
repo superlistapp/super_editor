@@ -45,7 +45,7 @@ jobs:
       # Build the clone
       - run: flutter build macos --debug
 
-  build_google_medium:
+  build_medium:
     runs-on: macos-latest
     defaults:
       run:
