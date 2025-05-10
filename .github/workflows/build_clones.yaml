@@ -6,7 +6,7 @@ jobs:
     defaults:
       run:
         # Run everything from within the bear project directory
-        working-directory: ../super_demos/bear
+        working-directory: ./super_clones/bear
     steps:
       # Checkout the PR branch
       - uses: actions/checkout@v3
