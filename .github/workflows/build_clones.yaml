@@ -65,7 +65,7 @@ jobs:
       - run: flutter pub get
 
       # Build the clone
-      - run: flutter build macos --debug
+      - run: flutter build web --debug
 
   build_obsidian:
     runs-on: macos-latest
