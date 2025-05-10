@@ -1,0 +1,24 @@
+name: Build Clones
+on: [pull_request]
+jobs:
+  build_bear:
+    runs-on: macos-latest
+    defaults:
+      run:
+        # Run everything from within the bear project directory
+        working-directory: ./super_demos/bear
+    steps:
+      # Checkout the PR branch
+      - uses: actions/checkout@v3
+
+      # Setup Flutter environment
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: "master"
+          architecture: x64
+
+      # Download all the packages that the app uses
+      - run: flutter pub get
+
+      # Build the clone
+      - run: flutter build macos
