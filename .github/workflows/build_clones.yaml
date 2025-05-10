@@ -21,4 +21,114 @@ jobs:
       - run: flutter pub get
 
       # Build the clone
-      - run: flutter build macos
+      - run: flutter build macos --debug
+
+  build_google_docs:
+    runs-on: macos-latest
+    defaults:
+      run:
+        # Run everything from within the google_docs project directory
+        working-directory: ./super_clones/google_docs
+    steps:
+      # Checkout the PR branch
+      - uses: actions/checkout@v3
+
+      # Setup Flutter environment
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: "master"
+          architecture: x64
+
+      # Download all the packages that the app uses
+      - run: flutter pub get
+
+      # Build the clone
+      - run: flutter build macos --debug
+
+  build_google_medium:
+    runs-on: macos-latest
+    defaults:
+      run:
+        # Run everything from within the medium project directory
+        working-directory: ./super_clones/medium
+    steps:
+      # Checkout the PR branch
+      - uses: actions/checkout@v3
+
+      # Setup Flutter environment
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: "master"
+          architecture: x64
+
+      # Download all the packages that the app uses
+      - run: flutter pub get
+
+      # Build the clone
+      - run: flutter build macos --debug
+
+  build_obsidian:
+    runs-on: macos-latest
+    defaults:
+      run:
+        # Run everything from within the obsidian project directory
+        working-directory: ./super_clones/obsidian
+    steps:
+      # Checkout the PR branch
+      - uses: actions/checkout@v3
+
+      # Setup Flutter environment
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: "master"
+          architecture: x64
+
+      # Download all the packages that the app uses
+      - run: flutter pub get
+
+      # Build the clone
+      - run: flutter build macos --debug
+
+  build_slack:
+    runs-on: macos-latest
+    defaults:
+      run:
+        # Run everything from within the slack project directory
+        working-directory: ./super_clones/slack
+    steps:
+      # Checkout the PR branch
+      - uses: actions/checkout@v3
+
+      # Setup Flutter environment
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: "master"
+          architecture: x64
+
+      # Download all the packages that the app uses
+      - run: flutter pub get
+
+      # Build the clone
+      - run: flutter build macos --debug
+
+  build_quill:
+    runs-on: macos-latest
+    defaults:
+      run:
+        # Run everything from within the quill project directory
+        working-directory: ./super_clones/quill
+    steps:
+      # Checkout the PR branch
+      - uses: actions/checkout@v3
+
+      # Setup Flutter environment
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: "master"
+          architecture: x64
+
+      # Download all the packages that the app uses
+      - run: flutter pub get
+
+      # Build the clone
+      - run: flutter build macos --debug
