@@ -1,11 +1,11 @@
 name: medium
 description: "A Flutter clone of Medium."
-publish_to: 'none'
+publish_to: "none"
 
 version: 1.0.0+1
 
 environment:
-  sdk: ^3.6.0
+  sdk: ">=3.0.0 <3.7.0"
 
 dependencies:
   flutter:
@@ -22,7 +22,6 @@ dev_dependencies:
   flutter_lints: ^5.0.0
 
 flutter:
-
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in
   # the material Icons class.
