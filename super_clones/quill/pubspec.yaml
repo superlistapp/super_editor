@@ -1,11 +1,11 @@
 name: feather
 description: "A Flutter clone of Quill"
-publish_to: 'none' # Remove this line if you wish to publish to pub.dev
+publish_to: "none" # Remove this line if you wish to publish to pub.dev
 
 version: 1.0.0+1
 
 environment:
-  sdk: '>=3.0.0 <4.0.0'
+  sdk: ^3.6.0
 
 dependencies:
   flutter:
@@ -23,15 +23,15 @@ dependencies:
 
 dependency_overrides:
   super_editor:
-    path: ../../
+    path: ../../super_editor
   super_editor_quill:
-    path: ../../../super_editor_quill
+    path: ../../super_editor_quill
   super_editor_markdown:
-    path: ../../../super_editor_markdown
+    path: ../../super_editor_markdown
   super_text_layout:
-    path: ../../../super_text_layout
+    path: ../../super_text_layout
   attributed_text:
-    path: ../../../attributed_text
+    path: ../../attributed_text
 
 dev_dependencies:
   flutter_test:
@@ -40,7 +40,6 @@ dev_dependencies:
   flutter_lints: ^3.0.0
 
 flutter:
-
   uses-material-design: true
 
   # To add assets to your application, add an assets section, like this:
