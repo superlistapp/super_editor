@@ -1,6 +1,6 @@
 name: slack
 description: "A Flutter clone of Slack."
-publish_to: 'none'
+publish_to: "none"
 
 version: 1.0.0+1
 
@@ -20,7 +20,6 @@ dev_dependencies:
   flutter_lints: ^5.0.0
 
 flutter:
-
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in
   # the material Icons class.
