@@ -7,6 +7,8 @@ layout:
 <html lang="en">
   <head>
     <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
     <title>{{ title }}</title>
 
     {{ components.favicon() }}
@@ -25,185 +27,163 @@ layout:
 
   <body>
     <main>
-      {{ components.navbar({"title": title}) }}
+      <div id="appBar">
+        <div class="title">Super Editor</div>
+        <nav>
+          <ul>
+            <li><a href="/super-editor/guides">Guides</a></li>
+            <li><a href="https://pub.dev/documentation/super_editor/0.3.0-dev.23/" target="_blank">API Docs</a></li>
+            <li><a href="https://github.com/superlistapp/super_editor" target="_blank">GitHub</a></li>
+            <li><a href="https://discord.gg/8hna2VD32s" target="_blank">Discord</a></li>
+          </ul>
+        </nav>
+      </div>
 
-      <section id="hero" class="container-fluid d-flex flex-column">
-        <div class="row flex-grow-1 align-content-center">
-          <div class="col">
-            <div class="container featured">
-              <div class="row justify-content-center">
-                <div class="col-7">
-                  <div class="tagline">
-                    A Document Editing &amp;<br>Reading Toolkit<br>for Flutter
-                  </div>
-                  <span class="label supplemental-text">Add Super Editor:</span>
-                  <div id="activation-command">
-                    <span class="cli">super_editor: <span class="accent-text">^{{ pub.super_editor.version }}</span></span>
-                    <button class="btn btn-primary copy" type="submit" onclick="copyActivationToClipboard();">
-                      <i class="fa fa-clone" style="color: black; font-size: 24px; font-weight: bold;"></i>
-                    </button>
-                  </div>
-                </div>
-                <div class="col col-auto" style="width: 300px; margin-left: 112px;">
-                  <img src="images/logo_big.png" width="256">
-                </div>
-              </div>
-            </div>
+      <section id="hero">
+        <div class="featured">
+          <div class="tagline">
+            Flutter's Most Configurable<br>Document <span class="highlight">Editor</span> &amp; <span class="highlight">Reader</span><br>Toolkit<span class="caret">&nbsp;</span>
+          </div>
+          <div class="by-line">
+            By the Flutter Bounty Hunters
           </div>
         </div>
 
-        <div class="row justify-content-center" style="padding: 0 0 72px 0;">
-          <div class="col-3" style="text-align: center;">
-            <a href="https://github.com/superlistapp/super_editor" target="_blank" class="btn btn-dark btn-social"><img src="images/icons/bxl-github.svg" width="24" style="display:inline; margin-right: 8px;"> GitHub</a>
-            <div style="display: inline; width: 24px;">&nbsp;</div>
-            <a href="https://discord.gg/8hna2VD32s" target="_blank" class="btn btn-dark btn-social"><img src="images/icons/bxl-discord-alt.svg" width="24" style="display:inline; margin-right: 8px;">Discord</a>
-          </div>
-        </div>
+        <nav class="sections">
+          <a href="#Documents">Documents</a>
 
-        <div class="row">
-          <div class="col">
-            <div id="banner-built-with-static-shock">
-              <span class="message">This website was built with <a href="https://staticshock.io" target="_blank" class="static-shock">Static Shock!</a></span>
-            </div>
+          <a href="#Chat">Chat</a>
+
+          <a href="#AI">AI / GPT</a>
+
+          <a href="#BuiltBy">Built By</a>
+        </nav>
+
+        <div id="banner-built-with-static-shock">
+          <span class="message">This website was built with <a href="https://staticshock.io" target="_blank" class="static-shock">Static Shock!</a></span>
+        </div>
+      </section>
+
+      <section id="Powering">
+        <div class="content">
+          <h4>Powering</h4>
+          <div class="companies">
+            <a href="https://superlistapp.com" target="_blank"><img src="/images/funders/superlist.png" height="64"></a>
+            <a href="https://clearful.com" target="_blank"><img src="/images/funders/clearful.png" height="64"></a>
+            <a href="https://clickup.com" target="_blank"><img src="/images/funders/clickup.png" height="64"></a>
+            <a href="https://bringingfire.com" target="_blank"><img src="/images/funders/bringing-fire.png" height="64"></a>
+            <a href="https://reflection.app" target="_blank"><img src="/images/funders/reflection.png" height="64"></a>
           </div>
         </div>
       </section>
 
-      <div id="content">
-        <section id="synopsis">
-          <div class="container">
-            <div class="row">
-              <div class="col">
-                <img src="images/homepage/synopsis_super-editor.png" class="featured-image">
-                <p class="title">A Document Editor</p>
-                <p class="description">Configure your very own document editing experience with the <code>SuperEditor</code> widget.</p>
-                <a href="/super-editor/guides/quickstart">Get started</a>
+      <section id="Install">
+        <div class="content">
+          <h4>Install</h4>
+          <code>
+            <div class="filename">pubspec.yaml</div>
+            <div class="code-sample">
+              <div class="line"><span class="highlight">dependencies:</span></div>
+              <div class="line">&nbsp;&nbsp;<span class="highlight">super_editor:</span> 0.3.0-dev.23</div>
+            </div>
+          </code>
+        </div>
+      </section>
+
+      <section id="Documents" class="feature">
+        <div class="content">
+          <div class="info">
+            <h2>Document Editing</h2>
+            <p class="tagline">Your design. Our editor.</p>
+            <p>The Super Editor toolkit can build whatever you can imagine.</p>
+            <a href="/super-editor/guides/" class="button">Get Started</a>
+          </div>
+          <div class="demo-desktop"></div>
+        </div>
+      </section>
+
+      <section id="Chat" class="feature left-oriented">
+        <div class="content">
+          <div class="info">
+            <h2>Chat</h2>
+            <p class="tagline">Mobile apps love to chat.</p>
+            <p>Send messages with images, list items, links, and more!</p>
+            <a href="/super-editor/guides/chat/overview" class="button">Get Started</a>
+          </div>
+          <div class="demo-mobile"></div>
+        </div>
+      </section>
+
+      <section id="AI" class="feature">
+        <div class="content">
+          <div class="info">
+            <h2>AI / GPT</h2>
+            <p class="tagline">You bring the AI. We'll bring the document.</p>
+            <p>Super Editor is delivering editor and reader tools for AI.</p>
+            <a href="/super-editor/guides/ai/overview" class="button">Get Started</a>
+          </div>
+          <div class="demo-desktop"></div>
+        </div>
+      </section>
+
+      <section id="BuiltBy">
+        <div class="content">
+          <div class="info">
+            <h2>Built By</h2>
+            <p class="tagline">Creators. Funders. Contributors.</p>
+            <p>We're making Flutter viable for document editing, rich text chat, and generative AI.</p>
+          </div>
+          <div class="row">
+            <div class="created-by">
+              <h3>Created By</h3>
+              <p class="tagline">The Flutter Bounty Hunters</p>
+              <div class="companies">
+                <a href="https://flutterbountyhunters.com" target="_blank"><img src="/images/fbh_logo.png" height="48"></a>
               </div>
-              <div class="col">
-                <img src="images/homepage/synopsis_super-reader.png" class="featured-image">
-                <p class="title">A Document Reader</p>
-                <p class="description">Configure your very own document reading experience with the <code>SuperReader</code> widget.</p>
-                <a href="/super-reader-guides/quickstart">Get started</a>
-              </div>
-              <div class="col">
-                <img src="images/homepage/synopsis_super-text-field.png" class="featured-image">
-                <p class="title">A Better Text Field</p>
-                <p class="description">Go beyond the limitations of Flutter's built-in text field with <code>SuperTextField</code>.</p>
-                <a href="/super-text-field-guides/quickstart">Get started</a>
+            </div>
+            <div class="funded-by">
+              <h3>Funded By</h3>
+              <p class="tagline">Superlist, ClickUp, Clearful</p>
+              <div class="companies">
+                <a href="https://superlistapp.com" target="_blank"><img src="/images/funders/superlist.png" height="48"></a>
+                <a href="https://clearful.com" target="_blank"><img src="/images/funders/clearful.png" height="48"></a>
+                <a href="https://clickup.com" target="_blank"><img src="/images/funders/clickup.png" height="48"></a>
+                <a href="https://bringingfire.com" target="_blank"><img src="/images/funders/bringing-fire.png" height="48"></a>
+                <a href="https://reflection.app" target="_blank"><img src="/images/funders/reflection.png" height="48"></a>
               </div>
             </div>
           </div>
-        </section>
-
-        <section class="content" style="margin-top: 128px;">
-          <div class="container">
-            <div class="title-category">Super Editor</div>
-            <h2>Rapid Tour</h2>
-
-            <div id="features-content-types" class="tour-section container">
-              <div class="row">
-                <div class="col-4">
-                  <img src="images/homepage/features_content-types.png" style="width: 100%; padding: 0 24px;">
-                </div>
-                <div class="col-6">
-                  <h3>Standard Content Types</h3>
-                  <p>Super Editor provides support for many standard types of content, out of the box.</p>
-                  <ul>
-                    <li>Headers</li>
-                    <li>Paragraphs</li>
-                    <li>Blockquotes</li>
-                    <li>Images</li>
-                    <li>List Items</li>
-                    <li>Horizontal Rules</li>
-                    <li>Tasks</li>
-                  </ul>
-                </div>
-              </div>
-            </div>
-
-            <div id="features-text-input" class="tour-section container">
-              <div class="row">
-                <div class="col-6">
-                  <h3>Text Input</h3>
-                  <p>Super Editor includes common shortcut key combinations, and support for standard Input Method Engine (IME) text input, across Android, iOS, Mac, Windows, and Linux.</p>
-                  <ul>
-                    <li>Caret movement with arrows (and expansion with <code>Shift</code>)</li>
-                    <li><code>Alt + Left/Right</code> to move to next word</li>
-                    <li><code>Cmd/Ctrl + Left/Right</code> to move to end of lines</li>
-                    <li><code>Cmd/Ctrl + A</code> to select all content</li>
-                    <li><code>Cmd/Ctrl + C</code> to copy</li>
-                    <li><code>Cmd/Ctrl + X</code> to cut</li>
-                    <li><code>Cmd/Ctrl + V</code> to paste</li>
-                    <li><code>Tab</code> to indent list items</li>
-                    <li>and more...</li>
-                  </ul>
-                </div>
-                <div class="col-4">
-                  <img src="images/homepage/features_tap-selection.png" style="width: 100%; padding: 0 24px;">
-                </div>
-              </div>
-            </div>
-
-            <div id="features-adaptive-ui" class="tour-section container">
-              <div class="row">
-                <div class="col-4">
-                  <img src="images/homepage/features_adaptive-ui.png" style="width: 100%; padding: 0 24px;">
-                </div>
-                <div class="col-6">
-                  <h3>Platform Adaptive UI</h3>
-                  <p>Super Editor displays appropriate carets, drag handles, and magnifiers for Android, iOS, Mac, Windows, and Linux.</p>
-                </div>
-              </div>
-            </div>
-
-            <div id="features-selection-gestures" class="tour-section container">
-              <div class="row">
-                <div class="col-6">
-                  <h3>Tap Selection</h3>
-                  <p>Super Editor includes standard selection behaviors for single, double, and triple taps on text content.</p>
-                  <ul>
-                    <li>Single-tap to place the caret.</li>
-                    <li>Double-tap to select a word.</li>
-                    <li>Triple-tap to select a paragraph.</li>
-                  </ul>
-                </div>
-                <div class="col-4">
-                  <img src="images/homepage/features_tap-selection.png" style="width: 100%; padding: 0 24px;">
-                </div>
-              </div>
-            </div>
-
+          <div style="text-align: center">
+            <a href="https://flutterbountyhunters.com" target="_blank" class="button">Become a Funder</a>
           </div>
-        </section>
 
-        {{ components.funders() }}
+          <div class="contributors">
+            <h3>Contributors</h3>
+            <p>Thanks to everyone who has helped to build Super Editor!</p>
+            <ol style="display: flex; flex-wrap: wrap; justify-content: center; list-style-type: none; margin: 0; margin-top: 32px; padding: 0; text-align: center;">
+              {% set contributors = github.superlistapp.super_editor %}
+              {% set contributorCount = 15 %}
+              {% for contributor in contributors|take(contributorCount) %}
+              <li style="display: inline-block; margin: 0; margin-right: 16px; margin-bottom: 16px; padding: 0;">
+                <a
+                    href="{{ contributor.userUrl }}"
+                    target="_blank"
+                    title="{{ contributor.userId }}"
+                    style="display: inline-block; width: 64px; height: 64px; border-radius: 32px; background-image: url('{{ contributor.avatarUrl }}'); background-size: cover; background-repeat: no-repeat; background-position: 50% 50%;"></a>
+              </li>
+              {% endfor %}
 
-        <section style="max-width: 800px; margin: auto; margin-top: 100px; margin-bottom: 200px;">
-          <h2 style="text-align: center; text-transform: uppercase;">Contributors</h2>
-          <p style="text-align: center; color: rgba(255, 255, 255, 0.5);">Thanks to everyone who has helped to build Super Editor!</p>
-          <ol style="display: flex; flex-wrap: wrap; justify-content: center; list-style-type: none; margin: 0; margin-top: 32px; padding: 0; text-align: center;">
-            {% set contributors = github.superlistapp.super_editor %}
-            {% set contributorCount = 15 %}
-            {% for contributor in contributors|take(contributorCount) %}
-            <li style="display: inline-block; margin: 0; margin-right: 16px; margin-bottom: 16px; padding: 0;">
-              <a
-                  href="{{ contributor.userUrl }}"
-                  target="_blank"
-                  title="{{ contributor.userId }}"
-                  style="display: inline-block; width: 64px; height: 64px; border-radius: 32px; background-image: url('{{ contributor.avatarUrl }}'); background-size: cover; background-repeat: no-repeat; background-position: 50% 50%;"></a>
-            </li>
-            {% endfor %}
-
-            {% if contributors|length > contributorCount %}
-            <li style="display: inline-block; margin: 0; padding: 0;">
-              <div style="display: inline-block; margin: 0; padding: 0; width: 64px; height: 64px; border-radius: 32px; background: rgba(255, 255, 255, 0.05); line-height: 64px; text-align: center; vertical-align: middle;">
-                +{{  contributors|length - contributorCount  }}
-              </div>
-            </li>
-            {% endif %}
-          </ol>
-        </section>
-      </div>
+              {% if contributors|length > contributorCount %}
+              <li style="display: inline-block; margin: 0; padding: 0;">
+                <div style="display: inline-block; margin: 0; padding: 0; width: 64px; height: 64px; border-radius: 32px; background: rgba(0, 0, 0, 0.05); line-height: 64px; text-align: center; vertical-align: middle;">
+                  +{{  contributors|length - contributorCount  }}
+                </div>
+              </li>
+              {% endif %}
+            </ol>
+          </div>
+        </div>
+      </section>
 
     </main>
 

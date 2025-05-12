@@ -8,4 +8,4 @@ editors with Flutter. Whether you're building a productivity app, journaling app
 taking app, or any other app that requires rich text layout and editing, Super Editor
 is here to help!
 
-Get started with Super Editor with our [Quickstart](/super-editor/guides/quickstart) guide.
+Get started with Super Editor with our [Quickstart](/super-editor/guides/getting-started/quickstart) guide.
