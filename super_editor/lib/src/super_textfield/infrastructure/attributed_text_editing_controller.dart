@@ -655,6 +655,7 @@ class AttributedTextEditingController with ChangeNotifier {
     notifyListeners();
   }
 
+  @Deprecated('Use text.computeInlineSpan() instead, which adds support for inline widgets.')
   TextSpan buildTextSpan(AttributionStyleBuilder styleBuilder) {
     return text.computeTextSpan(styleBuilder);
   }

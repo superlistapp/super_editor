@@ -1,41 +1,20 @@
+@import "typography";
+
 $dividerColor: rgba(255, 255, 255, 0.05);
 $standardDividerBorder: 1px solid $dividerColor;
 
 html[data-bs-theme="dark"] {
   code:not([class*="hljs"]) {
     // ^ don't apply these styles to highlightJS blocks of code.
-    color: #FF2222;
+    color: #777777;
+    font-family: $fontCode
   }
 
   .navbar {
     border-bottom: $standardDividerBorder;
-
-    .nav-item {
-      a, .fa {
-        color: #CCCCCC;
-
-        &:hover {
-          color: WHITE;
-        }
-      }
-    }
   }
 
   nav.main {
-    ol.organization-links {
-      a {
-        background: rgba(255, 255, 255, 0.02);
-
-        &:hover {
-          background: rgba(255, 255, 255, 0.10);
-        }
-      }
-    }
-
-    .organization-nav-divider {
-      background: $dividerColor;
-    }
-
     a {
       color: #AAAAAA;
 
@@ -65,20 +44,70 @@ html[data-bs-theme="dark"] {
 
       color: WHITE;
     }
+
+    p, li {
+      code:not([class*="hljs"]):not(a *) {
+        // ^ don't apply these styles to highlightJS blocks of code.
+        margin-left: 2px;
+        margin-right: 2px;
+
+        padding-left: 4px;
+        padding-right: 4px;
+        padding-top: 2px;
+        padding-bottom: 2px;
+
+        color: #FFFFFF;
+
+        background: #222222;
+        border-radius: 4px;
+        border: 1px solid #333333;
+      }
+    }
+
+    a {
+      code:not([class*="hljs"]) {
+        // ^ don't apply these styles to highlightJS blocks of code.
+        &:hover {
+          color: #999999;
+        }
+      }
+    }
   }
 
-  .table-of-contents {
-    ol {
+  .right-pane {
+    .content {
       border-left: $standardDividerBorder;
 
-      li {
-        a {
-          color: #CCCCCC;
+      .table-of-contents {
+        ol ol {
+          border-left: $standardDividerBorder;
+        }
 
-          &:hover {
-            color: WHITE;
+        ol {
+          li {
+            a {
+              color: #CCCCCC;
+
+              &:hover {
+                color: WHITE;
+              }
+            }
           }
         }
+      }
+
+      ol.organization-links {
+        a {
+          background: rgba(255, 255, 255, 0.02);
+
+          &:hover {
+            background: rgba(255, 255, 255, 0.10);
+          }
+        }
+      }
+
+      .organization-nav-divider {
+        background: $dividerColor;
       }
     }
   }

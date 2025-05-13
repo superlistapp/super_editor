@@ -1,6 +1,8 @@
 import 'package:flutter/gestures.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_test_robots/flutter_test_robots.dart';
 import 'package:flutter_test_runners/flutter_test_runners.dart';
 import 'package:super_editor/src/infrastructure/platforms/ios/selection_handles.dart';
 import 'package:super_editor/super_editor.dart';
@@ -495,6 +497,60 @@ void main() {
           await gesture.up();
           await tester.pumpAndSettle();
         });
+      });
+
+      testWidgetsOnIos("converts entire paragraph selection to entire document selection", (tester) async {
+        // This test locks the behavior of a workaround for https://github.com/superlistapp/super_editor/issues/2579.
+        //
+        // When using the native text selection toolbar to select all text in a document, the IME sends a delta
+        // that selects only the text of the currently selected nodes. This is because we only send the text of the
+        // currently selected nodes to the IME. This test ensures that we select the entire document when we
+        // receive a delta that selects an entire node.
+
+        await tester //
+            .createDocument()
+            .withCustomContent(MutableDocument(
+              nodes: [
+                ParagraphNode(
+                  id: '1',
+                  text: AttributedText('First paragraph'),
+                ),
+                ParagraphNode(
+                  id: '2',
+                  text: AttributedText('Second paragraph'),
+                ),
+              ],
+            ))
+            .pump();
+
+        // Place the caret at the beginning of the document.
+        await tester.placeCaretInParagraph('1', 0);
+
+        // Simulate the user pressing "Select all" on the native text selection toolbar.
+        // Since we send only the text of the currently selected nodes to the IME, this results in a delta
+        // that selects only the first paragraph.
+        await tester.ime.sendDeltas(const [
+          TextEditingDeltaNonTextUpdate(
+            oldText: '. First paragraph',
+            selection: TextSelection(baseOffset: 0, extentOffset: 17),
+            composing: TextRange(start: -1, end: -1),
+          ),
+        ], getter: imeClientGetter);
+
+        // Ensure that we selected the entire document.
+        expect(
+          SuperEditorInspector.findDocumentSelection(),
+          const DocumentSelection(
+            base: DocumentPosition(
+              nodeId: '1',
+              nodePosition: TextNodePosition(offset: 0),
+            ),
+            extent: DocumentPosition(
+              nodeId: '2',
+              nodePosition: TextNodePosition(offset: 16),
+            ),
+          ),
+        );
       });
     });
 

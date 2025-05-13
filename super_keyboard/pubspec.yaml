@@ -1,6 +1,6 @@
 name: super_keyboard
 description: "A plugin that reports keyboard visibility and size."
-version: 0.1.0
+version: 0.1.1
 homepage: https://github.com/superlistapp/super_editor
 funding:
   - https://flutterbountyhunters.com
@@ -20,6 +20,12 @@ dependencies:
     sdk: flutter
 
   plugin_platform_interface: ^2.0.2
+  # For accessing Activity lifecycle within the Android plugin implementation.
+  # References:
+  #  * https://api.flutter.dev/javadoc/io/flutter/embedding/engine/plugins/activity/ActivityPluginBinding.html#getLifecycle()
+  #  * https://github.com/flutter/plugins/tree/master_archive/packages/flutter_plugin_android_lifecycle
+  flutter_plugin_android_lifecycle: ^2.0.27
+
   logging: ^1.3.0
 
   # So that we can expose test tools to apps.

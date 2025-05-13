@@ -19,6 +19,7 @@ import 'package:super_editor/src/document_operations/selection_operations.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/content_layers.dart';
 import 'package:super_editor/src/infrastructure/flutter/build_context.dart';
+import 'package:super_editor/src/infrastructure/flutter/empty_box.dart';
 import 'package:super_editor/src/infrastructure/flutter/eager_pan_gesture_recognizer.dart';
 import 'package:super_editor/src/infrastructure/flutter/flutter_scheduler.dart';
 import 'package:super_editor/src/infrastructure/multi_tap_gesture.dart';
@@ -366,7 +367,7 @@ class SuperEditorAndroidToolbarFocalPointDocumentLayerBuilder implements SuperEd
         SuperEditorAndroidControlsScope.maybeNearestOf(context) == null) {
       // There's no controls scope. This probably means SuperEditor is configured with
       // a non-Android gesture mode. Build nothing.
-      return const ContentLayerProxyWidget(child: SizedBox());
+      return const ContentLayerProxyWidget(child: EmptyBox());
     }
 
     return AndroidToolbarFocalPointDocumentLayer(
@@ -399,7 +400,7 @@ class SuperEditorAndroidHandlesDocumentLayerBuilder implements SuperEditorLayerB
         SuperEditorAndroidControlsScope.maybeNearestOf(context) == null) {
       // There's no controls scope. This probably means SuperEditor is configured with
       // a non-Android gesture mode. Build nothing.
-      return const ContentLayerProxyWidget(child: SizedBox());
+      return const ContentLayerProxyWidget(child: EmptyBox());
     }
 
     return AndroidHandlesDocumentLayer(
@@ -429,6 +430,7 @@ class AndroidDocumentTouchInteractor extends StatefulWidget {
     required this.getDocumentLayout,
     required this.selection,
     this.openKeyboardWhenTappingExistingSelection = true,
+    this.openKeyboardOnSelectionChange = true,
     required this.openSoftwareKeyboard,
     required this.scrollController,
     required this.fillViewport,
@@ -448,6 +450,9 @@ class AndroidDocumentTouchInteractor extends StatefulWidget {
 
   /// {@macro openKeyboardWhenTappingExistingSelection}
   final bool openKeyboardWhenTappingExistingSelection;
+
+  /// {@macro openKeyboardOnSelectionChange}
+  final bool openKeyboardOnSelectionChange;
 
   /// A callback that should open the software keyboard when invoked.
   final VoidCallback openSoftwareKeyboard;
@@ -810,11 +815,11 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
 
     _showAndHideEditingControlsAfterTapSelection(didTapOnExistingSelection: didTapOnExistingSelection);
 
-    if (didTapOnExistingSelection && widget.openKeyboardWhenTappingExistingSelection) {
-      // The user tapped on the existing selection. Show the software keyboard.
-      //
-      // If the user didn't tap on an existing selection, the software keyboard will
-      // already be visible.
+    if ((didTapOnExistingSelection && widget.openKeyboardWhenTappingExistingSelection) ||
+        (!didTapOnExistingSelection && widget.openKeyboardOnSelectionChange)) {
+      // Either the user tapped somewhere other than the current selection, or
+      // the user tapped on the existing selection and we want to open the keyboard.
+      // when tapping on existing selection. Show the software keyboard.
       widget.openSoftwareKeyboard();
     }
 

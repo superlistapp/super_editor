@@ -1,3 +1,5 @@
+@import "typography";
+
 $lightBackground: WHITE;
 $dividerColor: #EBEBEB;
 
@@ -12,43 +14,9 @@ html[data-bs-theme="light"] {
   .navbar {
     background: $lightBackground;
     border-bottom: 1px solid $dividerColor;
-
-    .navbar-brand {
-      .name {
-        color: #333333;
-      }
-    }
-
-    .nav-item {
-      .nav-link.active {
-        color: WHITE;
-      }
-
-      .fa {
-        color: #444444;
-
-        &:hover {
-          color: BLACK;
-        }
-      }
-    }
   }
 
   nav.main {
-    ol.organization-links {
-      a {
-        background: rgba(0, 0, 0, 0.02);
-
-        &:hover {
-          background: rgba(0, 0, 0, 0.10);
-        }
-      }
-    }
-
-    .organization-nav-divider {
-      background: $dividerColor;
-    }
-
     a {
       color: #666666;
 
@@ -78,20 +46,85 @@ html[data-bs-theme="light"] {
 
       color: #222222;
     }
+
+    font-family: $fontSerif;
+    letter-spacing: 0.03em;
+
+    p {
+      font-size: 16px;
+    }
+
+    p, li {
+      code:not([class*="hljs"]):not(a *) {
+        // ^ don't apply these styles to highlightJS blocks of code.
+        margin-left: 2px;
+        margin-right: 2px;
+
+        padding-left: 4px;
+        padding-right: 4px;
+        padding-top: 2px;
+        padding-bottom: 2px;
+
+        color: BLACK;
+
+        background: #EEE;
+        border-radius: 4px;
+        border: 1px solid #CCC;
+      }
+    }
+
+    a {
+      color: #444;
+
+      &:hover {
+        color: BLACK;
+      }
+
+      code:not([class*="hljs"]) {
+        color: #444;
+
+        // ^ don't apply these styles to highlightJS blocks of code.
+        &:hover {
+          color: BLACK;
+        }
+      }
+    }
   }
 
-  .table-of-contents {
-    ol {
+  .right-pane {
+    .content {
       border-left: 1px solid #EBEBEB;
 
-      li {
-        a {
-          color: #666666;
+      .table-of-contents {
+        ol ol {
+          border-left: 1px solid #EBEBEB;
+        }
 
-          &:hover {
-            color: BLACK;
+        ol {
+          li {
+            a {
+              color: #666666;
+
+              &:hover {
+                color: BLACK;
+              }
+            }
           }
         }
+      }
+
+      ol.organization-links {
+        a {
+          background: rgba(0, 0, 0, 0.02);
+
+          &:hover {
+            background: rgba(0, 0, 0, 0.10);
+          }
+        }
+      }
+
+      .organization-nav-divider {
+        background: $dividerColor;
       }
     }
   }

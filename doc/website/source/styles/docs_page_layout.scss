@@ -1,22 +1,17 @@
+@import "typography";
+
 $contributorDiameter: 32px;
 $contributorRadius: 16px;
 
 .navbar {
   margin-bottom: 24px;
+  height: 54px;
 
+  background: WHITE;
+
+  font-family: $fontSerif;
   font-size: 16px;
   line-height: 1em;
-
-  .navbar-brand {
-    .name {
-      padding-left: 16px;
-
-      color: #FF4444;
-      font-size: 18px;
-      font-weight: bold;
-      text-transform: uppercase;
-    }
-  }
 
   #docsearch {
     position: absolute;
@@ -30,6 +25,29 @@ $contributorRadius: 16px;
     }
   }
 
+  .navbar-collapse {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+
+    a.home {
+      position:absolute;
+      left: 50%;
+      translateX: -50%;
+
+      color: #444444;
+
+      &:hover {
+        color: BLACK;
+      }
+    }
+
+    .navbar-nav {
+      margin-left: 0 !important;
+      margin-right: 0 !important;
+    }
+  }
+
   .nav-item {
     margin-left: 0.75em;
     margin-right: 0.75em;
@@ -37,12 +55,27 @@ $contributorRadius: 16px;
     > a.nav-link {
       margin: 0;
       padding: 0;
+
+      color: #545454;
+
+      &:hover {
+        color: BLACK;
+      }
+    }
+
+    .nav-link.active {
+      color: #CCCCCC;
     }
 
     .fa {
       cursor: pointer;
 
-      font-size: 22px;
+      color: #444444;
+      font-size: 18px;
+
+      &:hover {
+        color: BLACK;
+      }
     }
   }
 }
@@ -82,36 +115,19 @@ $contributorRadius: 16px;
 }
 
 nav.main {
-  ol.organization-links {
-    a {
-      display: block;
-      margin-top: 8px;
-      margin-bottom: 8px;
-
-      border-radius: 8px;
-    }
-
-    .fa {
-      // Constant width so that icons of different widths still align
-      // label text across multiple buttons.
-      width: 24px;
-    }
-  }
-
-  .organization-nav-divider {
-    margin-top: 32px;
-    margin-bottom: 32px;
-
-    padding: 0;
-
-    height: 1px;
+  // Displayed faded by default for low distraction reading of the main content.
+  opacity: 0.2;
+  transition: opacity 0.3s ease;
+  &:hover {
+    opacity: 1.0;
   }
 
   .header {
     display: block;
-    margin-top: 50px;
+    margin-top: 0px;
     margin-bottom: 16px;
 
+    font-family: $fontSerif;
     font-size: 24px;
     font-weight: bold;
   }
@@ -133,7 +149,7 @@ nav.main {
   }
 
   .link-group {
-    margin-bottom: 50px;
+    margin-bottom: 25px;
 
     .title {
       font-weight: bold;
@@ -239,7 +255,9 @@ main.page-content {
   padding-right: 48px;
   padding-bottom: 72px;
 
-  font-size: 1.2em;
+  font-size: 18px;
+  font-weight: 100;
+  line-height: 1.4em;
 
   @media(width <= 768px) {
     padding-left: 24px;
@@ -250,45 +268,125 @@ main.page-content {
     margin-bottom: 48px;
     padding-top: 100px;
     padding-bottom: 100px;
+    padding-left: 24px;
+    padding-right: 24px;
 
     text-align: center;
+    text-wrap: balance;
   }
 
   h2, h3, h4, h5, h6 {
     margin-top: 1.8em;
   }
+  h2 {
+    font-size: 2em;
+  }
+  h3 {
+    font-size: 1.5em;
+  }
+  h4 {
+    font-size: 1.2em;
+  }
+  h5 {
+    font-size: 1em;
+  }
+  h6 {
+    font-size: 0.7em;
+  }
 
-  pre code {
+  p {
+    line-height: 1.6em;
+  }
+  p + p, ul + p, ol + p, pre + p {
+    margin-top: 2em;
+  }
+
+  li {
     margin-top: 1em;
-    margin-bottom: 1em;
+  }
+
+  pre {
+    margin-top: 2em;
+  }
+  p + pre {
+    // Huge the preceding paragraph because it probably introduced this
+    // code block.
+    margin-top: 1em;
   }
 }
 
-.table-of-contents {
-  ol {
-    // This style applies to all levels of lists in the ToC.
-    margin: 0;
-    padding: 0;
-    padding-left: 16px;
-
-    list-style-type: none;
-
-    font-size: 14px;
+.right-pane {
+  // Displayed faded by default for low distraction reading of the main content.
+  opacity: 0.2;
+  transition: opacity 0.3s ease;
+  &:hover {
+    opacity: 1.0;
   }
 
-  > ol {
-    padding-left: 32px;
-    padding-top: 16px;
-    padding-bottom: 16px;
-    padding-right: 0;
+  .content {
+    .table-of-contents {
+      margin-top: 16px;
 
-    li {
-      margin-top: 1em;
-      margin-bottom: 1em;
+      h3 {
+        margin-bottom: 0;
+        padding-left: 32px;
 
-      a {
-        text-decoration: none;
+        font-size: 12px;
+        font-weight: bold;
+        text-transform: uppercase;
       }
+
+      ol {
+        // This style applies to all levels of lists in the ToC.
+        margin: 0;
+        padding: 0;
+        padding-left: 16px;
+
+        list-style-type: none;
+
+        font-size: 14px;
+      }
+
+      > ol {
+        padding-left: 32px;
+        padding-top: 0;
+        padding-bottom: 16px;
+        padding-right: 0;
+
+        li {
+          margin-top: 1em;
+          margin-bottom: 1em;
+
+          a {
+            text-decoration: none;
+          }
+        }
+      }
+    }
+
+    ol.organization-links {
+      a {
+        display: block;
+        margin-top: 8px;
+        margin-bottom: 8px;
+
+        border-radius: 8px;
+      }
+
+      .fa {
+        // Constant width so that icons of different widths still align
+        // label text across multiple buttons.
+        width: 24px;
+      }
+    }
+
+    .organization-nav-divider {
+      margin-top: 32px;
+      margin-bottom: 32px;
+
+      padding: 0;
+
+      height: 1px;
     }
   }
 }

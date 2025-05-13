@@ -1,3 +1,7 @@
+## 0.1.0-dev.10
+* Adjustment: Make it possible to serialize text inline placeholders as inline embeds.
+* Fix: Exception when serializing an empty document.
+
 ## 0.1.0-dev.9
 * Adjustment: Parsing deltas now allow for configurable merging of consecutive blocks, e.g., lines of code.
 

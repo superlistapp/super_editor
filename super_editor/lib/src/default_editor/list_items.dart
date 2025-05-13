@@ -9,6 +9,7 @@ import 'package:super_editor/src/core/editor.dart';
 import 'package:super_editor/src/core/styles.dart';
 import 'package:super_editor/src/default_editor/attributions.dart';
 import 'package:super_editor/src/default_editor/blocks/indentation.dart';
+import 'package:super_editor/src/default_editor/text_tools.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/attributed_text_styles.dart';
 import 'package:super_editor/src/infrastructure/keyboard.dart';
@@ -165,11 +166,16 @@ class ListItemComponentBuilder implements ComponentBuilder {
       ordinalValue = computeListItemOrdinalValue(node, document);
     }
 
+    final textDirection = getParagraphDirection(node.text.toPlainText());
+    final textAlignment = textDirection == TextDirection.ltr ? TextAlign.left : TextAlign.right;
+
     return switch (node.type) {
       ListItemType.unordered => UnorderedListItemComponentViewModel(
           nodeId: node.id,
           indent: node.indent,
           text: node.text,
+          textDirection: textDirection,
+          textAlignment: textAlignment,
           textStyleBuilder: noStyleBuilder,
           selectionColor: const Color(0x00000000),
         ),
@@ -178,6 +184,8 @@ class ListItemComponentBuilder implements ComponentBuilder {
           indent: node.indent,
           ordinalValue: ordinalValue,
           text: node.text,
+          textDirection: textDirection,
+          textAlignment: textAlignment,
           textStyleBuilder: noStyleBuilder,
           selectionColor: const Color(0x00000000),
         ),
@@ -200,9 +208,12 @@ class ListItemComponentBuilder implements ComponentBuilder {
         indent: componentViewModel.indent,
         dotStyle: componentViewModel.dotStyle,
         textSelection: componentViewModel.selection,
+        textDirection: componentViewModel.textDirection,
+        textAlignment: componentViewModel.textAlignment,
         selectionColor: componentViewModel.selectionColor,
         highlightWhenEmpty: componentViewModel.highlightWhenEmpty,
         underlines: componentViewModel.createUnderlines(),
+        inlineWidgetBuilders: componentViewModel.inlineWidgetBuilders,
       );
     } else if (componentViewModel is OrderedListItemComponentViewModel) {
       return OrderedListItemComponent(
@@ -210,12 +221,15 @@ class ListItemComponentBuilder implements ComponentBuilder {
         indent: componentViewModel.indent,
         listIndex: componentViewModel.ordinalValue!,
         text: componentViewModel.text,
+        textDirection: componentViewModel.textDirection,
+        textAlignment: componentViewModel.textAlignment,
         styleBuilder: componentViewModel.textStyleBuilder,
         numeralStyle: componentViewModel.numeralStyle,
         textSelection: componentViewModel.selection,
         selectionColor: componentViewModel.selectionColor,
         highlightWhenEmpty: componentViewModel.highlightWhenEmpty,
         underlines: componentViewModel.createUnderlines(),
+        inlineWidgetBuilders: componentViewModel.inlineWidgetBuilders,
       );
     }
 
@@ -285,6 +299,7 @@ abstract class ListItemComponentViewModel extends SingleColumnLayoutComponentVie
           indent == other.indent &&
           text == other.text &&
           textDirection == other.textDirection &&
+          textAlignment == other.textAlignment &&
           selection == other.selection &&
           selectionColor == other.selectionColor &&
           highlightWhenEmpty == other.highlightWhenEmpty &&
@@ -302,6 +317,7 @@ abstract class ListItemComponentViewModel extends SingleColumnLayoutComponentVie
       indent.hashCode ^
       text.hashCode ^
       textDirection.hashCode ^
+      textAlignment.hashCode ^
       selection.hashCode ^
       selectionColor.hashCode ^
       highlightWhenEmpty.hashCode ^
@@ -359,6 +375,7 @@ class UnorderedListItemComponentViewModel extends ListItemComponentViewModel {
       textStyleBuilder: textStyleBuilder,
       dotStyle: dotStyle,
       textDirection: textDirection,
+      textAlignment: textAlignment,
       selection: selection,
       selectionColor: selectionColor,
       composingRegion: composingRegion,
@@ -367,6 +384,7 @@ class UnorderedListItemComponentViewModel extends ListItemComponentViewModel {
       spellingErrors: List.from(spellingErrors),
       grammarErrorUnderlineStyle: grammarErrorUnderlineStyle,
       grammarErrors: List.from(grammarErrors),
+      inlineWidgetBuilders: inlineWidgetBuilders,
     );
   }
 
@@ -427,6 +445,7 @@ class OrderedListItemComponentViewModel extends ListItemComponentViewModel {
       text: text,
       textStyleBuilder: textStyleBuilder,
       textDirection: textDirection,
+      textAlignment: textAlignment,
       selection: selection,
       selectionColor: selectionColor,
       composingRegion: composingRegion,
@@ -435,6 +454,7 @@ class OrderedListItemComponentViewModel extends ListItemComponentViewModel {
       spellingErrors: List.from(spellingErrors),
       grammarErrorUnderlineStyle: grammarErrorUnderlineStyle,
       grammarErrors: List.from(grammarErrors),
+      inlineWidgetBuilders: inlineWidgetBuilders,
     );
   }
 
@@ -497,6 +517,8 @@ class UnorderedListItemComponent extends StatefulWidget {
     Key? key,
     required this.componentKey,
     required this.text,
+    this.textDirection = TextDirection.ltr,
+    this.textAlignment = TextAlign.left,
     required this.styleBuilder,
     this.inlineWidgetBuilders = const [],
     this.dotBuilder = _defaultUnorderedListItemDotBuilder,
@@ -514,6 +536,8 @@ class UnorderedListItemComponent extends StatefulWidget {
 
   final GlobalKey componentKey;
   final AttributedText text;
+  final TextDirection textDirection;
+  final TextAlign textAlignment;
   final AttributionStyleBuilder styleBuilder;
   final InlineWidgetBuilderChain inlineWidgetBuilders;
   final UnorderedListItemDotBuilder dotBuilder;
@@ -562,34 +586,39 @@ class _UnorderedListItemComponentState extends State<UnorderedListItemComponent>
     return ProxyTextDocumentComponent(
       key: widget.componentKey,
       textComponentKey: _innerTextComponentKey,
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: indentSpace,
-            decoration: BoxDecoration(
-              border: widget.showDebugPaint ? Border.all(width: 1, color: Colors.grey) : null,
+      child: Directionality(
+        textDirection: widget.textDirection,
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              width: indentSpace,
+              decoration: BoxDecoration(
+                border: widget.showDebugPaint ? Border.all(width: 1, color: Colors.grey) : null,
+              ),
+              child: SizedBox(
+                height: lineHeight,
+                child: widget.dotBuilder(context, widget),
+              ),
             ),
-            child: SizedBox(
-              height: lineHeight,
-              child: widget.dotBuilder(context, widget),
+            Expanded(
+              child: TextComponent(
+                key: _innerTextComponentKey,
+                text: widget.text,
+                textDirection: widget.textDirection,
+                textAlign: widget.textAlignment,
+                textStyleBuilder: widget.styleBuilder,
+                inlineWidgetBuilders: widget.inlineWidgetBuilders,
+                textSelection: widget.textSelection,
+                textScaler: textScaler,
+                selectionColor: widget.selectionColor,
+                highlightWhenEmpty: widget.highlightWhenEmpty,
+                underlines: widget.underlines,
+                showDebugPaint: widget.showDebugPaint,
+              ),
             ),
-          ),
-          Expanded(
-            child: TextComponent(
-              key: _innerTextComponentKey,
-              text: widget.text,
-              textStyleBuilder: widget.styleBuilder,
-              inlineWidgetBuilders: widget.inlineWidgetBuilders,
-              textSelection: widget.textSelection,
-              textScaler: textScaler,
-              selectionColor: widget.selectionColor,
-              highlightWhenEmpty: widget.highlightWhenEmpty,
-              underlines: widget.underlines,
-              showDebugPaint: widget.showDebugPaint,
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -663,6 +692,8 @@ class OrderedListItemComponent extends StatefulWidget {
     required this.componentKey,
     required this.listIndex,
     required this.text,
+    this.textDirection = TextDirection.ltr,
+    this.textAlignment = TextAlign.left,
     required this.styleBuilder,
     this.inlineWidgetBuilders = const [],
     this.numeralBuilder = _defaultOrderedListItemNumeralBuilder,
@@ -681,6 +712,8 @@ class OrderedListItemComponent extends StatefulWidget {
   final GlobalKey componentKey;
   final int listIndex;
   final AttributedText text;
+  final TextDirection textDirection;
+  final TextAlign textAlignment;
   final AttributionStyleBuilder styleBuilder;
   final InlineWidgetBuilderChain inlineWidgetBuilders;
   final OrderedListItemNumeralBuilder numeralBuilder;
@@ -729,35 +762,40 @@ class _OrderedListItemComponentState extends State<OrderedListItemComponent> {
     return ProxyTextDocumentComponent(
       key: widget.componentKey,
       textComponentKey: _innerTextComponentKey,
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: indentSpace,
-            height: lineHeight,
-            decoration: BoxDecoration(
-              border: widget.showDebugPaint ? Border.all(width: 1, color: Colors.grey) : null,
-            ),
-            child: SizedBox(
+      child: Directionality(
+        textDirection: widget.textDirection,
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              width: indentSpace,
               height: lineHeight,
-              child: widget.numeralBuilder(context, widget),
+              decoration: BoxDecoration(
+                border: widget.showDebugPaint ? Border.all(width: 1, color: Colors.grey) : null,
+              ),
+              child: SizedBox(
+                height: lineHeight,
+                child: widget.numeralBuilder(context, widget),
+              ),
             ),
-          ),
-          Expanded(
-            child: TextComponent(
-              key: _innerTextComponentKey,
-              text: widget.text,
-              textStyleBuilder: widget.styleBuilder,
-              inlineWidgetBuilders: widget.inlineWidgetBuilders,
-              textSelection: widget.textSelection,
-              textScaler: textScaler,
-              selectionColor: widget.selectionColor,
-              highlightWhenEmpty: widget.highlightWhenEmpty,
-              underlines: widget.underlines,
-              showDebugPaint: widget.showDebugPaint,
+            Expanded(
+              child: TextComponent(
+                key: _innerTextComponentKey,
+                text: widget.text,
+                textDirection: widget.textDirection,
+                textAlign: widget.textAlignment,
+                textStyleBuilder: widget.styleBuilder,
+                inlineWidgetBuilders: widget.inlineWidgetBuilders,
+                textSelection: widget.textSelection,
+                textScaler: textScaler,
+                selectionColor: widget.selectionColor,
+                highlightWhenEmpty: widget.highlightWhenEmpty,
+                underlines: widget.underlines,
+                showDebugPaint: widget.showDebugPaint,
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

@@ -203,7 +203,7 @@ class SpellingErrorParagraphComponentBuilder implements ComponentBuilder {
   }
 
   @override
-  ParagraphComponent? createComponent(
+  Widget? createComponent(
     SingleColumnDocumentComponentContext componentContext,
     SingleColumnLayoutComponentViewModel componentViewModel,
   ) {

@@ -528,10 +528,9 @@ class DragHandleAutoScroller {
       // If currentScrollOffset isn't greater than zero it means we are already
       // at the top edge of the scrollable, so we can't scroll further up.
       if (currentScrollOffset > 0.0) {
-        // Jump to the position where the offset sits at the leading boundary.
-        scrollPosition.jumpTo(
-          (currentScrollOffset + (offsetInViewport.dy - _dragAutoScrollBoundary.leading).clamp(min, max)),
-        );
+        final clampedVisibleScrollOffset =
+            (currentScrollOffset + (offsetInViewport.dy - _dragAutoScrollBoundary.leading)).clamp(min, max);
+        scrollPosition.jumpTo(clampedVisibleScrollOffset);
       }
     } else if (offsetInViewport.dy > _getViewportBox().size.height - _dragAutoScrollBoundary.trailing) {
       // The offset is below the trailing boundary. We need to scroll down

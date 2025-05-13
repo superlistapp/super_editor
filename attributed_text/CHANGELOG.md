@@ -1,4 +1,14 @@
-## [0.4.1] - Dec, 2024
+## [0.4.4] - Feb, 2024
+ * [FIX] - `toggleAttribution()` error with inline placeholders.
+
+## [0.4.3] - Jan, 2024
+ * [FIX] - Accessing individual characters in `AttributedText` no longer tries to access indices
+           out of bounds.
+
+## [0.4.2] - Jan, 2024
+ * [FIX] - A few `AttributedText` methods weren't updated to account for full length with placeholders.
+
+## [0.4.1] - Jan, 2024
  * [ADJUSTMENT] - Added a few queries for the character or the placeholder at a given text offset.
 
 ## [0.4.0] - Dec, 2024

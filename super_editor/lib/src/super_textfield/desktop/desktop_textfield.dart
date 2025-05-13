@@ -1,13 +1,13 @@
 import 'dart:math';
 import 'dart:ui' as ui;
 
-import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart' hide SelectableText;
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 import 'package:super_editor/src/core/document_layout.dart';
+import 'package:super_editor/src/default_editor/text_tools.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/actions.dart';
 import 'package:super_editor/src/infrastructure/attributed_text_styles.dart';
@@ -23,7 +23,6 @@ import 'package:super_editor/src/infrastructure/multi_tap_gesture.dart';
 import 'package:super_editor/src/infrastructure/platforms/mac/mac_ime.dart';
 import 'package:super_editor/src/infrastructure/platforms/platform.dart';
 import 'package:super_editor/src/infrastructure/text_input.dart';
-import 'package:super_editor/src/super_textfield/infrastructure/text_field_gestures_interaction_overrides.dart';
 import 'package:super_editor/src/super_textfield/infrastructure/text_field_scroller.dart';
 import 'package:super_editor/src/super_textfield/super_textfield.dart';
 import 'package:super_text_layout/super_text_layout.dart';
@@ -52,6 +51,7 @@ class SuperDesktopTextField extends StatefulWidget {
     this.tapRegionGroupId,
     this.textController,
     this.textStyleBuilder = defaultTextFieldStyleBuilder,
+    this.inlineWidgetBuilders = const [],
     this.textAlign = TextAlign.left,
     this.hintBehavior = HintBehavior.displayHintUntilFocus,
     this.hintBuilder,
@@ -93,6 +93,9 @@ class SuperDesktopTextField extends StatefulWidget {
   /// [textController] based on the attributions in that content.
   final AttributionStyleBuilder textStyleBuilder;
 
+  /// {@macro super_text_field_inline_widget_builders}
+  final InlineWidgetBuilderChain inlineWidgetBuilders;
+
   /// Policy for when the hint should be displayed.
   final HintBehavior hintBehavior;
 
@@ -102,7 +105,10 @@ class SuperDesktopTextField extends StatefulWidget {
   final WidgetBuilder? hintBuilder;
 
   /// The alignment to use for text in this text field.
-  final TextAlign textAlign;
+  ///
+  /// If `null`, the text alignment is determined by the text direction
+  /// of the content.
+  final TextAlign? textAlign;
 
   /// The visual representation of the user's selection highlight.
   final SelectionHighlightStyle selectionHighlightStyle;
@@ -170,6 +176,22 @@ class SuperDesktopTextFieldState extends State<SuperDesktopTextField> implements
 
   late SuperTextFieldContext _textFieldContext;
   late ImeAttributedTextEditingController _controller;
+
+  /// The text direction of the first character in the text.
+  ///
+  /// Used to align and position the caret depending on whether
+  /// the text is RTL or LTR.
+  TextDirection? _contentTextDirection;
+
+  /// The text direction applied to the inner text.
+  TextDirection get _textDirection => _contentTextDirection ?? TextDirection.ltr;
+
+  TextAlign get _textAlign =>
+      widget.textAlign ??
+      ((_textDirection == TextDirection.ltr) //
+          ? TextAlign.left
+          : TextAlign.right);
+
   late ScrollController _scrollController;
   late TextFieldScroller _textFieldScroller;
 
@@ -198,6 +220,8 @@ class SuperDesktopTextFieldState extends State<SuperDesktopTextField> implements
 
     // Check if we need to update the selection.
     _updateSelectionAndComposingRegionOnFocusChange();
+
+    _contentTextDirection = getParagraphDirection(_controller.text.toPlainText());
   }
 
   @override
@@ -316,6 +340,12 @@ class SuperDesktopTextFieldState extends State<SuperDesktopTextField> implements
     // so that any pending visual content changes can happen before
     // attempting to calculate the visual position of the selection extent.
     onNextFrame((_) => _updateViewportHeight());
+
+    // Even though we calling `onNextFrame`, it doesn't necessarily mean
+    // a new frame will be scheduled. Call setState to ensure the text direction is updated.
+    setState(() {
+      _contentTextDirection = getParagraphDirection(_controller.text.toPlainText());
+    });
   }
 
   /// Returns true if the viewport height changed, false otherwise.
@@ -433,7 +463,7 @@ class SuperDesktopTextFieldState extends State<SuperDesktopTextField> implements
                     key: _textScrollKey,
                     textKey: _textKey,
                     textController: _controller,
-                    textAlign: widget.textAlign,
+                    textAlign: _textAlign,
                     scrollController: _scrollController,
                     viewportHeight: _viewportHeight,
                     estimatedLineHeight: _getEstimatedLineHeight(),
@@ -495,60 +525,64 @@ class SuperDesktopTextFieldState extends State<SuperDesktopTextField> implements
   }
 
   Widget _buildSelectableText() {
-    return SuperText(
-      key: _textKey,
-      richText: _controller.text.computeTextSpan(widget.textStyleBuilder),
-      textAlign: widget.textAlign,
-      textScaler: _textScaler,
-      layerBeneathBuilder: (context, textLayout) {
-        final isTextEmpty = _controller.text.isEmpty;
-        final showHint = widget.hintBuilder != null &&
-            ((isTextEmpty && widget.hintBehavior == HintBehavior.displayHintUntilTextEntered) ||
-                (isTextEmpty && !_focusNode.hasFocus && widget.hintBehavior == HintBehavior.displayHintUntilFocus));
+    return Directionality(
+      textDirection: _textDirection,
+      child: SuperText(
+        key: _textKey,
+        richText: _controller.text.computeInlineSpan(context, widget.textStyleBuilder, widget.inlineWidgetBuilders),
+        textAlign: _textAlign,
+        textDirection: _textDirection,
+        textScaler: _textScaler,
+        layerBeneathBuilder: (context, textLayout) {
+          final isTextEmpty = _controller.text.isEmpty;
+          final showHint = widget.hintBuilder != null &&
+              ((isTextEmpty && widget.hintBehavior == HintBehavior.displayHintUntilTextEntered) ||
+                  (isTextEmpty && !_focusNode.hasFocus && widget.hintBehavior == HintBehavior.displayHintUntilFocus));
 
-        return Stack(
-          children: [
-            if (widget.textController?.selection.isValid == true)
-              // Selection highlight beneath the text.
-              TextLayoutSelectionHighlight(
-                textLayout: textLayout,
-                style: widget.selectionHighlightStyle,
-                selection: widget.textController?.selection,
-              ),
-            // Underline beneath the composing region.
-            if (widget.textController?.composingRegion.isValid == true && _shouldShowComposingUnderline)
-              TextUnderlineLayer(
-                textLayout: textLayout,
-                style: StraightUnderlineStyle(
-                  color: widget.textStyleBuilder({}).color ?? //
-                      (Theme.of(context).brightness == Brightness.light ? Colors.black : Colors.white),
+          return Stack(
+            children: [
+              if (widget.textController?.selection.isValid == true)
+                // Selection highlight beneath the text.
+                TextLayoutSelectionHighlight(
+                  textLayout: textLayout,
+                  style: widget.selectionHighlightStyle,
+                  selection: widget.textController?.selection,
                 ),
-                underlines: [
-                  TextLayoutUnderline(
-                    range: widget.textController!.composingRegion,
+              // Underline beneath the composing region.
+              if (widget.textController?.composingRegion.isValid == true && _shouldShowComposingUnderline)
+                TextUnderlineLayer(
+                  textLayout: textLayout,
+                  style: StraightUnderlineStyle(
+                    color: widget.textStyleBuilder({}).color ?? //
+                        (Theme.of(context).brightness == Brightness.light ? Colors.black : Colors.white),
                   ),
-                ],
-              ),
-            if (showHint) //
-              Align(
-                alignment: Alignment.centerLeft,
-                child: widget.hintBuilder!(context),
-              ),
-          ],
-        );
-      },
-      layerAboveBuilder: (context, textLayout) {
-        if (!_focusNode.hasFocus) {
-          return const SizedBox();
-        }
+                  underlines: [
+                    TextLayoutUnderline(
+                      range: widget.textController!.composingRegion,
+                    ),
+                  ],
+                ),
+              if (showHint) //
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: widget.hintBuilder!(context),
+                ),
+            ],
+          );
+        },
+        layerAboveBuilder: (context, textLayout) {
+          if (!_focusNode.hasFocus) {
+            return const SizedBox();
+          }
 
-        return TextLayoutCaret(
-          textLayout: textLayout,
-          style: widget.caretStyle,
-          position: _controller.selection.extent,
-          blinkTimingMode: widget.blinkTimingMode,
-        );
-      },
+          return TextLayoutCaret(
+            textLayout: textLayout,
+            style: widget.caretStyle,
+            position: _controller.selection.extent,
+            blinkTimingMode: widget.blinkTimingMode,
+          );
+        },
+      ),
     );
   }
 }

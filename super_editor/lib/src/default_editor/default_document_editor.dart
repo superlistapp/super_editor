@@ -61,6 +61,12 @@ final defaultRequestHandlers = List.unmodifiable(<EditRequestHandler>[
   (editor, request) => request is RemoveComposerPreferenceStylesRequest //
       ? RemoveComposerPreferenceStylesCommand(request.stylesToRemove)
       : null,
+  (editor, request) => request is InsertStyledTextAtCaretRequest //
+      ? InsertStyledTextAtCaretCommand(request.text)
+      : null,
+  (editor, request) => request is InsertInlinePlaceholderAtCaretRequest //
+      ? InsertInlinePlaceholderAtCaretCommand(request.placeholder)
+      : null,
   (editor, request) => request is InsertTextRequest
       ? InsertTextCommand(
           documentPosition: request.documentPosition,

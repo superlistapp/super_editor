@@ -1,0 +1,12 @@
+layout: layouts/docs_page.jinja
+
+navigation:
+  show_contributors: false
+
+  header: Contributing
+
+  items:
+    - title: Getting Started
+      items:
+        - title: Quickstart
+          url: contributing/quickstart

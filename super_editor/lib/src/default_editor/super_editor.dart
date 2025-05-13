@@ -665,7 +665,7 @@ class SuperEditorState extends State<SuperEditor> {
       widget.keyboardActions ??
       (inputSource == TextInputSource.ime ? defaultImeKeyboardActions : defaultKeyboardActions);
 
-  void _openSoftareKeyboard() {
+  void _openSoftwareKeyboard() {
     if (!_softwareKeyboardController.hasDelegate) {
       // There is no IME connection. It isn't possible to request the keyboard.
       return;
@@ -899,7 +899,8 @@ class SuperEditorState extends State<SuperEditor> {
           getDocumentLayout: () => editContext.documentLayout,
           selection: editContext.composer.selectionNotifier,
           openKeyboardWhenTappingExistingSelection: widget.selectionPolicies.openKeyboardWhenTappingExistingSelection,
-          openSoftwareKeyboard: _openSoftareKeyboard,
+          openKeyboardOnSelectionChange: widget.imePolicies.openKeyboardOnSelectionChange,
+          openSoftwareKeyboard: _openSoftwareKeyboard,
           contentTapHandlers: [
             ..._contentTapHandlers ?? [],
             for (final plugin in widget.plugins) //
@@ -919,7 +920,8 @@ class SuperEditorState extends State<SuperEditor> {
           getDocumentLayout: () => editContext.documentLayout,
           selection: editContext.composer.selectionNotifier,
           openKeyboardWhenTappingExistingSelection: widget.selectionPolicies.openKeyboardWhenTappingExistingSelection,
-          openSoftwareKeyboard: _openSoftareKeyboard,
+          openKeyboardOnSelectionChange: widget.imePolicies.openKeyboardOnSelectionChange,
+          openSoftwareKeyboard: _openSoftwareKeyboard,
           isImeConnected: _isImeConnected,
           contentTapHandlers: [
             ..._contentTapHandlers ?? [],
@@ -1438,18 +1440,22 @@ final defaultImeKeyboardActions = <DocumentKeyboardAction>[
   selectAllWhenCmdAIsPressed,
   cmdBToToggleBold,
   cmdIToToggleItalics,
+  // All handlers that use backspace should be placed before `doNothingWithBackspaceOnWeb`,
+  // otherwise they will not run on web.
+  backspaceToUnIndentListItem,
+  backspaceToUnIndentParagraph,
+  backspaceToUnIndentTask,
+  backspaceToConvertTaskToParagraph,
+  backspaceToClearParagraphBlockType,
+  // We handled all shortcuts that care about backspace. Let the browser IME handle the
+  // backspace to perform text deletion.
   doNothingWithBackspaceOnWeb,
   doNothingWithCtrlOrCmdAndZOnWeb,
   tabToIndentTask,
   shiftTabToUnIndentTask,
-  backspaceToUnIndentTask,
   tabToIndentParagraph,
   shiftTabToUnIndentParagraph,
-  backspaceToUnIndentParagraph,
-  backspaceToConvertTaskToParagraph,
-  backspaceToUnIndentListItem,
   enterToUnIndentParagraph,
-  backspaceToClearParagraphBlockType,
   deleteDownstreamCharacterWithCtrlDeleteOnMac,
   scrollOnCtrlOrCmdAndHomeKeyPress,
   scrollOnCtrlOrCmdAndEndKeyPress,

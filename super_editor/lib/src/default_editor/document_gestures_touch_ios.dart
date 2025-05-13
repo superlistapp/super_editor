@@ -17,6 +17,7 @@ import 'package:super_editor/src/default_editor/text_tools.dart';
 import 'package:super_editor/src/document_operations/selection_operations.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/content_layers.dart';
+import 'package:super_editor/src/infrastructure/flutter/empty_box.dart';
 import 'package:super_editor/src/infrastructure/flutter/eager_pan_gesture_recognizer.dart';
 import 'package:super_editor/src/infrastructure/flutter/build_context.dart';
 import 'package:super_editor/src/infrastructure/flutter/flutter_scheduler.dart';
@@ -265,6 +266,7 @@ class IosDocumentTouchInteractor extends StatefulWidget {
     required this.getDocumentLayout,
     required this.selection,
     this.openKeyboardWhenTappingExistingSelection = true,
+    this.openKeyboardOnSelectionChange = true,
     required this.openSoftwareKeyboard,
     required this.isImeConnected,
     required this.scrollController,
@@ -285,6 +287,9 @@ class IosDocumentTouchInteractor extends StatefulWidget {
 
   /// {@macro openKeyboardWhenTappingExistingSelection}
   final bool openKeyboardWhenTappingExistingSelection;
+
+  /// {@macro openKeyboardOnSelectionChange}
+  final bool openKeyboardOnSelectionChange;
 
   /// A callback that should open the software keyboard when invoked.
   final VoidCallback openSoftwareKeyboard;
@@ -700,6 +705,11 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
           // Place the document selection at the location where the
           // user tapped.
           _selectPosition(adjustedSelectionPosition);
+
+          // Ensure the keyboard is visible.
+          if (widget.openKeyboardOnSelectionChange) {
+            widget.openSoftwareKeyboard();
+          }
         }
       }
     } else {
@@ -1943,7 +1953,7 @@ class SuperEditorIosToolbarFocalPointDocumentLayerBuilder implements SuperEditor
     if (defaultTargetPlatform != TargetPlatform.iOS || SuperEditorIosControlsScope.maybeNearestOf(context) == null) {
       // There's no controls scope. This probably means SuperEditor is configured with
       // a non-iOS gesture mode. Build nothing.
-      return const ContentLayerProxyWidget(child: SizedBox());
+      return const ContentLayerProxyWidget(child: EmptyBox());
     }
 
     return IosToolbarFocalPointDocumentLayer(
@@ -1976,7 +1986,7 @@ class SuperEditorIosHandlesDocumentLayerBuilder implements SuperEditorLayerBuild
     if (defaultTargetPlatform != TargetPlatform.iOS || SuperEditorIosControlsScope.maybeNearestOf(context) == null) {
       // There's no controls scope. This probably means SuperEditor is configured with
       // a non-iOS gesture mode. Build nothing.
-      return const ContentLayerProxyWidget(child: SizedBox());
+      return const ContentLayerProxyWidget(child: EmptyBox());
     }
 
     final controlsController = SuperEditorIosControlsScope.rootOf(context);

@@ -119,13 +119,13 @@ class AttributedText {
   late final String _textWithPlaceholders;
 
   /// Returns the character or placeholder at offset zero.
-  Object get first => placeholders[0] ?? _text[0];
+  Object get first => placeholders[0] ?? _textWithPlaceholders[0];
 
   /// Returns the character or placeholder at the given [offset].
-  Object operator [](int offset) => placeholders[offset] ?? _text[offset];
+  Object operator [](int offset) => placeholders[offset] ?? _textWithPlaceholders[offset];
 
   /// Returns the character or placeholder at the end of this `AttributedText`.
-  Object get last => placeholders[length - 1] ?? _text[length - 1];
+  Object get last => placeholders[length - 1] ?? _textWithPlaceholders[length - 1];
 
   /// Returns a plain-text version of this `AttributedText`.
   ///
@@ -270,14 +270,14 @@ class AttributedText {
   /// Returns all spans in this [AttributedText] for the given [attributions].
   Set<AttributionSpan> getAttributionSpans(Set<Attribution> attributions) => getAttributionSpansInRange(
         attributionFilter: (a) => attributions.contains(a),
-        range: SpanRange(0, _text.length),
+        range: SpanRange(0, length),
       );
 
   /// Returns all spans in this [AttributedText], for attributions that are
   /// selected by the given [filter].
   Set<AttributionSpan> getAttributionSpansByFilter(AttributionFilter filter) => getAttributionSpansInRange(
         attributionFilter: filter,
-        range: SpanRange(0, _text.length),
+        range: SpanRange(0, length),
       );
 
   /// Returns spans for each attribution that (at least partially) appear
@@ -421,16 +421,20 @@ class AttributedText {
     final textEndCopyOffset =
         (endOffset ?? length) - placeholdersBeforeStartOffset.length - placeholdersAfterStartBeforeEndOffset.length;
 
+    // The span marker offsets are based on the text with placeholders, so we need
+    // to copy the text with placeholders to ensure the span markers are correct.
+    final textWithPlaceholders = toPlainText();
+
     // Note: -1 because copyText() uses an exclusive `start` and `end` but
     // _copyAttributionRegion() uses an inclusive `start` and `end`.
-    final startCopyOffset = startOffset < _text.length ? startOffset : _text.length - 1;
+    final startCopyOffset = startOffset < textWithPlaceholders.length ? startOffset : textWithPlaceholders.length - 1;
     int endCopyOffset;
     if (endOffset == startOffset) {
       endCopyOffset = startCopyOffset;
     } else if (endOffset != null) {
       endCopyOffset = endOffset - 1;
     } else {
-      endCopyOffset = _text.length - 1;
+      endCopyOffset = textWithPlaceholders.length - 1;
     }
     _log.fine('offsets, start: $startCopyOffset, end: $endCopyOffset');
 
@@ -502,7 +506,7 @@ class AttributedText {
 
     return AttributedText(
       _text + other._text,
-      spans.copy()..addAt(other: other.spans, index: _text.length),
+      spans.copy()..addAt(other: other.spans, index: length),
       {
         ...placeholders,
         ...other.placeholders.map((offset, placeholder) => MapEntry(offset + length, placeholder)),
@@ -707,7 +711,7 @@ class AttributedText {
   ///
   /// Attribution groups are useful when computing all style variations for [AttributedText].
   Iterable<MultiAttributionSpan> computeAttributionSpans() {
-    return spans.collapseSpans(contentLength: _text.length);
+    return spans.collapseSpans(contentLength: length);
   }
 
   /// Returns a copy of this [AttributedText].

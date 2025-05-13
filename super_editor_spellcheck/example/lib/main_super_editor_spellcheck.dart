@@ -82,10 +82,22 @@ class _SuperEditorSpellcheckScreenState extends State<_SuperEditorSpellcheckScre
     _spellingAndGrammarPlugin = SpellingAndGrammarPlugin(
       iosControlsController: _iosControlsController,
       androidControlsController: _androidControlsController,
+      ignoreRules: [
+        SpellingIgnoreRules.byAttribution(boldAttribution),
+        SpellingIgnoreRules.byAttributionFilter((attr) => attr is LinkAttribution),
+        SpellingIgnoreRules.byPattern(RegExp(r'#\w+')),
+      ],
     );
 
     _editor = createDefaultDocumentEditor(
-      document: MutableDocument.empty(),
+      document: MutableDocument(
+        // Start the document with some misspelled content to ensure pre-existing
+        // content is analyzed and styled.
+        nodes: [
+          ParagraphNode(id: "1", text: AttributedText("Tihs is mipelled")),
+          ParagraphNode(id: "2", text: AttributedText()),
+        ],
+      ),
       composer: MutableDocumentComposer(),
     );
 
@@ -104,13 +116,65 @@ class _SuperEditorSpellcheckScreenState extends State<_SuperEditorSpellcheckScre
       _editor.execute([
         InsertTextRequest(
           documentPosition: DocumentPosition(
-            nodeId: _editor.context.document.first.id,
-            nodePosition: _editor.context.document.first.beginningPosition,
+            nodeId: _editor.context.document.last.id,
+            nodePosition: _editor.context.document.last.beginningPosition,
           ),
           textToInsert:
               'Flutter is a populr framework developd by Google for buildng natively compilid applications for mobil, web, and desktop from a single code base. Its hot reload featur allows developers to see the changes they make in real-time without havng to restart the app, which can greatly sped up the development proccess. With a rich set of widgets and a customizble UI, Flutter makes it easy to creat beautiful and performant apps quickly.',
           attributions: {},
         ),
+      ]);
+      _editor.execute([
+        InsertNodeAfterNodeRequest(
+          existingNodeId: _editor.context.document.last.id,
+          newNode: ParagraphNode(id: Editor.createNodeId(), text: AttributedText('')),
+        )
+      ]);
+      _editor.execute([
+        InsertAttributedTextRequest(
+          DocumentPosition(
+            nodeId: _editor.context.document.last.id,
+            nodePosition: _editor.context.document.last.endPosition,
+          ),
+          AttributedText(
+            'The spellchecking can be configured to ignore spelling errors for some situation, like links: https://www.populr.com, '
+            'tags: #framwork, or text with specific attributions, like bold attbution.',
+            AttributedSpans(
+              attributions: [
+                const SpanMarker(
+                  attribution: LinkAttribution('https://www.populr.com'),
+                  offset: 94,
+                  markerType: SpanMarkerType.start,
+                ),
+                const SpanMarker(
+                  attribution: LinkAttribution('https://www.populr.com'),
+                  offset: 115,
+                  markerType: SpanMarkerType.end,
+                ),
+                const SpanMarker(
+                  attribution: PatternTagAttribution(),
+                  offset: 124,
+                  markerType: SpanMarkerType.start,
+                ),
+                const SpanMarker(
+                  attribution: PatternTagAttribution(),
+                  offset: 132,
+                  markerType: SpanMarkerType.end,
+                ),
+                const SpanMarker(
+                  attribution: boldAttribution,
+                  offset: 176,
+                  markerType: SpanMarkerType.start,
+                ),
+                const SpanMarker(
+                  attribution: boldAttribution,
+                  offset: 189,
+                  markerType: SpanMarkerType.end,
+                ),
+              ],
+            ),
+          ),
+        )
       ]);
     });
   }
@@ -126,6 +190,17 @@ class _SuperEditorSpellcheckScreenState extends State<_SuperEditorSpellcheckScre
             autofocus: true,
             editor: _editor,
             stylesheet: defaultStylesheet.copyWith(
+              inlineTextStyler: (attributions, existingStyle) {
+                TextStyle style = defaultInlineTextStyler(attributions, existingStyle);
+
+                if (attributions.whereType<PatternTagAttribution>().isNotEmpty) {
+                  style = style.copyWith(
+                    color: Colors.orange,
+                  );
+                }
+
+                return style;
+              },
               addRulesAfter: [
                 if (Theme.of(context).brightness == Brightness.dark) ..._darkModeStyles,
               ],

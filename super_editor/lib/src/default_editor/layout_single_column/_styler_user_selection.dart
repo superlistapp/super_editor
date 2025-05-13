@@ -134,20 +134,22 @@ class SingleColumnLayoutSelectionStyler extends SingleColumnLayoutStylePhase {
       if (viewModel is TextComponentViewModel) {
         final componentTextColor = viewModel.textStyleBuilder({}).color;
 
-        final textWithSelectionAttributions =
-            textSelection != null && _selectedTextColorStrategy != null && componentTextColor != null
-                ? (viewModel.text.copyText(0)
-                  ..addAttribution(
-                    ColorAttribution(_selectedTextColorStrategy!(
-                      originalTextColor: componentTextColor,
-                      selectionHighlightColor: _selectionStyles.selectionColor,
-                    )),
-                    SpanRange(textSelection.start, textSelection.end - 1),
-                    // The selected range might already have a color attribution. We want to override it
-                    // with the selected text color.
-                    overwriteConflictingSpans: true,
-                  ))
-                : viewModel.text;
+        final textWithSelectionAttributions = textSelection != null &&
+                !textSelection.isCollapsed &&
+                _selectedTextColorStrategy != null &&
+                componentTextColor != null
+            ? (viewModel.text.copyText(0)
+              ..addAttribution(
+                ColorAttribution(_selectedTextColorStrategy!(
+                  originalTextColor: componentTextColor,
+                  selectionHighlightColor: _selectionStyles.selectionColor,
+                )),
+                SpanRange(textSelection.start, textSelection.end - 1),
+                // The selected range might already have a color attribution. We want to override it
+                // with the selected text color.
+                overwriteConflictingSpans: true,
+              ))
+            : viewModel.text;
 
         viewModel
           ..text = textWithSelectionAttributions

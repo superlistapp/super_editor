@@ -147,7 +147,7 @@ class ParagraphComponentBuilder implements ComponentBuilder {
   }
 
   @override
-  ParagraphComponent? createComponent(
+  Widget? createComponent(
       SingleColumnDocumentComponentContext componentContext, SingleColumnLayoutComponentViewModel componentViewModel) {
     if (componentViewModel is! ParagraphComponentViewModel) {
       return null;
@@ -303,6 +303,186 @@ class ParagraphComponentViewModel extends SingleColumnLayoutComponentViewModel w
       showComposingRegionUnderline.hashCode;
 }
 
+/// A [ComponentBuilder] for rendering hint text in the first node of a document,
+/// when its an empty text node.
+class HintComponentBuilder extends ParagraphComponentBuilder {
+  const HintComponentBuilder(
+    this.hint,
+    this.hintStyleBuilder,
+  );
+
+  final String hint;
+  final TextStyle Function(BuildContext) hintStyleBuilder;
+
+  @override
+  SingleColumnLayoutComponentViewModel? createViewModel(
+    Document document,
+    DocumentNode node,
+  ) {
+    if (node is! ParagraphNode) {
+      return null;
+    }
+
+    final nodeIndex = document.getNodeIndexById(
+      node.id,
+    );
+
+    if (nodeIndex > 0) {
+      // This isn't the first node, we don't ever want to show hint text.
+      return null;
+    }
+
+    if (document.length > 1) {
+      // There are more than one nodes in the document, we don't want to show
+      // hint text.
+      return null;
+    }
+
+    return HintComponentViewModel.fromParagraphViewModel(
+      super.createViewModel(document, node)! as ParagraphComponentViewModel,
+      hintText: hint,
+    );
+  }
+
+  @override
+  Widget? createComponent(
+    SingleColumnDocumentComponentContext componentContext,
+    SingleColumnLayoutComponentViewModel componentViewModel,
+  ) {
+    if (componentViewModel is! HintComponentViewModel) {
+      return null;
+    }
+
+    return TextWithHintComponent(
+      key: componentContext.componentKey,
+      text: componentViewModel.text,
+      textStyleBuilder: componentViewModel.textStyleBuilder,
+      hintText: AttributedText(componentViewModel.hintText),
+      hintStyleBuilder: (attributions) => hintStyleBuilder(componentContext.context),
+      textSelection: componentViewModel.selection,
+      selectionColor: componentViewModel.selectionColor,
+      underlines: componentViewModel.createUnderlines(),
+      metadata: {
+        if (componentViewModel.blockType != null) //
+          'blockType': componentViewModel.blockType,
+      },
+    );
+  }
+}
+
+class HintComponentViewModel extends SingleColumnLayoutComponentViewModel with TextComponentViewModel {
+  factory HintComponentViewModel.fromParagraphViewModel(
+    ParagraphComponentViewModel viewModel, {
+    required String hintText,
+  }) {
+    return HintComponentViewModel(
+      nodeId: viewModel.nodeId,
+      maxWidth: viewModel.maxWidth,
+      padding: viewModel.padding,
+      blockType: viewModel.blockType,
+      text: viewModel.text,
+      hintText: hintText,
+      inlineWidgetBuilders: viewModel.inlineWidgetBuilders,
+      textAlignment: viewModel.textAlignment,
+      textDirection: viewModel.textDirection,
+      textStyleBuilder: viewModel.textStyleBuilder,
+      selectionColor: viewModel.selectionColor,
+      indent: viewModel.indent,
+      selection: viewModel.selection,
+      highlightWhenEmpty: viewModel.highlightWhenEmpty,
+    );
+  }
+
+  HintComponentViewModel({
+    required super.nodeId,
+    super.maxWidth,
+    required super.padding,
+    this.blockType,
+    required this.text,
+    required this.hintText,
+    this.inlineWidgetBuilders = const [],
+    this.textAlignment = TextAlign.left,
+    this.textDirection = TextDirection.ltr,
+    required this.textStyleBuilder,
+    required this.selectionColor,
+    this.indent = 0,
+    this.selection,
+    this.highlightWhenEmpty = false,
+  });
+
+  String hintText;
+
+  Attribution? blockType;
+
+  @override
+  AttributedText text;
+  @override
+  AttributionStyleBuilder textStyleBuilder;
+  @override
+  InlineWidgetBuilderChain inlineWidgetBuilders;
+  @override
+  TextDirection textDirection;
+  @override
+  TextAlign textAlignment;
+  int indent;
+  @override
+  TextSelection? selection;
+  @override
+  Color selectionColor;
+  @override
+  bool highlightWhenEmpty;
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+
+  @override
+  HintComponentViewModel copy() {
+    return HintComponentViewModel(
+      nodeId: nodeId,
+      maxWidth: maxWidth,
+      padding: padding,
+      text: text,
+      textStyleBuilder: textStyleBuilder,
+      textDirection: textDirection,
+      inlineWidgetBuilders: inlineWidgetBuilders,
+      indent: indent,
+      selection: selection,
+      selectionColor: selectionColor,
+      highlightWhenEmpty: highlightWhenEmpty,
+      hintText: hintText,
+    );
+  }
+
+  @override
+  // ignore: avoid_equals_and_hash_code_on_mutable_classes
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      super == other &&
+          other is HintComponentViewModel &&
+          runtimeType == other.runtimeType &&
+          text == other.text &&
+          hintText == other.hintText &&
+          textDirection == other.textDirection &&
+          textAlignment == other.textAlignment &&
+          indent == other.indent &&
+          selection == other.selection &&
+          selectionColor == other.selectionColor &&
+          highlightWhenEmpty == other.highlightWhenEmpty;
+
+  @override
+  // ignore: avoid_equals_and_hash_code_on_mutable_classes
+  int get hashCode =>
+      super.hashCode ^
+      text.hashCode ^
+      hintText.hashCode ^
+      textDirection.hashCode ^
+      textAlignment.hashCode ^
+      indent.hashCode ^
+      selection.hashCode ^
+      selectionColor.hashCode ^
+      highlightWhenEmpty.hashCode;
+}
+
 /// The standard [TextBlockIndentCalculator] used by paragraphs in `SuperEditor`.
 double defaultParagraphIndentCalculator(TextStyle textStyle, int indent) {
   return ((textStyle.fontSize ?? 16) * 0.60) * 4 * indent;
@@ -335,38 +515,42 @@ class _ParagraphComponentState extends State<ParagraphComponent>
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Indent spacing on left.
-        SizedBox(
-          width: widget.viewModel.indentCalculator(
-            widget.viewModel.textStyleBuilder({}),
-            widget.viewModel.indent,
+    return Directionality(
+      textDirection: widget.viewModel.textDirection,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Indent spacing on left.
+          SizedBox(
+            width: widget.viewModel.indentCalculator(
+              widget.viewModel.textStyleBuilder({}),
+              widget.viewModel.indent,
+            ),
           ),
-        ),
-        // The actual paragraph UI.
-        Expanded(
-          child: TextComponent(
-            key: _textKey,
-            text: widget.viewModel.text,
-            textAlign: widget.viewModel.textAlignment,
-            textScaler: widget.viewModel.textScaler,
-            textStyleBuilder: widget.viewModel.textStyleBuilder,
-            inlineWidgetBuilders: widget.viewModel.inlineWidgetBuilders,
-            metadata: widget.viewModel.blockType != null
-                ? {
-                    'blockType': widget.viewModel.blockType,
-                  }
-                : {},
-            textSelection: widget.viewModel.selection,
-            selectionColor: widget.viewModel.selectionColor,
-            highlightWhenEmpty: widget.viewModel.highlightWhenEmpty,
-            underlines: widget.viewModel.createUnderlines(),
-            showDebugPaint: widget.showDebugPaint,
+          // The actual paragraph UI.
+          Expanded(
+            child: TextComponent(
+              key: _textKey,
+              text: widget.viewModel.text,
+              textDirection: widget.viewModel.textDirection,
+              textAlign: widget.viewModel.textAlignment,
+              textScaler: widget.viewModel.textScaler,
+              textStyleBuilder: widget.viewModel.textStyleBuilder,
+              inlineWidgetBuilders: widget.viewModel.inlineWidgetBuilders,
+              metadata: widget.viewModel.blockType != null
+                  ? {
+                      'blockType': widget.viewModel.blockType,
+                    }
+                  : {},
+              textSelection: widget.viewModel.selection,
+              selectionColor: widget.viewModel.selectionColor,
+              highlightWhenEmpty: widget.viewModel.highlightWhenEmpty,
+              underlines: widget.viewModel.createUnderlines(),
+              showDebugPaint: widget.showDebugPaint,
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
