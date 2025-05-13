@@ -14,117 +14,112 @@ class AiFadeInFeatureDemo extends StatefulWidget {
 }
 
 class _AiFadeInFeatureDemoState extends State<AiFadeInFeatureDemo> with SingleTickerProviderStateMixin {
-  late final MutableDocument _document;
-  late final MutableDocumentComposer _composer;
-  late final Editor _editor;
+  // late final MutableDocument _document;
+  // late final MutableDocumentComposer _composer;
+  // late final Editor _editor;
+  //
+  // late final FocusNode _editorFocusNode;
+  //
+  // late final FadeInTextStyler _fadeInStylePhase;
+  //
+  // late final _FakeAiWithEditor _fakeAiWithEditor;
 
-  late final FocusNode _editorFocusNode;
-
-  late final FadeInTextStyler _fadeInStylePhase;
-
-  late final _FakeAi _fakeAi;
+  late final _FakeAiWithMarkdown _fakeAiWithMarkdown;
+  final _gptFeed = MarkdownGptReaderFeed();
 
   @override
   void initState() {
+    print("Initializing AI demo");
     super.initState();
 
-    _document = MutableDocument.empty();
-    _composer = MutableDocumentComposer();
-    _editor = Editor(
-      editables: {
-        Editor.documentKey: _document,
-        Editor.composerKey: _composer,
-      },
-      requestHandlers: [
-        ...defaultRequestHandlers,
-      ],
-    );
+    // _document = MutableDocument(
+    //   nodes: [
+    //     ParagraphNode(id: "1", text: AttributedText()),
+    //   ],
+    // );
+    // _composer = MutableDocumentComposer(
+    //   initialSelection: DocumentSelection.collapsed(
+    //     position: DocumentPosition(nodeId: "1", nodePosition: TextNodePosition(offset: 0)),
+    //   ),
+    // );
+    // _editor = Editor(
+    //   editables: {
+    //     Editor.documentKey: _document,
+    //     Editor.composerKey: _composer,
+    //   },
+    //   requestHandlers: [
+    //     ...defaultRequestHandlers,
+    //   ],
+    // );
+    //
+    // _editorFocusNode = FocusNode();
+    //
+    // _fadeInStylePhase = FadeInTextStyler(this);
+    //
+    // _fakeAiWithEditor = _FakeAiWithEditor(_editor);
 
-    _editorFocusNode = FocusNode();
-
-    _fadeInStylePhase = FadeInTextStyler(this);
-
-    _fakeAi = _FakeAi(_editor)..startSimulatedTextEntry();
+    _fakeAiWithMarkdown = _FakeAiWithMarkdown(_gptFeed);
   }
 
   @override
   void dispose() {
-    _fadeInStylePhase.dispose();
+    _fakeAiWithMarkdown.dispose();
 
-    _fakeAi.dispose();
-
-    _editorFocusNode.dispose();
-
-    _composer.dispose();
-    _editor.dispose();
-    _document.dispose();
+    // _fadeInStylePhase.dispose();
+    //
+    // _fakeAiWithEditor.dispose();
+    //
+    // _editorFocusNode.dispose();
+    //
+    // _composer.dispose();
+    // _editor.dispose();
+    // _document.dispose();
 
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    print("Building AI demo");
     return InTheLabScaffold(
-      content: _buildEditor(),
+      content: GptReader(
+        gptFeed: _gptFeed,
+        stylesheet: defaultStylesheet.copyWith(
+          selectedTextColorStrategy: ({
+            required Color originalTextColor,
+            required Color selectionHighlightColor,
+          }) {
+            return Colors.black;
+          },
+          addRulesAfter: [
+            ...darkModeStyles,
+          ],
+        ),
+        reactions: [
+          MarkdownInlineUpstreamSyntaxReaction(
+            defaultUpstreamInlineMarkdownParsers,
+          ),
+        ],
+      ),
       supplemental: Column(
         spacing: 16,
         children: [
           ElevatedButton(
-            onPressed: () => _fakeAi.startSimulatedTextEntry(),
+            onPressed: () => _fakeAiWithMarkdown.startSimulatedTextEntry(),
             child: Text("Restart Simulation"),
           ),
           ElevatedButton(
-            onPressed: () => _fakeAi.stopSimulatedTextEntry(),
+            onPressed: () => _fakeAiWithMarkdown.stopSimulatedTextEntry(),
             child: Text("Pause Simulation"),
           ),
         ],
       ),
     );
   }
-
-  Widget _buildEditor() {
-    return SuperEditor(
-      editor: _editor,
-      focusNode: _editorFocusNode,
-      componentBuilders: [
-        TaskComponentBuilder(_editor),
-        ...defaultComponentBuilders,
-      ],
-      // shrinkWrap: true,
-      customStylePhases: [
-        _fadeInStylePhase,
-      ],
-      documentOverlayBuilders: [
-        SuperEditorIosToolbarFocalPointDocumentLayerBuilder(),
-        SuperEditorIosHandlesDocumentLayerBuilder(),
-        SuperEditorAndroidToolbarFocalPointDocumentLayerBuilder(),
-        SuperEditorAndroidHandlesDocumentLayerBuilder(),
-        DefaultCaretOverlayBuilder(
-          caretStyle: CaretStyle(
-            color: Colors.red,
-            width: 4,
-            borderRadius: BorderRadius.circular(2),
-          ),
-        ),
-      ],
-      stylesheet: defaultStylesheet.copyWith(
-        selectedTextColorStrategy: ({
-          required Color originalTextColor,
-          required Color selectionHighlightColor,
-        }) {
-          return Colors.black;
-        },
-        addRulesAfter: [
-          ...darkModeStyles,
-        ],
-      ),
-      plugins: {},
-    );
-  }
 }
 
-class _FakeAi {
-  _FakeAi(this._editor) {
+class _FakeAiWithEditor {
+  _FakeAiWithEditor(this._editor) {
     _preCannedDocument = _createFakeAiDocument();
   }
 
@@ -333,14 +328,89 @@ class _FakeAi {
   Duration get _randomAiTextInsertionInterval => Duration(milliseconds: Random().nextInt(400) + 100);
 }
 
-// MutableDocument _createFakeAiDocument() => deserializeMarkdownToDocument('''
-// # AI-Style Fade-In
-// Super Editor supports a special attribution called _FadeInAttribution_ which causes the inserted text to appear with a **fade-in**.''');
+class _FakeAiWithMarkdown {
+  _FakeAiWithMarkdown(this._gptFeed) {
+    _chopDocumentIntoMarkdownInsertions();
+  }
 
-// MutableDocument _createFakeAiDocument() => deserializeMarkdownToDocument('''
-// ![This is an image](https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTBlCAeZTtCKu3AgBfAodstpMeroo905pj5og&s)''');
+  void dispose() {
+    _contentEntryTimer?.cancel();
+    _contentEntryTimer = null;
+  }
 
-MutableDocument _createFakeAiDocument() => deserializeMarkdownToDocument('''
+  final MarkdownGptReaderFeed _gptFeed;
+
+  final _choppedInsertions = <String>[];
+
+  bool _isRunningFadeIn = false;
+
+  Timer? _contentEntryTimer;
+
+  void _chopDocumentIntoMarkdownInsertions() {
+    print("Chopping document into snippets");
+    const minLength = 5;
+    const maxLength = 25;
+
+    int start = 0;
+    while (start < _markdownDocument.length) {
+      final end = _markdownDocument.length - start <= minLength //
+          ? _markdownDocument.length
+          : min(Random().nextInt(maxLength - minLength) + minLength + start, _markdownDocument.length);
+      print("Chopping from $start to $end (of ${_markdownDocument.length})");
+
+      _choppedInsertions.add(
+        _markdownDocument.substring(start, end),
+      );
+
+      start = end;
+    }
+    print("Done chopping document");
+  }
+
+  void startSimulatedTextEntry() {
+    print("Starting simulated text entry");
+    stopSimulatedTextEntry();
+
+    _isRunningFadeIn = true;
+
+    print("Calling _doInsertContent()");
+    _doInsertContent();
+  }
+
+  void _doInsertContent() {
+    if (!_isRunningFadeIn) {
+      print("Not running fade-in. Returning.");
+      return;
+    }
+
+    final snippet = _choppedInsertions.removeAt(0);
+    print("_doInsertContent() - snippet: '$snippet'");
+    _gptFeed.submit(snippet);
+    print("Done with insertion");
+
+    if (_choppedInsertions.isNotEmpty) {
+      print("Scheduling another timer");
+      _contentEntryTimer = Timer(_randomAiTextInsertionInterval, _doInsertContent);
+    }
+  }
+
+  void stopSimulatedTextEntry() {
+    print("STOPPING !!!!! - timer: $_contentEntryTimer");
+    if (!_isRunningFadeIn) {
+      return;
+    }
+
+    _isRunningFadeIn = false;
+    _contentEntryTimer?.cancel();
+    _contentEntryTimer = null;
+  }
+
+  Duration get _randomAiTextInsertionInterval => Duration(milliseconds: Random().nextInt(400) + 100);
+}
+
+MutableDocument _createFakeAiDocument() => deserializeMarkdownToDocument(_markdownDocument);
+
+const _markdownDocument = '''
 # AI-Style Fade-In
 It's common for chat GPT AI systems to fade in text and content as its generated by the AI model. Super Editor supports this.
 
@@ -357,4 +427,43 @@ To use this behavior, apps need to opt in to the following:
  * Configure Super Editor's style phases to include the `FadeInStyler`.
 
 
-''');
+''';
+
+class MarkdownGptReaderFeed extends GptReaderFeed {
+  void submit(String markdown) {
+    print("Ensuring editor is attached.");
+    ensureEditorIsAttached();
+    print("Executing markdown insertion: '$markdown'");
+
+    final now = DateTime.now();
+    for (final character in markdown.characters) {
+      if (character == "\n") {
+        final newNodeId = Editor.createNodeId();
+        editor!.execute([
+          InsertNodeAtIndexRequest(
+            nodeIndex: editor!.document.length,
+            newNode: ParagraphNode(id: newNodeId, text: AttributedText()),
+          ),
+          ChangeSelectionRequest(
+            DocumentSelection.collapsed(
+              position: DocumentPosition(nodeId: newNodeId, nodePosition: TextNodePosition(offset: 0)),
+            ),
+            SelectionChangeType.insertContent,
+            SelectionReason.contentChange,
+          ),
+        ]);
+        continue;
+      }
+
+      editor!.execute([
+        InsertPlainTextAtCaretRequest(character, createdAt: now),
+      ]);
+    }
+
+    print("Document after inserting '$markdown':");
+    for (final node in editor!.document) {
+      print(" - ${node.id}: $node");
+    }
+    print("---");
+  }
+}

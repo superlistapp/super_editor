@@ -1920,19 +1920,29 @@ class ChangeSingleColumnLayoutComponentStylesCommand extends EditCommand {
 /// If the [plainText] contains any newlines, those newlines will be inserted
 /// as characters. This request doesn't insert any new nodes.
 class InsertPlainTextAtCaretRequest implements EditRequest {
-  const InsertPlainTextAtCaretRequest(this.plainText);
+  const InsertPlainTextAtCaretRequest(
+    this.plainText, {
+    this.createdAt,
+  });
 
   final String plainText;
+
+  /// An (optional) timestamp that describes when this text was inserted.
+  final DateTime? createdAt;
 }
 
 class InsertPlainTextAtCaretCommand extends EditCommand {
   const InsertPlainTextAtCaretCommand(
     this.plainText, {
     this.attributions = const {},
+    this.createdAt,
   });
 
   final String plainText;
   final Set<Attribution> attributions;
+
+  /// An (optional) timestamp that describes when this text was inserted.
+  final DateTime? createdAt;
 
   @override
   void execute(EditContext context, CommandExecutor executor) {
@@ -1957,6 +1967,7 @@ class InsertPlainTextAtCaretCommand extends EditCommand {
       InsertTextCommand(
         documentPosition: range.start,
         textToInsert: plainText,
+        createdAt: createdAt,
         attributions: attributions,
       ),
     );

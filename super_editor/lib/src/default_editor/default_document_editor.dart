@@ -216,6 +216,7 @@ final defaultRequestHandlers = List.unmodifiable(<EditRequestHandler>[
       ? InsertPlainTextAtCaretCommand(
           request.plainText,
           attributions: editor.composer.preferences.currentAttributions,
+          createdAt: request.createdAt,
         )
       : null,
   (editor, request) => request is InsertTextRequest

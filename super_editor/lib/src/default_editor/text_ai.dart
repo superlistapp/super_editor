@@ -97,7 +97,7 @@ class CreatedAtAttribution implements Attribution {
   final DateTime start;
 
   @override
-  String get id => 'fade-in';
+  String get id => 'created-at';
 
   @override
   bool canMergeWith(Attribution other) {
@@ -107,4 +107,12 @@ class CreatedAtAttribution implements Attribution {
 
     return start == other.start;
   }
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is CreatedAtAttribution && runtimeType == other.runtimeType && start == other.start;
+
+  @override
+  int get hashCode => start.hashCode;
 }

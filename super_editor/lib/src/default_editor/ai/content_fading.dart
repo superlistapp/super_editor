@@ -34,6 +34,7 @@ class FadeInTextStyler extends SingleColumnLayoutStylePhase {
 
   @override
   SingleColumnLayoutViewModel style(Document document, SingleColumnLayoutViewModel viewModel) {
+    print("Running FadeInTextStyler - style()");
     _isFading = false;
 
     final newViewModel = SingleColumnLayoutViewModel(
