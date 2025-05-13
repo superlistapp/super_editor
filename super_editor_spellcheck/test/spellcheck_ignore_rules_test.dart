@@ -10,6 +10,60 @@ import 'package:super_editor_spellcheck/super_editor_spellcheck.dart';
 void main() {
   group('SuperEditor spellcheck >', () {
     group('ignore rules >', () {
+      testWidgetsOnArbitraryDesktop('ignores by block type', (tester) async {
+        final spellCheckerService = _FakeSpellChecker();
+
+        await _pumpTestApp(
+          tester,
+          document: MutableDocument(
+            nodes: [
+              ParagraphNode(
+                id: "1",
+                text: AttributedText(
+                  'This is a paragraph',
+                ),
+              ),
+              ParagraphNode(
+                id: "2",
+                text: AttributedText(
+                  'This is a code block',
+                ),
+                metadata: const {
+                  NodeMetadata.blockType: codeAttribution,
+                },
+              ),
+              ParagraphNode(
+                id: "3",
+                text: AttributedText(
+                  'This is another paragraph',
+                ),
+              ),
+              ParagraphNode(
+                id: "4",
+                text: AttributedText(
+                  'This is a blockquote',
+                ),
+                metadata: const {
+                  NodeMetadata.blockType: blockquoteAttribution,
+                },
+              ),
+            ],
+          ),
+          ignoreRules: [
+            SpellingIgnoreRules.byBlockType(codeAttribution),
+            SpellingIgnoreRules.byBlockType(blockquoteAttribution),
+          ],
+          spellCheckerService: spellCheckerService,
+        );
+
+        // Ensure the spell checker service was queried for the paragraphs but
+        // not for the code block or blockquote.
+        expect(spellCheckerService.queriedTexts, [
+          'This is a paragraph',
+          'This is another paragraph',
+        ]);
+      });
+
       testWidgetsOnArbitraryDesktop('ignores by pattern', (tester) async {
         final spellCheckerService = _FakeSpellChecker();
 
