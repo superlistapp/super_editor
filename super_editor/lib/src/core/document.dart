@@ -510,7 +510,7 @@ extension InspectNodeAffinity on DocumentNode {
 /// The path to a [DocumentNode] within a [Document].
 ///
 /// In the average case, the [NodePath] is effectively the same as a node's
-/// ID. However, some nodes are [CompositeDocumentNode]s, which have a hierarchy.
+/// ID. However, some nodes are [GroupNode]s, which have a hierarchy.
 /// For a composite node, the node path includes every node ID in the composite
 /// hierarchy.
 class NodePath {
@@ -606,13 +606,11 @@ class NodePath {
 
 /// A [DocumentNode] that contains other [DocumentNode]s in a hierarchy.
 ///
-/// [CompositeDocumentNode]s can contain more [CompositeDocumentNode]s. There's no
-/// logical restriction on the depth of this hierarchy. However, the effect of a multi-level
-/// hierarchy depends on the document layout and components that are used within a
-/// given editor.
-class CompositeDocumentNode extends DocumentNode {
-  CompositeDocumentNode(this.id, this._nodes)
-      : assert(_nodes.isNotEmpty, "CompositeDocumentNode's must contain at least 1 inner node.");
+/// [GroupNode]s can contain more [GroupNode]s. There's no logical restriction on the depth of this hierarchy.
+/// However, the effect of a multi-level hierarchy depends on the document layout and components that are used
+/// within a given editor.
+class GroupNode extends DocumentNode {
+  GroupNode(this.id, this._nodes); // : assert(_nodes.isNotEmpty, "GroupNode's must contain at least 1 inner node.");
 
   @override
   final String id;
@@ -825,14 +823,14 @@ class CompositeDocumentNode extends DocumentNode {
   }
 
   DocumentNode copy() {
-    return CompositeDocumentNode(id, List.from(_nodes));
+    return GroupNode(id, List.from(_nodes));
   }
 
   @override
   String toString() => "[CompositeNode] - $_nodes";
 }
 
-/// A selection within a single [CompositeDocumentNode].
+/// A selection within a single [GroupNode].
 class CompositeNodeSelection implements NodeSelection {
   const CompositeNodeSelection({
     required this.base,
@@ -854,7 +852,7 @@ class CompositeNodeSelection implements NodeSelection {
   int get hashCode => base.hashCode ^ extent.hashCode;
 }
 
-/// A [NodePosition] for a [CompositeDocumentNode], which is a node that contains
+/// A [NodePosition] for a [GroupNode], which is a node that contains
 /// other nodes in a node hierarchy.
 class CompositeNodePosition implements NodePosition {
   const CompositeNodePosition({

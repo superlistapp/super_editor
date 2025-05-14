@@ -368,6 +368,8 @@ typedef ViewModelChangeCallback = void Function({
 /// Creates view models and components to display various [DocumentNode]s
 /// in a [Document].
 abstract class ComponentBuilder {
+  const ComponentBuilder();
+
   /// Produces a [SingleColumnLayoutComponentViewModel] with default styles for the given
   /// [node], or returns `null` if this builder doesn't apply to the given node.
   SingleColumnLayoutComponentViewModel? createViewModel(

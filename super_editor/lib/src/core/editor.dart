@@ -1150,7 +1150,7 @@ class MutableDocument with Iterable<DocumentNode> implements Document, Editable 
           return parentNodePath.addSubPath(nodeId);
         }
 
-        if (child is CompositeDocumentNode) {
+        if (child is GroupNode) {
           print(" - this is a composite node. Adding another level to the search queue.");
           print(" - adding subpath: ${parentNodePath.addSubPath(nodeId)}");
           print(" - subpath has children: ${child.nodes.map((node) => node.id).join(", ")}");

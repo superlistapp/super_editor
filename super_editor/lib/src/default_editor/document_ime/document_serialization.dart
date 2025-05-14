@@ -106,7 +106,7 @@ class DocumentImeSerializer {
       var node = selectedNodes[i];
       final nodePath = NodePath.forNode(node.id);
       print("Serializing node for IME: $node");
-      if (node is CompositeDocumentNode) {
+      if (node is GroupNode) {
         final serializedCharacterCount = _serializeCompositeNode(NodePath.forNode(node.id), node, buffer);
         characterCount += serializedCharacterCount;
 
@@ -140,12 +140,12 @@ class DocumentImeSerializer {
     editorImeLog.fine("IME serialization:\n'$imeText'");
   }
 
-  int _serializeCompositeNode(NodePath nodePath, CompositeDocumentNode node, StringBuffer buffer) {
+  int _serializeCompositeNode(NodePath nodePath, GroupNode node, StringBuffer buffer) {
     print("Serializing a composite node: $nodePath");
     int characterCount = 0;
     for (final innerNode in node.nodes) {
       final innerNodePath = nodePath.addSubPath(innerNode.id);
-      if (innerNode is CompositeDocumentNode) {
+      if (innerNode is GroupNode) {
         characterCount += _serializeCompositeNode(innerNodePath, innerNode, buffer);
         continue;
       }

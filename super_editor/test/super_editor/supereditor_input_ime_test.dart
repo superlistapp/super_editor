@@ -1190,7 +1190,7 @@ Paragraph two
         _expectTextEditingValue(
           actualTextEditingValue: DocumentImeSerializer(
             MutableDocument(nodes: [
-              CompositeDocumentNode("1", [
+              GroupNode("1", [
                 ParagraphNode(id: "2", text: AttributedText(text)),
               ]),
             ]),
@@ -1216,11 +1216,11 @@ Paragraph two
         _expectTextEditingValue(
           actualTextEditingValue: DocumentImeSerializer(
             MutableDocument(nodes: [
-              CompositeDocumentNode("1", [
+              GroupNode("1", [
                 ParagraphNode(id: "2", text: AttributedText(text)),
               ]),
               HorizontalRuleNode(id: "3"),
-              CompositeDocumentNode("4", [
+              GroupNode("4", [
                 ParagraphNode(id: "5", text: AttributedText(text)),
               ])
             ]),

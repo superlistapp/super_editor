@@ -48,9 +48,9 @@ MutableDocument _createInitialDocument() {
   return MutableDocument(
     nodes: [
       ParagraphNode(id: "1.1", text: AttributedText("Paragraph before the first level of embedding.")),
-      CompositeDocumentNode("2", [
+      GroupNode("2", [
         ParagraphNode(id: "2.1", text: AttributedText("Paragraph before the second level of embedding.")),
-        CompositeDocumentNode("3", [
+        GroupNode("3", [
           ParagraphNode(id: "3.1", text: AttributedText("This paragraph is in the 3rd level of document.")),
         ]),
         ParagraphNode(id: "2.3", text: AttributedText("Paragraph after the second level of embedding.")),
@@ -69,7 +69,7 @@ class _BannerComponentBuilder implements ComponentBuilder {
     DocumentNode node,
     List<ComponentBuilder> componentBuilders,
   ) {
-    if (node is! CompositeDocumentNode) {
+    if (node is! GroupNode) {
       return null;
     }
 
@@ -150,7 +150,7 @@ class _BannerComponent extends StatefulWidget {
     required this.childComponents,
   });
 
-  final CompositeDocumentNode node;
+  final GroupNode node;
   final List<String> childComponentIds;
   final List<Widget> childComponents;
 

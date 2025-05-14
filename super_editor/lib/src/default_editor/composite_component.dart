@@ -12,7 +12,7 @@ class CompositeComponentBuilder implements ComponentBuilder {
     DocumentNode node,
     List<ComponentBuilder> componentBuilders,
   ) {
-    if (node is! CompositeDocumentNode) {
+    if (node is! GroupNode) {
       return null;
     }
 
@@ -91,7 +91,7 @@ class CompositeViewModel extends SingleColumnLayoutComponentViewModel {
     required this.childViewModels,
   });
 
-  final CompositeDocumentNode node;
+  final GroupNode node;
   final List<SingleColumnLayoutComponentViewModel> childViewModels;
 
   @override
@@ -123,7 +123,7 @@ class CompositeComponent extends StatefulWidget {
     required this.childComponents,
   });
 
-  final CompositeDocumentNode node;
+  final GroupNode node;
   final List<Widget> childComponents;
 
   @override

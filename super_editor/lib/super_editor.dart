@@ -49,6 +49,7 @@ export 'src/default_editor/layout_single_column/selection_aware_viewmodel.dart';
 export 'src/default_editor/selection_binary.dart';
 export 'src/default_editor/selection_upstream_downstream.dart';
 export 'src/default_editor/super_editor.dart';
+export 'src/default_editor/table.dart';
 export 'src/default_editor/tasks.dart';
 export 'src/default_editor/text.dart';
 export 'src/default_editor/text_tools.dart';

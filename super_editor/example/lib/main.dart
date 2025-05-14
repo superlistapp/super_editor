@@ -19,6 +19,7 @@ import 'package:example/demos/in_the_lab/feature_composite_nodes.dart';
 import 'package:example/demos/in_the_lab/feature_ios_native_context_menu.dart';
 import 'package:example/demos/in_the_lab/feature_pattern_tags.dart';
 import 'package:example/demos/in_the_lab/feature_stable_tags.dart';
+import 'package:example/demos/in_the_lab/feature_tables.dart';
 import 'package:example/demos/in_the_lab/selected_text_colors_demo.dart';
 import 'package:example/demos/in_the_lab/spelling_error_decorations.dart';
 import 'package:example/demos/interaction_spot_checks/toolbar_following_content_in_layer.dart';
@@ -332,6 +333,13 @@ final _menu = <_MenuGroup>[
         title: 'Native iOS Toolbar',
         pageBuilder: (context) {
           return const NativeIosContextMenuFeatureDemo();
+        },
+      ),
+      _MenuItem(
+        icon: Icons.account_tree,
+        title: 'Tables',
+        pageBuilder: (context) {
+          return const TablesDemo();
         },
       ),
       _MenuItem(
