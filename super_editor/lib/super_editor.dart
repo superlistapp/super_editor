@@ -14,9 +14,6 @@ export 'src/core/edit_context.dart';
 export 'src/core/editor.dart';
 export 'src/core/styles.dart';
 
-// AI
-export 'src/ai/gpt_reader.dart';
-
 // Chat
 export 'src/chat/message_page_scaffold.dart';
 

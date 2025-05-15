@@ -14,66 +14,59 @@ class AiFadeInFeatureDemo extends StatefulWidget {
 }
 
 class _AiFadeInFeatureDemoState extends State<AiFadeInFeatureDemo> with SingleTickerProviderStateMixin {
-  // late final MutableDocument _document;
-  // late final MutableDocumentComposer _composer;
-  // late final Editor _editor;
-  //
-  // late final FocusNode _editorFocusNode;
-  //
-  // late final FadeInTextStyler _fadeInStylePhase;
-  //
-  // late final _FakeAiWithEditor _fakeAiWithEditor;
+  late final MutableDocument _document;
+  late final MutableDocumentComposer _composer;
+  late final Editor _editor;
 
-  late final _FakeAiWithMarkdown _fakeAiWithMarkdown;
-  final _gptFeed = MarkdownGptReaderFeed();
+  late final FocusNode _editorFocusNode;
+
+  late final FadeInTextStyler _fadeInStylePhase;
+
+  late final _FakeAiWithEditor _fakeAiWithEditor;
 
   @override
   void initState() {
     print("Initializing AI demo");
     super.initState();
 
-    // _document = MutableDocument(
-    //   nodes: [
-    //     ParagraphNode(id: "1", text: AttributedText()),
-    //   ],
-    // );
-    // _composer = MutableDocumentComposer(
-    //   initialSelection: DocumentSelection.collapsed(
-    //     position: DocumentPosition(nodeId: "1", nodePosition: TextNodePosition(offset: 0)),
-    //   ),
-    // );
-    // _editor = Editor(
-    //   editables: {
-    //     Editor.documentKey: _document,
-    //     Editor.composerKey: _composer,
-    //   },
-    //   requestHandlers: [
-    //     ...defaultRequestHandlers,
-    //   ],
-    // );
-    //
-    // _editorFocusNode = FocusNode();
-    //
-    // _fadeInStylePhase = FadeInTextStyler(this);
-    //
-    // _fakeAiWithEditor = _FakeAiWithEditor(_editor);
+    _document = MutableDocument(
+      nodes: [
+        ParagraphNode(id: "1", text: AttributedText()),
+      ],
+    );
+    _composer = MutableDocumentComposer(
+      initialSelection: DocumentSelection.collapsed(
+        position: DocumentPosition(nodeId: "1", nodePosition: TextNodePosition(offset: 0)),
+      ),
+    );
+    _editor = Editor(
+      editables: {
+        Editor.documentKey: _document,
+        Editor.composerKey: _composer,
+      },
+      requestHandlers: [
+        ...defaultRequestHandlers,
+      ],
+    );
 
-    _fakeAiWithMarkdown = _FakeAiWithMarkdown(_gptFeed);
+    _editorFocusNode = FocusNode();
+
+    _fadeInStylePhase = FadeInTextStyler(this);
+
+    _fakeAiWithEditor = _FakeAiWithEditor(_editor);
   }
 
   @override
   void dispose() {
-    _fakeAiWithMarkdown.dispose();
+    _fadeInStylePhase.dispose();
 
-    // _fadeInStylePhase.dispose();
-    //
-    // _fakeAiWithEditor.dispose();
-    //
-    // _editorFocusNode.dispose();
-    //
-    // _composer.dispose();
-    // _editor.dispose();
-    // _document.dispose();
+    _fakeAiWithEditor.dispose();
+
+    _editorFocusNode.dispose();
+
+    _composer.dispose();
+    _editor.dispose();
+    _document.dispose();
 
     super.dispose();
   }
@@ -82,8 +75,8 @@ class _AiFadeInFeatureDemoState extends State<AiFadeInFeatureDemo> with SingleTi
   Widget build(BuildContext context) {
     print("Building AI demo");
     return InTheLabScaffold(
-      content: GptReader(
-        gptFeed: _gptFeed,
+      content: SuperReader(
+        editor: _editor,
         stylesheet: defaultStylesheet.copyWith(
           selectedTextColorStrategy: ({
             required Color originalTextColor,
@@ -95,21 +88,16 @@ class _AiFadeInFeatureDemoState extends State<AiFadeInFeatureDemo> with SingleTi
             ...darkModeStyles,
           ],
         ),
-        reactions: [
-          MarkdownInlineUpstreamSyntaxReaction(
-            defaultUpstreamInlineMarkdownParsers,
-          ),
-        ],
       ),
       supplemental: Column(
         spacing: 16,
         children: [
           ElevatedButton(
-            onPressed: () => _fakeAiWithMarkdown.startSimulatedTextEntry(),
+            onPressed: () => _fakeAiWithEditor.startSimulatedTextEntry(),
             child: Text("Restart Simulation"),
           ),
           ElevatedButton(
-            onPressed: () => _fakeAiWithMarkdown.stopSimulatedTextEntry(),
+            onPressed: () => _fakeAiWithEditor.stopSimulatedTextEntry(),
             child: Text("Pause Simulation"),
           ),
         ],
@@ -328,86 +316,6 @@ class _FakeAiWithEditor {
   Duration get _randomAiTextInsertionInterval => Duration(milliseconds: Random().nextInt(400) + 100);
 }
 
-class _FakeAiWithMarkdown {
-  _FakeAiWithMarkdown(this._gptFeed) {
-    _chopDocumentIntoMarkdownInsertions();
-  }
-
-  void dispose() {
-    _contentEntryTimer?.cancel();
-    _contentEntryTimer = null;
-  }
-
-  final MarkdownGptReaderFeed _gptFeed;
-
-  final _choppedInsertions = <String>[];
-
-  bool _isRunningFadeIn = false;
-
-  Timer? _contentEntryTimer;
-
-  void _chopDocumentIntoMarkdownInsertions() {
-    print("Chopping document into snippets");
-    const minLength = 5;
-    const maxLength = 25;
-
-    int start = 0;
-    while (start < _markdownDocument.length) {
-      final end = _markdownDocument.length - start <= minLength //
-          ? _markdownDocument.length
-          : min(Random().nextInt(maxLength - minLength) + minLength + start, _markdownDocument.length);
-      print("Chopping from $start to $end (of ${_markdownDocument.length})");
-
-      _choppedInsertions.add(
-        _markdownDocument.substring(start, end),
-      );
-
-      start = end;
-    }
-    print("Done chopping document");
-  }
-
-  void startSimulatedTextEntry() {
-    print("Starting simulated text entry");
-    stopSimulatedTextEntry();
-
-    _isRunningFadeIn = true;
-
-    print("Calling _doInsertContent()");
-    _doInsertContent();
-  }
-
-  void _doInsertContent() {
-    if (!_isRunningFadeIn) {
-      print("Not running fade-in. Returning.");
-      return;
-    }
-
-    final snippet = _choppedInsertions.removeAt(0);
-    print("_doInsertContent() - snippet: '$snippet'");
-    _gptFeed.submit(snippet);
-    print("Done with insertion");
-
-    if (_choppedInsertions.isNotEmpty) {
-      print("Scheduling another timer");
-      _contentEntryTimer = Timer(_randomAiTextInsertionInterval, _doInsertContent);
-    }
-  }
-
-  void stopSimulatedTextEntry() {
-    print("STOPPING !!!!! - timer: $_contentEntryTimer");
-    if (!_isRunningFadeIn) {
-      return;
-    }
-
-    _isRunningFadeIn = false;
-    _contentEntryTimer?.cancel();
-    _contentEntryTimer = null;
-  }
-
-  Duration get _randomAiTextInsertionInterval => Duration(milliseconds: Random().nextInt(400) + 100);
-}
-
 MutableDocument _createFakeAiDocument() => deserializeMarkdownToDocument(_markdownDocument);
 
 const _markdownDocument = '''
@@ -426,44 +334,4 @@ To use this behavior, apps need to opt in to the following:
  * Configure text insertion requests to inject creation metadata, which includes the time.
  * Configure Super Editor's style phases to include the `FadeInStyler`.
 
-
 ''';
-
-class MarkdownGptReaderFeed extends GptReaderFeed {
-  void submit(String markdown) {
-    print("Ensuring editor is attached.");
-    ensureEditorIsAttached();
-    print("Executing markdown insertion: '$markdown'");
-
-    final now = DateTime.now();
-    for (final character in markdown.characters) {
-      if (character == "\n") {
-        final newNodeId = Editor.createNodeId();
-        editor!.execute([
-          InsertNodeAtIndexRequest(
-            nodeIndex: editor!.document.length,
-            newNode: ParagraphNode(id: newNodeId, text: AttributedText()),
-          ),
-          ChangeSelectionRequest(
-            DocumentSelection.collapsed(
-              position: DocumentPosition(nodeId: newNodeId, nodePosition: TextNodePosition(offset: 0)),
-            ),
-            SelectionChangeType.insertContent,
-            SelectionReason.contentChange,
-          ),
-        ]);
-        continue;
-      }
-
-      editor!.execute([
-        InsertPlainTextAtCaretRequest(character, createdAt: now),
-      ]);
-    }
-
-    print("Document after inserting '$markdown':");
-    for (final node in editor!.document) {
-      print(" - ${node.id}: $node");
-    }
-    print("---");
-  }
-}

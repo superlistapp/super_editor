@@ -1200,7 +1200,7 @@ class TextComponentState extends State<TextComponent> with DocumentComponent imp
       attributionsWithBlockType.add(blockType);
     }
 
-    print("Running text style builder for component (${widget.text.toPlainText()})");
+    // print("Running text style builder for component (${widget.text.toPlainText()})");
     return widget.textStyleBuilder(attributionsWithBlockType);
   }
 }
