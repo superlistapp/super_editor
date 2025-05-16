@@ -160,7 +160,6 @@ final darkModeStyles = [
       return {
         Styles.textStyle: const TextStyle(
           color: Color(0xFFCCCCCC),
-          fontSize: 32,
         ),
       };
     },
@@ -171,7 +170,6 @@ final darkModeStyles = [
       return {
         Styles.textStyle: const TextStyle(
           color: Color(0xFF888888),
-          fontSize: 48,
         ),
       };
     },
@@ -182,7 +180,6 @@ final darkModeStyles = [
       return {
         Styles.textStyle: const TextStyle(
           color: Color(0xFF888888),
-          fontSize: 42,
         ),
       };
     },
@@ -193,6 +190,49 @@ final darkModeStyles = [
       return {
         Styles.textStyle: const TextStyle(
           color: Color(0xFF888888),
+        ),
+      };
+    },
+  ),
+];
+
+// Makes text larger for demos.
+final largeTextStyles = [
+  StyleRule(
+    BlockSelector.all,
+        (doc, docNode) {
+      return {
+        Styles.textStyle: const TextStyle(
+          fontSize: 32,
+        ),
+      };
+    },
+  ),
+  StyleRule(
+    const BlockSelector("header1"),
+        (doc, docNode) {
+      return {
+        Styles.textStyle: const TextStyle(
+          fontSize: 48,
+        ),
+      };
+    },
+  ),
+  StyleRule(
+    const BlockSelector("header2"),
+        (doc, docNode) {
+      return {
+        Styles.textStyle: const TextStyle(
+          fontSize: 42,
+        ),
+      };
+    },
+  ),
+  StyleRule(
+    const BlockSelector("header3"),
+        (doc, docNode) {
+      return {
+        Styles.textStyle: const TextStyle(
           fontSize: 36,
         ),
       };

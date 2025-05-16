@@ -115,42 +115,43 @@ class _UserTagsFeatureDemoState extends State<UserTagsFeatureDemo> {
         inlineTextStyler: (attributions, existingStyle) {
           TextStyle style = defaultInlineTextStyler(attributions, existingStyle);
 
-        if (attributions.contains(stableTagComposingAttribution)) {
-          style = style.copyWith(
-            color: Colors.blue,
-          );
-        }
+          if (attributions.contains(stableTagComposingAttribution)) {
+            style = style.copyWith(
+              color: Colors.blue,
+            );
+          }
 
-        if (attributions.whereType<CommittedStableTagAttribution>().isNotEmpty) {
-          style = style.copyWith(
-            color: Colors.orange,
-          );
-        }
+          if (attributions.whereType<CommittedStableTagAttribution>().isNotEmpty) {
+            style = style.copyWith(
+              color: Colors.orange,
+            );
+          }
 
-        return style;
-      },
-      addRulesAfter: [
-        ...darkModeStyles,
-      ],
-    ),
-    documentOverlayBuilders: [
-      AttributedTextBoundsOverlay(
-        selector: (a) => a == stableTagComposingAttribution,
-        builder: (context, attribution) {
-          return Leader(
-            link: _composingLink,
-            child: const SizedBox(),
-          );
+          return style;
         },
+        addRulesAfter: [
+          ...darkModeStyles,
+          ...largeTextStyles,
+        ],
       ),
-      DefaultCaretOverlayBuilder(
-        caretStyle: CaretStyle().copyWith(color: Colors.redAccent),
-      ),
-    ],
-    plugins: {
-      _userTagPlugin,
-    },
-        );
+      documentOverlayBuilders: [
+        AttributedTextBoundsOverlay(
+          selector: (a) => a == stableTagComposingAttribution,
+          builder: (context, attribution) {
+            return Leader(
+              link: _composingLink,
+              child: const SizedBox(),
+            );
+          },
+        ),
+        DefaultCaretOverlayBuilder(
+          caretStyle: CaretStyle().copyWith(color: Colors.redAccent),
+        ),
+      ],
+      plugins: {
+        _userTagPlugin,
+      },
+    );
   }
 
   Widget _buildTagList() {

@@ -237,9 +237,11 @@ class ListItemComponentBuilder implements ComponentBuilder {
 
 abstract class ListItemComponentViewModel extends SingleColumnLayoutComponentViewModel with TextComponentViewModel {
   ListItemComponentViewModel({
-    required String nodeId,
-    double? maxWidth,
-    EdgeInsetsGeometry padding = EdgeInsets.zero,
+    required super.nodeId,
+    super.maxWidth,
+    super.padding = EdgeInsets.zero,
+    super.opacity = 1.0,
+    super.metadata,
     required this.indent,
     required this.text,
     required this.textStyleBuilder,
@@ -255,7 +257,7 @@ abstract class ListItemComponentViewModel extends SingleColumnLayoutComponentVie
     List<TextRange> spellingErrors = const <TextRange>[],
     UnderlineStyle grammarErrorUnderlineStyle = const SquiggleUnderlineStyle(color: Colors.blue),
     List<TextRange> grammarErrors = const <TextRange>[],
-  }) : super(nodeId: nodeId, maxWidth: maxWidth, padding: padding) {
+  }) {
     this.composingRegion = composingRegion;
     this.showComposingRegionUnderline = showComposingRegionUnderline;
 
@@ -330,6 +332,8 @@ class UnorderedListItemComponentViewModel extends ListItemComponentViewModel {
     required super.nodeId,
     super.maxWidth,
     super.padding = EdgeInsets.zero,
+    super.opacity = 1.0,
+    super.metadata,
     required super.indent,
     required super.text,
     required super.textStyleBuilder,
@@ -366,8 +370,10 @@ class UnorderedListItemComponentViewModel extends ListItemComponentViewModel {
       nodeId: nodeId,
       maxWidth: maxWidth,
       padding: padding,
+      opacity: opacity,
+      metadata: metadata,
       indent: indent,
-      text: text,
+      text: text.copy(),
       textStyleBuilder: textStyleBuilder,
       dotStyle: dotStyle,
       textDirection: textDirection,
@@ -401,6 +407,8 @@ class OrderedListItemComponentViewModel extends ListItemComponentViewModel {
     required super.nodeId,
     super.maxWidth,
     super.padding = EdgeInsets.zero,
+    super.opacity = 1.0,
+    super.metadata,
     required super.indent,
     this.ordinalValue,
     this.numeralStyle = OrderedListNumeralStyle.arabic,
@@ -435,10 +443,12 @@ class OrderedListItemComponentViewModel extends ListItemComponentViewModel {
       nodeId: nodeId,
       maxWidth: maxWidth,
       padding: padding,
+      opacity: opacity,
+      metadata: metadata,
       indent: indent,
       ordinalValue: ordinalValue,
       numeralStyle: numeralStyle,
-      text: text,
+      text: text.copy(),
       textStyleBuilder: textStyleBuilder,
       textDirection: textDirection,
       textAlignment: textAlignment,

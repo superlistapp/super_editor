@@ -33,6 +33,8 @@ navigation:
       items:
         - title: Overview
           url: super-editor/guides/ai/overview
+        - title: Fade-In Content
+          url: super-editor/guides/ai/fade-in-content
 
     - title: Basics
       items:

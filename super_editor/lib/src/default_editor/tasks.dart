@@ -209,9 +209,11 @@ class TaskComponentBuilder implements ComponentBuilder {
 /// and caret appearance.
 class TaskComponentViewModel extends SingleColumnLayoutComponentViewModel with TextComponentViewModel {
   TaskComponentViewModel({
-    required String nodeId,
-    double? maxWidth,
-    required EdgeInsetsGeometry padding,
+    required super.nodeId,
+    super.maxWidth,
+    required super.padding,
+    super.opacity = 1.0,
+    super.metadata,
     this.indent = 0,
     this.indentCalculator = defaultTaskIndentCalculator,
     required this.isComplete,
@@ -230,7 +232,7 @@ class TaskComponentViewModel extends SingleColumnLayoutComponentViewModel with T
     List<TextRange> spellingErrors = const <TextRange>[],
     UnderlineStyle grammarErrorUnderlineStyle = const SquiggleUnderlineStyle(color: Colors.blue),
     List<TextRange> grammarErrors = const <TextRange>[],
-  }) : super(nodeId: nodeId, maxWidth: maxWidth, padding: padding) {
+  }) {
     this.composingRegion = composingRegion;
     this.showComposingRegionUnderline = showComposingRegionUnderline;
 
@@ -270,11 +272,13 @@ class TaskComponentViewModel extends SingleColumnLayoutComponentViewModel with T
       nodeId: nodeId,
       maxWidth: maxWidth,
       padding: padding,
+      opacity: opacity,
+      metadata: metadata,
       indent: indent,
       indentCalculator: indentCalculator,
       isComplete: isComplete,
       setComplete: setComplete,
-      text: text,
+      text: text.copy(),
       textStyleBuilder: textStyleBuilder,
       inlineWidgetBuilders: inlineWidgetBuilders,
       textDirection: textDirection,
