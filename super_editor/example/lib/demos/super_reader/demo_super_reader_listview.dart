@@ -1,78 +1,45 @@
 import 'package:flutter/material.dart';
 import 'package:super_editor/super_editor.dart';
 
-/// This demo proves that a read-only document can layout and
-/// scroll in a `CustomScrollView`.
-///
-/// The read-only document is represented as a `DefaultDocumentLayout`.
-/// It doesn't respond to any user interaction.
-///
-/// The demo begins with a collapsing tool bar at the top, followed by
-/// the read-only document, and then an infinite number of list items.
-class ReadOnlyCustomScrollViewDemo extends StatefulWidget {
+/// A [SuperReader] can be displayed in a `ListView` using its intrinsic height.
+class SuperReaderListViewDemo extends StatefulWidget {
   @override
-  State<ReadOnlyCustomScrollViewDemo> createState() => _ReadOnlyCustomScrollViewDemoState();
+  State<SuperReaderListViewDemo> createState() => _SuperReaderListViewDemoState();
 }
 
-class _ReadOnlyCustomScrollViewDemoState extends State<ReadOnlyCustomScrollViewDemo> {
-  late Document _doc;
+class _SuperReaderListViewDemoState extends State<SuperReaderListViewDemo> {
+  late final Editor _editor;
 
   @override
   void initState() {
     super.initState();
-    _doc = _createInitialDocument();
+
+    _editor = createDefaultDocumentEditor(
+      document: _createInitialDocument(),
+      composer: MutableDocumentComposer(),
+    );
   }
 
   @override
   void dispose() {
+    _editor.dispose();
+
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return CustomScrollView(
-      slivers: [
-        _buildCollapsingAppBar(),
-        _buildReadOnlyDocument(),
-        SliverList(
-          delegate: SliverChildBuilderDelegate((BuildContext context, int index) {
-            return _buildListItem(index);
-          }),
+    return ListView(
+      children: [
+        _buildListItem(0),
+        _buildListItem(1),
+        SuperReader(
+          editor: _editor,
+          shrinkWrap: true,
         ),
+        _buildListItem(2),
+        _buildListItem(3),
       ],
-    );
-  }
-
-  Widget _buildCollapsingAppBar() {
-    return SliverAppBar(
-      title: const Text(
-        'Rich Text Editor Sliver Example',
-      ),
-      expandedHeight: 200.0,
-      leading: const SizedBox(),
-      backgroundColor: Colors.blue,
-      flexibleSpace: FlexibleSpaceBar(
-        background: Image.network(
-          'https://i.imgur.com/fSZwM7G.jpg',
-          fit: BoxFit.cover,
-        ),
-      ),
-    );
-  }
-
-  Widget _buildReadOnlyDocument() {
-    return SliverPadding(
-      padding: const EdgeInsets.symmetric(horizontal: 96.0, vertical: 48.0),
-      sliver: SingleColumnDocumentLayout(
-        presenter: SingleColumnLayoutPresenter(
-          document: _doc,
-          componentBuilders: defaultComponentBuilders,
-          pipeline: [
-            SingleColumnStylesheetStyler(stylesheet: defaultStylesheet),
-          ],
-        ),
-        componentBuilders: defaultComponentBuilders,
-      ),
     );
   }
 
@@ -83,7 +50,7 @@ class _ReadOnlyCustomScrollViewDemoState extends State<ReadOnlyCustomScrollViewD
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              'SliverList element tapped with index $index.',
+              'ListView element tapped with index $index.',
             ),
             duration: const Duration(milliseconds: 500),
           ),
@@ -93,7 +60,7 @@ class _ReadOnlyCustomScrollViewDemoState extends State<ReadOnlyCustomScrollViewD
   }
 }
 
-Document _createInitialDocument() {
+MutableDocument _createInitialDocument() {
   return MutableDocument(
     nodes: [
       ImageNode(
