@@ -135,7 +135,6 @@ class _FakeAiWithEditor {
       return;
     }
 
-    print("_doInsertContent() - node ID: $_fadingNodeId");
     if (_fadingNodeId == null) {
       // This is the start of the content insertion process.
       final firstNode = _preCannedDocument.first;
@@ -145,7 +144,6 @@ class _FakeAiWithEditor {
         DeleteNodeRequest(nodeId: _editor.document.first.id),
       ]);
     } else if (!_isSimulatingTextEntry) {
-      print(" - selecting next node");
       _selectNextNode();
       if (_fadingNodeId == null) {
         // We're done running the document fade-in.
@@ -165,7 +163,6 @@ class _FakeAiWithEditor {
       final nextNode = _preCannedDocument.getNodeById(_fadingNodeId!)!;
       if (nextNode is TextNode) {
         // Start a new text node.
-        print("Inserting new text node. Pre-canned text: ${nextNode.text.toPlainText()}");
         _editor.execute([
           InsertNodeAtEndOfDocumentRequest(
             nextNode.copyTextNodeWith(
@@ -183,7 +180,6 @@ class _FakeAiWithEditor {
         isInsertingText = true;
       } else {
         // Insert the next non-text node.
-        print("Inserting new non-text node");
         _editor.execute([
           InsertNodeAtEndOfDocumentRequest(
             nextNode.copyWithAddedMetadata({
@@ -242,7 +238,6 @@ class _FakeAiWithEditor {
   }
 
   void _doInsertText() {
-    print("Inserting new text snippet");
     _editor.execute([
       InsertStyledTextAtEndOfDocumentRequest(
         _nextTextEntrySnippet!,
@@ -250,9 +245,7 @@ class _FakeAiWithEditor {
       ),
     ]);
 
-    print(" - text entry index: $_simulatedEntryTextIndex, text length: ${_textToInsert!.length}");
     if (_simulatedEntryTextIndex >= _textToInsert!.length) {
-      print(" - reached the end of a node. Turning off _isSimulatingTextEntry.");
       _isSimulatingTextEntry = false;
       _textToInsert = null;
       _simulatedEntryTextIndex = 0;
@@ -261,7 +254,6 @@ class _FakeAiWithEditor {
   }
 
   void stopSimulatedTextEntry() {
-    print("STOPPING !!!!! - timer: $_contentEntryTimer");
     if (!_isRunningFadeIn) {
       return;
     }

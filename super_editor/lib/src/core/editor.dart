@@ -3,7 +3,6 @@ import 'dart:math';
 import 'package:attributed_text/attributed_text.dart';
 import 'package:clock/clock.dart';
 import 'package:collection/collection.dart';
-import 'package:flutter/scheduler.dart';
 import 'package:super_editor/src/default_editor/paragraph.dart';
 import 'package:super_editor/src/default_editor/text.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
@@ -65,11 +64,9 @@ class Editor implements RequestDispatcher {
         _changeListeners = listeners ?? [] {
     context = EditContext(editables);
     _commandExecutor = _DocumentEditorCommandExecutor(context);
-    // animationClock = EditorClock(context, this, tickerProvider);
   }
 
   void dispose() {
-    // animationClock.dispose();
     reactionPipeline.clear();
     _changeListeners.clear();
   }
@@ -79,10 +76,6 @@ class Editor implements RequestDispatcher {
 
   /// Service Locator that provides all resources that are relevant for document editing.
   late final EditContext context;
-
-  /// A clock that can be used to run behaviors on every tick, such as animating the
-  /// change of logical information within a document.
-  // late final EditorClock animationClock;
 
   /// Whether history tracking (and undo/redo) are enabled.
   ///
@@ -486,50 +479,6 @@ class Editor implements RequestDispatcher {
     }
   }
 }
-
-class EditorClock {
-  EditorClock(this.editContext, this.requestDispatcher, TickerProvider tickerProvider) {
-    _ticker = tickerProvider.createTicker(_onTick);
-  }
-
-  void dispose() {
-    _listeners.clear();
-
-    _ticker.stop();
-    _ticker.dispose();
-  }
-
-  final EditContext editContext;
-  final RequestDispatcher requestDispatcher;
-
-  late final Ticker _ticker;
-
-  final _listeners = <EditorClockListener>{};
-
-  void addTickListener(EditorClockListener listener) {
-    _listeners.add(listener);
-
-    if (!_ticker.isActive) {
-      _ticker.start();
-    }
-  }
-
-  void removeTickListener(EditorClockListener listener) {
-    _listeners.remove(listener);
-
-    if (_listeners.isNotEmpty) {
-      _ticker.stop();
-    }
-  }
-
-  void _onTick(Duration _) {
-    for (final listener in _listeners) {
-      listener(editContext, requestDispatcher);
-    }
-  }
-}
-
-typedef EditorClockListener = void Function(EditContext editContext, RequestDispatcher requestDispatch);
 
 /// The merge policies that are used in the standard [Editor] construction.
 const defaultMergePolicy = HistoryGroupingPolicyList(
@@ -991,7 +940,7 @@ class DocumentEdit extends EditEvent {
 }
 
 /// An object that's notified with a change list from one or more commands that were just
-/// executed, and/or when the editor's clock ticks.
+/// executed.
 abstract class EditReaction {
   const EditReaction();
 
@@ -1012,12 +961,6 @@ abstract class EditReaction {
   /// To execute additional actions that are undone at the same time as the preceding
   /// changes, use [modifyContent].
   void react(EditContext editorContext, RequestDispatcher requestDispatcher, List<EditEvent> changeList) {}
-
-  /// Executes actions in response to a clock tick.
-  ///
-  /// This can be used, for example, to cleanup document metadata that's time-based
-  /// and temporary.
-  void onTick(EditContext editorContext, RequestDispatcher requestDispatcher) {}
 }
 
 /// An [EditReaction] that delegates its reaction to a given callback function.

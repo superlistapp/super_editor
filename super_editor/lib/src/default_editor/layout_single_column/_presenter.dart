@@ -208,7 +208,6 @@ class SingleColumnLayoutPresenter {
     required SingleColumnLayoutViewModel newViewModel,
   }) {
     editorLayoutLog.finer("Computing layout view model changes to notify listeners of those changes.");
-    // print("NOTIFY LISTENERS OF COMPONENT CHANGES");
 
     final addedComponents = <String>[];
     final movedComponents = <String>[];
@@ -307,7 +306,6 @@ class SingleColumnLayoutPresenter {
     if (addedComponents.isEmpty && movedComponents.isEmpty && changedComponents.isEmpty && removedComponents.isEmpty) {
       // No changes to report.
       editorLayoutLog.fine("Nothing has changed in the view model. Not notifying any listeners.");
-      // print("NO CHANGES");
       return;
     }
 
@@ -317,7 +315,6 @@ class SingleColumnLayoutPresenter {
     editorLayoutLog.fine(" - changed: $changedComponents");
     editorLayoutLog.fine(" - removed: $removedComponents");
     for (final listener in _listeners.toList()) {
-      // print("Reporting changed components: $changedComponents");
       listener.onViewModelChange(
         addedComponents: addedComponents,
         movedComponents: movedComponents,
