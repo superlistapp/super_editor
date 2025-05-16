@@ -90,9 +90,7 @@ class FadeInStyler extends SingleColumnLayoutStylePhase {
       _isFading = true;
       _scheduleAnotherFrame();
 
-      return viewModel.copy()
-        ..opacity = opacity
-        ..latestClockTick = DateTime.now();
+      return viewModel.copy()..opacity = opacity;
     }
 
     final fadeIns = viewModel.text.getAttributionSpansByFilter((a) => a is CreatedAtAttribution).toList();
@@ -113,7 +111,7 @@ class FadeInStyler extends SingleColumnLayoutStylePhase {
 
     // We know we're fading something. Create a copy of the view model so we can
     // change it.
-    final textViewModel = (viewModel.copy()..latestClockTick = DateTime.now()) as TextComponentViewModel;
+    final textViewModel = viewModel.copy() as TextComponentViewModel;
 
     // Add opacity attributions based on created-at timestamps.
     for (final span in fadeIns) {

@@ -454,7 +454,6 @@ abstract class SingleColumnLayoutComponentViewModel {
     this.maxWidth,
     required this.padding,
     this.opacity = 1.0,
-    this.latestClockTick,
     this.metadata = const {},
   });
 
@@ -469,14 +468,6 @@ abstract class SingleColumnLayoutComponentViewModel {
 
   /// The opacity of this whole node.
   double opacity;
-
-  /// The timestamp for the most recent tick of the clock, if this view model is
-  /// animating, or `null` if this view isn't animating.
-  DateTime? latestClockTick;
-
-  /// Whether this view model is currently animating something, e.g., fading in
-  /// some text.
-  bool get isAnimating => latestClockTick != null;
 
   /// Extra data that might be relevant to the styling of this view model.
   Map<String, dynamic> metadata;
@@ -498,15 +489,8 @@ abstract class SingleColumnLayoutComponentViewModel {
           maxWidth == other.maxWidth &&
           padding == other.padding &&
           opacity == other.opacity &&
-          latestClockTick == other.latestClockTick &&
           const DeepCollectionEquality().equals(metadata, other.metadata);
 
   @override
-  int get hashCode =>
-      nodeId.hashCode ^
-      maxWidth.hashCode ^
-      padding.hashCode ^
-      opacity.hashCode ^
-      latestClockTick.hashCode ^
-      metadata.hashCode;
+  int get hashCode => nodeId.hashCode ^ maxWidth.hashCode ^ padding.hashCode ^ opacity.hashCode ^ metadata.hashCode;
 }
