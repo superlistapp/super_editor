@@ -2711,13 +2711,129 @@ class InsertInlinePlaceholderAtCaretCommand extends EditCommand {
           createdAt != null
               ? AttributedSpans(attributions: [
                   SpanMarker(attribution: createdAtAttribution!, offset: 0, markerType: SpanMarkerType.start),
-                  SpanMarker(attribution: createdAtAttribution!, offset: 0, markerType: SpanMarkerType.end),
+                  SpanMarker(attribution: createdAtAttribution, offset: 0, markerType: SpanMarkerType.end),
                 ])
               : null,
           {
             0: placeholder,
           },
         ),
+      ),
+    );
+  }
+}
+
+/// Inserts the given plain [text] at the end of the document.
+///
+/// If the document is empty, or ends with a non-text node, a [ParagraphNode]
+/// is inserted at the end of the document, and then [text] is inserted into
+/// that node.
+class InsertPlainTextAtEndOfDocumentRequest implements EditRequest {
+  InsertPlainTextAtEndOfDocumentRequest(
+    this.text, {
+    String? newNodeId,
+    this.createdAt,
+  }) {
+    // We let callers avoid giving us a `newNodeId`, if desired, because
+    // callers may not understand that this ID is for undo/redo. Also,
+    // callers may not be sure what value they're supposed to provide.
+    // So if we don't get one, we create one.
+    this.newNodeId = newNodeId ?? Editor.createNodeId();
+  }
+
+  final String text;
+
+  /// {@macro newNodeId}
+  late final String newNodeId;
+
+  /// An (optional) timestamp that describes when this text was inserted.
+  final DateTime? createdAt;
+}
+
+/// Inserts the given styled [text] at the end of the document.
+///
+/// If the document is empty, or ends with a non-text node, a [ParagraphNode]
+/// is inserted at the end of the document, and then [text] is inserted into
+/// that node.
+class InsertStyledTextAtEndOfDocumentRequest implements EditRequest {
+  InsertStyledTextAtEndOfDocumentRequest(
+    this.text, {
+    String? newNodeId,
+    this.createdAt,
+  }) {
+    // We let callers avoid giving us a `newNodeId`, if desired, because
+    // callers may not understand that this ID is for undo/redo. Also,
+    // callers may not be sure what value they're supposed to provide.
+    // So if we don't get one, we create one.
+    this.newNodeId = newNodeId ?? Editor.createNodeId();
+  }
+
+  final AttributedText text;
+
+  /// {@macro newNodeId}
+  late final String newNodeId;
+
+  /// An (optional) timestamp that describes when this text was inserted.
+  final DateTime? createdAt;
+}
+
+class InsertStyledTextAtEndOfDocumentCommand extends EditCommand {
+  const InsertStyledTextAtEndOfDocumentCommand(
+    this.text, {
+    required this.newNodeId,
+    this.createdAt,
+  });
+
+  final AttributedText text;
+
+  final String newNodeId;
+
+  /// An (optional) timestamp that describes when this text was inserted.
+  final DateTime? createdAt;
+
+  @override
+  void execute(EditContext context, CommandExecutor executor) {
+    late final AttributedText textToInsert;
+    if (createdAt != null) {
+      textToInsert = text.copy()
+        ..addAttribution(
+          CreatedAtAttribution(start: createdAt!),
+          SpanRange(0, text.length - 1),
+        );
+    } else {
+      textToInsert = text;
+    }
+
+    late final DocumentPosition endOfDocument;
+    final lastNode = context.document.lastOrNull;
+    if (lastNode == null || lastNode is! TextNode) {
+      // There's no text node at the end of the document. We need to insert
+      // one so we can insert the text.
+      executor.executeCommand(
+        InsertNodeAtIndexCommand(
+          nodeIndex: context.document.length,
+          newNode: ParagraphNode(
+            id: newNodeId,
+            text: AttributedText(),
+          ),
+        ),
+      );
+
+      endOfDocument = DocumentPosition(
+        nodeId: newNodeId,
+        nodePosition: const TextNodePosition(offset: 0),
+      );
+    } else {
+      endOfDocument = DocumentPosition(
+        nodeId: lastNode.id,
+        nodePosition: lastNode.endPosition,
+      );
+    }
+
+    executor.executeCommand(
+      InsertAttributedTextCommand(
+        documentPosition: endOfDocument,
+        textToInsert: textToInsert,
       ),
     );
   }

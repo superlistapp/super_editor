@@ -17,7 +17,7 @@ class ImageNode extends BlockNode {
     this.altText = '',
     super.metadata,
   }) {
-    initAddToMetadata({"blockType": const NamedAttribution("image")});
+    initAddToMetadata({NodeMetadata.blockType: const NamedAttribution("image")});
   }
 
   @override

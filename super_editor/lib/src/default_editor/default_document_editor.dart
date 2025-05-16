@@ -1,15 +1,15 @@
+import 'package:attributed_text/attributed_text.dart' show AttributedText;
 import 'package:super_editor/src/core/document.dart';
 import 'package:super_editor/src/core/document_composer.dart';
 import 'package:super_editor/src/core/editor.dart';
 import 'package:super_editor/src/default_editor/attributions.dart';
-import 'package:super_editor/src/default_editor/composer/composer_reactions.dart';
 import 'package:super_editor/src/default_editor/box_component.dart';
+import 'package:super_editor/src/default_editor/composer/composer_reactions.dart';
 import 'package:super_editor/src/default_editor/list_items.dart';
 import 'package:super_editor/src/default_editor/multi_node_editing.dart';
 import 'package:super_editor/src/default_editor/paragraph.dart';
 import 'package:super_editor/src/default_editor/tasks.dart';
 import 'package:super_editor/src/default_editor/text.dart';
-import 'package:super_editor/src/default_editor/text_ai.dart';
 
 import 'common_editor_operations.dart';
 import 'default_document_editor_reactions.dart';
@@ -69,6 +69,16 @@ final defaultRequestHandlers = List.unmodifiable(<EditRequestHandler>[
       : null,
   (editor, request) => request is InsertInlinePlaceholderAtCaretRequest //
       ? InsertInlinePlaceholderAtCaretCommand(request.placeholder, createdAt: request.createdAt)
+      : null,
+  (editor, request) => request is InsertPlainTextAtEndOfDocumentRequest //
+      ? InsertStyledTextAtEndOfDocumentCommand(
+          AttributedText(request.text),
+          newNodeId: request.newNodeId,
+          createdAt: request.createdAt,
+        )
+      : null,
+  (editor, request) => request is InsertStyledTextAtEndOfDocumentRequest //
+      ? InsertStyledTextAtEndOfDocumentCommand(request.text, newNodeId: request.newNodeId, createdAt: request.createdAt)
       : null,
   (editor, request) => request is InsertTextRequest
       ? InsertTextCommand(
@@ -153,6 +163,9 @@ final defaultRequestHandlers = List.unmodifiable(<EditRequestHandler>[
           content: request.content,
           pastePosition: request.pastePosition,
         )
+      : null,
+  (editor, request) => request is InsertNodeAtEndOfDocumentRequest
+      ? InsertNodeAtIndexCommand(nodeIndex: editor.document.length, newNode: request.newNode)
       : null,
   (editor, request) => request is InsertNodeAtIndexRequest
       ? InsertNodeAtIndexCommand(nodeIndex: request.nodeIndex, newNode: request.newNode)

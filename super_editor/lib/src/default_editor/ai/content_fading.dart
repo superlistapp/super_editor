@@ -8,8 +8,19 @@ import 'package:super_editor/src/default_editor/layout_single_column/_presenter.
 import 'package:super_editor/src/default_editor/text.dart';
 import 'package:super_editor/src/default_editor/text_ai.dart';
 
-class FadeInTextStyler extends SingleColumnLayoutStylePhase {
-  FadeInTextStyler(
+/// A style phase, which controls the opacity of content, so that content
+/// fades in over time.
+///
+/// The opacity of the content, at a given moment, is determined by two
+/// things: the creation time, and the given [blockNodeFadeInDuration] and
+/// [textSnippetFadeInDuration].
+///
+/// Any content that needs to fade-in must be attributed with a [CreatedAtAttribution],
+/// with a timestamp that represents when the content was first inserted/created.
+/// Based on the "created at" timestamp, and the total fade-in duration, this styler
+/// sets content opacity on every frame.
+class FadeInStyler extends SingleColumnLayoutStylePhase {
+  FadeInStyler(
     TickerProvider tickerProvider, {
     this.blockNodeFadeInDuration = const Duration(milliseconds: 1500),
     this.textSnippetFadeInDuration = const Duration(milliseconds: 250),
@@ -34,7 +45,6 @@ class FadeInTextStyler extends SingleColumnLayoutStylePhase {
 
   @override
   SingleColumnLayoutViewModel style(Document document, SingleColumnLayoutViewModel viewModel) {
-    print("Running FadeInTextStyler - style()");
     _isFading = false;
 
     final newViewModel = SingleColumnLayoutViewModel(
@@ -47,7 +57,6 @@ class FadeInTextStyler extends SingleColumnLayoutStylePhase {
 
     if (!_isFading && _ticker.isActive) {
       // No fading is required. Stop ticking.
-      print("Stopping fade-in ticker");
       _ticker.stop();
     }
 
@@ -58,21 +67,16 @@ class FadeInTextStyler extends SingleColumnLayoutStylePhase {
   /// unchanged, otherwise, if it is animating, then this method copies the [viewModel],
   /// updates the copy's time to the current time, and returns the copy.
   SingleColumnLayoutComponentViewModel _updateViewModelAnimation(SingleColumnLayoutComponentViewModel viewModel) {
-    print("_updateViewModelAnimation(): $viewModel");
     if (viewModel is! TextComponentViewModel) {
-      print("Inspecting a non-text node");
-      final createdAt = viewModel.metadata['createdAt'];
+      final createdAt = viewModel.metadata[NodeMetadata.createdAt];
       if (createdAt == null || createdAt is! DateTime) {
-        print("Non-text node has no created at");
         return viewModel;
       }
       final deltaTime = DateTime.now().difference(createdAt);
       if (deltaTime > blockNodeFadeInDuration) {
-        print("Non-text node is already faded in");
         return viewModel;
       }
 
-      print("Fading in non-text node. Delta time: $deltaTime");
       final opacity = fadeCurve.transform(lerpDouble(
         0,
         1,
@@ -97,8 +101,6 @@ class FadeInTextStyler extends SingleColumnLayoutStylePhase {
       return viewModel;
     }
     final isFading = fadeInAttributions.fold(false, (isFading, fadeIn) => isFading || _isTextFading(fadeIn.start));
-    print(
-        "View model ($viewModel) fade-ins:\n${fadeInAttributions.map((a) => "Fading: ${_isTextFading(a.start)}, start: ${a.start}, expiry: ${DateTime.now()}, time since start: ${DateTime.now().difference(a.start)}").join("\n")}");
     if (!isFading) {
       return viewModel;
     }
@@ -114,8 +116,6 @@ class FadeInTextStyler extends SingleColumnLayoutStylePhase {
     final textViewModel = (viewModel.copy()..latestClockTick = DateTime.now()) as TextComponentViewModel;
 
     // Add opacity attributions based on created-at timestamps.
-    // TODO: Once the fade-in-to-opacity relationship works, replace FadeInAttribution
-    //       with a CreatedAtAttribution.
     for (final span in fadeIns) {
       final fadeInAttribution = span.attribution as CreatedAtAttribution;
       final deltaTime = DateTime.now().difference(fadeInAttribution.start);
@@ -123,7 +123,6 @@ class FadeInTextStyler extends SingleColumnLayoutStylePhase {
           ? 1.0
           : fadeCurve.transform(deltaTime.inMilliseconds / textSnippetFadeInDuration.inMilliseconds);
       if (opacity < 1) {
-        print("Fade-in span (${span.range.start} -> ${span.range.end}) - opacity: $opacity");
         textViewModel.text.addAttribution(
           OpacityAttribution(opacity),
           span.range,
@@ -147,7 +146,6 @@ class FadeInTextStyler extends SingleColumnLayoutStylePhase {
   }
 
   void _onTick(Duration elapsedTime) {
-    print("_onTick() - duration: $elapsedTime");
     // Fade-in status changed somewhere in the document. Run the styler again.
     markDirty();
   }
