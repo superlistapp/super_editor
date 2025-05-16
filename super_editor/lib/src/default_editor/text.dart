@@ -1144,7 +1144,6 @@ class TextComponentState extends State<TextComponent> with DocumentComponent imp
   Widget build(BuildContext context) {
     editorLayoutLog.finer('Building a TextComponent with key: ${widget.key}');
 
-    // print("Computing inline span: ${DateTime.now().millisecondsSinceEpoch}");
     return IgnorePointer(
       child: SuperText(
         key: _textKey,
@@ -1200,7 +1199,6 @@ class TextComponentState extends State<TextComponent> with DocumentComponent imp
       attributionsWithBlockType.add(blockType);
     }
 
-    // print("Running text style builder for component (${widget.text.toPlainText()})");
     return widget.textStyleBuilder(attributionsWithBlockType);
   }
 }
