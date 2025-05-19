@@ -380,6 +380,7 @@ class SuperEditorState extends State<SuperEditor> {
   SingleColumnLayoutPresenter? _docLayoutPresenter;
   late SingleColumnStylesheetStyler _docStylesheetStyler;
   late SingleColumnLayoutCustomComponentStyler _docLayoutPerComponentBlockStyler;
+  final _customUnderlineStyler = CustomUnderlineStyler();
   late SingleColumnLayoutSelectionStyler _docLayoutSelectionStyler;
 
   @visibleForTesting
@@ -610,7 +611,7 @@ class SuperEditorState extends State<SuperEditor> {
       pipeline: [
         _docStylesheetStyler,
         _docLayoutPerComponentBlockStyler,
-        CustomUnderlineStyler(),
+        _customUnderlineStyler,
         ...widget.customStylePhases,
         if (showComposingUnderline)
           SingleColumnLayoutComposingRegionStyler(

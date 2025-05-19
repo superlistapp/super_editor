@@ -607,11 +607,9 @@ mixin TextComponentViewModel on SingleColumnLayoutComponentViewModel {
   }
 
   List<Underlines> createUnderlines() {
-    print("Creating underlines for view model - ${customUnderlines.length} custom underlines");
     return [
       for (final underline in customUnderlines)
         Underlines(
-          // TODO: lookup the actual desired style
           style: customUnderlineStyles?.stylesByType[underline.type] ?? const StraightUnderlineStyle(),
           underlines: [underline.textRange],
         ),
