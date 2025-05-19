@@ -106,7 +106,7 @@ class ColorAttribution implements Attribution {
 }
 
 /// Attribution to be used within [AttributedText] to
-/// represent an inline span of a backgrounnd color change.
+/// represent an inline span of a background color change.
 ///
 /// Every [BackgroundColorAttribution] is considered equivalent so
 /// that [AttributedText] prevents multiple [BackgroundColorAttribution]s
@@ -135,6 +135,74 @@ class BackgroundColorAttribution implements Attribution {
   @override
   String toString() {
     return '[BackgroundColorAttribution]: $color';
+  }
+}
+
+/// Attribution to be used within [AttributedText] to mark text that should be painted
+/// with a custom underline.
+///
+/// A custom underline is an underline that's painted by Super Editor, rather than
+/// painted by the text layout package, inside of the Flutter engine. Flutter's standard
+/// text underline doesn't allow for any stylistic configuration. It always has the
+/// same thickness, the same end-caps, sits the same distance from the text, and has
+/// the same color as the text. This is insufficient for real world document editing
+/// use-cases.
+///
+/// A [CustomUnderlineAttribution] tells Super Editor that a user wants to paint a
+/// custom underline beneath a span of text. From there, various pieces of the Super Editor
+/// styling system process the attribution, and paint the desired underline.
+///
+/// ## Other Approaches to Underlines
+/// [CustomUnderlineAttribution]s refer to visual style choices, similar to bold, italics,
+/// and strikethrough. In other words, this attribution is for painting underlines in situations
+/// where the spans of text don't represent some other semantic meaning.
+///
+/// Super Editor includes other underlined content that does include semantic meaning.
+/// Therefore, those underlines don't use [CustomUnderlineAttribution]s.
+///
+/// One example is the user's composing region. Super Editor underlines the composing region,
+/// but that region doesn't have a [CustomUnderlineAttribution] applied to it. Instead,
+/// Super Editor explicitly tracks the user's composing region in a variable.
+///
+/// Another example is spelling and grammar errors. These, too, display underlines.
+/// However, the placement of spelling and grammar error spans is managed by the
+/// spelling and grammar check system. These spans don't simply represent a stylistic
+/// underline, they carry semantic meaning. In this case that meaning is a misspelled
+/// word, or a grammatically incorrect structure.
+///
+/// [CustomUnderlineAttribution] is provided for situations where the underline doesn't
+/// mean anything more than an underline.
+class CustomUnderlineAttribution implements Attribution {
+  static const standard = "standard";
+
+  const CustomUnderlineAttribution([this.type = standard]);
+
+  @override
+  String get id => 'custom_underline';
+
+  /// The type of underline that should be applied to the attributed text.
+  ///
+  /// The type can be anything. The meaning of the term is enforced by the developer's
+  /// styling system. Super Editor ships with some pre-defined terms for obvious
+  /// use-cases, e.g., [standard].
+  final String type;
+
+  @override
+  bool canMergeWith(Attribution other) {
+    return this == other;
+  }
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is CustomUnderlineAttribution && runtimeType == other.runtimeType && type == other.type;
+
+  @override
+  int get hashCode => type.hashCode;
+
+  @override
+  String toString() {
+    return '[CustomUnderlineAttribution]: $type';
   }
 }
 

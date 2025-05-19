@@ -22,6 +22,7 @@ import 'package:super_editor/src/default_editor/layout_single_column/_styler_com
 import 'package:super_editor/src/default_editor/list_items.dart';
 import 'package:super_editor/src/default_editor/tap_handlers/tap_handlers.dart';
 import 'package:super_editor/src/default_editor/tasks.dart';
+import 'package:super_editor/src/default_editor/text/custom_underlines.dart';
 import 'package:super_editor/src/infrastructure/content_layers.dart';
 import 'package:super_editor/src/infrastructure/documents/document_scaffold.dart';
 import 'package:super_editor/src/infrastructure/documents/document_scroller.dart';
@@ -609,6 +610,7 @@ class SuperEditorState extends State<SuperEditor> {
       pipeline: [
         _docStylesheetStyler,
         _docLayoutPerComponentBlockStyler,
+        CustomUnderlineStyler(),
         ...widget.customStylePhases,
         if (showComposingUnderline)
           SingleColumnLayoutComposingRegionStyler(
