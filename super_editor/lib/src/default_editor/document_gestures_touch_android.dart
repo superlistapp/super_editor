@@ -316,13 +316,22 @@ class SuperEditorAndroidControlsController {
   final _shouldShowToolbar = ValueNotifier<bool>(false);
 
   /// Shows the toolbar by setting [shouldShowToolbar] to `true`.
-  void showToolbar() => _shouldShowToolbar.value = true;
+  // void showToolbar() => _shouldShowToolbar.value = true;
+  void showToolbar() {
+    _shouldShowToolbar.value = true;
+  }
 
   /// Hides the toolbar by setting [shouldShowToolbar] to `false`.
-  void hideToolbar() => _shouldShowToolbar.value = false;
+  // void hideToolbar() => _shouldShowToolbar.value = false;
+  void hideToolbar() {
+    _shouldShowToolbar.value = false;
+  }
 
   /// Toggles [shouldShowToolbar].
-  void toggleToolbar() => _shouldShowToolbar.value = !_shouldShowToolbar.value;
+  // void toggleToolbar() => _shouldShowToolbar.value = !_shouldShowToolbar.value;
+  void toggleToolbar() {
+    _shouldShowToolbar.value = !_shouldShowToolbar.value;
+  }
 
   /// Link to a location where a toolbar should be focused.
   ///
