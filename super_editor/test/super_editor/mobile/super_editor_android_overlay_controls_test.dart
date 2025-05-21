@@ -1,8 +1,10 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_test_robots/flutter_test_robots.dart';
 import 'package:flutter_test_runners/flutter_test_runners.dart';
 import 'package:follow_the_leader/follow_the_leader.dart';
+import 'package:golden_toolkit/golden_toolkit.dart';
 import 'package:super_editor/src/infrastructure/platforms/android/selection_handles.dart';
 import 'package:super_editor/super_editor.dart';
 import 'package:super_editor/super_editor_test.dart';
@@ -109,8 +111,12 @@ void main() {
       // Ensure the toolbar is visible.
       expect(SuperEditorInspector.isMobileToolbarVisible(), isTrue);
 
-      // Place the caret at "Lorem |ipsum".
-      await tester.placeCaretInParagraph("1", 6);
+      // Place the caret somewhere else in the paragraph.
+      //
+      // WARNING: We choose a position way beyond the start of the paragraph so that
+      // it's down multiple lines, below the toolbar. Otherwise, this type might accidentally
+      // activate a toolbar button instead of moving the selection.
+      await tester.placeCaretInParagraph("1", 200);
 
       // Ensure the toolbar isn't visible.
       expect(SuperEditorInspector.isMobileToolbarVisible(), isFalse);

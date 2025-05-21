@@ -1097,7 +1097,6 @@ class DefaultAndroidEditorToolbar extends StatelessWidget {
 
   void _selectAll() {
     editorOps.selectAll();
-    editorControlsController.hideToolbar();
   }
 }
 
