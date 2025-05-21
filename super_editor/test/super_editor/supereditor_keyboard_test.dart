@@ -655,12 +655,18 @@ void main() {
         expect(keyboardController.isConnectedToIme, isFalse);
 
         // Select a word
-        await tester.doubleTapInParagraph(nodeId, 10);
+        //
+        // WARNING: To avoid accidentally tapping on the popover toolbar, we tap down a few
+        // lines. The specific text offset isn't important in this case.
+        await tester.doubleTapInParagraph(nodeId, 100);
         // Ensure the keyboard is still closed.
         expect(keyboardController.isConnectedToIme, isFalse);
 
-        // Select a paragraph
-        await tester.tripleTapInParagraph(nodeId, 15);
+        // Select a paragraph.
+        //
+        // WARNING: To avoid accidentally tapping on the popover toolbar, we tap down a few
+        // lines. The specific text offset isn't important in this case.
+        await tester.tripleTapInParagraph(nodeId, 100);
         // Ensure the keyboard is still closed.
         expect(keyboardController.isConnectedToIme, isFalse);
       });
