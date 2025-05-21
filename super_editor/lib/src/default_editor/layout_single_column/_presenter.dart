@@ -1,4 +1,5 @@
 import 'package:attributed_text/attributed_text.dart';
+import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:super_editor/src/core/document.dart';
@@ -452,6 +453,8 @@ abstract class SingleColumnLayoutComponentViewModel {
     required this.nodeId,
     this.maxWidth,
     required this.padding,
+    this.opacity = 1.0,
+    this.metadata = const {},
   });
 
   final String nodeId;
@@ -463,9 +466,16 @@ abstract class SingleColumnLayoutComponentViewModel {
   /// The padding applied around this component.
   EdgeInsetsGeometry padding;
 
+  /// The opacity of this whole node.
+  double opacity;
+
+  /// Extra data that might be relevant to the styling of this view model.
+  Map<String, dynamic> metadata;
+
   void applyStyles(Map<String, dynamic> styles) {
     maxWidth = styles[Styles.maxWidth] ?? double.infinity;
     padding = (styles[Styles.padding] as CascadingPadding?)?.toEdgeInsets() ?? EdgeInsets.zero;
+    opacity = styles[Styles.opacity] ?? 1.0;
   }
 
   SingleColumnLayoutComponentViewModel copy();
@@ -477,8 +487,10 @@ abstract class SingleColumnLayoutComponentViewModel {
           runtimeType == other.runtimeType &&
           nodeId == other.nodeId &&
           maxWidth == other.maxWidth &&
-          padding == other.padding;
+          padding == other.padding &&
+          opacity == other.opacity &&
+          const DeepCollectionEquality().equals(metadata, other.metadata);
 
   @override
-  int get hashCode => nodeId.hashCode ^ maxWidth.hashCode ^ padding.hashCode;
+  int get hashCode => nodeId.hashCode ^ maxWidth.hashCode ^ padding.hashCode ^ opacity.hashCode ^ metadata.hashCode;
 }

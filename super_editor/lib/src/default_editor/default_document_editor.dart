@@ -1,9 +1,10 @@
+import 'package:attributed_text/attributed_text.dart' show AttributedText;
 import 'package:super_editor/src/core/document.dart';
 import 'package:super_editor/src/core/document_composer.dart';
 import 'package:super_editor/src/core/editor.dart';
 import 'package:super_editor/src/default_editor/attributions.dart';
-import 'package:super_editor/src/default_editor/composer/composer_reactions.dart';
 import 'package:super_editor/src/default_editor/box_component.dart';
+import 'package:super_editor/src/default_editor/composer/composer_reactions.dart';
 import 'package:super_editor/src/default_editor/list_items.dart';
 import 'package:super_editor/src/default_editor/multi_node_editing.dart';
 import 'package:super_editor/src/default_editor/paragraph.dart';
@@ -61,23 +62,37 @@ final defaultRequestHandlers = List.unmodifiable(<EditRequestHandler>[
   (editor, request) => request is RemoveComposerPreferenceStylesRequest //
       ? RemoveComposerPreferenceStylesCommand(request.stylesToRemove)
       : null,
+
+  //--- Start text insertion ---
   (editor, request) => request is InsertStyledTextAtCaretRequest //
-      ? InsertStyledTextAtCaretCommand(request.text)
+      ? InsertStyledTextAtCaretCommand(request.text, createdAt: request.createdAt)
       : null,
   (editor, request) => request is InsertInlinePlaceholderAtCaretRequest //
-      ? InsertInlinePlaceholderAtCaretCommand(request.placeholder)
+      ? InsertInlinePlaceholderAtCaretCommand(request.placeholder, createdAt: request.createdAt)
+      : null,
+  (editor, request) => request is InsertPlainTextAtEndOfDocumentRequest //
+      ? InsertStyledTextAtEndOfDocumentCommand(
+          AttributedText(request.text),
+          newNodeId: request.newNodeId,
+          createdAt: request.createdAt,
+        )
+      : null,
+  (editor, request) => request is InsertStyledTextAtEndOfDocumentRequest //
+      ? InsertStyledTextAtEndOfDocumentCommand(request.text, newNodeId: request.newNodeId, createdAt: request.createdAt)
       : null,
   (editor, request) => request is InsertTextRequest
       ? InsertTextCommand(
           documentPosition: request.documentPosition,
           textToInsert: request.textToInsert,
           attributions: request.attributions,
+          createdAt: request.createdAt,
         )
       : null,
   (editor, request) => request is InsertAttributedTextRequest
       ? InsertAttributedTextCommand(
           documentPosition: request.documentPosition,
           textToInsert: request.textToInsert,
+          createdAt: request.createdAt,
         )
       : null,
   (editor, request) => request is InsertSoftNewlineAtCaretRequest //
@@ -141,11 +156,16 @@ final defaultRequestHandlers = List.unmodifiable(<EditRequestHandler>[
   (editor, request) => request is InsertNewlineAtCaretRequest //
       ? DefaultInsertNewlineAtCaretCommand(request.newNodeId)
       : null,
+  //---- End text insertion ----
+
   (editor, request) => request is PasteStructuredContentEditorRequest
       ? PasteStructuredContentEditorCommand(
           content: request.content,
           pastePosition: request.pastePosition,
         )
+      : null,
+  (editor, request) => request is InsertNodeAtEndOfDocumentRequest
+      ? InsertNodeAtIndexCommand(nodeIndex: editor.document.length, newNode: request.newNode)
       : null,
   (editor, request) => request is InsertNodeAtIndexRequest
       ? InsertNodeAtIndexCommand(nodeIndex: request.nodeIndex, newNode: request.newNode)
@@ -209,6 +229,7 @@ final defaultRequestHandlers = List.unmodifiable(<EditRequestHandler>[
       ? InsertPlainTextAtCaretCommand(
           request.plainText,
           attributions: editor.composer.preferences.currentAttributions,
+          createdAt: request.createdAt,
         )
       : null,
   (editor, request) => request is InsertTextRequest

@@ -12,8 +12,7 @@ class SuperReaderDemo extends StatefulWidget {
 }
 
 class _SuperReaderDemoState extends State<SuperReaderDemo> {
-  late final Document _document;
-  final _selection = ValueNotifier<DocumentSelection?>(null);
+  late final Editor _editor;
   final _selectionLayerLinks = SelectionLayerLinks();
   late MagnifierAndToolbarController _overlayController;
   late final SuperReaderIosControlsController _iosReaderControlsController;
@@ -21,7 +20,12 @@ class _SuperReaderDemoState extends State<SuperReaderDemo> {
   @override
   void initState() {
     super.initState();
-    _document = createInitialDocument();
+
+    _editor = createDefaultDocumentEditor(
+      document: createInitialDocument(),
+      composer: MutableDocumentComposer(),
+    );
+
     _overlayController = MagnifierAndToolbarController();
     _iosReaderControlsController = SuperReaderIosControlsController(
       toolbarBuilder: _buildToolbar,
@@ -31,17 +35,19 @@ class _SuperReaderDemoState extends State<SuperReaderDemo> {
   @override
   void dispose() {
     _iosReaderControlsController.dispose();
+    _editor.dispose();
+
     super.dispose();
   }
 
   void _copy() {
-    if (_selection.value == null) {
+    if (_editor.composer.selection == null) {
       return;
     }
 
     final textToCopy = _textInSelection(
-      document: _document,
-      documentSelection: _selection.value!,
+      document: _editor.document,
+      documentSelection: _editor.composer.selection!,
     );
     // TODO: figure out a general approach for asynchronous behaviors that
     //       need to be carried out in response to user input.
@@ -109,20 +115,26 @@ class _SuperReaderDemoState extends State<SuperReaderDemo> {
   }
 
   void _selectAll() {
-    if (_document.isEmpty) {
+    if (_editor.document.isEmpty) {
       return;
     }
 
-    _selection.value = DocumentSelection(
-      base: DocumentPosition(
-        nodeId: _document.first.id,
-        nodePosition: _document.first.beginningPosition,
+    _editor.execute([
+      ChangeSelectionRequest(
+        DocumentSelection(
+          base: DocumentPosition(
+            nodeId: _editor.document.first.id,
+            nodePosition: _editor.document.first.beginningPosition,
+          ),
+          extent: DocumentPosition(
+            nodeId: _editor.document.last.id,
+            nodePosition: _editor.document.last.endPosition,
+          ),
+        ),
+        SelectionChangeType.expandSelection,
+        SelectionReason.userInteraction,
       ),
-      extent: DocumentPosition(
-        nodeId: _document.last.id,
-        nodePosition: _document.last.endPosition,
-      ),
-    );
+    ]);
   }
 
   @override
@@ -130,8 +142,7 @@ class _SuperReaderDemoState extends State<SuperReaderDemo> {
     return SuperReaderIosControlsScope(
       controller: _iosReaderControlsController,
       child: SuperReader(
-        document: _document,
-        selection: _selection,
+        editor: _editor,
         overlayController: _overlayController,
         selectionLayerLinks: _selectionLayerLinks,
         stylesheet: defaultStylesheet.copyWith(

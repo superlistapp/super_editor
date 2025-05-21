@@ -73,6 +73,7 @@ class _SpellingErrorDecorationsDemoState extends State<SpellingErrorDecorationsD
       stylesheet: defaultStylesheet.copyWith(
         addRulesAfter: [
           ...darkModeStyles,
+          ...largeTextStyles,
           // When `_decoration` is null, place the underline in the
           // stylesheet instead of applying it directly to each component.
           if (_decoration == null)
