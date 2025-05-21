@@ -73,6 +73,16 @@ class TextLayoutUnderline {
 }
 
 abstract interface class UnderlineStyle {
+  /// Vertical offset of the underline (positive or negative) from the bottom
+  /// edge of the text line's bounding box.
+  ///
+  /// Negative moves the underline up, closer to the text, and positive moves
+  /// it down, further away from the text.
+  ///
+  /// Nothing prevents the underline from being pulled into the text, or pushed
+  /// into the line below the text. That responsibility is up to the developer.
+  double get offset;
+
   CustomPainter createPainter(List<LineSegment> underlines);
 }
 
@@ -81,15 +91,24 @@ class StraightUnderlineStyle implements UnderlineStyle {
     this.color = const Color(0xFF000000),
     this.thickness = 2,
     this.capType = StrokeCap.square,
+    this.offset = 0,
   });
 
   final Color color;
   final double thickness;
+  @override
+  final double offset;
   final StrokeCap capType;
 
   @override
   CustomPainter createPainter(List<LineSegment> underlines) {
-    return StraightUnderlinePainter(underlines: underlines, color: color, thickness: thickness, capType: capType);
+    return StraightUnderlinePainter(
+      underlines: underlines,
+      color: color,
+      thickness: thickness,
+      offset: offset,
+      capType: capType,
+    );
   }
 }
 
@@ -98,6 +117,7 @@ class StraightUnderlinePainter extends CustomPainter {
     required List<LineSegment> underlines,
     this.color = const Color(0xFF000000),
     this.thickness = 2,
+    this.offset = 0,
     this.capType = StrokeCap.square,
   }) : _underlines = underlines;
 
@@ -106,6 +126,7 @@ class StraightUnderlinePainter extends CustomPainter {
   final Color color;
   final double thickness;
   final StrokeCap capType;
+  final double offset;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -119,7 +140,7 @@ class StraightUnderlinePainter extends CustomPainter {
       ..strokeWidth = thickness
       ..strokeCap = capType;
     for (final underline in _underlines) {
-      canvas.drawLine(underline.start, underline.end, linePaint);
+      canvas.drawLine(underline.start + Offset(0, offset), underline.end + Offset(0, offset), linePaint);
     }
   }
 
@@ -128,6 +149,7 @@ class StraightUnderlinePainter extends CustomPainter {
     return color != oldDelegate.color ||
         thickness != oldDelegate.thickness ||
         capType != oldDelegate.capType ||
+        offset != oldDelegate.offset ||
         !const DeepCollectionEquality().equals(_underlines, oldDelegate._underlines);
   }
 }
@@ -137,15 +159,24 @@ class DottedUnderlineStyle implements UnderlineStyle {
     this.color = const Color(0xFFFF0000),
     this.dotDiameter = 2,
     this.dotSpace = 1,
+    this.offset = 0,
   });
 
   final Color color;
   final double dotDiameter;
   final double dotSpace;
+  @override
+  final double offset;
 
   @override
   CustomPainter createPainter(List<LineSegment> underlines) {
-    return DottedUnderlinePainter(underlines: underlines, color: color, dotDiameter: dotDiameter, dotSpace: dotSpace);
+    return DottedUnderlinePainter(
+      underlines: underlines,
+      color: color,
+      offset: offset,
+      dotDiameter: dotDiameter,
+      dotSpace: dotSpace,
+    );
   }
 }
 
@@ -153,6 +184,7 @@ class DottedUnderlinePainter extends CustomPainter {
   const DottedUnderlinePainter({
     required List<LineSegment> underlines,
     this.color = const Color(0xFFFF0000),
+    this.offset = 0,
     this.dotDiameter = 2,
     this.dotSpace = 1,
   }) : _underlines = underlines;
@@ -162,6 +194,7 @@ class DottedUnderlinePainter extends CustomPainter {
   final Color color;
   final double dotDiameter;
   final double dotSpace;
+  final double offset;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -175,7 +208,7 @@ class DottedUnderlinePainter extends CustomPainter {
 
       // Draw the dots.
       final delta = Offset(dotDiameter + dotSpace, (underline.end.dy - underline.start.dy) / dotCount);
-      Offset offset = underline.start + Offset(dotDiameter / 2, 0);
+      Offset offset = underline.start + Offset(dotDiameter / 2, 0) + Offset(0, this.offset);
       for (int i = 0; i < dotCount; i += 1) {
         canvas.drawCircle(offset, dotDiameter / 2, dotPaint);
         offset = offset + delta;
@@ -185,7 +218,11 @@ class DottedUnderlinePainter extends CustomPainter {
 
   @override
   bool shouldRepaint(DottedUnderlinePainter oldDelegate) {
-    return !const DeepCollectionEquality().equals(_underlines, oldDelegate._underlines);
+    return color != oldDelegate.color ||
+        dotDiameter != oldDelegate.dotDiameter ||
+        dotSpace != oldDelegate.dotSpace ||
+        offset != oldDelegate.offset ||
+        !const DeepCollectionEquality().equals(_underlines, oldDelegate._underlines);
   }
 }
 
@@ -193,6 +230,7 @@ class SquiggleUnderlineStyle implements UnderlineStyle {
   const SquiggleUnderlineStyle({
     this.color = const Color(0xFFFF0000),
     this.thickness = 1,
+    this.offset = 0,
     this.jaggedDeltaX = 2,
     this.jaggedDeltaY = 2,
   })  : assert(jaggedDeltaX > 0, "The squiggle jaggedDeltaX must be > 0"),
@@ -200,6 +238,8 @@ class SquiggleUnderlineStyle implements UnderlineStyle {
 
   final Color color;
   final double thickness;
+  @override
+  final double offset;
   final double jaggedDeltaX;
   final double jaggedDeltaY;
 
@@ -211,6 +251,7 @@ class SquiggleUnderlineStyle implements UnderlineStyle {
       thickness: thickness,
       jaggedDeltaX: jaggedDeltaX,
       jaggedDeltaY: jaggedDeltaY,
+      offset: offset,
     );
   }
 }
@@ -220,6 +261,7 @@ class SquiggleUnderlinePainter extends CustomPainter {
     required List<LineSegment> underlines,
     this.color = const Color(0xFFFF0000),
     this.thickness = 1,
+    this.offset = 0,
     this.jaggedDeltaX = 2,
     this.jaggedDeltaY = 2,
   })  : assert(jaggedDeltaX > 0, "The squiggle jaggedDeltaX must be > 0"),
@@ -230,6 +272,7 @@ class SquiggleUnderlinePainter extends CustomPainter {
 
   final Color color;
   final double thickness;
+  final double offset;
   final double jaggedDeltaX;
   final double jaggedDeltaY;
 
@@ -247,7 +290,7 @@ class SquiggleUnderlinePainter extends CustomPainter {
 
     for (final underline in _underlines) {
       // Draw the squiggle.
-      Offset offset = underline.start + Offset(delta.dy / 2, 0);
+      Offset offset = underline.start + Offset(delta.dy / 2, 0) + Offset(0, this.offset);
       int nextDirection = -1;
       while (offset.dx <= underline.end.dx) {
         // Calculate the endpoint of this jagged squiggle segment.
@@ -265,7 +308,12 @@ class SquiggleUnderlinePainter extends CustomPainter {
 
   @override
   bool shouldRepaint(SquiggleUnderlinePainter oldDelegate) {
-    return !const DeepCollectionEquality().equals(_underlines, oldDelegate._underlines);
+    return color != oldDelegate.color ||
+        thickness != oldDelegate.thickness ||
+        jaggedDeltaX != oldDelegate.jaggedDeltaX ||
+        jaggedDeltaY != oldDelegate.jaggedDeltaY ||
+        offset != oldDelegate.offset ||
+        !const DeepCollectionEquality().equals(_underlines, oldDelegate._underlines);
   }
 }
 

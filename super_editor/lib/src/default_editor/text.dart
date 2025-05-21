@@ -15,6 +15,7 @@ import 'package:super_editor/src/core/edit_context.dart';
 import 'package:super_editor/src/core/editor.dart';
 import 'package:super_editor/src/core/styles.dart';
 import 'package:super_editor/src/default_editor/attributions.dart';
+import 'package:super_editor/src/default_editor/text/custom_underlines.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/attributed_text_styles.dart';
 import 'package:super_editor/src/infrastructure/composable_text.dart';
@@ -25,7 +26,6 @@ import 'package:super_editor/src/infrastructure/strings.dart';
 import 'package:super_text_layout/super_text_layout.dart';
 
 import 'layout_single_column/layout_single_column.dart';
-import 'list_items.dart';
 import 'multi_node_editing.dart';
 import 'paragraph.dart';
 import 'selection_upstream_downstream.dart';
@@ -530,6 +530,9 @@ mixin TextComponentViewModel on SingleColumnLayoutComponentViewModel {
   TextRange? composingRegion;
   UnderlineStyle composingRegionUnderlineStyle = const StraightUnderlineStyle();
 
+  Set<CustomUnderline> customUnderlines = {};
+  CustomUnderlineStyles? customUnderlineStyles;
+
   /// Whether to underline the [composingRegion].
   ///
   /// Showing the underline is optional because the behavior differs between
@@ -542,8 +545,74 @@ mixin TextComponentViewModel on SingleColumnLayoutComponentViewModel {
   List<TextRange> grammarErrors = [];
   UnderlineStyle grammarErrorUnderlineStyle = const SquiggleUnderlineStyle(color: Colors.blue);
 
+  /// Given a [subclassInstance] of [TextComponentViewModel], copies all base-level text
+  /// properties from this [TextComponentViewModel] into the given [subclassInstance].
+  ///
+  /// Every view model must implement the ability to copy. Without this method, every subclass
+  /// would have to repeat the same mapping of properties between the original view model to
+  /// the copied view model. Originally, that's what Super Editor did, but it became very
+  /// tedious, and it was error prone because it was easy to accidentally miss a property.
+  ///
+  /// From a copy perspective, mutability of view models is important because [TextComponentViewModel]
+  /// doesn't have a constructor, and because every subclass has different constructors. Therefore,
+  /// the one approach to consistently support copy is to mutate the parts of a view model
+  /// that a given class knows about, such as what you see in the implementation of this method.
+  @protected
+  TextComponentViewModel internalCopy(covariant TextComponentViewModel subclassInstance) {
+    subclassInstance
+      ..maxWidth = maxWidth
+      ..padding = padding
+      ..text = text
+      ..textStyleBuilder = textStyleBuilder
+      ..inlineWidgetBuilders = inlineWidgetBuilders
+      ..textDirection = textDirection
+      ..textAlignment = textAlignment
+      ..selection = selection
+      ..selectionColor = selectionColor
+      ..highlightWhenEmpty = highlightWhenEmpty
+      ..customUnderlines = Set.from(customUnderlines)
+      ..customUnderlineStyles = customUnderlineStyles?.copy()
+      ..spellingErrorUnderlineStyle = spellingErrorUnderlineStyle
+      ..spellingErrors = List.from(spellingErrors)
+      ..grammarErrorUnderlineStyle = grammarErrorUnderlineStyle
+      ..grammarErrors = List.from(grammarErrors)
+      ..composingRegion = composingRegion
+      ..showComposingRegionUnderline = showComposingRegionUnderline;
+
+    return subclassInstance;
+  }
+
+  @override
+  void applyStyles(Map<String, dynamic> styles) {
+    super.applyStyles(styles);
+
+    textAlignment = styles[Styles.textAlign] ?? textAlignment;
+
+    textStyleBuilder = (attributions) {
+      final baseStyle = styles[Styles.textStyle] ?? noStyleBuilder({});
+      final inlineTextStyler = styles[Styles.inlineTextStyler] as AttributionStyleAdjuster;
+
+      return inlineTextStyler(attributions, baseStyle);
+    };
+
+    inlineWidgetBuilders = styles[Styles.inlineWidgetBuilders] ?? [];
+
+    customUnderlineStyles = styles[Styles.customUnderlineStyles];
+
+    composingRegionUnderlineStyle = styles[Styles.composingRegionUnderlineStyle] ?? composingRegionUnderlineStyle;
+    showComposingRegionUnderline = styles[Styles.showComposingRegionUnderline] ?? showComposingRegionUnderline;
+
+    spellingErrorUnderlineStyle = styles[Styles.spellingErrorUnderlineStyle] ?? spellingErrorUnderlineStyle;
+    grammarErrorUnderlineStyle = styles[Styles.grammarErrorUnderlineStyle] ?? grammarErrorUnderlineStyle;
+  }
+
   List<Underlines> createUnderlines() {
     return [
+      for (final underline in customUnderlines)
+        Underlines(
+          style: customUnderlineStyles?.stylesByType[underline.type] ?? const StraightUnderlineStyle(),
+          underlines: [underline.textRange],
+        ),
       if (composingRegion != null && showComposingRegionUnderline)
         Underlines(
           style: composingRegionUnderlineStyle,
@@ -562,27 +631,48 @@ mixin TextComponentViewModel on SingleColumnLayoutComponentViewModel {
     ];
   }
 
-  @override
-  void applyStyles(Map<String, dynamic> styles) {
-    super.applyStyles(styles);
+  bool textViewModelEquals(Object other) =>
+      identical(this, other) ||
+      super == other &&
+          other is TextComponentViewModel &&
+          runtimeType == other.runtimeType &&
+          nodeId == other.nodeId &&
+          maxWidth == other.maxWidth &&
+          padding == other.padding &&
+          text == other.text &&
+          textDirection == other.textDirection &&
+          textAlignment == other.textAlignment &&
+          selection == other.selection &&
+          selectionColor == other.selectionColor &&
+          highlightWhenEmpty == other.highlightWhenEmpty &&
+          customUnderlineStyles == other.customUnderlineStyles &&
+          spellingErrorUnderlineStyle == other.spellingErrorUnderlineStyle &&
+          grammarErrorUnderlineStyle == other.grammarErrorUnderlineStyle &&
+          composingRegion == other.composingRegion &&
+          showComposingRegionUnderline == other.showComposingRegionUnderline &&
+          const DeepCollectionEquality().equals(customUnderlines, other.customUnderlines) &&
+          const DeepCollectionEquality().equals(spellingErrors, other.spellingErrors) &&
+          const DeepCollectionEquality().equals(grammarErrors, other.grammarErrors);
 
-    textAlignment = styles[Styles.textAlign] ?? textAlignment;
-
-    textStyleBuilder = (attributions) {
-      final baseStyle = styles[Styles.textStyle] ?? noStyleBuilder({});
-      final inlineTextStyler = styles[Styles.inlineTextStyler] as AttributionStyleAdjuster;
-
-      return inlineTextStyler(attributions, baseStyle);
-    };
-
-    inlineWidgetBuilders = styles[Styles.inlineWidgetBuilders] ?? [];
-
-    composingRegionUnderlineStyle = styles[Styles.composingRegionUnderlineStyle] ?? composingRegionUnderlineStyle;
-    showComposingRegionUnderline = styles[Styles.showComposingRegionUnderline] ?? showComposingRegionUnderline;
-
-    spellingErrorUnderlineStyle = styles[Styles.spellingErrorUnderlineStyle] ?? spellingErrorUnderlineStyle;
-    grammarErrorUnderlineStyle = styles[Styles.grammarErrorUnderlineStyle] ?? grammarErrorUnderlineStyle;
-  }
+  int get textViewModelHashCode =>
+      super.hashCode ^
+      nodeId.hashCode ^
+      maxWidth.hashCode ^
+      padding.hashCode ^
+      text.hashCode ^
+      textDirection.hashCode ^
+      textAlignment.hashCode ^
+      selection.hashCode ^
+      selectionColor.hashCode ^
+      highlightWhenEmpty.hashCode ^
+      customUnderlines.hashCode ^
+      customUnderlineStyles.hashCode ^
+      spellingErrorUnderlineStyle.hashCode ^
+      spellingErrors.hashCode ^
+      grammarErrorUnderlineStyle.hashCode ^
+      grammarErrors.hashCode ^
+      composingRegion.hashCode ^
+      showComposingRegionUnderline.hashCode;
 }
 
 /// Document component that displays hint text when its content text
