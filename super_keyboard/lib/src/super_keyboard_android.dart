@@ -10,7 +10,7 @@ class SuperKeyboardAndroidBuilder extends StatefulWidget {
     required this.builder,
   });
 
-  final Widget Function(BuildContext, KeyboardState) builder;
+  final Widget Function(BuildContext, MobileWindowGeometry?) builder;
 
   @override
   State<SuperKeyboardAndroidBuilder> createState() => _SuperKeyboardAndroidBuilderState();
@@ -51,15 +51,10 @@ class _SuperKeyboardAndroidBuilderState extends State<SuperKeyboardAndroidBuilde
   }
 
   @override
-  void onKeyboardHeightChange(double newHeight) {
-    // no-op
-  }
-
-  @override
   Widget build(BuildContext context) {
     return widget.builder(
       context,
-      SuperKeyboardAndroid.instance.keyboardState.value,
+      SuperKeyboardAndroid.instance.geometry.value,
     );
   }
 }
@@ -89,11 +84,8 @@ class SuperKeyboardAndroid {
     await _methodChannel.invokeMethod(isEnabled ? "startLogging" : "stopLogging");
   }
 
-  ValueListenable<KeyboardState> get keyboardState => _keyboardState;
-  final _keyboardState = ValueNotifier(KeyboardState.closed);
-
-  ValueListenable<double> get keyboardHeight => _keyboardHeight;
-  final _keyboardHeight = ValueNotifier(0.0);
+  ValueListenable<MobileWindowGeometry> get geometry => _geometry;
+  final _geometry = ValueNotifier<MobileWindowGeometry>(const MobileWindowGeometry());
 
   final _listeners = <SuperKeyboardAndroidListener>{};
   void addListener(SuperKeyboardAndroidListener listener) => _listeners.add(listener);
@@ -101,66 +93,77 @@ class SuperKeyboardAndroid {
 
   Future<void> _onPlatformMessage(MethodCall message) async {
     log.fine("Android platform message: '${message.method}', args: ${message.arguments}");
+    print("Android platform message: '${message.method}', args: ${message.arguments}");
     switch (message.method) {
       case "keyboardOpening":
-        if (_keyboardState.value == KeyboardState.opening) {
-          return;
-        }
-
-        _keyboardState.value = KeyboardState.opening;
+        _geometry.value = _geometry.value.updateWith(
+          MobileWindowGeometry(
+            keyboardState: KeyboardState.opening,
+            keyboardHeight: (message.arguments["keyboardHeight"] as num?)?.toDouble(),
+            bottomPadding: (message.arguments["bottomPadding"] as num?)?.toDouble(),
+          ),
+        );
 
         for (final listener in _listeners) {
           listener.onKeyboardOpening();
         }
         break;
       case "keyboardOpened":
-        if (_keyboardState.value == KeyboardState.open) {
-          return;
-        }
-
-        _keyboardState.value = KeyboardState.open;
+        _geometry.value = _geometry.value.updateWith(
+          MobileWindowGeometry(
+            keyboardState: KeyboardState.open,
+            keyboardHeight: (message.arguments["keyboardHeight"] as num?)?.toDouble(),
+            bottomPadding: (message.arguments["bottomPadding"] as num?)?.toDouble(),
+          ),
+        );
 
         for (final listener in _listeners) {
           listener.onKeyboardOpen();
         }
         break;
       case "keyboardClosing":
-        if (_keyboardState.value == KeyboardState.closing) {
-          return;
-        }
-
-        _keyboardState.value = KeyboardState.closing;
+        _geometry.value = _geometry.value.updateWith(
+          MobileWindowGeometry(
+            keyboardState: KeyboardState.closing,
+            keyboardHeight: (message.arguments["keyboardHeight"] as num?)?.toDouble(),
+            bottomPadding: (message.arguments["bottomPadding"] as num?)?.toDouble(),
+          ),
+        );
 
         for (final listener in _listeners) {
           listener.onKeyboardClosing();
         }
         break;
       case "keyboardClosed":
-        if (_keyboardState.value == KeyboardState.closed) {
-          return;
-        }
-
-        _keyboardState.value = KeyboardState.closed;
-
-        // Just in case the height got out of sync, perhaps due to Activity
-        // lifecycle changes, explicitly set the keyboard height to zero.
-        _keyboardHeight.value = 0;
+        _geometry.value = _geometry.value.updateWith(
+          MobileWindowGeometry(
+            keyboardState: KeyboardState.closed,
+            // Just in case the height got out of sync, perhaps due to Activity
+            // lifecycle changes, explicitly set the keyboard height to zero.
+            keyboardHeight: 0,
+            bottomPadding: (message.arguments["bottomPadding"] as num?)?.toDouble(),
+          ),
+        );
 
         for (final listener in _listeners) {
           listener.onKeyboardClosed();
         }
         break;
       case "onProgress":
-        final keyboardHeight = message.arguments["keyboardHeight"] as num?;
-        if (keyboardHeight == null) {
-          break;
-        }
-
-        _keyboardHeight.value = keyboardHeight.toDouble();
-
-        for (final listener in _listeners) {
-          listener.onKeyboardHeightChange(keyboardHeight.toDouble());
-        }
+        _geometry.value = _geometry.value.updateWith(
+          MobileWindowGeometry(
+            keyboardHeight: (message.arguments["keyboardHeight"] as num?)?.toDouble(),
+            bottomPadding: (message.arguments["bottomPadding"] as num?)?.toDouble(),
+          ),
+        );
+        break;
+      case "metricsUpdate":
+        _geometry.value = _geometry.value.updateWith(
+          MobileWindowGeometry(
+            keyboardHeight: (message.arguments["keyboardHeight"] as num?)?.toDouble(),
+            bottomPadding: (message.arguments["bottomPadding"] as num?)?.toDouble(),
+          ),
+        );
         break;
       default:
         log.warning("Unknown Android plugin platform message: $message");
@@ -173,5 +176,4 @@ abstract interface class SuperKeyboardAndroidListener {
   void onKeyboardOpen();
   void onKeyboardClosing();
   void onKeyboardClosed();
-  void onKeyboardHeightChange(double height);
 }

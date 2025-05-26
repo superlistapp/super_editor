@@ -10,7 +10,7 @@ class SuperKeyboardIOSBuilder extends StatefulWidget {
     required this.builder,
   });
 
-  final Widget Function(BuildContext, KeyboardState) builder;
+  final Widget Function(BuildContext, MobileWindowGeometry) builder;
 
   @override
   State<SuperKeyboardIOSBuilder> createState() => _SuperKeyboardIOSBuilderState();
@@ -53,7 +53,7 @@ class _SuperKeyboardIOSBuilderState extends State<SuperKeyboardIOSBuilder> imple
   Widget build(BuildContext context) {
     return widget.builder(
       context,
-      SuperKeyboardIOS.instance.keyboardState.value,
+      SuperKeyboardIOS.instance.geometry.value,
     );
   }
 }
@@ -78,8 +78,8 @@ class SuperKeyboardIOS {
 
   final _methodChannel = const MethodChannel('super_keyboard_ios');
 
-  ValueListenable<KeyboardState> get keyboardState => _keyboardState;
-  final _keyboardState = ValueNotifier(KeyboardState.closed);
+  ValueListenable<MobileWindowGeometry> get geometry => _geometry;
+  final _geometry = ValueNotifier<MobileWindowGeometry>(const MobileWindowGeometry());
 
   final _listeners = <SuperKeyboardIOSListener>{};
   void addListener(SuperKeyboardIOSListener listener) => _listeners.add(listener);
@@ -94,7 +94,13 @@ class SuperKeyboardIOS {
     switch (message.method) {
       case "keyboardWillShow":
         log.info("keyboardWillShow");
-        _keyboardState.value = KeyboardState.opening;
+        _geometry.value = _geometry.value.updateWith(
+          MobileWindowGeometry(
+            keyboardState: KeyboardState.opening,
+            keyboardHeight: (message.arguments["keyboardHeight"] as num?)?.toDouble(),
+            bottomPadding: (message.arguments["bottomPadding"] as num?)?.toDouble(),
+          ),
+        );
 
         for (final listener in _listeners) {
           listener.onKeyboardWillShow();
@@ -102,7 +108,13 @@ class SuperKeyboardIOS {
         break;
       case "keyboardDidShow":
         log.info("keyboardDidShow");
-        _keyboardState.value = KeyboardState.open;
+        _geometry.value = _geometry.value.updateWith(
+          MobileWindowGeometry(
+            keyboardState: KeyboardState.open,
+            keyboardHeight: (message.arguments["keyboardHeight"] as num?)?.toDouble(),
+            bottomPadding: (message.arguments["bottomPadding"] as num?)?.toDouble(),
+          ),
+        );
 
         for (final listener in _listeners) {
           listener.onKeyboardDidShow();
@@ -113,7 +125,13 @@ class SuperKeyboardIOS {
         break;
       case "keyboardWillHide":
         log.info("keyboardWillHide");
-        _keyboardState.value = KeyboardState.closing;
+        _geometry.value = _geometry.value.updateWith(
+          MobileWindowGeometry(
+            keyboardState: KeyboardState.closing,
+            keyboardHeight: (message.arguments["keyboardHeight"] as num?)?.toDouble(),
+            bottomPadding: (message.arguments["bottomPadding"] as num?)?.toDouble(),
+          ),
+        );
 
         for (final listener in _listeners) {
           listener.onKeyboardWillHide();
@@ -121,7 +139,13 @@ class SuperKeyboardIOS {
         break;
       case "keyboardDidHide":
         log.info("keyboardDidHide");
-        _keyboardState.value = KeyboardState.closed;
+        _geometry.value = _geometry.value.updateWith(
+          MobileWindowGeometry(
+            keyboardState: KeyboardState.closed,
+            keyboardHeight: (message.arguments["keyboardHeight"] as num?)?.toDouble(),
+            bottomPadding: (message.arguments["bottomPadding"] as num?)?.toDouble(),
+          ),
+        );
 
         for (final listener in _listeners) {
           listener.onKeyboardDidHide();
