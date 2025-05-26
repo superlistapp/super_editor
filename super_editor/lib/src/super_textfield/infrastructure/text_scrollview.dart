@@ -1223,7 +1223,10 @@ class _RenderTextViewport extends RenderProxyBox {
       child!.layout(childConstraints.tighten(height: childIntrinsicHeight), parentUsesSize: true);
 
       // Forcibly restore the scroll offset to the original pre-layout value.
-      _scrollController.position.correctPixels(scrollOffsetBeforeLayout);
+      _scrollController.position.correctPixels(scrollOffsetBeforeLayout.clamp(
+        _scrollController.position.minScrollExtent,
+        _scrollController.position.maxScrollExtent,
+      ));
 
       size = child!.size;
       return;
@@ -1233,7 +1236,10 @@ class _RenderTextViewport extends RenderProxyBox {
     child!.layout(childConstraints.tighten(height: adjustedChildHeight), parentUsesSize: true);
 
     // Forcibly restore the scroll offset to the original pre-layout value.
-    _scrollController.position.correctPixels(scrollOffsetBeforeLayout);
+    _scrollController.position.correctPixels(scrollOffsetBeforeLayout.clamp(
+      _scrollController.position.minScrollExtent,
+      _scrollController.position.maxScrollExtent,
+    ));
 
     size = child!.size;
   }
