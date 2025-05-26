@@ -248,6 +248,11 @@ class MessagePageController with ChangeNotifier {
 
     notifyListeners();
   }
+
+  /// The bottom spacing that was most recently used to build the scaffold.
+  ///
+  /// This is a debug value and should only be used for logging.
+  final debugMostRecentBottomSpacing = ValueNotifier<double?>(null);
 }
 
 enum MessagePageSheetHeightPolicy {
@@ -368,6 +373,7 @@ class MessagePageElement extends RenderObjectElement {
 
   void buildContent(double bottomSpacing) {
     messagePageElementLog.info('ContentLayersElement ($hashCode) - (re)building layers');
+    widget.controller?.debugMostRecentBottomSpacing.value = bottomSpacing;
 
     owner!.buildScope(this, () {
       if (_content == null) {
@@ -909,9 +915,9 @@ class RenderMessagePageScaffold extends RenderBox {
     // Do a throw-away layout pass to get the preview height of the bottom
     // sheet, bounded within its min/max height.
     _overrideSheetMode = BottomSheetMode.preview;
-
     _previewHeight = _bottomSheet!.computeDryLayout(constraints.copyWith(minHeight: 0)).height;
 
+    // Switch back to a real layout pass.
     _overrideSheetMode = null;
     messagePageLayoutLog.info(
       ' - Bottom sheet bounded preview height: $_previewHeight, min height: $_bottomSheetMinimumHeight, max height: $_bottomSheetMaximumHeight',
@@ -935,6 +941,8 @@ class RenderMessagePageScaffold extends RenderBox {
       MessagePageSheetCollapsedMode.preview => _previewHeight,
       MessagePageSheetCollapsedMode.intrinsic => _intrinsicHeight,
     };
+    print(
+        "Collapsed mode: ${_controller.collapsedMode}, preview height: $_previewHeight, intrinsic height: $_intrinsicHeight");
 
     final bottomSheetConstraints = constraints.copyWith(
       minHeight: minimizedHeight,
@@ -1015,6 +1023,8 @@ class RenderMessagePageScaffold extends RenderBox {
     // Now that we know the size of the message editor, build the content based
     // on the bottom spacing needed to push above the editor.
     final bottomSpacing = _bottomSheet!.size.height;
+    print(
+        "Bottom sheet. Constraints - min: $minimizedHeight, max: $_bottomSheetMaximumHeight, chosen height: ${_bottomSheet!.size.height}");
     messagePageLayoutLog.info('');
     messagePageLayoutLog.info('Building chat scaffold content');
     invokeLayoutCallback((constraints) {
@@ -1108,6 +1118,7 @@ class RenderMessagePageScaffold extends RenderBox {
       messagePagePaintLog.info(
         'Painting message editor - y-offset: ${size.height - _bottomSheet!.size.height}',
       );
+      print('Painting message editor - y-offset: ${size.height - _bottomSheet!.size.height}');
       context.paintChild(
         _bottomSheet!,
         offset + (_bottomSheet!.parentData! as BoxParentData).offset,
