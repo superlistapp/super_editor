@@ -31,25 +31,21 @@ class _SuperKeyboardIOSBuilderState extends State<SuperKeyboardIOSBuilder> imple
 
   @override
   void onKeyboardWillShow() {
-    print("iOS keyboard builder - will show");
     setState(() {});
   }
 
   @override
   void onKeyboardDidShow() {
-    print("iOS keyboard builder - did show");
     setState(() {});
   }
 
   @override
   void onKeyboardWillHide() {
-    print("iOS keyboard builder - will hide");
     setState(() {});
   }
 
   @override
   void onKeyboardDidHide() {
-    print("iOS keyboard builder - did hide");
     setState(() {});
   }
 
@@ -106,7 +102,6 @@ class SuperKeyboardIOS {
           ),
         );
 
-        print("Reporting onKeyboardWillShow()");
         for (final listener in _listeners) {
           listener.onKeyboardWillShow();
         }
@@ -121,7 +116,6 @@ class SuperKeyboardIOS {
           ),
         );
 
-        print("Reporting onkeyboardDidShow()");
         for (final listener in _listeners) {
           listener.onKeyboardDidShow();
         }
@@ -139,7 +133,6 @@ class SuperKeyboardIOS {
           ),
         );
 
-        print("Reporting onKeyboardWillHide()");
         for (final listener in _listeners) {
           listener.onKeyboardWillHide();
         }
@@ -154,7 +147,6 @@ class SuperKeyboardIOS {
           ),
         );
 
-        print("Reporting onKeyboardDidHide()");
         for (final listener in _listeners) {
           listener.onKeyboardDidHide();
         }
