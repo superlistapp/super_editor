@@ -5,13 +5,15 @@ import 'package:super_keyboard/src/keyboard.dart';
 import 'package:super_keyboard/src/super_keyboard_android.dart';
 import 'package:super_keyboard/src/super_keyboard_ios.dart';
 
+/// A widget that rebuilds whenever the window geometry changes in a way that's
+/// relevant to the software keyboard.
 class SuperKeyboardBuilder extends StatefulWidget {
   const SuperKeyboardBuilder({
     super.key,
     required this.builder,
   });
 
-  final Widget Function(BuildContext, KeyboardState) builder;
+  final Widget Function(BuildContext, MobileWindowGeometry) builder;
 
   @override
   State<SuperKeyboardBuilder> createState() => _SuperKeyboardBuilderState();
@@ -21,12 +23,12 @@ class _SuperKeyboardBuilderState extends State<SuperKeyboardBuilder> {
   @override
   void initState() {
     super.initState();
-    SuperKeyboard.instance.state.addListener(_onKeyboardStateChange);
+    SuperKeyboard.instance.mobileGeometry.addListener(_onKeyboardStateChange);
   }
 
   @override
   void dispose() {
-    SuperKeyboard.instance.state.removeListener(_onKeyboardStateChange);
+    SuperKeyboard.instance.mobileGeometry.removeListener(_onKeyboardStateChange);
     super.dispose();
   }
 
@@ -40,13 +42,12 @@ class _SuperKeyboardBuilderState extends State<SuperKeyboardBuilder> {
   Widget build(BuildContext context) {
     return widget.builder(
       context,
-      SuperKeyboard.instance.state.value,
+      SuperKeyboard.instance.mobileGeometry.value,
     );
   }
 }
 
-/// A unified API for tracking the software keyboard status, regardless
-/// of platform.
+/// A unified API for tracking the software keyboard status, regardless of platform.
 class SuperKeyboard {
   static SuperKeyboard? _instance;
   static SuperKeyboard get instance {
@@ -80,11 +81,10 @@ class SuperKeyboard {
     log.info("Initializing SuperKeyboard");
     if (defaultTargetPlatform == TargetPlatform.iOS) {
       log.fine("SuperKeyboard - Initializing for iOS");
-      SuperKeyboardIOS.instance.keyboardState.addListener(_onIOSKeyboardChange);
+      SuperKeyboardIOS.instance.geometry.addListener(_onIOSWindowGeometryChange);
     } else if (defaultTargetPlatform == TargetPlatform.android) {
       log.fine("SuperKeyboard - Initializing for Android");
-      SuperKeyboardAndroid.instance.keyboardState.addListener(_onAndroidKeyboardChange);
-      SuperKeyboardAndroid.instance.keyboardHeight.addListener(_onAndroidKeyboardHeightChange);
+      SuperKeyboardAndroid.instance.geometry.addListener(_onAndroidWindowGeometryChange);
     }
   }
 
@@ -101,22 +101,15 @@ class SuperKeyboard {
     }
   }
 
-  ValueListenable<KeyboardState> get state => _state;
-  final _state = ValueNotifier(KeyboardState.closed);
+  ValueListenable<MobileWindowGeometry> get mobileGeometry => _mobileGeometry;
+  final _mobileGeometry = ValueNotifier<MobileWindowGeometry>(const MobileWindowGeometry());
 
-  ValueListenable<double?> get keyboardHeight => _keyboardHeight;
-  final _keyboardHeight = ValueNotifier<double?>(null);
-
-  void _onIOSKeyboardChange() {
-    _state.value = SuperKeyboardIOS.instance.keyboardState.value;
+  void _onIOSWindowGeometryChange() {
+    _mobileGeometry.value = SuperKeyboardIOS.instance.geometry.value;
   }
 
-  void _onAndroidKeyboardChange() {
-    _state.value = SuperKeyboardAndroid.instance.keyboardState.value;
-  }
-
-  void _onAndroidKeyboardHeightChange() {
-    _keyboardHeight.value = SuperKeyboardAndroid.instance.keyboardHeight.value;
+  void _onAndroidWindowGeometryChange() {
+    _mobileGeometry.value = SuperKeyboardAndroid.instance.geometry.value;
   }
 }
 
