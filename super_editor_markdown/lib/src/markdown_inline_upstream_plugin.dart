@@ -258,7 +258,7 @@ class _UpstreamInlineMarkdownParser {
     // Start visiting upstream characters by visiting the first character
     // and checking for possible syntaxes.
     for (final parser in parsers) {
-      final markdownToken = parser.startWith(attributedText[offset] as String, offset);
+      final markdownToken = parser.startWith(attributedText.toPlainText()[offset], offset);
       if (markdownToken != null) {
         _possibleSyntaxes.add(markdownToken);
       }
@@ -270,7 +270,7 @@ class _UpstreamInlineMarkdownParser {
 
       // Update all existing possible syntaxes and remove any possible syntaxes
       // that are now invalid due to the new character.
-      _updatePossibleSyntaxes(attributedText[offset] as String, offset);
+      _updatePossibleSyntaxes(attributedText.toPlainText()[offset], offset);
 
       // Store any successful parsers on a stack. We keep searching after successful
       // parsing because some parsers are essentially supersets of others, e.g., "*"
@@ -291,7 +291,7 @@ class _UpstreamInlineMarkdownParser {
         //
         // Finding a completed syntax isn't enough. We need to ensure that the
         // immediate upstream character before the syntax doesn't invalidate it.
-        final upstreamCharacter = attributedText[offset - 1] as String;
+        final upstreamCharacter = attributedText.toPlainText()[offset - 1];
         successfulParsers.removeWhere((parser) => !parser.canFollowCharacter(upstreamCharacter));
       }
     }
@@ -317,14 +317,14 @@ class _UpstreamInlineMarkdownParser {
       return null;
     }
 
-    final characterAtCaret = attributedText[caretOffset - 1] as String; // -1 because caret sits after character
+    final characterAtCaret = attributedText.toPlainText()[caretOffset - 1]; // -1 because caret sits after character
     if (characterAtCaret != " ") {
       // Don't linkify unless the user just inserted a space after the token.
       return null;
     }
 
     final endOfTokenOffset = caretOffset - 2;
-    if (attributedText[endOfTokenOffset] != ")") {
+    if (attributedText.toPlainText()[endOfTokenOffset] != ")") {
       // All links end with a ")", therefore we know the upstream token
       // isn't a link. Short-circuit return.
       return null;

@@ -6,3 +6,7 @@ ios_text_example/
 android_text_example/
 
 .vscode
+
+# FVM Version Cache
+.fvm/
+.fvmrc/
