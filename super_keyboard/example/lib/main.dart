@@ -53,7 +53,7 @@ class _SuperKeyboardDemoAppState extends State<SuperKeyboardDemoApp> {
                 ),
                 const SizedBox(height: 12),
                 ValueListenableBuilder(
-                  valueListenable: SuperKeyboard.instance.geometry,
+                  valueListenable: SuperKeyboard.instance.mobileGeometry,
                   builder: (context, value, child) {
                     return Text(
                         "Keyboard height: ${value.keyboardHeight != null ? "${value.keyboardHeight!.toInt()}" : "???"}");
@@ -75,7 +75,7 @@ class _SuperKeyboardDemoAppState extends State<SuperKeyboardDemoApp> {
                 _buildFlutterLoggingOption(),
                 _buildPlatformLoggingOption(),
                 ValueListenableBuilder(
-                  valueListenable: SuperKeyboard.instance.geometry,
+                  valueListenable: SuperKeyboard.instance.mobileGeometry,
                   builder: (context, value, child) {
                     if (value.keyboardHeight == null) {
                       return const SizedBox();
@@ -94,17 +94,14 @@ class _SuperKeyboardDemoAppState extends State<SuperKeyboardDemoApp> {
 
   Widget _buildKeyboardStateIcon() {
     return ValueListenableBuilder(
-      valueListenable: SuperKeyboard.instance.geometry,
+      valueListenable: SuperKeyboard.instance.mobileGeometry,
       builder: (context, value, child) {
-        if (value.keyboardState == null) {
-          return const SizedBox();
-        }
-
-        final icon = switch (value.keyboardState!) {
+        final icon = switch (value.keyboardState) {
           KeyboardState.closed => Icons.border_bottom,
           KeyboardState.opening => Icons.upload_sharp,
           KeyboardState.open => Icons.border_top,
           KeyboardState.closing => Icons.download_sharp,
+          null => Icons.question_mark,
         };
 
         return Icon(
@@ -116,7 +113,7 @@ class _SuperKeyboardDemoAppState extends State<SuperKeyboardDemoApp> {
   }
 
   String? get _keyboardState {
-    return switch (SuperKeyboard.instance.geometry.value.keyboardState) {
+    return switch (SuperKeyboard.instance.mobileGeometry.value.keyboardState) {
       KeyboardState.closed => "Closed",
       KeyboardState.opening => "Opening",
       KeyboardState.open => "Open",

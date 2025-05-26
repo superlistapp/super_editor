@@ -31,21 +31,25 @@ class _SuperKeyboardIOSBuilderState extends State<SuperKeyboardIOSBuilder> imple
 
   @override
   void onKeyboardWillShow() {
+    print("iOS keyboard builder - will show");
     setState(() {});
   }
 
   @override
   void onKeyboardDidShow() {
+    print("iOS keyboard builder - did show");
     setState(() {});
   }
 
   @override
   void onKeyboardWillHide() {
+    print("iOS keyboard builder - will hide");
     setState(() {});
   }
 
   @override
   void onKeyboardDidHide() {
+    print("iOS keyboard builder - did hide");
     setState(() {});
   }
 
@@ -97,11 +101,12 @@ class SuperKeyboardIOS {
         _geometry.value = _geometry.value.updateWith(
           MobileWindowGeometry(
             keyboardState: KeyboardState.opening,
-            keyboardHeight: (message.arguments["keyboardHeight"] as num?)?.toDouble(),
-            bottomPadding: (message.arguments["bottomPadding"] as num?)?.toDouble(),
+            keyboardHeight: (message.arguments?["keyboardHeight"] as num?)?.toDouble(),
+            bottomPadding: (message.arguments?["bottomPadding"] as num?)?.toDouble(),
           ),
         );
 
+        print("Reporting onKeyboardWillShow()");
         for (final listener in _listeners) {
           listener.onKeyboardWillShow();
         }
@@ -111,11 +116,12 @@ class SuperKeyboardIOS {
         _geometry.value = _geometry.value.updateWith(
           MobileWindowGeometry(
             keyboardState: KeyboardState.open,
-            keyboardHeight: (message.arguments["keyboardHeight"] as num?)?.toDouble(),
-            bottomPadding: (message.arguments["bottomPadding"] as num?)?.toDouble(),
+            keyboardHeight: (message.arguments?["keyboardHeight"] as num?)?.toDouble(),
+            bottomPadding: (message.arguments?["bottomPadding"] as num?)?.toDouble(),
           ),
         );
 
+        print("Reporting onkeyboardDidShow()");
         for (final listener in _listeners) {
           listener.onKeyboardDidShow();
         }
@@ -128,11 +134,12 @@ class SuperKeyboardIOS {
         _geometry.value = _geometry.value.updateWith(
           MobileWindowGeometry(
             keyboardState: KeyboardState.closing,
-            keyboardHeight: (message.arguments["keyboardHeight"] as num?)?.toDouble(),
-            bottomPadding: (message.arguments["bottomPadding"] as num?)?.toDouble(),
+            keyboardHeight: (message.arguments?["keyboardHeight"] as num?)?.toDouble(),
+            bottomPadding: (message.arguments?["bottomPadding"] as num?)?.toDouble(),
           ),
         );
 
+        print("Reporting onKeyboardWillHide()");
         for (final listener in _listeners) {
           listener.onKeyboardWillHide();
         }
@@ -142,11 +149,12 @@ class SuperKeyboardIOS {
         _geometry.value = _geometry.value.updateWith(
           MobileWindowGeometry(
             keyboardState: KeyboardState.closed,
-            keyboardHeight: (message.arguments["keyboardHeight"] as num?)?.toDouble(),
-            bottomPadding: (message.arguments["bottomPadding"] as num?)?.toDouble(),
+            keyboardHeight: (message.arguments?["keyboardHeight"] as num?)?.toDouble(),
+            bottomPadding: (message.arguments?["bottomPadding"] as num?)?.toDouble(),
           ),
         );
 
+        print("Reporting onKeyboardDidHide()");
         for (final listener in _listeners) {
           listener.onKeyboardDidHide();
         }

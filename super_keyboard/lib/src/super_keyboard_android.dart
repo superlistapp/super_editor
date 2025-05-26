@@ -10,7 +10,7 @@ class SuperKeyboardAndroidBuilder extends StatefulWidget {
     required this.builder,
   });
 
-  final Widget Function(BuildContext, MobileWindowGeometry?) builder;
+  final Widget Function(BuildContext, MobileWindowGeometry) builder;
 
   @override
   State<SuperKeyboardAndroidBuilder> createState() => _SuperKeyboardAndroidBuilderState();
@@ -93,7 +93,6 @@ class SuperKeyboardAndroid {
 
   Future<void> _onPlatformMessage(MethodCall message) async {
     log.fine("Android platform message: '${message.method}', args: ${message.arguments}");
-    print("Android platform message: '${message.method}', args: ${message.arguments}");
     switch (message.method) {
       case "keyboardOpening":
         _geometry.value = _geometry.value.updateWith(

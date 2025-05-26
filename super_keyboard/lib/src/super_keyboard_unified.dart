@@ -23,12 +23,12 @@ class _SuperKeyboardBuilderState extends State<SuperKeyboardBuilder> {
   @override
   void initState() {
     super.initState();
-    SuperKeyboard.instance.geometry.addListener(_onKeyboardStateChange);
+    SuperKeyboard.instance.mobileGeometry.addListener(_onKeyboardStateChange);
   }
 
   @override
   void dispose() {
-    SuperKeyboard.instance.geometry.removeListener(_onKeyboardStateChange);
+    SuperKeyboard.instance.mobileGeometry.removeListener(_onKeyboardStateChange);
     super.dispose();
   }
 
@@ -42,7 +42,7 @@ class _SuperKeyboardBuilderState extends State<SuperKeyboardBuilder> {
   Widget build(BuildContext context) {
     return widget.builder(
       context,
-      SuperKeyboard.instance.geometry.value,
+      SuperKeyboard.instance.mobileGeometry.value,
     );
   }
 }
@@ -101,15 +101,15 @@ class SuperKeyboard {
     }
   }
 
-  ValueListenable<MobileWindowGeometry> get geometry => _geometry;
-  final _geometry = ValueNotifier<MobileWindowGeometry>(const MobileWindowGeometry());
+  ValueListenable<MobileWindowGeometry> get mobileGeometry => _mobileGeometry;
+  final _mobileGeometry = ValueNotifier<MobileWindowGeometry>(const MobileWindowGeometry());
 
   void _onIOSWindowGeometryChange() {
-    _geometry.value = SuperKeyboardIOS.instance.geometry.value;
+    _mobileGeometry.value = SuperKeyboardIOS.instance.geometry.value;
   }
 
   void _onAndroidWindowGeometryChange() {
-    _geometry.value = SuperKeyboardAndroid.instance.geometry.value;
+    _mobileGeometry.value = SuperKeyboardAndroid.instance.geometry.value;
   }
 }
 

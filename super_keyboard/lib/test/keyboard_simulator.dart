@@ -116,7 +116,7 @@ class _SoftwareKeyboardHeightSimulatorState extends State<SoftwareKeyboardHeight
   @override
   Widget build(BuildContext context) {
     return ValueListenableBuilder(
-      valueListenable: SuperKeyboard.instance.geometry,
+      valueListenable: SuperKeyboard.instance.mobileGeometry,
       builder: (context, geometry, child) {
         final realMediaQuery = MediaQuery.of(context);
         final isRelevantPlatform = widget.enableForAllPlatforms ||
@@ -266,7 +266,7 @@ class TestSuperKeyboard implements SuperKeyboard {
   late final AnimationController _keyboardHeightController;
 
   @override
-  ValueListenable<MobileWindowGeometry> get geometry => _geometry;
+  ValueListenable<MobileWindowGeometry> get mobileGeometry => _geometry;
   final _geometry = ValueNotifier(const MobileWindowGeometry());
 
   void _simulatePlatformOpeningKeyboard() {
