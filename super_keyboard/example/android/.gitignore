@@ -1,3 +1,5 @@
+app/.cxx/
+
 gradle-wrapper.jar
 /.gradle
 /captures/

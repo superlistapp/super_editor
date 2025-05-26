@@ -53,7 +53,7 @@ public class SuperKeyboardPlugin: NSObject, FlutterPlugin {
     let keyboardHeight = max(0, screenHeight - keyboardFrame.origin.y)
     
     channel!.invokeMethod("keyboardDidShow", arguments: [
-      "keyboard_height": keyboardHeight
+      "keyboardHeight": keyboardHeight
     ])
   }
   
@@ -161,7 +161,9 @@ public class SuperKeyboardPlugin: NSObject, FlutterPlugin {
   }
   
   @objc private func keyboardDidHide(_ notification: Notification) {
-    channel!.invokeMethod("keyboardDidHide", arguments: nil)
+    channel!.invokeMethod("keyboardDidHide", arguments: [
+      "keyboardHeight": 0
+    ])
 //    stopTrackingKeyboard()
   }
 }
