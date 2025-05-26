@@ -294,45 +294,34 @@ class SuperKeyboardPlugin: FlutterPlugin, ActivityAware, DefaultLifecycleObserve
   }
 
   private fun sendMessageKeyboardOpened() {
-    channel.invokeMethod("keyboardOpened", mapOf(
-      "keyboardHeight" to imeHeightInDpi,
-      "bottomPadding" to bottomPaddingInDpi,
-    ))
+    channel.invokeMethod("keyboardOpened", createMetricsPayload())
   }
 
   private fun sendMessageKeyboardOpening() {
-    channel.invokeMethod("keyboardOpening", mapOf(
-      "keyboardHeight" to imeHeightInDpi,
-      "bottomPadding" to bottomPaddingInDpi,
-    ))
+    channel.invokeMethod("keyboardOpening", createMetricsPayload())
   }
 
   private fun sendMessageKeyboardProgress() {
-    channel.invokeMethod("onProgress", mapOf(
-      "keyboardHeight" to imeHeightInDpi,
-      "bottomPadding" to bottomPaddingInDpi,
-    ))
+    channel.invokeMethod("onProgress", createMetricsPayload())
   }
 
   private fun sendMessageKeyboardClosed() {
-    channel.invokeMethod("keyboardClosed", mapOf(
-      "keyboardHeight" to imeHeightInDpi,
-      "bottomPadding" to bottomPaddingInDpi,
-    ))
+    channel.invokeMethod("keyboardClosed", createMetricsPayload())
   }
 
   private fun sendMessageKeyboardClosing() {
-    channel.invokeMethod("keyboardClosing", mapOf(
-      "keyboardHeight" to imeHeightInDpi,
-      "bottomPadding" to bottomPaddingInDpi,
-    ))
+    channel.invokeMethod("keyboardClosing", createMetricsPayload())
   }
 
   private fun sendMessageMetricsUpdate() {
-    channel.invokeMethod("metricsUpdate", mapOf(
+    channel.invokeMethod("metricsUpdate", createMetricsPayload())
+  }
+
+  private fun createMetricsPayload(): Map<String, Any> {
+    return mapOf<String, Any>(
       "keyboardHeight" to imeHeightInDpi,
       "bottomPadding" to bottomPaddingInDpi,
-    ))
+    )
   }
 }
 
