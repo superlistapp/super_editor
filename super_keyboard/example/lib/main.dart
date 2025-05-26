@@ -53,9 +53,10 @@ class _SuperKeyboardDemoAppState extends State<SuperKeyboardDemoApp> {
                 ),
                 const SizedBox(height: 12),
                 ValueListenableBuilder(
-                  valueListenable: SuperKeyboard.instance.keyboardHeight,
+                  valueListenable: SuperKeyboard.instance.mobileGeometry,
                   builder: (context, value, child) {
-                    return Text("Keyboard height: ${value != null ? "${value.toInt()}" : "???"}");
+                    return Text(
+                        "Keyboard height: ${value.keyboardHeight != null ? "${value.keyboardHeight!.toInt()}" : "???"}");
                   },
                 ),
                 const SizedBox(height: 48),
@@ -74,13 +75,13 @@ class _SuperKeyboardDemoAppState extends State<SuperKeyboardDemoApp> {
                 _buildFlutterLoggingOption(),
                 _buildPlatformLoggingOption(),
                 ValueListenableBuilder(
-                  valueListenable: SuperKeyboard.instance.keyboardHeight,
+                  valueListenable: SuperKeyboard.instance.mobileGeometry,
                   builder: (context, value, child) {
-                    if (value == null) {
+                    if (value.keyboardHeight == null) {
                       return const SizedBox();
                     }
 
-                    return SizedBox(height: value / MediaQuery.of(context).devicePixelRatio);
+                    return SizedBox(height: value.keyboardHeight! / MediaQuery.of(context).devicePixelRatio);
                   },
                 ),
               ],
@@ -93,13 +94,14 @@ class _SuperKeyboardDemoAppState extends State<SuperKeyboardDemoApp> {
 
   Widget _buildKeyboardStateIcon() {
     return ValueListenableBuilder(
-      valueListenable: SuperKeyboard.instance.state,
+      valueListenable: SuperKeyboard.instance.mobileGeometry,
       builder: (context, value, child) {
-        final icon = switch (value) {
+        final icon = switch (value.keyboardState) {
           KeyboardState.closed => Icons.border_bottom,
           KeyboardState.opening => Icons.upload_sharp,
           KeyboardState.open => Icons.border_top,
           KeyboardState.closing => Icons.download_sharp,
+          null => Icons.question_mark,
         };
 
         return Icon(
@@ -110,12 +112,13 @@ class _SuperKeyboardDemoAppState extends State<SuperKeyboardDemoApp> {
     );
   }
 
-  String get _keyboardState {
-    return switch (SuperKeyboard.instance.state.value) {
+  String? get _keyboardState {
+    return switch (SuperKeyboard.instance.mobileGeometry.value.keyboardState) {
       KeyboardState.closed => "Closed",
       KeyboardState.opening => "Opening",
       KeyboardState.open => "Open",
       KeyboardState.closing => "Closing",
+      _ => null,
     };
   }
 
