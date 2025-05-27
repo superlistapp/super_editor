@@ -1,3 +1,7 @@
+## [0.2.1] - May 26, 2025
+* FIX: Fix keyboard test simulator - we accidentally hard coded the keyboard height in a few places, now it respects
+  the desired keyboard height.
+
 ## [0.2.0] - May 26, 2025
  * BREAKING: Keyboard state and height are now reported together as a "geometry" data structure.
  * ADJUSTMENT: Android - Bottom padding is now reported along with keyboard height and state.
