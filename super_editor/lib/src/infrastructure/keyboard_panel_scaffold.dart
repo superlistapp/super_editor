@@ -236,20 +236,6 @@ class _KeyboardPanelScaffoldState<PanelType> extends State<KeyboardPanelScaffold
     super.dispose();
   }
 
-  double _getCurrentKeyboardHeight() {
-    if (widget.bypassMediaQuery) {
-      return SuperKeyboard.instance.mobileGeometry.value.keyboardHeight ?? MediaQuery.viewInsetsOf(context).bottom;
-    }
-
-    // Note: One reason that it's still important to use MediaQuery bottom insets on iOS instead
-    // of deferring to SuperKeyboard is that, at the time of writing this (May, 2025), SuperKeyboard
-    // hasn't implemented any heuristics to estimate keyboard transition insets, nor does iOS report
-    // those insets.
-    // TODO: We should lookup how Flutter's MediaQuery estimates the keyboard insets when the keyboard
-    //       is closing, and replicate that in SuperKeyboard so we can defer to SuperKeyboard all the time.
-    return MediaQuery.viewInsetsOf(context).bottom;
-  }
-
   void _onKeyboardGeometryChange() {
     // Note: The following post frame callback shouldn't be necessary.
     // We should be able to look up our ancestor MediaQuery immediately.
@@ -592,7 +578,7 @@ class _KeyboardPanelScaffoldState<PanelType> extends State<KeyboardPanelScaffold
         ? 0.0
         : _wantsToShowSoftwareKeyboard //
             ? 0.0
-            : MediaQuery.paddingOf(context).bottom;
+            : _getCurrentBottomPadding();
 
     final toolbarSize = (_toolbarKey.currentContext?.findRenderObject() as RenderBox?)?.size;
     final bottomInsets = _currentBottomSpacing.value + (toolbarSize?.height ?? 0);
@@ -601,6 +587,28 @@ class _KeyboardPanelScaffoldState<PanelType> extends State<KeyboardPanelScaffold
       bottomInsets: bottomInsets,
       bottomPadding: bottomPadding,
     );
+  }
+
+  double _getCurrentKeyboardHeight() {
+    if (widget.bypassMediaQuery) {
+      return SuperKeyboard.instance.mobileGeometry.value.keyboardHeight ?? MediaQuery.viewInsetsOf(context).bottom;
+    }
+
+    // Note: One reason that it's still important to use MediaQuery bottom insets on iOS instead
+    // of deferring to SuperKeyboard is that, at the time of writing this (May, 2025), SuperKeyboard
+    // hasn't implemented any heuristics to estimate keyboard transition insets, nor does iOS report
+    // those insets.
+    // TODO: We should lookup how Flutter's MediaQuery estimates the keyboard insets when the keyboard
+    //       is closing, and replicate that in SuperKeyboard so we can defer to SuperKeyboard all the time.
+    return MediaQuery.viewInsetsOf(context).bottom;
+  }
+
+  double _getCurrentBottomPadding() {
+    if (widget.bypassMediaQuery) {
+      return SuperKeyboard.instance.mobileGeometry.value.bottomPadding ?? MediaQuery.paddingOf(context).bottom;
+    }
+
+    return MediaQuery.paddingOf(context).bottom;
   }
 
   @override
@@ -1004,7 +1012,7 @@ class _KeyboardScaffoldSafeAreaScopeState extends State<KeyboardScaffoldSafeArea
       // we want to continue blindly honoring the MediaQuery.
       _keyboardSafeAreaData = KeyboardSafeAreaGeometry(
         bottomInsets: _getCurrentKeyboardHeight(),
-        bottomPadding: MediaQuery.paddingOf(context).bottom,
+        bottomPadding: _getCurrentBottomPadding(),
       );
     } else if (_isSafeAreaFromAncestor) {
       if (_ancestorSafeArea != null) {
@@ -1015,9 +1023,8 @@ class _KeyboardScaffoldSafeAreaScopeState extends State<KeyboardScaffoldSafeArea
         // Our previous safe area was inherited from an ancestor scope, but now that
         // scope is gone. Reset back to the regular MediaQuery safe area.
         _keyboardSafeAreaData = KeyboardSafeAreaGeometry(
-          bottomInsets:
-              SuperKeyboard.instance.mobileGeometry.value.keyboardHeight ?? MediaQuery.viewInsetsOf(context).bottom,
-          bottomPadding: MediaQuery.paddingOf(context).bottom,
+          bottomInsets: _getCurrentKeyboardHeight(),
+          bottomPadding: _getCurrentBottomPadding(),
         );
         _isSafeAreaFromMediaQuery = true;
         _isSafeAreaFromAncestor = false;
@@ -1049,6 +1056,14 @@ class _KeyboardScaffoldSafeAreaScopeState extends State<KeyboardScaffoldSafeArea
     }
 
     return MediaQuery.viewInsetsOf(context).bottom;
+  }
+
+  double _getCurrentBottomPadding() {
+    if (widget.bypassMediaQuery) {
+      return SuperKeyboard.instance.mobileGeometry.value.bottomPadding ?? MediaQuery.paddingOf(context).bottom;
+    }
+
+    return MediaQuery.paddingOf(context).bottom;
   }
 
   @override
