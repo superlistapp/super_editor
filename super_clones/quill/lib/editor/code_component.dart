@@ -126,7 +126,7 @@ class CodeBlockComponentViewModel extends SingleColumnLayoutComponentViewModel w
       nodeId: nodeId,
       maxWidth: maxWidth,
       padding: padding,
-      text: text,
+      text: text.copy(),
       textStyleBuilder: textStyleBuilder,
       inlineWidgetBuilders: inlineWidgetBuilders,
       textDirection: textDirection,

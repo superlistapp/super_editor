@@ -257,9 +257,11 @@ class TestDocumentConfigurator {
 
     final layoutKey = GlobalKey();
     final documentContext = SuperReaderContext(
-      document: _document!,
+      editor: createDefaultDocumentEditor(
+        document: _document!,
+        composer: MutableDocumentComposer(),
+      ),
       getDocumentLayout: () => layoutKey.currentState as DocumentLayout,
-      selection: ValueNotifier<DocumentSelection?>(_selection),
       scroller: DocumentScroller(),
     );
     final testContext = TestDocumentContext._(
@@ -279,9 +281,8 @@ class TestDocumentConfigurator {
             focusNode: testContext.focusNode,
             autofocus: _autoFocus,
             tapRegionGroupId: _tapRegionGroupId,
-            document: documentContext.document,
+            editor: documentContext.editor,
             documentLayoutKey: layoutKey,
-            selection: documentContext.selection,
             selectionStyle: _selectionStyles,
             gestureMode: _gestureMode ?? _defaultGestureMode,
             stylesheet: _stylesheet,
