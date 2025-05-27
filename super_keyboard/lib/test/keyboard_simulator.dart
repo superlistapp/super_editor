@@ -280,21 +280,21 @@ class TestSuperKeyboard implements SuperKeyboard {
   void _onKeyboardAnimationStatusChange(AnimationStatus status) {
     switch (status) {
       case AnimationStatus.forward:
-        _geometry.value = const MobileWindowGeometry(
+        _geometry.value = MobileWindowGeometry(
           keyboardState: KeyboardState.opening,
-          keyboardHeight: 150,
+          keyboardHeight: fakeKeyboardHeight / 2,
           bottomPadding: 48,
         );
       case AnimationStatus.completed:
-        _geometry.value = const MobileWindowGeometry(
+        _geometry.value = MobileWindowGeometry(
           keyboardState: KeyboardState.open,
-          keyboardHeight: 300,
+          keyboardHeight: fakeKeyboardHeight,
           bottomPadding: 48,
         );
       case AnimationStatus.reverse:
-        _geometry.value = const MobileWindowGeometry(
+        _geometry.value = MobileWindowGeometry(
           keyboardState: KeyboardState.closing,
-          keyboardHeight: 150,
+          keyboardHeight: fakeKeyboardHeight / 2,
           bottomPadding: 48,
         );
       case AnimationStatus.dismissed:
