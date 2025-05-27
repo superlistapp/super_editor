@@ -15,6 +15,20 @@ class _SuperEditorMessagePageDemoState extends State<SuperEditorMessagePageDemo>
   final _messagePageController = MessagePageController();
 
   @override
+  void initState() {
+    super.initState();
+
+    SuperKeyboard.startLogging();
+  }
+
+  @override
+  void dispose() {
+    SuperKeyboard.stopLogging();
+
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return MessagePageScaffold(
       controller: _messagePageController,
@@ -328,7 +342,7 @@ class _ChatEditorState extends State<_ChatEditor> {
 
     _isImeConnected.addListener(_onImeConnectionChange);
 
-    SuperKeyboardAndroid.instance.keyboardState.addListener(_onKeyboardStateChange);
+    SuperKeyboard.instance.mobileGeometry.addListener(_onKeyboardChange);
   }
 
   @override
@@ -343,7 +357,7 @@ class _ChatEditorState extends State<_ChatEditor> {
 
   @override
   void dispose() {
-    SuperKeyboardAndroid.instance.keyboardState.removeListener(_onKeyboardStateChange);
+    SuperKeyboard.instance.mobileGeometry.removeListener(_onKeyboardChange);
 
     widget.messagePageController.removeListener(_onMessagePageControllerChange);
 
@@ -355,7 +369,7 @@ class _ChatEditorState extends State<_ChatEditor> {
     super.dispose();
   }
 
-  void _onKeyboardStateChange() {
+  void _onKeyboardChange() {
     // On Android, we've found that when swiping to go back, the keyboard often
     // closes without Flutter reporting the closure of the IME connection.
     // Therefore, the keyboard closes, but editors and text fields retain focus,
@@ -366,7 +380,7 @@ class _ChatEditorState extends State<_ChatEditor> {
     // To hack around this bug in Flutter, when super_keyboard reports keyboard
     // closure, and this controller thinks the keyboard is open, we give up
     // focus so that our app state synchronizes with the closed IME connection.
-    final keyboardState = SuperKeyboardAndroid.instance.keyboardState.value;
+    final keyboardState = SuperKeyboard.instance.mobileGeometry.value.keyboardState;
     if (_isImeConnected.value && (keyboardState == KeyboardState.closing || keyboardState == KeyboardState.closed)) {
       _editorFocusNode.unfocus();
     }
