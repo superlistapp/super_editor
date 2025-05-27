@@ -43,6 +43,7 @@ class KeyboardPanelScaffold<PanelType> extends StatefulWidget {
     required this.keyboardPanelBuilder,
     this.fallbackPanelHeight = 250,
     required this.contentBuilder,
+    this.bypassMediaQuery = false,
   });
 
   /// Controls the visibility of the keyboard toolbar, keyboard panel, and software keyboard.
@@ -71,6 +72,16 @@ class KeyboardPanelScaffold<PanelType> extends StatefulWidget {
   /// a whole screen of content, or other times this content might be a single widget
   /// like a text field or an editor.
   final Widget Function(BuildContext context, PanelType? openPanel) contentBuilder;
+
+  /// When determining the height of the keyboard, whether to bypass Flutter's `MediaQuery`
+  /// and solely rely on `SuperKeyboard` reporting, or whether the scaffold should use a
+  /// combination of both.
+  ///
+  /// This option was added after a client app had an Android lifecycle bug, which caused
+  /// Flutter's `MediaQuery` to report the wrong bottom insets. Apps should start with this
+  /// value as `false` and only change it to `true` if the app runs into problems with
+  /// `MediaQuery`.
+  final bool bypassMediaQuery;
 
   @override
   State<KeyboardPanelScaffold<PanelType>> createState() => _KeyboardPanelScaffoldState<PanelType>();
@@ -226,7 +237,7 @@ class _KeyboardPanelScaffoldState<PanelType> extends State<KeyboardPanelScaffold
   }
 
   double _getCurrentKeyboardHeight() {
-    if (defaultTargetPlatform == TargetPlatform.android) {
+    if (widget.bypassMediaQuery) {
       return SuperKeyboard.instance.mobileGeometry.value.keyboardHeight ?? MediaQuery.viewInsetsOf(context).bottom;
     }
 
@@ -919,12 +930,23 @@ class KeyboardScaffoldSafeAreaScope extends StatefulWidget {
   const KeyboardScaffoldSafeAreaScope({
     super.key,
     this.debugLabel = "UNNAMED",
+    this.bypassMediaQuery = false,
     required this.child,
   });
 
   /// A label associated with this widget that can be helpful when debugging
   /// unexpected safe areas throughout a scope.
   final String debugLabel;
+
+  /// When determining the height of the keyboard, whether to bypass Flutter's `MediaQuery`
+  /// and solely rely on `SuperKeyboard` reporting, or whether the scaffold should use a
+  /// combination of both.
+  ///
+  /// This option was added after a client app had an Android lifecycle bug, which caused
+  /// Flutter's `MediaQuery` to report the wrong bottom insets. Apps should start with this
+  /// value as `false` and only change it to `true` if the app runs into problems with
+  /// `MediaQuery`.
+  final bool bypassMediaQuery;
 
   final Widget child;
 
@@ -1022,7 +1044,7 @@ class _KeyboardScaffoldSafeAreaScopeState extends State<KeyboardScaffoldSafeArea
   }
 
   double _getCurrentKeyboardHeight() {
-    if (defaultTargetPlatform == TargetPlatform.android) {
+    if (widget.bypassMediaQuery) {
       return SuperKeyboard.instance.mobileGeometry.value.keyboardHeight ?? MediaQuery.viewInsetsOf(context).bottom;
     }
 
