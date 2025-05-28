@@ -105,7 +105,11 @@ class ParagraphComponentBuilder implements ComponentBuilder {
   const ParagraphComponentBuilder();
 
   @override
-  SingleColumnLayoutComponentViewModel? createViewModel(Document document, DocumentNode node) {
+  SingleColumnLayoutComponentViewModel? createViewModel(
+    Document document,
+    DocumentNode node,
+    List<ComponentBuilder> componentBuilders,
+  ) {
     if (node is! ParagraphNode) {
       return null;
     }
@@ -314,6 +318,7 @@ class HintComponentBuilder extends ParagraphComponentBuilder {
   SingleColumnLayoutComponentViewModel? createViewModel(
     Document document,
     DocumentNode node,
+    List<ComponentBuilder> componentBuilders,
   ) {
     if (node is! ParagraphNode) {
       return null;
@@ -335,7 +340,7 @@ class HintComponentBuilder extends ParagraphComponentBuilder {
     }
 
     return HintComponentViewModel.fromParagraphViewModel(
-      super.createViewModel(document, node)! as ParagraphComponentViewModel,
+      super.createViewModel(document, node, componentBuilders)! as ParagraphComponentViewModel,
       hintText: hint,
     );
   }
