@@ -4,6 +4,9 @@ import 'package:super_editor/src/default_editor/super_editor.dart';
 import 'package:super_editor/src/infrastructure/attribution_layout_bounds.dart';
 import 'package:super_editor/src/infrastructure/content_layers.dart';
 
+/// A [SuperEditorLayerBuilder] that makes [AttributionBounds] usable by a `SuperEditor`.
+///
+/// See [AttributionBounds] for the real implementation.
 class AttributedTextBoundsOverlay implements SuperEditorLayerBuilder {
   const AttributedTextBoundsOverlay({
     required this.selector,
