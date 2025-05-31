@@ -358,7 +358,7 @@ class _KeyboardPanelScaffoldState<PanelType> extends State<KeyboardPanelScaffold
     setState(() {
       _wantsToShowKeyboardPanel = false;
       _wantsToShowSoftwareKeyboard = true;
-      _softwareKeyboardController!.open();
+      _softwareKeyboardController!.open(viewId: View.of(context).viewId);
 
       // Notify delegate listeners.
       notifyListeners();
@@ -425,7 +425,7 @@ class _KeyboardPanelScaffoldState<PanelType> extends State<KeyboardPanelScaffold
       _panelHeightController.reverse();
 
       // Open the keyboard.
-      _softwareKeyboardController!.open();
+      _softwareKeyboardController!.open(viewId: View.of(context).viewId);
 
       // Notify delegate listeners.
       notifyListeners();

@@ -629,6 +629,30 @@ void main() {
       expect(keyboardAppearance, 'Brightness.dark');
     });
 
+    testWidgetsOnAllPlatforms('applies viewId when attaching to the IME', (tester) async {
+      await _pumpEmptySuperTextField(tester);
+
+      // Intercept the messages sent to the platform to check if
+      // we provided the viewId when attaching to the IME.
+      int? viewId;
+      tester
+          .interceptChannel(SystemChannels.textInput.name) //
+          .interceptMethod(
+        'TextInput.setClient',
+        (methodCall) {
+          final textInputConfig = (methodCall.arguments as List<dynamic>)[1] as Map;
+          viewId = textInputConfig['viewId'];
+          return null;
+        },
+      );
+
+      // Place the caret to attach to the IME.
+      await tester.placeCaretInSuperTextField(0);
+
+      // Ensure we provided a viewId when attaching to the IME.
+      expect(viewId, isNotNull);
+    });
+
     group('on iPhone 15 (iOS 17.5)', () {
       testWidgetsOnIos('ignores keyboard autocorrections when pressing the action button', (tester) async {
         await _pumpEmptySuperTextField(tester);

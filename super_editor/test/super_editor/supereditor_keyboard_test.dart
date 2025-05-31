@@ -579,7 +579,7 @@ void main() {
         expect(selectionBefore.extent.nodeId, nodeId);
 
         // Open the keyboard
-        keyboardController.open();
+        keyboardController.open(viewId: 1);
         await tester.pump();
 
         // Ensure the IME is open
@@ -634,7 +634,7 @@ void main() {
         expect(selectionBefore.extent.nodeId, nodeId);
 
         // Open the keyboard
-        keyboardController.open();
+        keyboardController.open(viewId: _findSuperEditorViewId());
         await tester.pump();
 
         // Ensure the IME is open
@@ -709,7 +709,7 @@ void main() {
         expect(selectionBefore.extent.nodeId, nodeId);
 
         // Open the keyboard
-        keyboardController.open();
+        keyboardController.open(viewId: _findSuperEditorViewId());
         await tester.pump();
 
         // Ensure the IME is open
@@ -723,7 +723,7 @@ void main() {
         expect(keyboardController.isConnectedToIme, isFalse);
 
         // Re-open the IME
-        keyboardController.open();
+        keyboardController.open(viewId: _findSuperEditorViewId());
         await tester.pumpAndSettle();
 
         // Ensure the IME is re-opened
@@ -796,7 +796,7 @@ void main() {
         expect(selectionBefore.extent.nodeId, nodeId);
 
         // Open the keyboard
-        keyboardController.open();
+        keyboardController.open(viewId: _findSuperEditorViewId());
         await tester.pump();
 
         // Ensure the IME is open
@@ -946,6 +946,15 @@ DocumentSelection _selectionInParagraph(
     base: DocumentPosition(nodeId: nodeId, nodePosition: TextNodePosition(offset: from, affinity: fromAffinity)),
     extent: DocumentPosition(nodeId: nodeId, nodePosition: TextNodePosition(offset: to, affinity: toAffinity)),
   );
+}
+
+/// Finds the viewId of the [SuperEditor] widget.
+///
+/// {@macro supereditor_finder}
+int _findSuperEditorViewId([Finder? finder]) {
+  finder ??= find.byType(SuperEditor);
+  final context = (finder.evaluate().first as BuildContext);
+  return View.of(context).viewId;
 }
 
 /// A widget that calls [SoftwareKeyboardController.close] during `dispose()`.
