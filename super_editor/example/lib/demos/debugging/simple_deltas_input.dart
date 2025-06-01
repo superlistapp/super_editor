@@ -68,6 +68,7 @@ class _SimpleDeltasInputState extends State<SimpleDeltasInputDemo> with TextInpu
 
   TextInputConfiguration _createInputConfiguration() {
     return TextInputConfiguration(
+      viewId: View.of(context).viewId,
       enableDeltaModel: true,
       inputType: TextInputType.multiline,
       textCapitalization: TextCapitalization.sentences,

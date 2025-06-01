@@ -1438,6 +1438,34 @@ Paragraph two
       expect(wasKeyboardShown, isTrue);
     });
 
+    testWidgetsOnAllPlatforms('applies viewId when attaching to the IME', (tester) async {
+      await tester
+          .createDocument() //
+          .withSingleEmptyParagraph()
+          .withInputSource(TextInputSource.ime)
+          .pump();
+
+      // Intercept the messages sent to the platform to check if
+      // we provided the viewId when attaching to the IME.
+      int? viewId;
+      tester
+          .interceptChannel(SystemChannels.textInput.name) //
+          .interceptMethod(
+        'TextInput.setClient',
+        (methodCall) {
+          final textInputConfig = (methodCall.arguments as List<dynamic>)[1] as Map;
+          viewId = textInputConfig['viewId'];
+          return null;
+        },
+      );
+
+      // Place the caret at the beginning of the paragraph to attach to the IME.
+      await tester.placeCaretInParagraph('1', 0);
+
+      // Ensure we provided a viewId when attaching to the IME.
+      expect(viewId, isNotNull);
+    });
+
     testWidgetsOnAllPlatforms('clears composing region after losing focus', (tester) async {
       final focusNode = FocusNode();
 

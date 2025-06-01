@@ -670,7 +670,7 @@ class SuperEditorState extends State<SuperEditor> {
       return;
     }
 
-    _softwareKeyboardController.open();
+    _softwareKeyboardController.open(viewId: View.of(context).viewId);
   }
 
   @override
