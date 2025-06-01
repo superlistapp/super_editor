@@ -235,6 +235,7 @@ void main() {
 
         // Change the keyboard appearance from light to dark.
         controller.updateTextInputConfiguration(
+          viewId: 0,
           keyboardAppearance: Brightness.dark,
         );
         await tester.pump();
@@ -274,6 +275,7 @@ void main() {
 
         // Change the keyboard appearance from light to dark while detached from IME.
         controller.updateTextInputConfiguration(
+          viewId: 0,
           keyboardAppearance: Brightness.dark,
         );
 

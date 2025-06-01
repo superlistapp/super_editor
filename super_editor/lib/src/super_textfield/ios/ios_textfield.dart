@@ -316,6 +316,7 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField>
         (oldWidget.imeConfiguration == null || !widget.imeConfiguration!.isEquivalentTo(oldWidget.imeConfiguration!)) &&
         _textEditingController.isAttachedToIme) {
       _textEditingController.updateTextInputConfiguration(
+        viewId: View.of(context).viewId,
         textInputAction: widget.imeConfiguration!.inputAction,
         textInputType: widget.imeConfiguration!.inputType,
         autocorrect: widget.imeConfiguration!.autocorrect,
@@ -452,6 +453,7 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField>
               _textEditingController.attachToImeWithConfig(widget.imeConfiguration!);
             } else {
               _textEditingController.attachToIme(
+                viewId: View.of(context).viewId,
                 textInputAction: widget.textInputAction ?? TextInputAction.done,
                 textInputType: _isMultiline ? TextInputType.multiline : TextInputType.text,
               );
