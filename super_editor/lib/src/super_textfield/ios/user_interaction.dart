@@ -235,7 +235,7 @@ class IOSTextFieldTouchInteractorState extends State<IOSTextFieldTouchInteractor
       // or clicks on the OK button of the software keyboard.
       // In this situation, the IME connection is closed but the field remains focused.
       // We need to attach to IME so the keyboard is displayed again.
-      widget.textController.attachToIme();
+      widget.textController.attachToIme(viewId: View.of(context).viewId);
     } else {
       widget.focusNode.requestFocus();
     }

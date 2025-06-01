@@ -315,7 +315,9 @@ class _ChatEditorState extends State<_ChatEditor> implements SoftwareKeyboardCon
   bool get isConnectedToIme => _textFieldFocusNode.hasFocus;
 
   @override
-  void open() {
+  void open({
+    required int viewId,
+  }) {
     _textFieldFocusNode.requestFocus();
   }
 

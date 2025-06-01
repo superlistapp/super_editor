@@ -67,7 +67,9 @@ class _SoftwareKeyboardOpenerState extends State<SoftwareKeyboardOpener> impleme
   bool get isConnectedToIme => widget.imeConnection.value?.attached ?? false;
 
   @override
-  void open() {
+  void open({
+    required int viewId,
+  }) {
     editorImeLog.info("[SoftwareKeyboard] - showing keyboard");
     widget.imeConnection.value ??= TextInput.attach(widget.createImeClient(), widget.createImeConfiguration());
     widget.imeConnection.value!.show();
@@ -125,9 +127,14 @@ class SoftwareKeyboardController {
   }
 
   /// Opens the software keyboard.
-  void open() {
+  ///
+  /// The [viewId] is required do determine the view that the text input belongs to. You can call
+  /// `View.of(context).viewId` to get the current view's ID.
+  void open({
+    required int viewId,
+  }) {
     assert(hasDelegate);
-    _delegate?.open();
+    _delegate?.open(viewId: viewId);
   }
 
   void hide() {
@@ -149,7 +156,12 @@ abstract class SoftwareKeyboardControllerDelegate {
   bool get isConnectedToIme;
 
   /// Opens the software keyboard.
-  void open();
+  ///
+  /// The [viewId] is required do determine the view that the text input belongs to. You can call
+  /// `View.of(context).viewId` to get the current view's ID.
+  void open({
+    required int viewId,
+  });
 
   /// Hides the software keyboard without closing the IME connection.
   void hide();

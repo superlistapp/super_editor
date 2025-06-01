@@ -184,8 +184,6 @@ class SuperEditorImeInteractorState extends State<SuperEditorImeInteractor> impl
 
     _imeConnection.addListener(_onImeConnectionChange);
 
-    _textInputConfiguration = widget.imeConfiguration.toTextInputConfiguration();
-
     WidgetsBinding.instance.addPostFrameCallback((_) {
       // Synchronize the IME connection notifier with our IME connection state. We run
       // this in a post-frame callback because the very first pump of the Super Editor
@@ -202,6 +200,8 @@ class SuperEditorImeInteractorState extends State<SuperEditorImeInteractor> impl
     _controlsController = SuperEditorIosControlsScope.maybeRootOf(context);
     _documentImeClient.floatingCursorController =
         widget.floatingCursorController ?? _controlsController?.floatingCursorController;
+    _textInputConfiguration = widget.imeConfiguration //
+        .toTextInputConfiguration(viewId: View.of(context).viewId);
   }
 
   @override
@@ -216,7 +216,7 @@ class SuperEditorImeInteractorState extends State<SuperEditorImeInteractor> impl
     }
 
     if (widget.imeConfiguration != oldWidget.imeConfiguration) {
-      _textInputConfiguration = widget.imeConfiguration.toTextInputConfiguration();
+      _textInputConfiguration = widget.imeConfiguration.toTextInputConfiguration(viewId: View.of(context).viewId);
       if (isAttachedToIme) {
         _imeConnection.value!.updateConfig(_textInputConfiguration);
       }
@@ -872,8 +872,15 @@ class SuperEditorImeConfiguration {
   /// new-line, done, go, etc.
   final TextInputAction keyboardActionButton;
 
-  TextInputConfiguration toTextInputConfiguration() {
+  /// Converts this configuration to a [TextInputConfiguration] that can be used to attach to the IME.
+  ///
+  /// The [viewId] is required do determine the view that the text input belongs to. You can call
+  /// `View.of(context).viewId` to get the current view's ID.
+  TextInputConfiguration toTextInputConfiguration({
+    required int viewId,
+  }) {
     return TextInputConfiguration(
+      viewId: viewId,
       enableDeltaModel: true,
       inputType: TextInputType.multiline,
       textCapitalization: TextCapitalization.sentences,
