@@ -235,7 +235,7 @@ void main() {
 
         // Change the keyboard appearance from light to dark.
         controller.updateTextInputConfiguration(
-          viewId: _findSuperTextFieldViewId(),
+          viewId: 0,
           keyboardAppearance: Brightness.dark,
         );
         await tester.pump();
@@ -275,7 +275,7 @@ void main() {
 
         // Change the keyboard appearance from light to dark while detached from IME.
         controller.updateTextInputConfiguration(
-          viewId: _findSuperTextFieldViewId(),
+          viewId: 0,
           keyboardAppearance: Brightness.dark,
         );
 
@@ -462,13 +462,4 @@ bool _isCaretPresent(WidgetTester tester) {
   }
   final caretState = (caretMatches.single as StatefulElement).state as TextLayoutCaretState;
   return caretState.isCaretPresent;
-}
-
-/// Finds the viewId of the [SuperTextField] widget.
-///
-/// {@macro supertextfield_finder}
-int _findSuperTextFieldViewId([Finder? finder]) {
-  finder ??= find.byType(SuperTextField);
-  final context = (finder.evaluate().first as BuildContext);
-  return View.of(context).viewId;
 }
