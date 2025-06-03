@@ -35,7 +35,7 @@ bool moveSelectionToNearestSelectableNode({
   NodePosition? newPosition;
 
   // Try to find a new selection downstream.
-  final downstreamNode = _getDownstreamSelectableNodeAfter(document, documentLayoutResolver, startingNode);
+  final downstreamNode = getDownstreamSelectableNodeAfter(document, documentLayoutResolver, startingNode);
   if (downstreamNode != null) {
     newNodeId = downstreamNode.id;
     final nextComponent = documentLayoutResolver().getComponentByNodeId(newNodeId);
@@ -44,7 +44,7 @@ bool moveSelectionToNearestSelectableNode({
 
   // Try to find a new selection upstream.
   if (newPosition == null) {
-    final upstreamNode = _getUpstreamSelectableNodeBefore(document, documentLayoutResolver, startingNode);
+    final upstreamNode = getUpstreamSelectableNodeBefore(document, documentLayoutResolver, startingNode);
     if (upstreamNode != null) {
       newNodeId = upstreamNode.id;
       final previousComponent = documentLayoutResolver().getComponentByNodeId(newNodeId);
@@ -88,7 +88,7 @@ bool moveSelectionToNearestSelectableNode({
 
 /// Returns the first [DocumentNode] after [startingNode] whose
 /// [DocumentComponent] is visually selectable.
-DocumentNode? _getDownstreamSelectableNodeAfter(
+DocumentNode? getDownstreamSelectableNodeAfter(
   Document document,
   DocumentLayoutResolver documentLayoutResolver,
   DocumentNode startingNode,
@@ -113,7 +113,7 @@ DocumentNode? _getDownstreamSelectableNodeAfter(
 
 /// Returns the first [DocumentNode] before [startingNode] whose
 /// [DocumentComponent] is visually selectable.
-DocumentNode? _getUpstreamSelectableNodeBefore(
+DocumentNode? getUpstreamSelectableNodeBefore(
   Document document,
   DocumentLayoutResolver documentLayoutResolver,
   DocumentNode startingNode,
@@ -134,85 +134,6 @@ DocumentNode? _getUpstreamSelectableNodeBefore(
   } while (!foundSelectableNode && selectableNode != null);
 
   return selectableNode;
-}
-
-/// Calculates an appropriate [DocumentSelection] from an (x,y)
-/// [baseOffsetInDocument], to an (x,y) [extentOffsetInDocument], setting
-/// the new document selection in the given [selection].
-void selectRegion({
-  required DocumentLayout documentLayout,
-  required Offset baseOffsetInDocument,
-  required Offset extentOffsetInDocument,
-  required SelectionType selectionType,
-  bool expandSelection = false,
-  required ValueNotifier<DocumentSelection?> selection,
-}) {
-  docGesturesLog.info("Selecting region with selection mode: $selectionType");
-  DocumentSelection? regionSelection = documentLayout.getDocumentSelectionInRegion(
-    baseOffsetInDocument,
-    extentOffsetInDocument,
-  );
-  DocumentPosition? basePosition = regionSelection?.base;
-  DocumentPosition? extentPosition = regionSelection?.extent;
-  docGesturesLog.fine(" - base: $basePosition, extent: $extentPosition");
-
-  if (basePosition == null || extentPosition == null) {
-    selection.value = null;
-    return;
-  }
-
-  if (selectionType == SelectionType.paragraph) {
-    final baseParagraphSelection = getParagraphSelection(
-      docPosition: basePosition,
-      docLayout: documentLayout,
-    );
-    if (baseParagraphSelection == null) {
-      selection.value = null;
-      return;
-    }
-    basePosition = baseOffsetInDocument.dy < extentOffsetInDocument.dy
-        ? baseParagraphSelection.base
-        : baseParagraphSelection.extent;
-
-    final extentParagraphSelection = getParagraphSelection(
-      docPosition: extentPosition,
-      docLayout: documentLayout,
-    );
-    if (extentParagraphSelection == null) {
-      selection.value = null;
-      return;
-    }
-    extentPosition = baseOffsetInDocument.dy < extentOffsetInDocument.dy
-        ? extentParagraphSelection.extent
-        : extentParagraphSelection.base;
-  } else if (selectionType == SelectionType.word) {
-    final baseWordSelection = getWordSelection(
-      docPosition: basePosition,
-      docLayout: documentLayout,
-    );
-    if (baseWordSelection == null) {
-      selection.value = null;
-      return;
-    }
-    basePosition = baseWordSelection.base;
-
-    final extentWordSelection = getWordSelection(
-      docPosition: extentPosition,
-      docLayout: documentLayout,
-    );
-    if (extentWordSelection == null) {
-      selection.value = null;
-      return;
-    }
-    extentPosition = extentWordSelection.extent;
-  }
-
-  selection.value = (DocumentSelection(
-    // If desired, expand the selection instead of replacing it.
-    base: expandSelection ? selection.value?.base ?? basePosition : basePosition,
-    extent: extentPosition,
-  ));
-  docGesturesLog.fine("Selected region: ${selection.value}");
 }
 
 enum SelectionType {
@@ -254,79 +175,37 @@ bool selectBlockAt(DocumentPosition position, ValueNotifier<DocumentSelection?> 
   return true;
 }
 
-bool selectParagraphAt({
-  required DocumentPosition docPosition,
-  required DocumentLayout docLayout,
-  required ValueNotifier<DocumentSelection?> selection,
-}) {
-  final newSelection = getParagraphSelection(docPosition: docPosition, docLayout: docLayout);
-  if (newSelection != null) {
-    selection.value = newSelection;
-    return true;
-  } else {
-    return false;
-  }
-}
-
-void moveToNearestSelectableComponent(
-  Document document,
-  DocumentLayout documentLayout,
-  ValueNotifier<DocumentSelection?> selection,
-  String nodeId,
-  DocumentComponent component,
-) {
-  // TODO: this was taken from CommonOps. We don't have CommonOps in this
-  // interactor, because it's for read-only documents. Selection operations
-  // should probably be moved to something outside of CommonOps
-  DocumentNode startingNode = document.getNodeById(nodeId)!;
-  String? newNodeId;
-  NodePosition? newPosition;
-
-  // Try to find a new selection downstream.
-  final downstreamNode = _getDownstreamSelectableNodeAfter(document, () => documentLayout, startingNode);
-  if (downstreamNode != null) {
-    newNodeId = downstreamNode.id;
-    final nextComponent = documentLayout.getComponentByNodeId(newNodeId);
-    newPosition = nextComponent?.getBeginningPosition();
+DocumentSelection? getBlockSelection(DocumentPosition caretPosition) {
+  if (caretPosition.nodePosition is! UpstreamDownstreamNodePosition) {
+    return null;
   }
 
-  // Try to find a new selection upstream.
-  if (newPosition == null) {
-    final upstreamNode = _getUpstreamSelectableNodeBefore(document, () => documentLayout, startingNode);
-    if (upstreamNode != null) {
-      newNodeId = upstreamNode.id;
-      final previousComponent = documentLayout.getComponentByNodeId(newNodeId);
-      newPosition = previousComponent?.getBeginningPosition();
-    }
-  }
-
-  if (newNodeId == null || newPosition == null) {
-    return;
-  }
-
-  selection.value = selection.value!.expandTo(
-    DocumentPosition(
-      nodeId: newNodeId,
-      nodePosition: newPosition,
+  return DocumentSelection(
+    base: DocumentPosition(
+      nodeId: caretPosition.nodeId,
+      nodePosition: const UpstreamDownstreamNodePosition.upstream(),
+    ),
+    extent: DocumentPosition(
+      nodeId: caretPosition.nodeId,
+      nodePosition: const UpstreamDownstreamNodePosition.downstream(),
     ),
   );
 }
 
 bool moveCaretUpstream({
-  required Document document,
+  required Editor editor,
   required DocumentLayout documentLayout,
-  required ValueNotifier<DocumentSelection?> selectionNotifier,
   MovementModifier? movementModifier,
   required bool retainCollapsedSelection,
 }) {
-  final selection = selectionNotifier.value;
+  final selection = editor.composer.selection;
   if (selection == null) {
     return false;
   }
 
   final currentExtent = selection.extent;
   final nodeId = currentExtent.nodeId;
-  final node = document.getNodeById(nodeId);
+  final node = editor.document.getNodeById(nodeId);
   if (node == null) {
     return false;
   }
@@ -340,7 +219,7 @@ bool moveCaretUpstream({
 
   if (newExtentNodePosition == null) {
     // Move to next node
-    final nextNode = _getUpstreamSelectableNodeBefore(document, () => documentLayout, node);
+    final nextNode = getUpstreamSelectableNodeBefore(editor.document, () => documentLayout, node);
 
     if (nextNode == null) {
       // We're at the beginning of the document and can't go anywhere.
@@ -364,7 +243,13 @@ bool moveCaretUpstream({
   if (newSelection.isCollapsed && !retainCollapsedSelection) {
     newSelection = null;
   }
-  selectionNotifier.value = newSelection;
+  editor.execute([
+    ChangeSelectionRequest(
+      newSelection,
+      SelectionChangeType.pushCaret,
+      SelectionReason.userInteraction,
+    ),
+  ]);
 
   return true;
 }
@@ -386,20 +271,19 @@ bool moveCaretUpstream({
 /// selection collapsed but the extent stayed in the same place. Returns
 /// [false] if the extent did not move and the selection did not change.
 bool moveCaretDownstream({
-  required Document document,
+  required Editor editor,
   required DocumentLayout documentLayout,
-  required ValueNotifier<DocumentSelection?> selectionNotifier,
   MovementModifier? movementModifier,
   required bool retainCollapsedSelection,
 }) {
-  final selection = selectionNotifier.value;
+  final selection = editor.composer.selection;
   if (selection == null) {
     return false;
   }
 
   final currentExtent = selection.extent;
   final nodeId = currentExtent.nodeId;
-  final node = document.getNodeById(nodeId);
+  final node = editor.document.getNodeById(nodeId);
   if (node == null) {
     return false;
   }
@@ -413,7 +297,7 @@ bool moveCaretDownstream({
 
   if (newExtentNodePosition == null) {
     // Move to next node
-    final nextNode = _getDownstreamSelectableNodeAfter(document, () => documentLayout, node);
+    final nextNode = getDownstreamSelectableNodeAfter(editor.document, () => documentLayout, node);
 
     if (nextNode == null) {
       // We're at the beginning/end of the document and can't go
@@ -438,7 +322,13 @@ bool moveCaretDownstream({
   if (newSelection.isCollapsed && !retainCollapsedSelection) {
     newSelection = null;
   }
-  selectionNotifier.value = newSelection;
+  editor.execute([
+    ChangeSelectionRequest(
+      newSelection,
+      SelectionChangeType.pushCaret,
+      SelectionReason.userInteraction,
+    ),
+  ]);
 
   return true;
 }
@@ -463,19 +353,18 @@ bool moveCaretDownstream({
 /// selection collapsed but the extent stayed in the same place. Returns
 /// [false] if the extent did not move and the selection did not change.
 bool moveCaretUp({
-  required Document document,
-  required ValueNotifier<DocumentSelection?> selectionNotifier,
+  required Editor editor,
   required DocumentLayout documentLayout,
   required bool retainCollapsedSelection,
 }) {
-  final selection = selectionNotifier.value;
+  final selection = editor.composer.selection;
   if (selection == null) {
     return false;
   }
 
   final currentExtent = selection.extent;
   final nodeId = currentExtent.nodeId;
-  final node = document.getNodeById(nodeId);
+  final node = editor.document.getNodeById(nodeId);
   if (node == null) {
     return false;
   }
@@ -489,7 +378,7 @@ bool moveCaretUp({
 
   if (newExtentNodePosition == null) {
     // Move to next node
-    final nextNode = _getUpstreamSelectableNodeBefore(document, () => documentLayout, node);
+    final nextNode = getUpstreamSelectableNodeBefore(editor.document, () => documentLayout, node);
     if (nextNode != null) {
       newExtentNodeId = nextNode.id;
       final nextComponent = documentLayout.getComponentByNodeId(nextNode.id);
@@ -515,7 +404,14 @@ bool moveCaretUp({
   if (newSelection.isCollapsed && !retainCollapsedSelection) {
     newSelection = null;
   }
-  selectionNotifier.value = newSelection;
+
+  editor.execute([
+    ChangeSelectionRequest(
+      newSelection,
+      SelectionChangeType.pushCaret,
+      SelectionReason.userInteraction,
+    ),
+  ]);
 
   return true;
 }
@@ -540,19 +436,18 @@ bool moveCaretUp({
 /// selection collapsed but the extent stayed in the same place. Returns
 /// [false] if the extent did not move and the selection did not change.
 bool moveCaretDown({
-  required Document document,
+  required Editor editor,
   required DocumentLayout documentLayout,
-  required ValueNotifier<DocumentSelection?> selectionNotifier,
   required bool retainCollapsedSelection,
 }) {
-  final selection = selectionNotifier.value;
+  final selection = editor.composer.selection;
   if (selection == null) {
     return false;
   }
 
   final currentExtent = selection.extent;
   final nodeId = currentExtent.nodeId;
-  final node = document.getNodeById(nodeId);
+  final node = editor.document.getNodeById(nodeId);
   if (node == null) {
     return false;
   }
@@ -566,7 +461,7 @@ bool moveCaretDown({
 
   if (newExtentNodePosition == null) {
     // Move to next node
-    final nextNode = _getDownstreamSelectableNodeAfter(document, () => documentLayout, node);
+    final nextNode = getDownstreamSelectableNodeAfter(editor.document, () => documentLayout, node);
     if (nextNode != null) {
       newExtentNodeId = nextNode.id;
       final nextComponent = documentLayout.getComponentByNodeId(nextNode.id);
@@ -592,7 +487,13 @@ bool moveCaretDown({
   if (newSelection.isCollapsed && !retainCollapsedSelection) {
     newSelection = null;
   }
-  selectionNotifier.value = newSelection;
+  editor.execute([
+    ChangeSelectionRequest(
+      newSelection,
+      SelectionChangeType.pushCaret,
+      SelectionReason.userInteraction,
+    ),
+  ]);
 
   return true;
 }
@@ -601,21 +502,27 @@ bool moveCaretDown({
 ///
 /// Returns `true` if any content was selected, or `false` if the document
 /// is empty.
-bool selectAll(Document document, ValueNotifier<DocumentSelection?> selection) {
-  if (document.isEmpty) {
+bool selectAll(Editor editor) {
+  if (editor.document.isEmpty) {
     return false;
   }
 
-  selection.value = DocumentSelection(
-    base: DocumentPosition(
-      nodeId: document.first.id,
-      nodePosition: document.first.beginningPosition,
+  editor.execute([
+    ChangeSelectionRequest(
+      DocumentSelection(
+        base: DocumentPosition(
+          nodeId: editor.document.first.id,
+          nodePosition: editor.document.first.beginningPosition,
+        ),
+        extent: DocumentPosition(
+          nodeId: editor.document.last.id,
+          nodePosition: editor.document.last.endPosition,
+        ),
+      ),
+      SelectionChangeType.expandSelection,
+      SelectionReason.userInteraction,
     ),
-    extent: DocumentPosition(
-      nodeId: document.last.id,
-      nodePosition: document.last.endPosition,
-    ),
-  );
+  ]);
 
   return true;
 }

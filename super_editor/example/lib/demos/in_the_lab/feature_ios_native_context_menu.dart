@@ -85,6 +85,7 @@ class _NativeIosContextMenuFeatureDemoState extends State<NativeIosContextMenuFe
           stylesheet: defaultStylesheet.copyWith(
             addRulesAfter: [
               ...darkModeStyles,
+              ...largeTextStyles,
             ],
           ),
           documentOverlayBuilders: [
