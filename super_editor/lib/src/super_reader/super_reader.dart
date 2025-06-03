@@ -37,6 +37,7 @@ import 'package:super_editor/src/infrastructure/platforms/ios/toolbar.dart';
 import 'package:super_editor/src/infrastructure/platforms/platform.dart';
 import 'package:super_editor/src/super_reader/tasks.dart';
 
+import '../default_editor/text/custom_underlines.dart';
 import '../infrastructure/platforms/mobile_documents.dart';
 import '../infrastructure/text_input.dart';
 import 'read_only_document_android_touch_interactor.dart';
@@ -230,6 +231,7 @@ class SuperReaderState extends State<SuperReader> {
   final _documentLayoutLink = LayerLink();
   SingleColumnLayoutPresenter? _docLayoutPresenter;
   late SingleColumnStylesheetStyler _docStylesheetStyler;
+  final _customUnderlineStyler = CustomUnderlineStyler();
   late SingleColumnLayoutCustomComponentStyler _docLayoutPerComponentBlockStyler;
   late SingleColumnLayoutSelectionStyler _docLayoutSelectionStyler;
 
@@ -351,6 +353,7 @@ class SuperReaderState extends State<SuperReader> {
       pipeline: [
         _docStylesheetStyler,
         _docLayoutPerComponentBlockStyler,
+        _customUnderlineStyler,
         ...widget.customStylePhases,
         // Selection changes are very volatile. Put that phase last
         // to minimize view model recalculations.
