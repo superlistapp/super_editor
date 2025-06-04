@@ -1,20 +1,68 @@
 import 'dart:collection';
 
-import 'package:clock/clock.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_test_runners/flutter_test_runners.dart';
 import 'package:super_editor/super_editor.dart';
 import 'package:super_editor/super_editor_test.dart';
+import 'package:super_editor_spellcheck/src/super_editor/spellcheck_clock.dart';
 import 'package:super_editor_spellcheck/super_editor_spellcheck.dart';
 
 void main() {
   group('SuperEditor spellcheck >', () {
-    // TODO: Test where we type "Hllo" and run spell check on a paragraph. Then we delete
-    //       the text, convert the paragraph to an ignored block type, then type "Hllo"
-    //       again. In ClickUp, this is immediately (no delay) running spellcheck on the
-    //       ignored block.
+    group('timing >', () {
+      testWidgetsOnArbitraryDesktop(
+        'waits for a specified delay before running spellcheck',
+        (tester) async {
+          final testClock = SpellcheckClock.forTesting(tester);
+          final spellCheckerService = _FakeSpellChecker();
+
+          await _pumpTestApp(
+            tester,
+            document: MutableDocument(
+              nodes: [
+                ParagraphNode(
+                  id: "1",
+                  text: AttributedText(''),
+                ),
+              ],
+            ),
+            spellCheckDelay: const Duration(seconds: 1),
+            ignoreRules: [
+              SpellingIgnoreRules.byBlockType(codeAttribution),
+              SpellingIgnoreRules.byBlockType(blockquoteAttribution),
+            ],
+            spellCheckerService: spellCheckerService,
+            clock: testClock,
+          );
+
+          // Place the caret in the paragraph.
+          await tester.placeCaretInParagraph("1", 0);
+
+          // Type text that should be spell checked after a delay.
+          //
+          // Don't let the test clock pump frames - otherwise it will pump until the spellcheck
+          // timer goes off, and then we can't verify whether the check happened immediately, or
+          // after the intended delay.
+          testClock.pauseAutomaticFramePumping();
+          await tester.typeImeText("Hllo");
+
+          // Ensure spell check doesn't run immediately.
+          expect(spellCheckerService.queriedTexts, [
+            // empty.
+          ]);
+
+          // Simulate a delay.
+          await tester.pump(const Duration(seconds: 1));
+
+          // Ensure spell check was run after delay.
+          expect(spellCheckerService.queriedTexts, [
+            "Hllo",
+          ]);
+        },
+      );
+    });
 
     group('ignore rules >', () {
       testWidgetsOnArbitraryDesktop('ignores by block type', (tester) async {
@@ -70,149 +118,6 @@ void main() {
           'This is another paragraph',
         ]);
       });
-
-      testWidgetsOnArbitraryDesktop(
-        'does not run spell check when converting from paragraph to ignored block type (no delay)',
-        (tester) async {
-          final spellCheckerService = _FakeSpellChecker();
-
-          final editor = await _pumpTestApp(
-            tester,
-            document: MutableDocument(
-              nodes: [
-                ParagraphNode(
-                  id: "1",
-                  text: AttributedText(''),
-                ),
-              ],
-            ),
-            ignoreRules: [
-              SpellingIgnoreRules.byBlockType(codeAttribution),
-              SpellingIgnoreRules.byBlockType(blockquoteAttribution),
-            ],
-            spellCheckerService: spellCheckerService,
-          );
-
-          // Place the caret in the paragraph.
-          await tester.placeCaretInParagraph("1", 0);
-
-          // Trigger a regular spell check.
-          await tester.typeImeText("H");
-
-          // Ensure one spell check was run.
-          expect(spellCheckerService.queriedTexts, [
-            'H',
-          ]);
-
-          // Convert paragraph to blockquote.
-          editor.execute([
-            ChangeParagraphBlockTypeRequest(nodeId: "1", blockType: blockquoteAttribution),
-          ]);
-          await tester.pump();
-
-          // Type more text.
-          await tester.typeImeText("l");
-
-          // Ensure no additional spell checks were run.
-          expect(spellCheckerService.queriedTexts, [
-            'H',
-          ]);
-
-          // Convert back to a paragraph.
-          editor.execute([
-            ChangeParagraphBlockTypeRequest(nodeId: "1", blockType: paragraphAttribution),
-          ]);
-          await tester.pump();
-
-          // Type more text.
-          await tester.typeImeText("l");
-
-          // Ensure spell check was run after conversion, and after typing new text.
-          expect(spellCheckerService.queriedTexts, [
-            'H',
-            'Hl',
-            'Hll',
-          ]);
-
-          // Convert paragraph to a code block
-          editor.execute([
-            ChangeParagraphBlockTypeRequest(nodeId: "1", blockType: codeAttribution),
-          ]);
-          await tester.pump();
-
-          // Type more text.
-          await tester.typeImeText("o");
-
-          // Ensure no further spell checks were run upon conversion or new text typed.
-          expect(spellCheckerService.queriedTexts, [
-            'H',
-            'Hl',
-            'Hll',
-          ]);
-        },
-      );
-
-      testWidgetsOnArbitraryDesktop(
-        'does not run spell check when converting from paragraph to ignored block type (with delay)',
-        (tester) async {
-          final startTime = DateTime.now();
-          var runDuration = Duration.zero;
-          final clock = Clock(() {
-            print("Get time - start time: $startTime, duration: $runDuration");
-            return startTime.add(runDuration);
-          });
-
-          print("1");
-          final spellCheckerService = _FakeSpellChecker();
-
-          print("2");
-          await _pumpTestApp(
-            tester,
-            document: MutableDocument(
-              nodes: [
-                ParagraphNode(
-                  id: "1",
-                  text: AttributedText(''),
-                ),
-              ],
-            ),
-            spellCheckDelay: const Duration(seconds: 1),
-            ignoreRules: [
-              SpellingIgnoreRules.byBlockType(codeAttribution),
-              SpellingIgnoreRules.byBlockType(blockquoteAttribution),
-            ],
-            spellCheckerService: spellCheckerService,
-            clock: clock,
-          );
-
-          // Place the caret in the paragraph.
-          print("3");
-          await tester.placeCaretInParagraph("1", 0);
-
-          // Type text that should be spell checked after a delay.
-          print("4");
-          await tester.typeImeText("H");
-          runDuration = runDuration + const Duration(milliseconds: 50);
-
-          // Ensure spell check doesn't run immediately.
-          print("5");
-          expect(spellCheckerService.queriedTexts, [
-            // empty.
-          ]);
-
-          // Let any ongoing spell check timer expire.
-          print("6");
-          runDuration = runDuration + const Duration(seconds: 1);
-          await tester.pump(const Duration(seconds: 1));
-          await tester.pumpAndSettle();
-
-          // Ensure spell check was run after delay.
-          print("7");
-          expect(spellCheckerService.queriedTexts, [
-            "H",
-          ]);
-        },
-      );
 
       testWidgetsOnArbitraryDesktop('ignores by pattern', (tester) async {
         final spellCheckerService = _FakeSpellChecker();
@@ -379,9 +284,193 @@ void main() {
         // of the overlapping ranges.
         expect(spellCheckerService.queriedTexts, ['The first                     text']);
       });
+
+      testWidgetsOnArbitraryDesktop(
+        'does not run spell check when converting from paragraph to ignored block type (no delay)',
+        (tester) async {
+          final spellCheckerService = _FakeSpellChecker();
+
+          final editor = await _pumpTestApp(
+            tester,
+            document: MutableDocument(
+              nodes: [
+                ParagraphNode(
+                  id: "1",
+                  text: AttributedText(''),
+                ),
+              ],
+            ),
+            ignoreRules: [
+              SpellingIgnoreRules.byBlockType(codeAttribution),
+              SpellingIgnoreRules.byBlockType(blockquoteAttribution),
+            ],
+            spellCheckerService: spellCheckerService,
+          );
+
+          // Place the caret in the paragraph.
+          await tester.placeCaretInParagraph("1", 0);
+
+          // Trigger a regular spell check.
+          await tester.typeImeText("H");
+
+          // Ensure one spell check was run.
+          expect(spellCheckerService.queriedTexts, [
+            'H',
+          ]);
+
+          // Convert paragraph to blockquote.
+          editor.execute([
+            ChangeParagraphBlockTypeRequest(nodeId: "1", blockType: blockquoteAttribution),
+          ]);
+          await tester.pump();
+
+          // Type more text.
+          await tester.typeImeText("l");
+
+          // Ensure no additional spell checks were run.
+          expect(spellCheckerService.queriedTexts, [
+            'H',
+          ]);
+
+          // Convert back to a paragraph.
+          editor.execute([
+            ChangeParagraphBlockTypeRequest(nodeId: "1", blockType: paragraphAttribution),
+          ]);
+          await tester.pump();
+
+          // Type more text.
+          await tester.typeImeText("l");
+
+          // Ensure spell check was run after conversion, and after typing new text.
+          expect(spellCheckerService.queriedTexts, [
+            // In original paragraph.
+            'H',
+            // After converting from blockquote back to paragraph.
+            'Hl',
+            // After inserting 'l' in paragraph that was converted from blockquote.
+            'Hll',
+          ]);
+
+          // Convert paragraph to a code block
+          editor.execute([
+            ChangeParagraphBlockTypeRequest(nodeId: "1", blockType: codeAttribution),
+          ]);
+          await tester.pump();
+
+          // Type more text.
+          await tester.typeImeText("o");
+
+          // Ensure no further spell checks were run upon conversion or new text typed.
+          expect(spellCheckerService.queriedTexts, [
+            // In original paragraph.
+            'H',
+            // After converting from blockquote back to paragraph.
+            'Hl',
+            // After inserting 'l' in paragraph that was converted from blockquote.
+            'Hll',
+          ]);
+        },
+      );
+
+      testWidgetsOnArbitraryDesktop(
+        'does not run spell check when converting from paragraph to ignored block type (with delay)',
+        (tester) async {
+          final testClock = SpellcheckClock.forTesting(tester);
+          final spellCheckerService = _FakeSpellChecker();
+
+          await _pumpTestApp(
+            tester,
+            document: MutableDocument(
+              nodes: [
+                ParagraphNode(
+                  id: "1",
+                  text: AttributedText(''),
+                ),
+              ],
+            ),
+            spellCheckDelay: const Duration(seconds: 1),
+            ignoreRules: [
+              SpellingIgnoreRules.byBlockType(codeAttribution),
+              SpellingIgnoreRules.byBlockType(blockquoteAttribution),
+            ],
+            spellCheckerService: spellCheckerService,
+            clock: testClock,
+          );
+
+          // Place the caret in the paragraph.
+          await tester.placeCaretInParagraph("1", 0);
+
+          // Type text that should be spell checked after a delay.
+          //
+          // Don't let the test clock pump frames - otherwise it will pump until the spellcheck
+          // timer goes off, and then we can't verify whether the check happened immediately, or
+          // after the intended delay.
+          testClock.pauseAutomaticFramePumping();
+          await tester.typeImeText("H");
+
+          // Ensure spell check doesn't run immediately.
+          expect(spellCheckerService.queriedTexts, [
+            // empty.
+          ]);
+
+          // Simulate a delay.
+          await tester.pump(const Duration(seconds: 1));
+
+          // Ensure spell check was run after delay.
+          expect(spellCheckerService.queriedTexts, [
+            "H",
+          ]);
+        },
+      );
     });
   });
 }
+
+// class _PerFrameWidgetTestClock implements TimerProvider {
+//   _PerFrameWidgetTestClock(this._tester) {
+//     _startTime = DateTime.now();
+//     _ticker = _tester.createTicker(_onTick);
+//
+//     clock = Clock(() {
+//       print("Get time - start time: $_startTime, duration: $_elapsedTime, time: ${_startTime.add(_elapsedTime)}");
+//       return _startTime.add(_elapsedTime);
+//     });
+//   }
+//
+//   final WidgetTester _tester;
+//
+//   late final Clock clock;
+//
+//   late DateTime _startTime;
+//   Duration _elapsedTime = Duration.zero;
+//
+//   late final Ticker _ticker;
+//   Duration _tickTargetDuration = Duration.zero;
+//   Duration _tickForElapsedAtStart = Duration.zero;
+//
+//   Future<void> tickFor(Duration duration) async {
+//     print("tickFor: $duration");
+//     _tickTargetDuration = duration;
+//     _tickForElapsedAtStart = _elapsedTime;
+//     _ticker.start();
+//
+//     await _tester.pumpAndSettle();
+//   }
+//
+//   void _onTick(Duration elapsedTickerTime) {
+//     print("Ticker callback - elapsed: $elapsedTickerTime");
+//     _elapsedTime = _tickForElapsedAtStart + elapsedTickerTime;
+//     if (elapsedTickerTime >= _tickTargetDuration) {
+//       _ticker.stop();
+//     }
+//   }
+//
+//   @override
+//   Timer createTimer(Duration duration, VoidCallback callback) {
+//     print("Creating ticker Timer - duration: $duration");
+//     return TickerTimer.fromTicker(_ticker, duration, callback);
+//   }
+// }
 
 Future<Editor> _pumpTestApp(
   WidgetTester tester, {
@@ -389,7 +478,7 @@ Future<Editor> _pumpTestApp(
   List<SpellingIgnoreRule> ignoreRules = const [],
   SpellCheckService? spellCheckerService,
   Duration spellCheckDelay = Duration.zero,
-  Clock? clock,
+  SpellcheckClock? clock,
 }) async {
   final editor = createDefaultDocumentEditor(
     document: document,
@@ -400,8 +489,7 @@ Future<Editor> _pumpTestApp(
     ignoreRules: ignoreRules,
     spellCheckService: spellCheckerService,
     spellCheckDelayAfterEdit: spellCheckDelay,
-    clock: clock ?? const Clock(),
-    timerProvider: TickerTimerProvider(tester),
+    clock: clock,
   );
 
   await tester.pumpWidget(

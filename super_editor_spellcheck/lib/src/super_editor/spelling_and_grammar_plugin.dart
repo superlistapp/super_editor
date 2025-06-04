@@ -1,16 +1,15 @@
 import 'dart:async';
 import 'dart:ui';
 
-import 'package:clock/clock.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:follow_the_leader/follow_the_leader.dart';
 import 'package:super_editor/super_editor.dart';
-import 'package:super_editor_spellcheck/src/flutter/timers.dart';
 import 'package:super_editor_spellcheck/src/platform/spell_checker.dart';
 import 'package:super_editor_spellcheck/src/super_editor/spell_checker_popover_controller.dart';
+import 'package:super_editor_spellcheck/src/super_editor/spellcheck_clock.dart';
 import 'package:super_editor_spellcheck/src/super_editor/spelling_error_suggestion_overlay.dart';
 import 'package:super_editor_spellcheck/src/super_editor/spelling_error_suggestions.dart';
 
@@ -58,18 +57,17 @@ class SpellingAndGrammarPlugin extends SuperEditorPlugin {
     List<SpellingIgnoreRule> ignoreRules = const [],
     SpellCheckService? spellCheckService,
     GrammarCheckService? grammarCheckService,
-    Clock? clock,
-    TimerProvider? timerProvider,
+    SpellcheckClock? clock,
   })  : _isSpellCheckEnabled = isSpellingCheckEnabled,
         _isGrammarCheckEnabled = isGrammarCheckEnabled,
-        _spellCheckDelayAfterEdit = spellCheckDelayAfterEdit,
-        _clock = clock ?? const Clock(),
-        _timerProvider = timerProvider ?? const TimerProvider() {
+        _spellCheckDelayAfterEdit = spellCheckDelayAfterEdit {
     assert(defaultTargetPlatform != TargetPlatform.android || androidControlsController != null,
         'The androidControlsController must be provided when running on Android.');
 
     assert(defaultTargetPlatform != TargetPlatform.iOS || iosControlsController != null,
         'The iosControlsController must be provided when running on iOS.');
+
+    _clock = clock ?? SpellcheckClock.forProduction();
 
     _spellCheckService = spellCheckService ??
         switch (defaultTargetPlatform) {
@@ -117,9 +115,7 @@ class SpellingAndGrammarPlugin extends SuperEditorPlugin {
     };
   }
 
-  late final Clock _clock;
-
-  late final TimerProvider _timerProvider;
+  late final SpellcheckClock _clock;
 
   /// A service that provides spell checking functionality.
   late final SpellCheckService? _spellCheckService;
@@ -197,7 +193,6 @@ class SpellingAndGrammarPlugin extends SuperEditorPlugin {
       _grammarCheckService,
       spellCheckDelayAfterEdit: _spellCheckDelayAfterEdit,
       clock: _clock,
-      timerProvider: _timerProvider,
     );
     editor.reactionPipeline.add(_reaction);
 
@@ -313,11 +308,10 @@ class SpellingAndGrammarReaction implements EditReaction {
     this._spellCheckService,
     this._grammarCheckService, {
     Duration spellCheckDelayAfterEdit = Duration.zero,
-    Clock? clock,
-    TimerProvider? timerProvider,
-  })  : _spellCheckDelayAfterEdit = spellCheckDelayAfterEdit,
-        _clock = clock ?? const Clock(),
-        _timerProvider = timerProvider ?? const TimerProvider();
+    SpellcheckClock? clock,
+  }) : _spellCheckDelayAfterEdit = spellCheckDelayAfterEdit {
+    _clock = clock ?? SpellcheckClock.forProduction();
+  }
 
   void dispose() {
     _delayedChecks.clear();
@@ -326,9 +320,7 @@ class SpellingAndGrammarReaction implements EditReaction {
     _delayedChecksTimer = null;
   }
 
-  final Clock _clock;
-
-  final TimerProvider _timerProvider;
+  late final SpellcheckClock _clock;
 
   final SpellingErrorSuggestions _suggestions;
 
@@ -468,19 +460,20 @@ class SpellingAndGrammarReaction implements EditReaction {
 
     // The user wants a delay before running spelling and grammar checks. Schedule
     // this node for a check after a delay.
-    _delayedChecks[textNode.id] = (_clock.now().add(_spellCheckDelayAfterEdit), textNode);
+    // _delayedChecks[textNode.id] = (_clock.now().add(_spellCheckDelayAfterEdit), textNode);
+    _delayedChecks[textNode.id] = (_clock.now.add(_spellCheckDelayAfterEdit), textNode);
 
     // Schedule a timer for the next delayed check.
-    _delayedChecksTimer ??= _timerProvider.createTimer(_spellCheckDelayAfterEdit, _runCheckAfterDelay);
+    // _delayedChecksTimer ??= _timerProvider.createTimer(_spellCheckDelayAfterEdit, _runCheckAfterDelay);
+    _clock.createTimer(_spellCheckDelayAfterEdit, _runCheckAfterDelay);
   }
 
   void _runCheckAfterDelay() {
     // Find all nodes that haven't changed in the delayed amount of time.
-    final now = _clock.now();
+    final now = _clock.now;
     final waitingNodes = _delayedChecks.keys.toList(growable: false);
     final nodesToCheck = <TextNode>{};
     for (final nodeId in waitingNodes) {
-      print("Running spell check - now: $now, waiting for: ${_delayedChecks[nodeId]!.$1}");
       if (now.isAfter(_delayedChecks[nodeId]!.$1)) {
         nodesToCheck.add(_delayedChecks[nodeId]!.$2);
       }
@@ -494,9 +487,10 @@ class SpellingAndGrammarReaction implements EditReaction {
 
     // Schedule the next timer if there are still nodes waiting to be checked.
     if (_delayedChecks.isNotEmpty) {
-      _delayedChecksTimer = _timerProvider.createTimer(_findNextDelayedCheckDuration(), _runCheckAfterDelay);
+      // _delayedChecksTimer = _timerProvider.createTimer(_findNextDelayedCheckDuration(), _runCheckAfterDelay);
+      _clock.createTimer(_findNextDelayedCheckDuration(), _runCheckAfterDelay);
     } else {
-      _delayedChecksTimer = null;
+      // _delayedChecksTimer = null;
     }
   }
 
@@ -508,7 +502,7 @@ class SpellingAndGrammarReaction implements EditReaction {
       }
     }
 
-    final timeDifference = nearest.difference(_clock.now());
+    final timeDifference = nearest.difference(_clock.now);
     if (timeDifference <= Duration.zero) {
       // This shouldn't happen, but the clock has already passed
       // at least one desired check time. Schedule an immediate
