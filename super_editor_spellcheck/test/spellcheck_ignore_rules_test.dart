@@ -426,52 +426,6 @@ void main() {
   });
 }
 
-// class _PerFrameWidgetTestClock implements TimerProvider {
-//   _PerFrameWidgetTestClock(this._tester) {
-//     _startTime = DateTime.now();
-//     _ticker = _tester.createTicker(_onTick);
-//
-//     clock = Clock(() {
-//       print("Get time - start time: $_startTime, duration: $_elapsedTime, time: ${_startTime.add(_elapsedTime)}");
-//       return _startTime.add(_elapsedTime);
-//     });
-//   }
-//
-//   final WidgetTester _tester;
-//
-//   late final Clock clock;
-//
-//   late DateTime _startTime;
-//   Duration _elapsedTime = Duration.zero;
-//
-//   late final Ticker _ticker;
-//   Duration _tickTargetDuration = Duration.zero;
-//   Duration _tickForElapsedAtStart = Duration.zero;
-//
-//   Future<void> tickFor(Duration duration) async {
-//     print("tickFor: $duration");
-//     _tickTargetDuration = duration;
-//     _tickForElapsedAtStart = _elapsedTime;
-//     _ticker.start();
-//
-//     await _tester.pumpAndSettle();
-//   }
-//
-//   void _onTick(Duration elapsedTickerTime) {
-//     print("Ticker callback - elapsed: $elapsedTickerTime");
-//     _elapsedTime = _tickForElapsedAtStart + elapsedTickerTime;
-//     if (elapsedTickerTime >= _tickTargetDuration) {
-//       _ticker.stop();
-//     }
-//   }
-//
-//   @override
-//   Timer createTimer(Duration duration, VoidCallback callback) {
-//     print("Creating ticker Timer - duration: $duration");
-//     return TickerTimer.fromTicker(_ticker, duration, callback);
-//   }
-// }
-
 Future<Editor> _pumpTestApp(
   WidgetTester tester, {
   required MutableDocument document,

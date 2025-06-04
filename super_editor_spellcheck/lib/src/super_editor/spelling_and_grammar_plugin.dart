@@ -460,11 +460,9 @@ class SpellingAndGrammarReaction implements EditReaction {
 
     // The user wants a delay before running spelling and grammar checks. Schedule
     // this node for a check after a delay.
-    // _delayedChecks[textNode.id] = (_clock.now().add(_spellCheckDelayAfterEdit), textNode);
     _delayedChecks[textNode.id] = (_clock.now.add(_spellCheckDelayAfterEdit), textNode);
 
     // Schedule a timer for the next delayed check.
-    // _delayedChecksTimer ??= _timerProvider.createTimer(_spellCheckDelayAfterEdit, _runCheckAfterDelay);
     _clock.createTimer(_spellCheckDelayAfterEdit, _runCheckAfterDelay);
   }
 
@@ -486,12 +484,7 @@ class SpellingAndGrammarReaction implements EditReaction {
     }
 
     // Schedule the next timer if there are still nodes waiting to be checked.
-    if (_delayedChecks.isNotEmpty) {
-      // _delayedChecksTimer = _timerProvider.createTimer(_findNextDelayedCheckDuration(), _runCheckAfterDelay);
-      _clock.createTimer(_findNextDelayedCheckDuration(), _runCheckAfterDelay);
-    } else {
-      // _delayedChecksTimer = null;
-    }
+    _clock.createTimer(_findNextDelayedCheckDuration(), _runCheckAfterDelay);
   }
 
   Duration _findNextDelayedCheckDuration() {
