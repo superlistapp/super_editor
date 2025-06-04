@@ -356,7 +356,7 @@ class SpellingAndGrammarReaction implements EditReaction {
   ///
   /// There may be many waiting checks, each with a different desired check time. This timer
   /// is scheduled for the nearest desired check time.
-  Timer? _delayedChecksTimer;
+  SpellcheckTimer? _delayedChecksTimer;
 
   /// A map from a document node to the ID of the most recent spelling and grammar
   /// check request ID.
@@ -484,7 +484,11 @@ class SpellingAndGrammarReaction implements EditReaction {
     }
 
     // Schedule the next timer if there are still nodes waiting to be checked.
-    _clock.createTimer(_findNextDelayedCheckDuration(), _runCheckAfterDelay);
+    if (_delayedChecks.isNotEmpty) {
+      _delayedChecksTimer = _clock.createTimer(_findNextDelayedCheckDuration(), _runCheckAfterDelay);
+    } else {
+      _delayedChecksTimer = null;
+    }
   }
 
   Duration _findNextDelayedCheckDuration() {

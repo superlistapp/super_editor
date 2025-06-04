@@ -29,10 +29,26 @@ abstract class SpellcheckClock {
   DateTime get now;
 
   /// Runs [callback] at the given [time], or as close to it at this [StopwatchClock] can monitor.
-  void createAlarm(DateTime time, VoidCallback callback);
+  SpellcheckAlarm createAlarm(DateTime time, VoidCallback callback);
 
   /// Runs [callback] after a delay of [duration], or as close to it as this [StopwatchClock] can monitor.
-  void createTimer(Duration duration, VoidCallback callback);
+  SpellcheckTimer createTimer(Duration duration, VoidCallback callback);
+}
+
+abstract class SpellcheckAlarm {
+  bool get isActive;
+
+  DateTime get time;
+
+  void cancel();
+}
+
+abstract class SpellcheckTimer {
+  bool get isActive;
+
+  Duration get duration;
+
+  void cancel();
 }
 
 /// A [SpellcheckClock] that uses [Timer]s to monitor the passage of time.
@@ -55,7 +71,7 @@ class _TimerSpellcheckClock implements SpellcheckClock {
   DateTime get now => _clock.now();
 
   @override
-  void createAlarm(DateTime time, VoidCallback callback) {
+  SpellcheckAlarm createAlarm(DateTime time, VoidCallback callback) {
     final timeNow = now;
     if (time.compareTo(timeNow) < 0) {
       throw Exception(
@@ -63,21 +79,18 @@ class _TimerSpellcheckClock implements SpellcheckClock {
       );
     }
 
-    _timers.add(
-      Timer(time.difference(timeNow), _createTimerCallback(callback)),
-    );
+    final timer = Timer(time.difference(timeNow), _createTimerCallback(callback));
+    _timers.add(timer);
+
+    return _TimerSpellcheckAlarm(timer, time, _clearExpiredTimers);
   }
 
   @override
-  void createTimer(Duration duration, VoidCallback callback) {
-    if (duration == Duration.zero) {
-      callback();
-      return;
-    }
+  SpellcheckTimer createTimer(Duration duration, VoidCallback callback) {
+    final timer = Timer(duration, _createTimerCallback(callback));
+    _timers.add(timer);
 
-    _timers.add(
-      Timer(duration, _createTimerCallback(callback)),
-    );
+    return _TimerSpellcheckTimer(timer, duration, _clearExpiredTimers);
   }
 
   VoidCallback _createTimerCallback(VoidCallback realCallback) {
@@ -85,6 +98,48 @@ class _TimerSpellcheckClock implements SpellcheckClock {
       _timers.removeWhere((timer) => !timer.isActive);
       realCallback();
     };
+  }
+
+  void _clearExpiredTimers() {
+    _timers.removeWhere((timer) => !timer.isActive);
+  }
+}
+
+class _TimerSpellcheckAlarm implements SpellcheckAlarm {
+  _TimerSpellcheckAlarm(this._timer, this.time, this._onCancel);
+
+  final Timer _timer;
+  final VoidCallback _onCancel;
+
+  @override
+  final DateTime time;
+
+  @override
+  bool get isActive => _timer.isActive;
+
+  @override
+  void cancel() {
+    _timer.cancel();
+    _onCancel();
+  }
+}
+
+class _TimerSpellcheckTimer implements SpellcheckTimer {
+  _TimerSpellcheckTimer(this._timer, this.duration, this._onCancel);
+
+  final Timer _timer;
+  final VoidCallback _onCancel;
+
+  @override
+  final Duration duration;
+
+  @override
+  bool get isActive => _timer.isActive;
+
+  @override
+  void cancel() {
+    _timer.cancel();
+    _onCancel();
   }
 }
 
@@ -169,7 +224,7 @@ class WidgetTestSpellcheckClock implements SpellcheckClock {
   Ticker? _ticker;
   var _isFramePumpingPaused = false;
 
-  final _tickerAlarmsAndTimers = <({DateTime time, VoidCallback callback})>{};
+  final _tickerAlarmsAndTimers = <_WidgetTestSpellcheckTimeEvent>{};
 
   /// The current time, according to this [StopwatchClock].
   @override
@@ -177,7 +232,7 @@ class WidgetTestSpellcheckClock implements SpellcheckClock {
 
   /// Runs [callback] at the given [time], or as close to it at this [StopwatchClock] can monitor.
   @override
-  void createAlarm(DateTime time, VoidCallback callback) {
+  SpellcheckAlarm createAlarm(DateTime time, VoidCallback callback) {
     final timeNow = now;
     if (time.compareTo(timeNow) < 0) {
       throw Exception(
@@ -186,23 +241,39 @@ class WidgetTestSpellcheckClock implements SpellcheckClock {
     }
 
     _ticker ??= _tickerProvider!.createTicker(_onTick);
-    _tickerAlarmsAndTimers.add((time: time, callback: callback));
 
-    _pumpFramesIfNeeded();
+    final alarm = _WidgetTestSpellcheckTimeEvent.alarm(
+      time,
+      callback,
+      _clearExpiredAlarmsAndTimers,
+    );
+    _tickerAlarmsAndTimers.add(alarm);
+
+    _startPumpingFramesIfNeeded();
+
+    return alarm;
   }
 
   /// Runs [callback] after a delay of [duration], or as close to it as this [StopwatchClock] can monitor.
   @override
-  void createTimer(Duration duration, VoidCallback callback) {
-    if (duration == Duration.zero) {
-      callback();
-      return;
-    }
-
+  SpellcheckTimer createTimer(Duration duration, VoidCallback callback) {
     _ticker ??= _tickerProvider!.createTicker(_onTick);
-    _tickerAlarmsAndTimers.add((time: now.add(duration), callback: callback));
 
-    _pumpFramesIfNeeded();
+    final timer = _WidgetTestSpellcheckTimeEvent.timer(
+      now,
+      duration,
+      callback,
+      _clearExpiredAlarmsAndTimers,
+    );
+    _tickerAlarmsAndTimers.add(timer);
+
+    _startPumpingFramesIfNeeded();
+
+    return timer;
+  }
+
+  void _clearExpiredAlarmsAndTimers() {
+    _tickerAlarmsAndTimers.removeWhere((timeEvent) => !timeEvent.isActive);
   }
 
   /// Stops this clock from scheduling more frames, even if alarms and timers are scheduled.
@@ -230,7 +301,7 @@ class WidgetTestSpellcheckClock implements SpellcheckClock {
     _ticker!.start();
   }
 
-  void _pumpFramesIfNeeded() {
+  void _startPumpingFramesIfNeeded() {
     if (!_isFramePumpingPaused && _ticker != null && !_ticker!.isActive && _tickerAlarmsAndTimers.isNotEmpty) {
       _ticker!.start();
     }
@@ -250,10 +321,11 @@ class WidgetTestSpellcheckClock implements SpellcheckClock {
 
     // Run all alarms and timers that have reached their goal time.
     final nowTime = now;
-    final toRemove = <({DateTime time, VoidCallback callback})>{};
-    for (final alarmOrTimer in _tickerAlarmsAndTimers) {
+    final toRemove = <_WidgetTestSpellcheckTimeEvent>{};
+    final alarmsAndTimersCopy = Set.from(_tickerAlarmsAndTimers);
+    for (final alarmOrTimer in alarmsAndTimersCopy) {
       if (alarmOrTimer.time.compareTo(nowTime) <= 0) {
-        alarmOrTimer.callback();
+        alarmOrTimer.execute();
         toRemove.add(alarmOrTimer);
       }
     }
@@ -284,4 +356,43 @@ class WidgetTestSpellcheckClock implements SpellcheckClock {
       WidgetsBinding.instance.addPostFrameCallback(_onFrame);
     }
   }
+}
+
+class _WidgetTestSpellcheckTimeEvent implements SpellcheckAlarm, SpellcheckTimer {
+  _WidgetTestSpellcheckTimeEvent.alarm(DateTime alarmTime, this._onAlarmOrTimer, this._onCancel) {
+    _startTime = DateTime.now();
+    duration = alarmTime.difference(_startTime);
+  }
+
+  _WidgetTestSpellcheckTimeEvent.timer(this._startTime, this.duration, this._onAlarmOrTimer, this._onCancel) {
+    time = _startTime.add(duration);
+  }
+
+  late final DateTime _startTime;
+  final VoidCallback _onAlarmOrTimer;
+  final VoidCallback _onCancel;
+  var _isActive = true;
+
+  @override
+  late final DateTime time;
+
+  @override
+  late final Duration duration;
+
+  @override
+  bool get isActive => _isActive;
+
+  void execute() {
+    _onAlarmOrTimer();
+    _isActive = false;
+  }
+
+  @override
+  void cancel() {
+    _isActive = false;
+    _onCancel();
+  }
+
+  @override
+  String toString() => "[_WidgetTestSpellcheckTimeEvent] - start: $_startTime, alarm time: $time ($hashCode)";
 }

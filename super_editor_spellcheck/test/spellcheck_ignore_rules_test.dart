@@ -28,7 +28,8 @@ void main() {
                 ),
               ],
             ),
-            spellCheckDelay: const Duration(seconds: 1),
+            spellCheckDelay: const Duration(seconds: 5),
+            // ^ Make sure delay is longer than the simulated typing speed.
             ignoreRules: [
               SpellingIgnoreRules.byBlockType(codeAttribution),
               SpellingIgnoreRules.byBlockType(blockquoteAttribution),
@@ -54,7 +55,7 @@ void main() {
           ]);
 
           // Simulate a delay.
-          await tester.pump(const Duration(seconds: 1));
+          await tester.pump(const Duration(seconds: 5));
 
           // Ensure spell check was run after delay.
           expect(spellCheckerService.queriedTexts, [
