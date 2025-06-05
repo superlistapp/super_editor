@@ -30,7 +30,13 @@ dev_dependencies:
     sdk: flutter
   flutter_lints: ^3.0.0
   pigeon: ^21.1.0
+  flutter_test_goldens:
+    git:
+      url: https://github.com/flutter-bounty-hunters/flutter_test_goldens
+      ref: 7c5c6a0e5056b24b9d36c4544bda3eec910e203d
   flutter_test_runners: ^0.0.4
+  flutter_test_robots: ^0.0.24
+  golden_bricks: ^1.0.0
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

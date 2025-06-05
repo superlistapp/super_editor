@@ -414,7 +414,7 @@ class SpellingAndGrammarReaction implements EditReaction {
 
     final document = editorContext.document;
 
-    final changedTextNodes = <String>{};
+    final textChanges = <NodeChangeEvent>{};
     for (final event in changeList) {
       if (event is! DocumentEdit) {
         continue;
@@ -431,11 +431,11 @@ class SpellingAndGrammarReaction implements EditReaction {
       }
 
       // A TextNode was changed in some way. Queue it for spelling and grammar checks.
-      changedTextNodes.add(node.id);
+      textChanges.add(change);
     }
 
-    for (final textNodeId in changedTextNodes) {
-      final textNode = document.getNodeById(textNodeId);
+    for (final change in textChanges) {
+      final textNode = document.getNodeById(change.nodeId);
       if (textNode == null) {
         editorSpellingAndGrammarLog.warning(
             "A TextNode that was listed as changed in a transaction somehow disappeared from the Document before this Reaction ran.");
@@ -447,8 +447,29 @@ class SpellingAndGrammarReaction implements EditReaction {
         continue;
       }
 
+      if (change is TextDeletedEvent) {
+        _clearErrorForDeletedRange(change);
+      }
+
       _scheduleSpellingAndGrammarCheck(textNode);
     }
+  }
+
+  /// Clears any pre-existing error for any word that was partially or entirely deleted by the given
+  /// [deletion] change.
+  void _clearErrorForDeletedRange(TextDeletedEvent deletion) {
+    final errors = _styler.getErrorsForNode(deletion.nodeId);
+    final errorsToClear = <TextError>{};
+    for (final error in errors) {
+      final deletedRange = TextRange(start: deletion.offset, end: deletion.offset + deletion.deletedText.length);
+      final errorRange = error.range;
+      if (errorRange.start >= deletedRange.start && errorRange.start <= deletedRange.end ||
+          errorRange.end >= deletedRange.start && errorRange.end <= deletedRange.end) {
+        errorsToClear.add(error);
+      }
+    }
+
+    _styler.clearSomeErrorsForNode(deletion.nodeId, errorsToClear);
   }
 
   void _scheduleSpellingAndGrammarCheck(TextNode textNode) {
@@ -463,7 +484,7 @@ class SpellingAndGrammarReaction implements EditReaction {
     _delayedChecks[textNode.id] = (_clock.now.add(_spellCheckDelayAfterEdit), textNode);
 
     // Schedule a timer for the next delayed check.
-    _clock.createTimer(_spellCheckDelayAfterEdit, _runCheckAfterDelay);
+    _delayedChecksTimer ??= _clock.createTimer(_spellCheckDelayAfterEdit, _runCheckAfterDelay);
   }
 
   void _runCheckAfterDelay() {
@@ -514,11 +535,16 @@ class SpellingAndGrammarReaction implements EditReaction {
     final textErrors = <TextError>{};
     final spellingSuggestions = <TextRange, SpellingError>{};
 
-    final plainText = _filterIgnoredRanges(textNode);
-    if (plainText.isEmpty) {
+    final redactedText = _filterIgnoredRanges(textNode);
+    if (redactedText.isEmpty) {
       // On Android it appears that running spell check on an empty string breaks
       // spell check for the remainder of the app session, so don't even try.
       // https://github.com/superlistapp/super_editor/issues/2640
+
+      // Since we're not running a check on any text in this node, clear any previously
+      // reported errors for this node.
+      _styler.clearErrorsForNode(textNode.id);
+
       return;
     }
 
@@ -539,14 +565,14 @@ class SpellingAndGrammarReaction implements EditReaction {
       do {
         suggestions = await _spellCheckService.fetchSpellCheckSuggestions(
           PlatformDispatcher.instance.locale,
-          plainText,
+          redactedText,
         );
         tryCount += 1;
       } while (suggestions == null && tryCount < maxTryCount);
 
       if (suggestions != null) {
         for (final suggestion in suggestions) {
-          final misspelledWord = plainText.substring(suggestion.range.start, suggestion.range.end);
+          final misspelledWord = redactedText.substring(suggestion.range.start, suggestion.range.end);
           spellingSuggestions[suggestion.range] = SpellingError(
             word: misspelledWord,
             nodeId: textNode.id,
@@ -568,13 +594,13 @@ class SpellingAndGrammarReaction implements EditReaction {
     if (isGrammarCheckEnabled && _grammarCheckService != null) {
       final grammarErrors = await _grammarCheckService!.checkGrammar(
         PlatformDispatcher.instance.locale,
-        plainText,
+        redactedText,
       );
 
       if (grammarErrors != null) {
         for (final grammarError in grammarErrors) {
           final errorRange = grammarError.range;
-          final text = plainText.substring(errorRange.start, errorRange.end);
+          final text = redactedText.substring(errorRange.start, errorRange.end);
           textErrors.add(
             TextError.grammar(
               nodeId: textNode.id,

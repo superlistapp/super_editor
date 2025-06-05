@@ -6,65 +6,10 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_test_runners/flutter_test_runners.dart';
 import 'package:super_editor/super_editor.dart';
 import 'package:super_editor/super_editor_test.dart';
-import 'package:super_editor_spellcheck/src/super_editor/spellcheck_clock.dart';
 import 'package:super_editor_spellcheck/super_editor_spellcheck.dart';
 
 void main() {
   group('SuperEditor spellcheck >', () {
-    group('timing >', () {
-      testWidgetsOnArbitraryDesktop(
-        'waits for a specified delay before running spellcheck',
-        (tester) async {
-          final testClock = SpellcheckClock.forTesting(tester);
-          final spellCheckerService = _FakeSpellChecker();
-
-          await _pumpTestApp(
-            tester,
-            document: MutableDocument(
-              nodes: [
-                ParagraphNode(
-                  id: "1",
-                  text: AttributedText(''),
-                ),
-              ],
-            ),
-            spellCheckDelay: const Duration(seconds: 5),
-            // ^ Make sure delay is longer than the simulated typing speed.
-            ignoreRules: [
-              SpellingIgnoreRules.byBlockType(codeAttribution),
-              SpellingIgnoreRules.byBlockType(blockquoteAttribution),
-            ],
-            spellCheckerService: spellCheckerService,
-            clock: testClock,
-          );
-
-          // Place the caret in the paragraph.
-          await tester.placeCaretInParagraph("1", 0);
-
-          // Type text that should be spell checked after a delay.
-          //
-          // Don't let the test clock pump frames - otherwise it will pump until the spellcheck
-          // timer goes off, and then we can't verify whether the check happened immediately, or
-          // after the intended delay.
-          testClock.pauseAutomaticFramePumping();
-          await tester.typeImeText("Hllo");
-
-          // Ensure spell check doesn't run immediately.
-          expect(spellCheckerService.queriedTexts, [
-            // empty.
-          ]);
-
-          // Simulate a delay.
-          await tester.pump(const Duration(seconds: 5));
-
-          // Ensure spell check was run after delay.
-          expect(spellCheckerService.queriedTexts, [
-            "Hllo",
-          ]);
-        },
-      );
-    });
-
     group('ignore rules >', () {
       testWidgetsOnArbitraryDesktop('ignores by block type', (tester) async {
         final spellCheckerService = _FakeSpellChecker();

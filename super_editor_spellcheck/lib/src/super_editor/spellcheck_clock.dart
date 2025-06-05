@@ -316,7 +316,7 @@ class WidgetTestSpellcheckClock implements SpellcheckClock {
     if (_frameReferenceTime == null) {
       _frameReferenceTime = timeStamp;
     } else {
-      _elapsedTime += timeStamp - _frameReferenceTime!;
+      _elapsedTime = timeStamp - _frameReferenceTime!;
     }
 
     // Run all alarms and timers that have reached their goal time.
