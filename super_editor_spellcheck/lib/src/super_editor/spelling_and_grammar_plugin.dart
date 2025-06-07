@@ -9,6 +9,7 @@ import 'package:follow_the_leader/follow_the_leader.dart';
 import 'package:super_editor/super_editor.dart';
 import 'package:super_editor_spellcheck/src/platform/spell_checker.dart';
 import 'package:super_editor_spellcheck/src/super_editor/spell_checker_popover_controller.dart';
+import 'package:super_editor_spellcheck/src/super_editor/spellcheck_clock.dart';
 import 'package:super_editor_spellcheck/src/super_editor/spelling_error_suggestion_overlay.dart';
 import 'package:super_editor_spellcheck/src/super_editor/spelling_error_suggestions.dart';
 
@@ -56,6 +57,7 @@ class SpellingAndGrammarPlugin extends SuperEditorPlugin {
     List<SpellingIgnoreRule> ignoreRules = const [],
     SpellCheckService? spellCheckService,
     GrammarCheckService? grammarCheckService,
+    SpellcheckClock? clock,
   })  : _isSpellCheckEnabled = isSpellingCheckEnabled,
         _isGrammarCheckEnabled = isGrammarCheckEnabled,
         _spellCheckDelayAfterEdit = spellCheckDelayAfterEdit {
@@ -64,6 +66,8 @@ class SpellingAndGrammarPlugin extends SuperEditorPlugin {
 
     assert(defaultTargetPlatform != TargetPlatform.iOS || iosControlsController != null,
         'The iosControlsController must be provided when running on iOS.');
+
+    _clock = clock ?? SpellcheckClock.forProduction();
 
     _spellCheckService = spellCheckService ??
         switch (defaultTargetPlatform) {
@@ -110,6 +114,8 @@ class SpellingAndGrammarPlugin extends SuperEditorPlugin {
       _ => _SuperEditorDesktopSpellCheckerTapHandler(popoverController: _popoverController),
     };
   }
+
+  late final SpellcheckClock _clock;
 
   /// A service that provides spell checking functionality.
   late final SpellCheckService? _spellCheckService;
@@ -186,6 +192,7 @@ class SpellingAndGrammarPlugin extends SuperEditorPlugin {
       _spellCheckService!,
       _grammarCheckService,
       spellCheckDelayAfterEdit: _spellCheckDelayAfterEdit,
+      clock: _clock,
     );
     editor.reactionPipeline.add(_reaction);
 
@@ -301,7 +308,10 @@ class SpellingAndGrammarReaction implements EditReaction {
     this._spellCheckService,
     this._grammarCheckService, {
     Duration spellCheckDelayAfterEdit = Duration.zero,
-  }) : _spellCheckDelayAfterEdit = spellCheckDelayAfterEdit;
+    SpellcheckClock? clock,
+  }) : _spellCheckDelayAfterEdit = spellCheckDelayAfterEdit {
+    _clock = clock ?? SpellcheckClock.forProduction();
+  }
 
   void dispose() {
     _delayedChecks.clear();
@@ -309,6 +319,8 @@ class SpellingAndGrammarReaction implements EditReaction {
     _delayedChecksTimer?.cancel();
     _delayedChecksTimer = null;
   }
+
+  late final SpellcheckClock _clock;
 
   final SpellingErrorSuggestions _suggestions;
 
@@ -344,7 +356,7 @@ class SpellingAndGrammarReaction implements EditReaction {
   ///
   /// There may be many waiting checks, each with a different desired check time. This timer
   /// is scheduled for the nearest desired check time.
-  Timer? _delayedChecksTimer;
+  SpellcheckTimer? _delayedChecksTimer;
 
   /// A map from a document node to the ID of the most recent spelling and grammar
   /// check request ID.
@@ -402,7 +414,7 @@ class SpellingAndGrammarReaction implements EditReaction {
 
     final document = editorContext.document;
 
-    final changedTextNodes = <String>{};
+    final textChanges = <NodeChangeEvent>{};
     for (final event in changeList) {
       if (event is! DocumentEdit) {
         continue;
@@ -419,11 +431,11 @@ class SpellingAndGrammarReaction implements EditReaction {
       }
 
       // A TextNode was changed in some way. Queue it for spelling and grammar checks.
-      changedTextNodes.add(node.id);
+      textChanges.add(change);
     }
 
-    for (final textNodeId in changedTextNodes) {
-      final textNode = document.getNodeById(textNodeId);
+    for (final change in textChanges) {
+      final textNode = document.getNodeById(change.nodeId);
       if (textNode == null) {
         editorSpellingAndGrammarLog.warning(
             "A TextNode that was listed as changed in a transaction somehow disappeared from the Document before this Reaction ran.");
@@ -435,8 +447,29 @@ class SpellingAndGrammarReaction implements EditReaction {
         continue;
       }
 
+      if (change is TextDeletedEvent) {
+        _clearErrorForDeletedRange(change);
+      }
+
       _scheduleSpellingAndGrammarCheck(textNode);
     }
+  }
+
+  /// Clears any pre-existing error for any word that was partially or entirely deleted by the given
+  /// [deletion] change.
+  void _clearErrorForDeletedRange(TextDeletedEvent deletion) {
+    final errors = _styler.getErrorsForNode(deletion.nodeId);
+    final errorsToClear = <TextError>{};
+    for (final error in errors) {
+      final deletedRange = TextRange(start: deletion.offset, end: deletion.offset + deletion.deletedText.length);
+      final errorRange = error.range;
+      if (errorRange.start >= deletedRange.start && errorRange.start <= deletedRange.end ||
+          errorRange.end >= deletedRange.start && errorRange.end <= deletedRange.end) {
+        errorsToClear.add(error);
+      }
+    }
+
+    _styler.clearSomeErrorsForNode(deletion.nodeId, errorsToClear);
   }
 
   void _scheduleSpellingAndGrammarCheck(TextNode textNode) {
@@ -448,15 +481,15 @@ class SpellingAndGrammarReaction implements EditReaction {
 
     // The user wants a delay before running spelling and grammar checks. Schedule
     // this node for a check after a delay.
-    _delayedChecks[textNode.id] = (DateTime.now().add(_spellCheckDelayAfterEdit), textNode);
+    _delayedChecks[textNode.id] = (_clock.now.add(_spellCheckDelayAfterEdit), textNode);
 
     // Schedule a timer for the next delayed check.
-    _delayedChecksTimer ??= Timer(_spellCheckDelayAfterEdit, _runCheckAfterDelay);
+    _delayedChecksTimer ??= _clock.createTimer(_spellCheckDelayAfterEdit, _runCheckAfterDelay);
   }
 
   void _runCheckAfterDelay() {
     // Find all nodes that haven't changed in the delayed amount of time.
-    final now = DateTime.now();
+    final now = _clock.now;
     final waitingNodes = _delayedChecks.keys.toList(growable: false);
     final nodesToCheck = <TextNode>{};
     for (final nodeId in waitingNodes) {
@@ -473,7 +506,7 @@ class SpellingAndGrammarReaction implements EditReaction {
 
     // Schedule the next timer if there are still nodes waiting to be checked.
     if (_delayedChecks.isNotEmpty) {
-      _delayedChecksTimer = Timer(_findNextDelayedCheckDuration(), _runCheckAfterDelay);
+      _delayedChecksTimer = _clock.createTimer(_findNextDelayedCheckDuration(), _runCheckAfterDelay);
     } else {
       _delayedChecksTimer = null;
     }
@@ -487,7 +520,7 @@ class SpellingAndGrammarReaction implements EditReaction {
       }
     }
 
-    final timeDifference = nearest.difference(DateTime.now());
+    final timeDifference = nearest.difference(_clock.now);
     if (timeDifference <= Duration.zero) {
       // This shouldn't happen, but the clock has already passed
       // at least one desired check time. Schedule an immediate
@@ -502,11 +535,16 @@ class SpellingAndGrammarReaction implements EditReaction {
     final textErrors = <TextError>{};
     final spellingSuggestions = <TextRange, SpellingError>{};
 
-    final plainText = _filterIgnoredRanges(textNode);
-    if (plainText.isEmpty) {
+    final redactedText = _filterIgnoredRanges(textNode);
+    if (redactedText.isEmpty) {
       // On Android it appears that running spell check on an empty string breaks
       // spell check for the remainder of the app session, so don't even try.
       // https://github.com/superlistapp/super_editor/issues/2640
+
+      // Since we're not running a check on any text in this node, clear any previously
+      // reported errors for this node.
+      _styler.clearErrorsForNode(textNode.id);
+
       return;
     }
 
@@ -527,14 +565,14 @@ class SpellingAndGrammarReaction implements EditReaction {
       do {
         suggestions = await _spellCheckService.fetchSpellCheckSuggestions(
           PlatformDispatcher.instance.locale,
-          plainText,
+          redactedText,
         );
         tryCount += 1;
       } while (suggestions == null && tryCount < maxTryCount);
 
       if (suggestions != null) {
         for (final suggestion in suggestions) {
-          final misspelledWord = plainText.substring(suggestion.range.start, suggestion.range.end);
+          final misspelledWord = redactedText.substring(suggestion.range.start, suggestion.range.end);
           spellingSuggestions[suggestion.range] = SpellingError(
             word: misspelledWord,
             nodeId: textNode.id,
@@ -556,13 +594,13 @@ class SpellingAndGrammarReaction implements EditReaction {
     if (isGrammarCheckEnabled && _grammarCheckService != null) {
       final grammarErrors = await _grammarCheckService!.checkGrammar(
         PlatformDispatcher.instance.locale,
-        plainText,
+        redactedText,
       );
 
       if (grammarErrors != null) {
         for (final grammarError in grammarErrors) {
           final errorRange = grammarError.range;
-          final text = plainText.substring(errorRange.start, errorRange.end);
+          final text = redactedText.substring(errorRange.start, errorRange.end);
           textErrors.add(
             TextError.grammar(
               nodeId: textNode.id,
