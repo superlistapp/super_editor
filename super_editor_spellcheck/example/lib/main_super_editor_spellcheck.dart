@@ -82,7 +82,7 @@ class _SuperEditorSpellcheckScreenState extends State<_SuperEditorSpellcheckScre
     _spellingAndGrammarPlugin = SpellingAndGrammarPlugin(
       iosControlsController: _iosControlsController,
       androidControlsController: _androidControlsController,
-      spellCheckDelayAfterEdit: const Duration(seconds: 3),
+      spellCheckDelayAfterEdit: const Duration(seconds: 1),
       ignoreRules: [
         SpellingIgnoreRules.byAttribution(codeAttribution),
         SpellingIgnoreRules.byAttributionFilter((attr) => attr is LinkAttribution),
