@@ -194,6 +194,7 @@ class WidgetTestSpellcheckClock implements SpellcheckClock {
   WidgetTestSpellcheckClock(TickerProvider tickerProvider, [DateTime? startTime]) : _tickerProvider = tickerProvider {
     _startTime = startTime ?? DateTime.now();
 
+    // Note: `_onFrame` will re-register itself for all future post-frame callbacks, until stopped.
     WidgetsBinding.instance.addPostFrameCallback(_onFrame);
   }
 

@@ -153,7 +153,7 @@ final _stylesheet = defaultStylesheet.copyWith(
 );
 
 /// A [SpellCheckService] that records the texts that were queried and returns
-/// an empty list of suggestions for each query.
+/// a pre-canned list of suggestions for each query.
 class _FakeSpellChecker extends SpellCheckService {
   _FakeSpellChecker([this._responses = const {}]);
 
