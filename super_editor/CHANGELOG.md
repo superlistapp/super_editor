@@ -1,3 +1,7 @@
+## [0.3.0-dev.25] - June 6, 2025
+ * FIX: Crash when connecting to IME (because Flutter broke everything with latest release).
+ * ADJUSTMENT: Added a couple methods to the spelling and grammar plugin for working with spelling errors.
+
 ## [0.3.0-dev.24] - May 26, 2025
  * FIX: Text is duplicated when typing with styles applied.
  * FIX: Ordered list item numerals are mis-aligned with content text.
