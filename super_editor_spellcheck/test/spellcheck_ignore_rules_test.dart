@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_test_runners/flutter_test_runners.dart';
 import 'package:super_editor/super_editor.dart';
+import 'package:super_editor/super_editor_test.dart';
 import 'package:super_editor_spellcheck/super_editor_spellcheck.dart';
 
 void main() {
@@ -229,15 +230,155 @@ void main() {
         // of the overlapping ranges.
         expect(spellCheckerService.queriedTexts, ['The first                     text']);
       });
+
+      testWidgetsOnArbitraryDesktop(
+        'does not run spell check when converting from paragraph to ignored block type (no delay)',
+        (tester) async {
+          final spellCheckerService = _FakeSpellChecker();
+
+          final editor = await _pumpTestApp(
+            tester,
+            document: MutableDocument(
+              nodes: [
+                ParagraphNode(
+                  id: "1",
+                  text: AttributedText(''),
+                ),
+              ],
+            ),
+            ignoreRules: [
+              SpellingIgnoreRules.byBlockType(codeAttribution),
+              SpellingIgnoreRules.byBlockType(blockquoteAttribution),
+            ],
+            spellCheckerService: spellCheckerService,
+          );
+
+          // Place the caret in the paragraph.
+          await tester.placeCaretInParagraph("1", 0);
+
+          // Trigger a regular spell check.
+          await tester.typeImeText("H");
+
+          // Ensure one spell check was run.
+          expect(spellCheckerService.queriedTexts, [
+            'H',
+          ]);
+
+          // Convert paragraph to blockquote.
+          editor.execute([
+            ChangeParagraphBlockTypeRequest(nodeId: "1", blockType: blockquoteAttribution),
+          ]);
+          await tester.pump();
+
+          // Type more text.
+          await tester.typeImeText("l");
+
+          // Ensure no additional spell checks were run.
+          expect(spellCheckerService.queriedTexts, [
+            'H',
+          ]);
+
+          // Convert back to a paragraph.
+          editor.execute([
+            ChangeParagraphBlockTypeRequest(nodeId: "1", blockType: paragraphAttribution),
+          ]);
+          await tester.pump();
+
+          // Type more text.
+          await tester.typeImeText("l");
+
+          // Ensure spell check was run after conversion, and after typing new text.
+          expect(spellCheckerService.queriedTexts, [
+            // In original paragraph.
+            'H',
+            // After converting from blockquote back to paragraph.
+            'Hl',
+            // After inserting 'l' in paragraph that was converted from blockquote.
+            'Hll',
+          ]);
+
+          // Convert paragraph to a code block
+          editor.execute([
+            ChangeParagraphBlockTypeRequest(nodeId: "1", blockType: codeAttribution),
+          ]);
+          await tester.pump();
+
+          // Type more text.
+          await tester.typeImeText("o");
+
+          // Ensure no further spell checks were run upon conversion or new text typed.
+          expect(spellCheckerService.queriedTexts, [
+            // In original paragraph.
+            'H',
+            // After converting from blockquote back to paragraph.
+            'Hl',
+            // After inserting 'l' in paragraph that was converted from blockquote.
+            'Hll',
+          ]);
+        },
+      );
+
+      testWidgetsOnArbitraryDesktop(
+        'does not run spell check when converting from paragraph to ignored block type (with delay)',
+        (tester) async {
+          final testClock = SpellcheckClock.forTesting(tester);
+          final spellCheckerService = _FakeSpellChecker();
+
+          await _pumpTestApp(
+            tester,
+            document: MutableDocument(
+              nodes: [
+                ParagraphNode(
+                  id: "1",
+                  text: AttributedText(''),
+                ),
+              ],
+            ),
+            spellCheckDelay: const Duration(seconds: 1),
+            ignoreRules: [
+              SpellingIgnoreRules.byBlockType(codeAttribution),
+              SpellingIgnoreRules.byBlockType(blockquoteAttribution),
+            ],
+            spellCheckerService: spellCheckerService,
+            clock: testClock,
+          );
+
+          // Place the caret in the paragraph.
+          await tester.placeCaretInParagraph("1", 0);
+
+          // Type text that should be spell checked after a delay.
+          //
+          // Don't let the test clock pump frames - otherwise it will pump until the spellcheck
+          // timer goes off, and then we can't verify whether the check happened immediately, or
+          // after the intended delay.
+          testClock.pauseAutomaticFramePumping();
+          await tester.typeImeText("H");
+
+          // Ensure spell check doesn't run immediately.
+          expect(spellCheckerService.queriedTexts, [
+            // empty.
+          ]);
+
+          // Simulate a delay.
+          await tester.pump(const Duration(seconds: 1));
+
+          // Ensure spell check was run after delay.
+          expect(spellCheckerService.queriedTexts, [
+            "H",
+          ]);
+        },
+      );
     });
   });
 }
 
-Future<void> _pumpTestApp(
+Future<Editor> _pumpTestApp(
   WidgetTester tester, {
   required MutableDocument document,
   List<SpellingIgnoreRule> ignoreRules = const [],
   SpellCheckService? spellCheckerService,
+  Duration spellCheckDelay = Duration.zero,
+  SpellcheckClock? clock,
 }) async {
   final editor = createDefaultDocumentEditor(
     document: document,
@@ -247,6 +388,8 @@ Future<void> _pumpTestApp(
   final plugin = SpellingAndGrammarPlugin(
     ignoreRules: ignoreRules,
     spellCheckService: spellCheckerService,
+    spellCheckDelayAfterEdit: spellCheckDelay,
+    clock: clock,
   );
 
   await tester.pumpWidget(
@@ -259,6 +402,8 @@ Future<void> _pumpTestApp(
       ),
     ),
   );
+
+  return editor;
 }
 
 /// A [SpellCheckService] that records the texts that were queried and returns
