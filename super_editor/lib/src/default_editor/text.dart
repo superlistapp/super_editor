@@ -1143,49 +1143,47 @@ class TextComponentState extends State<TextComponent> with DocumentComponent imp
   Widget build(BuildContext context) {
     editorLayoutLog.finer('Building a TextComponent with key: ${widget.key}');
 
-    return IgnorePointer(
-      child: SuperText(
-        key: _textKey,
-        richText: widget.text.computeInlineSpan(
-          context,
-          _textStyleWithBlockType,
-          widget.inlineWidgetBuilders,
-        ),
-        textAlign: widget.textAlign ?? TextAlign.left,
-        textDirection: widget.textDirection ?? TextDirection.ltr,
-        textScaler: widget.textScaler ?? MediaQuery.textScalerOf(context),
-        layerBeneathBuilder: (context, textLayout) {
-          return Stack(
-            children: [
-              // Selection highlight beneath the text.
-              if (widget.text.length > 0)
-                TextLayoutSelectionHighlight(
-                  textLayout: textLayout,
-                  style: SelectionHighlightStyle(
-                    color: widget.selectionColor,
-                  ),
-                  selection: widget.textSelection ?? const TextSelection.collapsed(offset: -1),
-                )
-              else if (widget.highlightWhenEmpty)
-                TextLayoutEmptyHighlight(
-                  textLayout: textLayout,
-                  style: SelectionHighlightStyle(
-                    color: widget.selectionColor,
-                  ),
-                ),
-              for (final underlines in widget.underlines)
-                TextUnderlineLayer(
-                  textLayout: textLayout,
-                  style: underlines.style,
-                  underlines: [
-                    for (final range in underlines.underlines) //
-                      TextLayoutUnderline(range: range),
-                  ],
-                ),
-            ],
-          );
-        },
+    return SuperText(
+      key: _textKey,
+      richText: widget.text.computeInlineSpan(
+        context,
+        _textStyleWithBlockType,
+        widget.inlineWidgetBuilders,
       ),
+      textAlign: widget.textAlign ?? TextAlign.left,
+      textDirection: widget.textDirection ?? TextDirection.ltr,
+      textScaler: widget.textScaler ?? MediaQuery.textScalerOf(context),
+      layerBeneathBuilder: (context, textLayout) {
+        return Stack(
+          children: [
+            // Selection highlight beneath the text.
+            if (widget.text.length > 0)
+              TextLayoutSelectionHighlight(
+                textLayout: textLayout,
+                style: SelectionHighlightStyle(
+                  color: widget.selectionColor,
+                ),
+                selection: widget.textSelection ?? const TextSelection.collapsed(offset: -1),
+              )
+            else if (widget.highlightWhenEmpty)
+              TextLayoutEmptyHighlight(
+                textLayout: textLayout,
+                style: SelectionHighlightStyle(
+                  color: widget.selectionColor,
+                ),
+              ),
+            for (final underlines in widget.underlines)
+              TextUnderlineLayer(
+                textLayout: textLayout,
+                style: underlines.style,
+                underlines: [
+                  for (final range in underlines.underlines) //
+                    TextLayoutUnderline(range: range),
+                ],
+              ),
+          ],
+        );
+      },
     );
   }
 
