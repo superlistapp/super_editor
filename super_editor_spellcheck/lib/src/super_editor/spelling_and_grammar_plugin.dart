@@ -217,6 +217,10 @@ extension SpellingAndGrammarEditableExtensions on EditContext {
   SpellingErrorSuggestions get spellingErrorSuggestions => find<SpellingErrorSuggestions>(
         SpellingAndGrammarPlugin.spellingErrorSuggestionsKey,
       );
+
+  SpellingErrorSuggestions? get maybeSpellingErrorSuggestions => findMaybe<SpellingErrorSuggestions>(
+        SpellingAndGrammarPlugin.spellingErrorSuggestionsKey,
+      );
 }
 
 extension SpellingAndGrammarEditorExtensions on Editor {

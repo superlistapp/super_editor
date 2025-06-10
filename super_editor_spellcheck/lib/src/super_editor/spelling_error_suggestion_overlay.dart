@@ -123,8 +123,10 @@ class _SpellingErrorSuggestionOverlayState
       widget.editor.context.composer.selectionNotifier.addListener(_onSelectionChange);
     }
 
-    if (widget.editor.context.spellingErrorSuggestions != oldWidget.editor.context.spellingErrorSuggestions) {
-      oldWidget.editor.context.spellingErrorSuggestions.removeListener(_onSpellingSuggestionsChange);
+    // Note: We use maybeSpellingErrorSuggestions on the old Editor because its possible that the
+    // old Editor already had its spelling plugin removed.
+    if (widget.editor.context.spellingErrorSuggestions != oldWidget.editor.context.maybeSpellingErrorSuggestions) {
+      oldWidget.editor.context.maybeSpellingErrorSuggestions?.removeListener(_onSpellingSuggestionsChange);
       widget.editor.context.spellingErrorSuggestions.addListener(_onSpellingSuggestionsChange);
     }
 
