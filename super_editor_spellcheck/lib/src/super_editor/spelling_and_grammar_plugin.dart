@@ -136,7 +136,7 @@ class SpellingAndGrammarPlugin extends SuperEditorPlugin {
 
   late final List<SpellingIgnoreRule> _ignoreRules;
 
-  late final SpellingAndGrammarReaction _reaction;
+  late SpellingAndGrammarReaction _reaction;
 
   /// Whether this reaction checks spelling in the document.
   bool get isSpellCheckEnabled => _isSpellCheckEnabled;
@@ -215,6 +215,10 @@ class SpellingAndGrammarPlugin extends SuperEditorPlugin {
 
 extension SpellingAndGrammarEditableExtensions on EditContext {
   SpellingErrorSuggestions get spellingErrorSuggestions => find<SpellingErrorSuggestions>(
+        SpellingAndGrammarPlugin.spellingErrorSuggestionsKey,
+      );
+
+  SpellingErrorSuggestions? get maybeSpellingErrorSuggestions => findMaybe<SpellingErrorSuggestions>(
         SpellingAndGrammarPlugin.spellingErrorSuggestionsKey,
       );
 }
