@@ -1,5 +1,6 @@
 import 'package:attributed_text/attributed_text.dart';
 import 'package:flutter/painting.dart';
+import 'package:super_editor/src/default_editor/text/custom_underlines.dart';
 import 'package:super_editor/src/infrastructure/attributed_text_styles.dart';
 
 import 'document.dart';
@@ -346,6 +347,12 @@ class Styles {
 
   /// Applies a [TextAlign] to a text node.
   static const String textAlign = 'textAlign';
+
+  /// Defines the visual style for all custom underlines rendered by all
+  /// text that matches the style rule selector.
+  ///
+  /// The value should be a [CustomUnderlineStyles].
+  static const String customUnderlineStyles = "customUnderlineStyles";
 
   /// Applies an [UnderlineStyle] to the composing region, e.g., the word
   /// the user is currently editing on mobile.

@@ -1,5 +1,4 @@
 import 'package:attributed_text/attributed_text.dart';
-import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:super_editor/src/core/document_composer.dart';
@@ -286,43 +285,25 @@ abstract class ListItemComponentViewModel extends SingleColumnLayoutComponentVie
   bool highlightWhenEmpty;
 
   @override
+  ListItemComponentViewModel internalCopy(ListItemComponentViewModel viewModel) {
+    final copy = super.internalCopy(viewModel) as ListItemComponentViewModel;
+
+    copy.indent = indent;
+
+    return copy;
+  }
+
+  @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       super == other &&
           other is ListItemComponentViewModel &&
           runtimeType == other.runtimeType &&
-          nodeId == other.nodeId &&
-          indent == other.indent &&
-          text == other.text &&
-          textDirection == other.textDirection &&
-          textAlignment == other.textAlignment &&
-          selection == other.selection &&
-          selectionColor == other.selectionColor &&
-          highlightWhenEmpty == other.highlightWhenEmpty &&
-          spellingErrorUnderlineStyle == other.spellingErrorUnderlineStyle &&
-          const DeepCollectionEquality().equals(spellingErrors, spellingErrors) &&
-          grammarErrorUnderlineStyle == other.grammarErrorUnderlineStyle &&
-          const DeepCollectionEquality().equals(grammarErrors, grammarErrors) &&
-          composingRegion == other.composingRegion &&
-          showComposingRegionUnderline == other.showComposingRegionUnderline;
+          textViewModelEquals(other) &&
+          indent == other.indent;
 
   @override
-  int get hashCode =>
-      super.hashCode ^
-      nodeId.hashCode ^
-      indent.hashCode ^
-      text.hashCode ^
-      textDirection.hashCode ^
-      textAlignment.hashCode ^
-      selection.hashCode ^
-      selectionColor.hashCode ^
-      highlightWhenEmpty.hashCode ^
-      spellingErrorUnderlineStyle.hashCode ^
-      spellingErrors.hashCode ^
-      grammarErrorUnderlineStyle.hashCode ^
-      grammarErrors.hashCode ^
-      composingRegion.hashCode ^
-      showComposingRegionUnderline.hashCode;
+  int get hashCode => super.hashCode ^ textViewModelHashCode ^ indent.hashCode;
 }
 
 class UnorderedListItemComponentViewModel extends ListItemComponentViewModel {
@@ -362,26 +343,26 @@ class UnorderedListItemComponentViewModel extends ListItemComponentViewModel {
 
   @override
   UnorderedListItemComponentViewModel copy() {
-    return UnorderedListItemComponentViewModel(
-      nodeId: nodeId,
-      maxWidth: maxWidth,
-      padding: padding,
-      indent: indent,
-      text: text,
-      textStyleBuilder: textStyleBuilder,
-      dotStyle: dotStyle,
-      textDirection: textDirection,
-      textAlignment: textAlignment,
-      selection: selection,
-      selectionColor: selectionColor,
-      composingRegion: composingRegion,
-      showComposingRegionUnderline: showComposingRegionUnderline,
-      spellingErrorUnderlineStyle: spellingErrorUnderlineStyle,
-      spellingErrors: List.from(spellingErrors),
-      grammarErrorUnderlineStyle: grammarErrorUnderlineStyle,
-      grammarErrors: List.from(grammarErrors),
-      inlineWidgetBuilders: inlineWidgetBuilders,
+    return internalCopy(
+      UnorderedListItemComponentViewModel(
+        nodeId: nodeId,
+        text: text,
+        textStyleBuilder: textStyleBuilder,
+        selectionColor: selectionColor,
+        indent: indent,
+      ),
     );
+  }
+
+  @override
+  UnorderedListItemComponentViewModel internalCopy(UnorderedListItemComponentViewModel viewModel) {
+    final copy = super.internalCopy(viewModel) as UnorderedListItemComponentViewModel;
+
+    copy
+      ..indent = indent
+      ..dotStyle = dotStyle.copyWith();
+
+    return copy;
   }
 
   @override
@@ -420,7 +401,7 @@ class OrderedListItemComponentViewModel extends ListItemComponentViewModel {
     super.grammarErrors,
   });
 
-  final int? ordinalValue;
+  int? ordinalValue;
   OrderedListNumeralStyle numeralStyle;
 
   @override
@@ -431,27 +412,27 @@ class OrderedListItemComponentViewModel extends ListItemComponentViewModel {
 
   @override
   OrderedListItemComponentViewModel copy() {
-    return OrderedListItemComponentViewModel(
-      nodeId: nodeId,
-      maxWidth: maxWidth,
-      padding: padding,
-      indent: indent,
-      ordinalValue: ordinalValue,
-      numeralStyle: numeralStyle,
-      text: text,
-      textStyleBuilder: textStyleBuilder,
-      textDirection: textDirection,
-      textAlignment: textAlignment,
-      selection: selection,
-      selectionColor: selectionColor,
-      composingRegion: composingRegion,
-      showComposingRegionUnderline: showComposingRegionUnderline,
-      spellingErrorUnderlineStyle: spellingErrorUnderlineStyle,
-      spellingErrors: List.from(spellingErrors),
-      grammarErrorUnderlineStyle: grammarErrorUnderlineStyle,
-      grammarErrors: List.from(grammarErrors),
-      inlineWidgetBuilders: inlineWidgetBuilders,
+    return internalCopy(
+      OrderedListItemComponentViewModel(
+        nodeId: nodeId,
+        text: text,
+        textStyleBuilder: textStyleBuilder,
+        selectionColor: selectionColor,
+        indent: indent,
+      ),
     );
+  }
+
+  @override
+  OrderedListItemComponentViewModel internalCopy(OrderedListItemComponentViewModel viewModel) {
+    final copy = super.internalCopy(viewModel) as OrderedListItemComponentViewModel;
+
+    copy
+      ..indent = indent
+      ..ordinalValue = ordinalValue
+      ..numeralStyle = numeralStyle;
+
+    return copy;
   }
 
   @override
