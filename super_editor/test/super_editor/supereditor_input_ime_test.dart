@@ -1107,7 +1107,7 @@ Paragraph two
       );
     });
 
-    group('text serialization and selected content', () {
+    group('text serialization and selected content >', () {
       test('within a single node is reported as a TextEditingValue', () {
         const text = "This is a paragraph of text.";
 
@@ -1167,6 +1167,62 @@ Paragraph two
               ParagraphNode(id: "1", text: AttributedText(text)),
               HorizontalRuleNode(id: "2"),
               ParagraphNode(id: "3", text: AttributedText(text)),
+            ]),
+            const DocumentSelection(
+              base: DocumentPosition(
+                nodeId: "1",
+                nodePosition: TextNodePosition(offset: 10),
+              ),
+              extent: DocumentPosition(
+                nodeId: "3",
+                nodePosition: TextNodePosition(offset: 19),
+              ),
+            ),
+            null,
+          ).toTextEditingValue(),
+          expectedTextWithSelection: ". This is a |paragraph of text.\n~\nThis is a paragraph| of text.",
+        );
+      });
+
+      test('text within a composite node reported as a TextEditingValue', () {
+        const text = "This is a paragraph of text.";
+
+        _expectTextEditingValue(
+          actualTextEditingValue: DocumentImeSerializer(
+            MutableDocument(nodes: [
+              GroupNode("1", [
+                ParagraphNode(id: "2", text: AttributedText(text)),
+              ]),
+            ]),
+            const DocumentSelection.collapsed(
+              position: DocumentPosition(
+                nodeId: "1",
+                nodePosition: CompositeNodePosition(
+                  compositeNodeId: "1",
+                  childNodeId: "2",
+                  childNodePosition: TextNodePosition(offset: 10),
+                ),
+              ),
+            ),
+            null,
+          ).toTextEditingValue(),
+          expectedTextWithSelection: ". This is a |paragraph of text.",
+        );
+      });
+
+      test('text within composite nodes and non-text in between reported as a TextEditingValue', () {
+        const text = "This is a paragraph of text.";
+
+        _expectTextEditingValue(
+          actualTextEditingValue: DocumentImeSerializer(
+            MutableDocument(nodes: [
+              GroupNode("1", [
+                ParagraphNode(id: "2", text: AttributedText(text)),
+              ]),
+              HorizontalRuleNode(id: "3"),
+              GroupNode("4", [
+                ParagraphNode(id: "5", text: AttributedText(text)),
+              ])
             ]),
             const DocumentSelection(
               base: DocumentPosition(
@@ -1710,11 +1766,19 @@ void _expectTextEditingValue({
   required String expectedTextWithSelection,
   required TextEditingValue actualTextEditingValue,
 }) {
+  print("Expected text with selection: '$expectedTextWithSelection'");
+  print("Actual text editing value: '${actualTextEditingValue.text}'");
+  print("Actual selection: ${actualTextEditingValue.selection}");
   final selectionStartIndex = expectedTextWithSelection.indexOf("|");
-  final selectionEndIndex =
-      expectedTextWithSelection.indexOf("|", selectionStartIndex + 1) - 1; // -1 to account for the selection start "|"
+  final selectionEndIndex = expectedTextWithSelection.characters.where((c) => c == "|").length > 1
+      ? expectedTextWithSelection.indexOf("|", selectionStartIndex + 1) - 1 // -1 to account for the selection start "|"
+      : selectionStartIndex;
   final expectedText = expectedTextWithSelection.replaceAll("|", "");
+  print("selectionStartIndex: $selectionStartIndex, selectionEndIndex: $selectionEndIndex");
   final expectedSelection = TextSelection(baseOffset: selectionStartIndex, extentOffset: selectionEndIndex);
+
+  // expect(expectedText, actualTextEditingValue.text);
+  // expect(expectedSelection, actualTextEditingValue.selection);
 
   expect(
     actualTextEditingValue,
