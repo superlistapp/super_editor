@@ -36,7 +36,9 @@ navigation:
         - title: Dark Mode & Light Mode
           url: super-editor/guides/dark-mode-and-light-mode
         - title: Style a Document
-          url: super-editor/guides/style-a-document
+          url: super-editor/guides/styling/style-a-document
+        - title: Text Underlines
+          url: super-editor/guides/styling/text-underlines
 
     - title: Custom Content
       items:

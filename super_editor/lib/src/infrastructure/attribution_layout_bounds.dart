@@ -6,12 +6,15 @@ import 'package:super_editor/src/core/document_selection.dart';
 import 'package:super_editor/src/default_editor/text.dart';
 import 'package:super_editor/src/infrastructure/content_layers.dart';
 
-/// Positions invisible widgets around runs of attributed text.
+/// Places invisible widgets around runs of attributed text.
 ///
 /// The attributions that are bounded are selected with a given [selector].
 ///
-/// The bounding widget is build with a given [builder], so that any number
-/// of use-cases can be implemented with this widget.
+/// The bounding widget is built with a given [builder], so that any number
+/// of use-cases can be implemented with this widget. This widget is sized
+/// as wide and tall as the attributed text run. If text is laid out across
+/// multiple lines, the [builder] widget is made as wide and as tall as the
+/// bounding box which includes all lines of that text.
 class AttributionBounds extends ContentLayerStatefulWidget {
   const AttributionBounds({
     Key? key,
@@ -128,6 +131,6 @@ class AttributionBoundsLayout {
 /// should have a widget boundary placed around it.
 typedef AttributionBoundsSelector = bool Function(Attribution attribution);
 
-/// Builder that (optionally) returns a widget that positioned at the size
+/// Builder that (optionally) returns a widget that is positioned at the size
 /// and location of attributed text.
 typedef AttributionBoundsBuilder = Widget? Function(BuildContext context, Attribution attribution);

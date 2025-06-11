@@ -1,15 +1,11 @@
 import 'package:attributed_text/attributed_text.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:super_editor/src/core/edit_context.dart';
-import 'package:super_editor/src/core/editor.dart';
 import 'package:super_editor/src/core/styles.dart';
 import 'package:super_editor/src/default_editor/attributions.dart';
 import 'package:super_editor/src/default_editor/blocks/indentation.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/attributed_text_styles.dart';
-import 'package:super_editor/src/infrastructure/keyboard.dart';
 import 'package:super_text_layout/super_text_layout.dart';
 
 import '../core/document.dart';
@@ -155,29 +151,29 @@ class BlockquoteComponentViewModel extends SingleColumnLayoutComponentViewModel 
 
   @override
   BlockquoteComponentViewModel copy() {
-    return BlockquoteComponentViewModel(
-      nodeId: nodeId,
-      maxWidth: maxWidth,
-      padding: padding,
-      text: text,
-      textStyleBuilder: textStyleBuilder,
-      inlineWidgetBuilders: inlineWidgetBuilders,
-      textDirection: textDirection,
-      textAlignment: textAlignment,
-      indent: indent,
-      indentCalculator: indentCalculator,
-      backgroundColor: backgroundColor,
-      borderRadius: borderRadius,
-      selection: selection,
-      selectionColor: selectionColor,
-      highlightWhenEmpty: highlightWhenEmpty,
-      spellingErrorUnderlineStyle: spellingErrorUnderlineStyle,
-      spellingErrors: List.from(spellingErrors),
-      grammarErrorUnderlineStyle: grammarErrorUnderlineStyle,
-      grammarErrors: List.from(grammarErrors),
-      composingRegion: composingRegion,
-      showComposingRegionUnderline: showComposingRegionUnderline,
+    return internalCopy(
+      BlockquoteComponentViewModel(
+        nodeId: nodeId,
+        text: text,
+        textStyleBuilder: textStyleBuilder,
+        selectionColor: selectionColor,
+        backgroundColor: backgroundColor,
+        borderRadius: borderRadius,
+      ),
     );
+  }
+
+  @override
+  BlockquoteComponentViewModel internalCopy(BlockquoteComponentViewModel viewModel) {
+    final copy = super.internalCopy(viewModel) as BlockquoteComponentViewModel;
+
+    copy
+      ..indent = indent
+      ..indentCalculator = indentCalculator
+      ..backgroundColor = backgroundColor
+      ..borderRadius = borderRadius;
+
+    return copy;
   }
 
   @override
@@ -186,42 +182,14 @@ class BlockquoteComponentViewModel extends SingleColumnLayoutComponentViewModel 
       super == other &&
           other is BlockquoteComponentViewModel &&
           runtimeType == other.runtimeType &&
-          nodeId == other.nodeId &&
-          text == other.text &&
-          textDirection == other.textDirection &&
-          textAlignment == other.textAlignment &&
+          textViewModelEquals(other) &&
           indent == other.indent &&
           backgroundColor == other.backgroundColor &&
-          borderRadius == other.borderRadius &&
-          selection == other.selection &&
-          selectionColor == other.selectionColor &&
-          highlightWhenEmpty == other.highlightWhenEmpty &&
-          spellingErrorUnderlineStyle == other.spellingErrorUnderlineStyle &&
-          const DeepCollectionEquality().equals(spellingErrors, other.spellingErrors) &&
-          grammarErrorUnderlineStyle == other.grammarErrorUnderlineStyle &&
-          const DeepCollectionEquality().equals(grammarErrors, other.grammarErrors) &&
-          composingRegion == other.composingRegion &&
-          showComposingRegionUnderline == other.showComposingRegionUnderline;
+          borderRadius == other.borderRadius;
 
   @override
   int get hashCode =>
-      super.hashCode ^
-      nodeId.hashCode ^
-      text.hashCode ^
-      textDirection.hashCode ^
-      textAlignment.hashCode ^
-      indent.hashCode ^
-      backgroundColor.hashCode ^
-      borderRadius.hashCode ^
-      selection.hashCode ^
-      selectionColor.hashCode ^
-      highlightWhenEmpty.hashCode ^
-      spellingErrorUnderlineStyle.hashCode ^
-      spellingErrors.hashCode ^
-      grammarErrorUnderlineStyle.hashCode ^
-      grammarErrors.hashCode ^
-      composingRegion.hashCode ^
-      showComposingRegionUnderline.hashCode;
+      super.hashCode ^ textViewModelHashCode ^ indent.hashCode ^ backgroundColor.hashCode ^ borderRadius.hashCode;
 }
 
 /// Displays a blockquote in a document.
