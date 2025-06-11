@@ -1,8 +1,6 @@
 import 'package:attributed_text/attributed_text.dart';
-import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter/widgets.dart';
 import 'package:super_editor/src/core/document.dart';
 import 'package:super_editor/src/core/document_composer.dart';
 import 'package:super_editor/src/core/document_layout.dart';
@@ -14,6 +12,7 @@ import 'package:super_editor/src/default_editor/blocks/indentation.dart';
 import 'package:super_editor/src/default_editor/box_component.dart';
 import 'package:super_editor/src/default_editor/multi_node_editing.dart';
 import 'package:super_editor/src/default_editor/text.dart';
+import 'package:super_editor/src/default_editor/text/custom_underlines.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/attributed_text_styles.dart';
 import 'package:super_editor/src/infrastructure/composable_text.dart';
@@ -183,6 +182,7 @@ class ParagraphComponentViewModel extends SingleColumnLayoutComponentViewModel w
     this.selection,
     required this.selectionColor,
     this.highlightWhenEmpty = false,
+    Set<CustomUnderline> customUnderlines = const <CustomUnderline>{},
     TextRange? composingRegion,
     bool showComposingRegionUnderline = false,
     UnderlineStyle spellingErrorUnderlineStyle = const SquiggleUnderlineStyle(color: Colors.red),
@@ -190,6 +190,8 @@ class ParagraphComponentViewModel extends SingleColumnLayoutComponentViewModel w
     UnderlineStyle grammarErrorUnderlineStyle = const SquiggleUnderlineStyle(color: Colors.blue),
     List<TextRange> grammarErrors = const <TextRange>[],
   }) : super(nodeId: nodeId, maxWidth: maxWidth, padding: padding) {
+    this.customUnderlines = customUnderlines;
+
     this.composingRegion = composingRegion;
     this.showComposingRegionUnderline = showComposingRegionUnderline;
 
@@ -230,29 +232,27 @@ class ParagraphComponentViewModel extends SingleColumnLayoutComponentViewModel w
 
   @override
   ParagraphComponentViewModel copy() {
-    return ParagraphComponentViewModel(
-      nodeId: nodeId,
-      maxWidth: maxWidth,
-      padding: padding,
-      blockType: blockType,
-      indent: indent,
-      indentCalculator: indentCalculator,
-      text: text,
-      textStyleBuilder: textStyleBuilder,
-      inlineWidgetBuilders: inlineWidgetBuilders,
-      textDirection: textDirection,
-      textAlignment: textAlignment,
-      textScaler: textScaler,
-      selection: selection,
-      selectionColor: selectionColor,
-      highlightWhenEmpty: highlightWhenEmpty,
-      spellingErrorUnderlineStyle: spellingErrorUnderlineStyle,
-      spellingErrors: List.from(spellingErrors),
-      grammarErrorUnderlineStyle: grammarErrorUnderlineStyle,
-      grammarErrors: List.from(grammarErrors),
-      composingRegion: composingRegion,
-      showComposingRegionUnderline: showComposingRegionUnderline,
+    return internalCopy(
+      ParagraphComponentViewModel(
+        nodeId: nodeId,
+        text: text,
+        textStyleBuilder: textStyleBuilder,
+        selectionColor: selectionColor,
+      ),
     );
+  }
+
+  @override
+  ParagraphComponentViewModel internalCopy(ParagraphComponentViewModel viewModel) {
+    final copy = super.internalCopy(viewModel) as ParagraphComponentViewModel;
+
+    copy
+      ..blockType = blockType
+      ..indent = indent
+      ..indentCalculator = indentCalculator
+      ..textScaler = textScaler;
+
+    return copy;
   }
 
   @override
@@ -261,42 +261,14 @@ class ParagraphComponentViewModel extends SingleColumnLayoutComponentViewModel w
       super == other &&
           other is ParagraphComponentViewModel &&
           runtimeType == other.runtimeType &&
-          nodeId == other.nodeId &&
+          textViewModelEquals(other) &&
           blockType == other.blockType &&
           indent == other.indent &&
-          text == other.text &&
-          textDirection == other.textDirection &&
-          textAlignment == other.textAlignment &&
-          textScaler == other.textScaler &&
-          selection == other.selection &&
-          selectionColor == other.selectionColor &&
-          highlightWhenEmpty == other.highlightWhenEmpty &&
-          spellingErrorUnderlineStyle == other.spellingErrorUnderlineStyle &&
-          const DeepCollectionEquality().equals(spellingErrors, other.spellingErrors) &&
-          grammarErrorUnderlineStyle == other.grammarErrorUnderlineStyle &&
-          const DeepCollectionEquality().equals(grammarErrors, other.grammarErrors) &&
-          composingRegion == other.composingRegion &&
-          showComposingRegionUnderline == other.showComposingRegionUnderline;
+          textScaler == other.textScaler;
 
   @override
   int get hashCode =>
-      super.hashCode ^
-      nodeId.hashCode ^
-      blockType.hashCode ^
-      indent.hashCode ^
-      text.hashCode ^
-      textDirection.hashCode ^
-      textAlignment.hashCode ^
-      textScaler.hashCode ^
-      selection.hashCode ^
-      selectionColor.hashCode ^
-      highlightWhenEmpty.hashCode ^
-      spellingErrorUnderlineStyle.hashCode ^
-      spellingErrors.hashCode ^
-      grammarErrorUnderlineStyle.hashCode ^
-      grammarErrors.hashCode ^
-      composingRegion.hashCode ^
-      showComposingRegionUnderline.hashCode;
+      super.hashCode ^ textViewModelHashCode ^ blockType.hashCode ^ indent.hashCode ^ textScaler.hashCode;
 }
 
 /// A [ComponentBuilder] for rendering hint text in the first node of a document,
@@ -433,50 +405,43 @@ class HintComponentViewModel extends SingleColumnLayoutComponentViewModel with T
 
   @override
   HintComponentViewModel copy() {
-    return HintComponentViewModel(
-      nodeId: nodeId,
-      maxWidth: maxWidth,
-      padding: padding,
-      text: text,
-      textStyleBuilder: textStyleBuilder,
-      textDirection: textDirection,
-      inlineWidgetBuilders: inlineWidgetBuilders,
-      indent: indent,
-      selection: selection,
-      selectionColor: selectionColor,
-      highlightWhenEmpty: highlightWhenEmpty,
-      hintText: hintText,
+    return internalCopy(
+      HintComponentViewModel(
+        nodeId: nodeId,
+        padding: padding,
+        text: text,
+        textStyleBuilder: textStyleBuilder,
+        selectionColor: selectionColor,
+        hintText: hintText,
+      ),
     );
   }
 
   @override
-  // ignore: avoid_equals_and_hash_code_on_mutable_classes
+  HintComponentViewModel internalCopy(HintComponentViewModel viewModel) {
+    final copy = super.internalCopy(viewModel) as HintComponentViewModel;
+
+    copy
+      ..blockType = blockType
+      ..indent = indent
+      ..hintText = hintText;
+
+    return copy;
+  }
+
+  @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       super == other &&
           other is HintComponentViewModel &&
           runtimeType == other.runtimeType &&
-          text == other.text &&
-          hintText == other.hintText &&
-          textDirection == other.textDirection &&
-          textAlignment == other.textAlignment &&
+          textViewModelEquals(other) &&
+          blockType == other.blockType &&
           indent == other.indent &&
-          selection == other.selection &&
-          selectionColor == other.selectionColor &&
-          highlightWhenEmpty == other.highlightWhenEmpty;
+          hintText == hintText;
 
   @override
-  // ignore: avoid_equals_and_hash_code_on_mutable_classes
-  int get hashCode =>
-      super.hashCode ^
-      text.hashCode ^
-      hintText.hashCode ^
-      textDirection.hashCode ^
-      textAlignment.hashCode ^
-      indent.hashCode ^
-      selection.hashCode ^
-      selectionColor.hashCode ^
-      highlightWhenEmpty.hashCode;
+  int get hashCode => super.hashCode ^ textViewModelHashCode ^ blockType.hashCode ^ indent.hashCode ^ hintText.hashCode;
 }
 
 /// The standard [TextBlockIndentCalculator] used by paragraphs in `SuperEditor`.
