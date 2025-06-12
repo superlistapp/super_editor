@@ -8,3 +8,4 @@ linter:
         omit_local_variable_types: false
         use_key_in_widget_constructors: false
         avoid_renaming_method_parameters: false
+        always_use_package_imports: true

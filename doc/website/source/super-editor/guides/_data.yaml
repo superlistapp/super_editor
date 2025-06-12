@@ -84,6 +84,8 @@ navigation:
           url: super-editor/guides/styling/dark-mode-and-light-mode
         - title: Style a Document
           url: super-editor/guides/styling/style-a-document
+        - title: Text Underlines
+          url: super-editor/guides/styling/text-underlines
 
     - title: Editing UI
       items:

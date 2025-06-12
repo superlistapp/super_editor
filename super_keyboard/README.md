@@ -14,8 +14,8 @@ Build a widget subtree based on the keyboard state:
 @override
 Widget build(BuildContext context) {
   return SuperKeyboardBuilder(
-    builder: (context, keyboardState) {
-      // TODO: do something with the keyboard state.
+    builder: (context, keyboardGeometry) {
+      // TODO: do something with the keyboard state and size.
       return const SizedBox();
     }
   );
@@ -25,21 +25,27 @@ Widget build(BuildContext context) {
 Directly listen for changes to the keyboard state:
 ```dart
 void startListeningToKeyboardState() {
-  SuperKeyboard.instance.state.addListener(_onKeyboardStateChange);
+  SuperKeyboard.instance.geometry.addListener(_onKeyboardChange);
 }
 
 void stopListeningToKeyboardState() {
-  SuperKeyboard.instance.state.removeListener(_onKeyboardStateChange);
+  SuperKeyboard.instance.geometry.removeListener(_onKeyboardChange);
 }
 
-void _onKeyboardStateChange(KeyboardState newState) {
-  // TODO: do something with the new keyboard state.
+void _onKeyboardChange(MobileWindowGeometry geometry) {
+  // TODO: do something with the new keyboard state and size.
 }
 ```
 
+**Note:** This plugin is limited by the APIs of the underlying platform. For example,
+iOS does not provide any direct means of querying the keyboard height as it opens and
+closes. Therefore, on iOS, while this plugin does notify clients about the keyboard
+opening and closing, the reported keyboard height during those transitions won't match
+the visual keyboard on screen.
+
 Activate logs:
 ```dart
-SuperKeyboard.initLogs();
+SuperKeyboard.startLogging();
 ```
 
 ## iOS and Android

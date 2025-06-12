@@ -1,5 +1,4 @@
 import 'package:attributed_text/attributed_text.dart';
-import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:super_editor/src/core/document.dart';
@@ -268,31 +267,32 @@ class TaskComponentViewModel extends SingleColumnLayoutComponentViewModel with T
 
   @override
   TaskComponentViewModel copy() {
-    return TaskComponentViewModel(
-      nodeId: nodeId,
-      maxWidth: maxWidth,
-      padding: padding,
-      opacity: opacity,
-      metadata: metadata,
-      indent: indent,
-      indentCalculator: indentCalculator,
-      isComplete: isComplete,
-      setComplete: setComplete,
-      text: text.copy(),
-      textStyleBuilder: textStyleBuilder,
-      inlineWidgetBuilders: inlineWidgetBuilders,
-      textDirection: textDirection,
-      textAlignment: textAlignment,
-      selection: selection,
-      selectionColor: selectionColor,
-      highlightWhenEmpty: highlightWhenEmpty,
-      spellingErrorUnderlineStyle: spellingErrorUnderlineStyle,
-      spellingErrors: List.from(spellingErrors),
-      grammarErrorUnderlineStyle: grammarErrorUnderlineStyle,
-      grammarErrors: List.from(grammarErrors),
-      composingRegion: composingRegion,
-      showComposingRegionUnderline: showComposingRegionUnderline,
+    return internalCopy(
+      TaskComponentViewModel(
+        nodeId: nodeId,
+        metadata: metadata,
+        padding: padding,
+        text: text.copy(),
+        textStyleBuilder: textStyleBuilder,
+        opacity: opacity,
+        selectionColor: selectionColor,
+        indent: indent,
+        isComplete: isComplete,
+        setComplete: setComplete,
+      ),
     );
+  }
+
+  @override
+  TaskComponentViewModel internalCopy(TaskComponentViewModel viewModel) {
+    final copy = super.internalCopy(viewModel) as TaskComponentViewModel;
+
+    copy
+      ..indent = indent
+      ..isComplete = isComplete
+      ..setComplete = setComplete;
+
+    return copy;
   }
 
   @override
@@ -301,38 +301,12 @@ class TaskComponentViewModel extends SingleColumnLayoutComponentViewModel with T
       super == other &&
           other is TaskComponentViewModel &&
           runtimeType == other.runtimeType &&
+          textViewModelEquals(other) &&
           indent == other.indent &&
-          isComplete == other.isComplete &&
-          text == other.text &&
-          textDirection == other.textDirection &&
-          textAlignment == other.textAlignment &&
-          selection == other.selection &&
-          selectionColor == other.selectionColor &&
-          highlightWhenEmpty == other.highlightWhenEmpty &&
-          spellingErrorUnderlineStyle == other.spellingErrorUnderlineStyle &&
-          const DeepCollectionEquality().equals(spellingErrors, other.spellingErrors) &&
-          grammarErrorUnderlineStyle == other.grammarErrorUnderlineStyle &&
-          const DeepCollectionEquality().equals(grammarErrors, other.grammarErrors) &&
-          composingRegion == other.composingRegion &&
-          showComposingRegionUnderline == other.showComposingRegionUnderline;
+          isComplete == other.isComplete;
 
   @override
-  int get hashCode =>
-      super.hashCode ^
-      indent.hashCode ^
-      isComplete.hashCode ^
-      text.hashCode ^
-      textDirection.hashCode ^
-      textAlignment.hashCode ^
-      selection.hashCode ^
-      selectionColor.hashCode ^
-      highlightWhenEmpty.hashCode ^
-      spellingErrorUnderlineStyle.hashCode ^
-      spellingErrors.hashCode ^
-      grammarErrorUnderlineStyle.hashCode ^
-      grammarErrors.hashCode ^
-      composingRegion.hashCode ^
-      showComposingRegionUnderline.hashCode;
+  int get hashCode => super.hashCode ^ textViewModelHashCode ^ indent.hashCode ^ isComplete.hashCode;
 }
 
 /// The standard [TextBlockIndentCalculator] used by tasks in `SuperEditor`.

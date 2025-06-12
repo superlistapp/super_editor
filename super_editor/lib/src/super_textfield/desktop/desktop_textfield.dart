@@ -1541,6 +1541,7 @@ class _SuperTextFieldImeInteractorState extends State<SuperTextFieldImeInteracto
         (oldWidget.imeConfiguration == null || !widget.imeConfiguration!.isEquivalentTo(oldWidget.imeConfiguration!)) &&
         _textController.isAttachedToIme) {
       _textController.updateTextInputConfiguration(
+        viewId: View.of(context).viewId,
         textInputAction: widget.imeConfiguration!.inputAction,
         textInputType: widget.imeConfiguration!.inputType,
         autocorrect: widget.imeConfiguration!.autocorrect,
@@ -1577,6 +1578,7 @@ class _SuperTextFieldImeInteractorState extends State<SuperTextFieldImeInteracto
             _textController.attachToImeWithConfig(widget.imeConfiguration!);
           } else {
             _textController.attachToIme(
+              viewId: View.of(context).viewId,
               textInputType: widget.isMultiline ? TextInputType.multiline : TextInputType.text,
               textInputAction:
                   widget.textInputAction ?? (widget.isMultiline ? TextInputAction.newline : TextInputAction.done),

@@ -19,6 +19,7 @@ import 'package:example/demos/flutter_features/textinputclient/basic_text_input_
 import 'package:example/demos/flutter_features/textinputclient/textfield.dart';
 import 'package:example/demos/in_the_lab/feature_action_tags.dart';
 import 'package:example/demos/in_the_lab/feature_ai_fade_in.dart';
+import 'package:example/demos/in_the_lab/feature_custom_underlines.dart';
 import 'package:example/demos/in_the_lab/feature_ios_native_context_menu.dart';
 import 'package:example/demos/in_the_lab/feature_pattern_tags.dart';
 import 'package:example/demos/in_the_lab/feature_stable_tags.dart';
@@ -36,8 +37,8 @@ import 'package:example/demos/super_reader/demo_super_reader_listview.dart';
 import 'package:example/demos/supertextfield/android/demo_superandroidtextfield.dart';
 import 'package:example/demos/supertextfield/demo_textfield.dart';
 import 'package:example/demos/supertextfield/ios/demo_superiostextfield.dart';
+import 'package:example/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:super_editor/super_editor.dart';
 
@@ -331,6 +332,13 @@ final _menu = <_MenuGroup>[
         title: 'Native iOS Toolbar',
         pageBuilder: (context) {
           return const NativeIosContextMenuFeatureDemo();
+        },
+      ),
+      _MenuItem(
+        icon: Icons.line_style,
+        title: 'Custom Underlines',
+        pageBuilder: (context) {
+          return const CustomUnderlinesDemo();
         },
       ),
       _MenuItem(

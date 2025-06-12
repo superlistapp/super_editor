@@ -1,5 +1,4 @@
 import 'package:attributed_text/attributed_text.dart';
-import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:super_editor/src/core/document_composer.dart';
@@ -288,43 +287,25 @@ abstract class ListItemComponentViewModel extends SingleColumnLayoutComponentVie
   bool highlightWhenEmpty;
 
   @override
+  ListItemComponentViewModel internalCopy(ListItemComponentViewModel viewModel) {
+    final copy = super.internalCopy(viewModel) as ListItemComponentViewModel;
+
+    copy.indent = indent;
+
+    return copy;
+  }
+
+  @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       super == other &&
           other is ListItemComponentViewModel &&
           runtimeType == other.runtimeType &&
-          nodeId == other.nodeId &&
-          indent == other.indent &&
-          text == other.text &&
-          textDirection == other.textDirection &&
-          textAlignment == other.textAlignment &&
-          selection == other.selection &&
-          selectionColor == other.selectionColor &&
-          highlightWhenEmpty == other.highlightWhenEmpty &&
-          spellingErrorUnderlineStyle == other.spellingErrorUnderlineStyle &&
-          const DeepCollectionEquality().equals(spellingErrors, spellingErrors) &&
-          grammarErrorUnderlineStyle == other.grammarErrorUnderlineStyle &&
-          const DeepCollectionEquality().equals(grammarErrors, grammarErrors) &&
-          composingRegion == other.composingRegion &&
-          showComposingRegionUnderline == other.showComposingRegionUnderline;
+          textViewModelEquals(other) &&
+          indent == other.indent;
 
   @override
-  int get hashCode =>
-      super.hashCode ^
-      nodeId.hashCode ^
-      indent.hashCode ^
-      text.hashCode ^
-      textDirection.hashCode ^
-      textAlignment.hashCode ^
-      selection.hashCode ^
-      selectionColor.hashCode ^
-      highlightWhenEmpty.hashCode ^
-      spellingErrorUnderlineStyle.hashCode ^
-      spellingErrors.hashCode ^
-      grammarErrorUnderlineStyle.hashCode ^
-      grammarErrors.hashCode ^
-      composingRegion.hashCode ^
-      showComposingRegionUnderline.hashCode;
+  int get hashCode => super.hashCode ^ textViewModelHashCode ^ indent.hashCode;
 }
 
 class UnorderedListItemComponentViewModel extends ListItemComponentViewModel {
@@ -366,28 +347,28 @@ class UnorderedListItemComponentViewModel extends ListItemComponentViewModel {
 
   @override
   UnorderedListItemComponentViewModel copy() {
-    return UnorderedListItemComponentViewModel(
-      nodeId: nodeId,
-      maxWidth: maxWidth,
-      padding: padding,
-      opacity: opacity,
-      metadata: metadata,
-      indent: indent,
-      text: text.copy(),
-      textStyleBuilder: textStyleBuilder,
-      dotStyle: dotStyle,
-      textDirection: textDirection,
-      textAlignment: textAlignment,
-      selection: selection,
-      selectionColor: selectionColor,
-      composingRegion: composingRegion,
-      showComposingRegionUnderline: showComposingRegionUnderline,
-      spellingErrorUnderlineStyle: spellingErrorUnderlineStyle,
-      spellingErrors: List.from(spellingErrors),
-      grammarErrorUnderlineStyle: grammarErrorUnderlineStyle,
-      grammarErrors: List.from(grammarErrors),
-      inlineWidgetBuilders: inlineWidgetBuilders,
+    return internalCopy(
+      UnorderedListItemComponentViewModel(
+        nodeId: nodeId,
+        metadata: metadata,
+        text: text.copy(),
+        textStyleBuilder: textStyleBuilder,
+        opacity: opacity,
+        selectionColor: selectionColor,
+        indent: indent,
+      ),
     );
+  }
+
+  @override
+  UnorderedListItemComponentViewModel internalCopy(UnorderedListItemComponentViewModel viewModel) {
+    final copy = super.internalCopy(viewModel) as UnorderedListItemComponentViewModel;
+
+    copy
+      ..indent = indent
+      ..dotStyle = dotStyle.copyWith();
+
+    return copy;
   }
 
   @override
@@ -428,7 +409,7 @@ class OrderedListItemComponentViewModel extends ListItemComponentViewModel {
     super.grammarErrors,
   });
 
-  final int? ordinalValue;
+  int? ordinalValue;
   OrderedListNumeralStyle numeralStyle;
 
   @override
@@ -439,29 +420,29 @@ class OrderedListItemComponentViewModel extends ListItemComponentViewModel {
 
   @override
   OrderedListItemComponentViewModel copy() {
-    return OrderedListItemComponentViewModel(
-      nodeId: nodeId,
-      maxWidth: maxWidth,
-      padding: padding,
-      opacity: opacity,
-      metadata: metadata,
-      indent: indent,
-      ordinalValue: ordinalValue,
-      numeralStyle: numeralStyle,
-      text: text.copy(),
-      textStyleBuilder: textStyleBuilder,
-      textDirection: textDirection,
-      textAlignment: textAlignment,
-      selection: selection,
-      selectionColor: selectionColor,
-      composingRegion: composingRegion,
-      showComposingRegionUnderline: showComposingRegionUnderline,
-      spellingErrorUnderlineStyle: spellingErrorUnderlineStyle,
-      spellingErrors: List.from(spellingErrors),
-      grammarErrorUnderlineStyle: grammarErrorUnderlineStyle,
-      grammarErrors: List.from(grammarErrors),
-      inlineWidgetBuilders: inlineWidgetBuilders,
+    return internalCopy(
+      OrderedListItemComponentViewModel(
+        nodeId: nodeId,
+        metadata: metadata,
+        text: text,
+        textStyleBuilder: textStyleBuilder,
+        opacity: opacity,
+        selectionColor: selectionColor,
+        indent: indent,
+      ),
     );
+  }
+
+  @override
+  OrderedListItemComponentViewModel internalCopy(OrderedListItemComponentViewModel viewModel) {
+    final copy = super.internalCopy(viewModel) as OrderedListItemComponentViewModel;
+
+    copy
+      ..indent = indent
+      ..ordinalValue = ordinalValue
+      ..numeralStyle = numeralStyle;
+
+    return copy;
   }
 
   @override
@@ -819,7 +800,14 @@ Widget _defaultOrderedListItemNumeralBuilder(BuildContext context, OrderedListIt
   // also contain a FontSizeAttribution, which overrides the stylesheet. Use the attributions
   // of the first character to determine the text style.
   final attributions = component.text.getAllAttributionsAt(0).toSet();
-  final textStyle = component.styleBuilder(attributions);
+
+  // We set inherit to false because, when it's true, the Text widget merges the
+  // textStyle with the default textStyle. This might cause it to apply a font family,
+  // letter spacing, etc. That might cause the numeral to be misaligned with the
+  // list item's text.
+  final textStyle = component.styleBuilder(attributions).copyWith(
+        inherit: false,
+      );
 
   return OverflowBox(
     maxWidth: double.infinity,

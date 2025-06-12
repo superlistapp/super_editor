@@ -1,3 +1,16 @@
+## [0.3.0-dev.25] - June 6, 2025
+ * FIX: Crash when connecting to IME (because Flutter broke everything with latest release).
+ * ADJUSTMENT: Added a couple methods to the spelling and grammar plugin for working with spelling errors.
+
+## [0.3.0-dev.24] - May 26, 2025
+ * FIX: Text is duplicated when typing with styles applied.
+ * FIX: Ordered list item numerals are mis-aligned with content text.
+ * FIX: Toolbar disappears after user presses "Select All", preventing selection of "copy" or "paste".
+ * ADJUSTMENT: Add option to bypass `MediaQuery` and user `super_keyboard` to monitor keyboard
+   height in a `KeyboardPanelScaffold`. This was added to work around a possible `MediaQuery`
+   glitch on Android due to an app mishandling the Android lifecycle/permission requirements.
+ * FIX: Editor overlays obscure everything below them when using Dev Tools with layout outlines.
+
 ## [0.3.0-dev.23] - Apr 3, 2025
  * FIX: iOS native toolbar "select all" now selects all document content instead of just the paragraph.
  * FIX: Pressing `enter` to split list items works again.

@@ -248,6 +248,11 @@ class MessagePageController with ChangeNotifier {
 
     notifyListeners();
   }
+
+  /// The bottom spacing that was most recently used to build the scaffold.
+  ///
+  /// This is a debug value and should only be used for logging.
+  final debugMostRecentBottomSpacing = ValueNotifier<double?>(null);
 }
 
 enum MessagePageSheetHeightPolicy {
@@ -368,6 +373,7 @@ class MessagePageElement extends RenderObjectElement {
 
   void buildContent(double bottomSpacing) {
     messagePageElementLog.info('ContentLayersElement ($hashCode) - (re)building layers');
+    widget.controller?.debugMostRecentBottomSpacing.value = bottomSpacing;
 
     owner!.buildScope(this, () {
       if (_content == null) {
@@ -909,9 +915,9 @@ class RenderMessagePageScaffold extends RenderBox {
     // Do a throw-away layout pass to get the preview height of the bottom
     // sheet, bounded within its min/max height.
     _overrideSheetMode = BottomSheetMode.preview;
-
     _previewHeight = _bottomSheet!.computeDryLayout(constraints.copyWith(minHeight: 0)).height;
 
+    // Switch back to a real layout pass.
     _overrideSheetMode = null;
     messagePageLayoutLog.info(
       ' - Bottom sheet bounded preview height: $_previewHeight, min height: $_bottomSheetMinimumHeight, max height: $_bottomSheetMaximumHeight',

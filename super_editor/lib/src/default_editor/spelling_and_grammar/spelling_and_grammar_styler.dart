@@ -64,6 +64,8 @@ class SpellingAndGrammarStyler extends SingleColumnLayoutStylePhase {
     markDirty();
   }
 
+  Set<TextError> getErrorsForNode(String nodeId) =>
+      _errorsByNode[nodeId] != null ? Set.from(_errorsByNode[nodeId]!) : {};
   final _errorsByNode = <String, Set<TextError>>{};
   final _dirtyNodes = <String>{};
 
@@ -71,6 +73,12 @@ class SpellingAndGrammarStyler extends SingleColumnLayoutStylePhase {
     _errorsByNode[nodeId] ??= <TextError>{};
     _errorsByNode[nodeId]!.addAll(errors);
     _dirtyNodes.add(nodeId);
+
+    markDirty();
+  }
+
+  void clearSomeErrorsForNode(String nodeId, Set<TextError> errors) {
+    _errorsByNode[nodeId]?.removeAll(errors);
 
     markDirty();
   }
@@ -171,6 +179,10 @@ class TextError {
   final TextErrorType type;
   final String value;
   final List<String> suggestions;
+
+  @override
+  String toString() =>
+      "[TextError] - node: $nodeId, type: $type, range: $range, value: $value, suggestion: $suggestions";
 
   @override
   bool operator ==(Object other) =>

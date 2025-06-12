@@ -116,6 +116,7 @@ class ImeAttributedTextEditingController extends AttributedTextEditingController
   bool _hasPerformedNonNewLineTextInputActionThisFrame = false;
 
   void attachToIme({
+    required int viewId,
     bool autocorrect = true,
     bool enableSuggestions = true,
     TextInputAction textInputAction = TextInputAction.done,
@@ -127,6 +128,7 @@ class ImeAttributedTextEditingController extends AttributedTextEditingController
     }
 
     final config = TextInputConfiguration(
+      viewId: viewId,
       enableDeltaModel: true,
       autocorrect: autocorrect,
       enableSuggestions: enableSuggestions,
@@ -157,6 +159,7 @@ class ImeAttributedTextEditingController extends AttributedTextEditingController
   }
 
   void updateTextInputConfiguration({
+    required int viewId,
     bool autocorrect = true,
     bool enableSuggestions = true,
     TextInputAction textInputAction = TextInputAction.done,
@@ -178,6 +181,7 @@ class ImeAttributedTextEditingController extends AttributedTextEditingController
 
     // Open a new connection with the new configuration.
     final imeConfig = TextInputConfiguration(
+      viewId: viewId,
       autocorrect: autocorrect,
       enableDeltaModel: true,
       enableSuggestions: enableSuggestions,

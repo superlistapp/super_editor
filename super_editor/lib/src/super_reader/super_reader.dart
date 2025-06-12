@@ -22,6 +22,7 @@ import 'package:super_editor/src/default_editor/layout_single_column/_styler_use
 import 'package:super_editor/src/default_editor/list_items.dart';
 import 'package:super_editor/src/default_editor/paragraph.dart';
 import 'package:super_editor/src/default_editor/text.dart';
+import 'package:super_editor/src/default_editor/text/custom_underlines.dart';
 import 'package:super_editor/src/default_editor/unknown_component.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/content_layers.dart';
@@ -229,6 +230,7 @@ class SuperReaderState extends State<SuperReader> {
   final _documentLayoutLink = LayerLink();
   SingleColumnLayoutPresenter? _docLayoutPresenter;
   late SingleColumnStylesheetStyler _docStylesheetStyler;
+  final _customUnderlineStyler = CustomUnderlineStyler();
   late SingleColumnLayoutCustomComponentStyler _docLayoutPerComponentBlockStyler;
   late SingleColumnLayoutSelectionStyler _docLayoutSelectionStyler;
 
@@ -341,6 +343,7 @@ class SuperReaderState extends State<SuperReader> {
       pipeline: [
         _docStylesheetStyler,
         _docLayoutPerComponentBlockStyler,
+        _customUnderlineStyler,
         ...widget.customStylePhases,
         // Selection changes are very volatile. Put that phase last
         // to minimize view model recalculations.

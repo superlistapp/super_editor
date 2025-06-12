@@ -23,6 +23,7 @@ class SoftwareKeyboardHeightSimulator extends StatefulWidget {
     required this.tester,
     this.isEnabled = true,
     this.enableForAllPlatforms = false,
+    this.initialKeyboardState = KeyboardState.closed,
     this.keyboardHeight = _defaultKeyboardHeight,
     this.animateKeyboard = false,
     required this.child,
@@ -44,6 +45,9 @@ class SoftwareKeyboardHeightSimulator extends StatefulWidget {
   /// The value for this property should remain constant within a single test. Don't
   /// attempt to enable and then disable keyboard simulation. That behavior is undefined.
   final bool enableForAllPlatforms;
+
+  /// The state of the keyboard, e.g., open, opening, closed, closing.
+  final KeyboardState initialKeyboardState;
 
   /// The vertical space, in logical pixels, to occupy at the bottom of the screen to simulate the appearance
   /// of a keyboard.
@@ -72,6 +76,7 @@ class _SoftwareKeyboardHeightSimulatorState extends State<SoftwareKeyboardHeight
     if (widget.isEnabled) {
       TestSuperKeyboard.install(
         widget.tester,
+        initialKeyboardState: widget.initialKeyboardState,
         fakeKeyboardHeight: widget.keyboardHeight,
         keyboardAnimationTime: widget.animateKeyboard ? const Duration(milliseconds: 600) : Duration.zero,
       );
@@ -87,6 +92,7 @@ class _SoftwareKeyboardHeightSimulatorState extends State<SoftwareKeyboardHeight
 
       TestSuperKeyboard.install(
         widget.tester,
+        initialKeyboardState: widget.initialKeyboardState,
         fakeKeyboardHeight: widget.keyboardHeight,
         keyboardAnimationTime: widget.animateKeyboard ? const Duration(milliseconds: 600) : Duration.zero,
       );
@@ -110,8 +116,8 @@ class _SoftwareKeyboardHeightSimulatorState extends State<SoftwareKeyboardHeight
   @override
   Widget build(BuildContext context) {
     return ValueListenableBuilder(
-      valueListenable: SuperKeyboard.instance.keyboardHeight,
-      builder: (context, keyboardHeight, child) {
+      valueListenable: SuperKeyboard.instance.mobileGeometry,
+      builder: (context, geometry, child) {
         final realMediaQuery = MediaQuery.of(context);
         final isRelevantPlatform = widget.enableForAllPlatforms ||
             (defaultTargetPlatform == TargetPlatform.android || defaultTargetPlatform == TargetPlatform.iOS);
@@ -129,7 +135,7 @@ class _SoftwareKeyboardHeightSimulatorState extends State<SoftwareKeyboardHeight
                 child: MediaQuery(
                   data: realMediaQuery.copyWith(
                     viewInsets: realMediaQuery.viewInsets.copyWith(
-                      bottom: keyboardHeight ?? 0.0,
+                      bottom: geometry.keyboardHeight ?? 0.0,
                     ),
                   ),
                   child: widget.child,
@@ -141,7 +147,7 @@ class _SoftwareKeyboardHeightSimulatorState extends State<SoftwareKeyboardHeight
                 left: 0,
                 right: 0,
                 bottom: 0,
-                height: keyboardHeight,
+                height: geometry.keyboardHeight,
                 child: const Placeholder(),
               ),
             ],
@@ -155,6 +161,7 @@ class _SoftwareKeyboardHeightSimulatorState extends State<SoftwareKeyboardHeight
 class TestSuperKeyboard implements SuperKeyboard {
   static void install(
     WidgetTester tester, {
+    KeyboardState initialKeyboardState = KeyboardState.closed,
     double fakeKeyboardHeight = _defaultKeyboardHeight,
     Duration keyboardAnimationTime = const Duration(milliseconds: 600),
   }) {
@@ -164,6 +171,7 @@ class TestSuperKeyboard implements SuperKeyboard {
 
     _instance = TestSuperKeyboard(
       tester,
+      initialKeyboardState: initialKeyboardState,
       fakeKeyboardHeight: fakeKeyboardHeight,
       keyboardAnimationTime: keyboardAnimationTime,
     );
@@ -186,17 +194,26 @@ class TestSuperKeyboard implements SuperKeyboard {
 
   TestSuperKeyboard(
     this.tester, {
+    KeyboardState initialKeyboardState = KeyboardState.closed,
     this.fakeKeyboardHeight = 400.0,
     Duration keyboardAnimationTime = const Duration(milliseconds: 600),
   }) {
     _interceptPlatformChannel();
+
+    _geometry.value = MobileWindowGeometry(
+      keyboardState: initialKeyboardState,
+    );
 
     _keyboardHeightController = AnimationController(
       duration: keyboardAnimationTime,
       vsync: tester,
     )
       ..addListener(() {
-        _keyboardHeight.value = _keyboardHeightController.value * fakeKeyboardHeight;
+        _geometry.value = _geometry.value.updateWith(
+          MobileWindowGeometry(
+            keyboardHeight: _keyboardHeightController.value * fakeKeyboardHeight,
+          ),
+        );
       })
       ..addStatusListener(_onKeyboardAnimationStatusChange);
   }
@@ -249,12 +266,8 @@ class TestSuperKeyboard implements SuperKeyboard {
   late final AnimationController _keyboardHeightController;
 
   @override
-  ValueListenable<double?> get keyboardHeight => _keyboardHeight;
-  final _keyboardHeight = ValueNotifier(0.0);
-
-  @override
-  ValueListenable<KeyboardState> get state => _state;
-  final _state = ValueNotifier(KeyboardState.closed);
+  ValueListenable<MobileWindowGeometry> get mobileGeometry => _geometry;
+  final _geometry = ValueNotifier(const MobileWindowGeometry());
 
   void _simulatePlatformOpeningKeyboard() {
     _keyboardHeightController.forward();
@@ -267,13 +280,29 @@ class TestSuperKeyboard implements SuperKeyboard {
   void _onKeyboardAnimationStatusChange(AnimationStatus status) {
     switch (status) {
       case AnimationStatus.forward:
-        _state.value = KeyboardState.opening;
+        _geometry.value = MobileWindowGeometry(
+          keyboardState: KeyboardState.opening,
+          keyboardHeight: fakeKeyboardHeight / 2,
+          bottomPadding: 48,
+        );
       case AnimationStatus.completed:
-        _state.value = KeyboardState.open;
+        _geometry.value = MobileWindowGeometry(
+          keyboardState: KeyboardState.open,
+          keyboardHeight: fakeKeyboardHeight,
+          bottomPadding: 48,
+        );
       case AnimationStatus.reverse:
-        _state.value = KeyboardState.closing;
+        _geometry.value = MobileWindowGeometry(
+          keyboardState: KeyboardState.closing,
+          keyboardHeight: fakeKeyboardHeight / 2,
+          bottomPadding: 48,
+        );
       case AnimationStatus.dismissed:
-        _state.value = KeyboardState.closed;
+        _geometry.value = const MobileWindowGeometry(
+          keyboardState: KeyboardState.closed,
+          keyboardHeight: 0,
+          bottomPadding: 48,
+        );
     }
   }
 }

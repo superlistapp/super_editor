@@ -53,6 +53,7 @@ export 'src/default_editor/tasks.dart';
 export 'src/default_editor/text.dart';
 export 'src/default_editor/text_ai.dart';
 export 'src/default_editor/text_tools.dart';
+export 'src/default_editor/text/custom_underlines.dart';
 export 'src/default_editor/text_tokenizing/action_tags.dart';
 export 'src/default_editor/text_tokenizing/pattern_tags.dart';
 export 'src/default_editor/text_tokenizing/tags.dart';

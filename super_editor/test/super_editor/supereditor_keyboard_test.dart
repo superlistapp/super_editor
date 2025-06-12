@@ -579,7 +579,7 @@ void main() {
         expect(selectionBefore.extent.nodeId, nodeId);
 
         // Open the keyboard
-        keyboardController.open();
+        keyboardController.open(viewId: 1);
         await tester.pump();
 
         // Ensure the IME is open
@@ -634,7 +634,7 @@ void main() {
         expect(selectionBefore.extent.nodeId, nodeId);
 
         // Open the keyboard
-        keyboardController.open();
+        keyboardController.open(viewId: 0);
         await tester.pump();
 
         // Ensure the IME is open
@@ -655,12 +655,18 @@ void main() {
         expect(keyboardController.isConnectedToIme, isFalse);
 
         // Select a word
-        await tester.doubleTapInParagraph(nodeId, 10);
+        //
+        // WARNING: To avoid accidentally tapping on the popover toolbar, we tap down a few
+        // lines. The specific text offset isn't important in this case.
+        await tester.doubleTapInParagraph(nodeId, 100);
         // Ensure the keyboard is still closed.
         expect(keyboardController.isConnectedToIme, isFalse);
 
-        // Select a paragraph
-        await tester.tripleTapInParagraph(nodeId, 15);
+        // Select a paragraph.
+        //
+        // WARNING: To avoid accidentally tapping on the popover toolbar, we tap down a few
+        // lines. The specific text offset isn't important in this case.
+        await tester.tripleTapInParagraph(nodeId, 100);
         // Ensure the keyboard is still closed.
         expect(keyboardController.isConnectedToIme, isFalse);
       });
@@ -703,7 +709,7 @@ void main() {
         expect(selectionBefore.extent.nodeId, nodeId);
 
         // Open the keyboard
-        keyboardController.open();
+        keyboardController.open(viewId: 0);
         await tester.pump();
 
         // Ensure the IME is open
@@ -717,7 +723,7 @@ void main() {
         expect(keyboardController.isConnectedToIme, isFalse);
 
         // Re-open the IME
-        keyboardController.open();
+        keyboardController.open(viewId: 0);
         await tester.pumpAndSettle();
 
         // Ensure the IME is re-opened
@@ -790,7 +796,7 @@ void main() {
         expect(selectionBefore.extent.nodeId, nodeId);
 
         // Open the keyboard
-        keyboardController.open();
+        keyboardController.open(viewId: 0);
         await tester.pump();
 
         // Ensure the IME is open

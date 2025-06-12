@@ -355,7 +355,7 @@ class _ChatEditorState extends State<_ChatEditor> with SingleTickerProviderState
               Spacer(),
               GestureDetector(
                 onTap: () {
-                  _softwareKeyboardController.open();
+                  _softwareKeyboardController.open(viewId: View.of(context).viewId);
                   _isImeConnected.value = true;
                 },
                 child: Icon(Icons.keyboard_alt_rounded),
@@ -415,11 +415,13 @@ class _DoNothingSoftwareKeyboardControllerDelegate implements SoftwareKeyboardCo
   bool get isConnectedToIme => _textInputConnection != null;
 
   @override
-  void open() {
+  void open({
+    required int viewId,
+  }) {
     print("ATTACHING TO TEXT INPUT CLIENT");
     _textInputConnection = TextInput.attach(
       _InvisibleTextInputClient(),
-      TextInputConfiguration(),
+      TextInputConfiguration(viewId: viewId),
     )..show();
   }
 

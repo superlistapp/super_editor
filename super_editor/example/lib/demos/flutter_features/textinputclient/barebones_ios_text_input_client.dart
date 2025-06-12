@@ -130,7 +130,12 @@ class _BareBonesTextFieldWithInputClientState extends State<_BareBonesTextFieldW
       if (_textInputConnection == null) {
         print('Attaching TextInputClient to TextInput');
         setState(() {
-          _textInputConnection = TextInput.attach(this, const TextInputConfiguration());
+          _textInputConnection = TextInput.attach(
+            this,
+            TextInputConfiguration(
+              viewId: View.of(context).viewId,
+            ),
+          );
           _textInputConnection!
             ..show()
             ..setEditingState(currentTextEditingValue!);
