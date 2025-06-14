@@ -68,8 +68,8 @@ class FadeInStyler extends SingleColumnLayoutStylePhase {
   /// updates the copy's time to the current time, and returns the copy.
   SingleColumnLayoutComponentViewModel _updateViewModelAnimation(SingleColumnLayoutComponentViewModel viewModel) {
     if (viewModel is! TextComponentViewModel) {
-      final createdAt = viewModel.metadata[NodeMetadata.createdAt];
-      if (createdAt == null || createdAt is! DateTime) {
+      final createdAt = viewModel.createdAt;
+      if (createdAt == null) {
         return viewModel;
       }
       final deltaTime = DateTime.now().difference(createdAt);

@@ -167,6 +167,7 @@ class TaskComponentBuilder implements ComponentBuilder {
 
     return TaskComponentViewModel(
       nodeId: node.id,
+      createdAt: node.metadata[NodeMetadata.createdAt],
       padding: EdgeInsets.zero,
       indent: node.indent,
       isComplete: node.isComplete,
@@ -209,10 +210,10 @@ class TaskComponentBuilder implements ComponentBuilder {
 class TaskComponentViewModel extends SingleColumnLayoutComponentViewModel with TextComponentViewModel {
   TaskComponentViewModel({
     required super.nodeId,
+    super.createdAt,
     super.maxWidth,
     required super.padding,
     super.opacity = 1.0,
-    super.metadata,
     this.indent = 0,
     this.indentCalculator = defaultTaskIndentCalculator,
     required this.isComplete,
@@ -270,7 +271,7 @@ class TaskComponentViewModel extends SingleColumnLayoutComponentViewModel with T
     return internalCopy(
       TaskComponentViewModel(
         nodeId: nodeId,
-        metadata: metadata,
+        createdAt: createdAt,
         padding: padding,
         text: text.copy(),
         textStyleBuilder: textStyleBuilder,

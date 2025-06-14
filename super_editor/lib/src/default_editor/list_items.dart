@@ -167,6 +167,7 @@ class ListItemComponentBuilder implements ComponentBuilder {
     return switch (node.type) {
       ListItemType.unordered => UnorderedListItemComponentViewModel(
           nodeId: node.id,
+          createdAt: node.metadata[NodeMetadata.createdAt],
           indent: node.indent,
           text: node.text,
           textDirection: textDirection,
@@ -176,6 +177,7 @@ class ListItemComponentBuilder implements ComponentBuilder {
         ),
       ListItemType.ordered => OrderedListItemComponentViewModel(
           nodeId: node.id,
+          createdAt: node.metadata[NodeMetadata.createdAt],
           indent: node.indent,
           ordinalValue: ordinalValue,
           text: node.text,
@@ -237,10 +239,10 @@ class ListItemComponentBuilder implements ComponentBuilder {
 abstract class ListItemComponentViewModel extends SingleColumnLayoutComponentViewModel with TextComponentViewModel {
   ListItemComponentViewModel({
     required super.nodeId,
+    super.createdAt,
     super.maxWidth,
     super.padding = EdgeInsets.zero,
     super.opacity = 1.0,
-    super.metadata,
     required this.indent,
     required this.text,
     required this.textStyleBuilder,
@@ -311,10 +313,10 @@ abstract class ListItemComponentViewModel extends SingleColumnLayoutComponentVie
 class UnorderedListItemComponentViewModel extends ListItemComponentViewModel {
   UnorderedListItemComponentViewModel({
     required super.nodeId,
+    super.createdAt,
     super.maxWidth,
     super.padding = EdgeInsets.zero,
     super.opacity = 1.0,
-    super.metadata,
     required super.indent,
     required super.text,
     required super.textStyleBuilder,
@@ -350,7 +352,7 @@ class UnorderedListItemComponentViewModel extends ListItemComponentViewModel {
     return internalCopy(
       UnorderedListItemComponentViewModel(
         nodeId: nodeId,
-        metadata: metadata,
+        createdAt: createdAt,
         text: text.copy(),
         textStyleBuilder: textStyleBuilder,
         opacity: opacity,
@@ -386,10 +388,10 @@ class UnorderedListItemComponentViewModel extends ListItemComponentViewModel {
 class OrderedListItemComponentViewModel extends ListItemComponentViewModel {
   OrderedListItemComponentViewModel({
     required super.nodeId,
+    super.createdAt,
     super.maxWidth,
     super.padding = EdgeInsets.zero,
     super.opacity = 1.0,
-    super.metadata,
     required super.indent,
     this.ordinalValue,
     this.numeralStyle = OrderedListNumeralStyle.arabic,
@@ -423,7 +425,7 @@ class OrderedListItemComponentViewModel extends ListItemComponentViewModel {
     return internalCopy(
       OrderedListItemComponentViewModel(
         nodeId: nodeId,
-        metadata: metadata,
+        createdAt: createdAt,
         text: text,
         textStyleBuilder: textStyleBuilder,
         opacity: opacity,

@@ -1,5 +1,4 @@
 import 'package:attributed_text/attributed_text.dart';
-import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:super_editor/src/core/styles.dart';
 import 'package:super_editor/src/default_editor/attributions.dart';
@@ -50,6 +49,7 @@ class BlockquoteComponentBuilder implements ComponentBuilder {
 
     return BlockquoteComponentViewModel(
       nodeId: node.id,
+      createdAt: node.metadata["createdAt"],
       text: node.text,
       textStyleBuilder: noStyleBuilder,
       indent: node.indent,
@@ -58,7 +58,6 @@ class BlockquoteComponentBuilder implements ComponentBuilder {
       textDirection: textDirection,
       textAlignment: textAlign,
       selectionColor: const Color(0x00000000),
-      metadata: node.metadata,
     );
   }
 
@@ -88,10 +87,10 @@ class BlockquoteComponentBuilder implements ComponentBuilder {
 class BlockquoteComponentViewModel extends SingleColumnLayoutComponentViewModel with TextComponentViewModel {
   BlockquoteComponentViewModel({
     required super.nodeId,
+    super.createdAt,
     super.maxWidth,
     super.padding = EdgeInsets.zero,
     super.opacity = 1.0,
-    super.metadata,
     required this.text,
     required this.textStyleBuilder,
     this.inlineWidgetBuilders = const [],
@@ -157,7 +156,7 @@ class BlockquoteComponentViewModel extends SingleColumnLayoutComponentViewModel 
     return internalCopy(
       BlockquoteComponentViewModel(
         nodeId: nodeId,
-        metadata: metadata,
+        createdAt: createdAt,
         text: text.copy(),
         textStyleBuilder: textStyleBuilder,
         opacity: opacity,

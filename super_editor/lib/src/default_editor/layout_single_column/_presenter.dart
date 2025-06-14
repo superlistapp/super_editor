@@ -451,13 +451,20 @@ class SingleColumnLayoutViewModel {
 abstract class SingleColumnLayoutComponentViewModel {
   SingleColumnLayoutComponentViewModel({
     required this.nodeId,
+    required this.createdAt,
     this.maxWidth,
     required this.padding,
     this.opacity = 1.0,
-    this.metadata = const {},
   });
 
   final String nodeId;
+
+  /// When view model's corresponding node was created, which can be used for
+  /// making decisions about animated invalidations.
+  ///
+  /// Reporting the creation time is optional. Stylers must handle cases where
+  /// no creation timestamp is available.
+  DateTime? createdAt;
 
   /// The maximum width of this component in the layout, or `null` to
   /// defer to the layout's preference.
@@ -468,9 +475,6 @@ abstract class SingleColumnLayoutComponentViewModel {
 
   /// The opacity of this whole node.
   double opacity;
-
-  /// Extra data that might be relevant to the styling of this view model.
-  Map<String, dynamic> metadata;
 
   void applyStyles(Map<String, dynamic> styles) {
     maxWidth = styles[Styles.maxWidth] ?? double.infinity;
@@ -486,11 +490,11 @@ abstract class SingleColumnLayoutComponentViewModel {
       other is SingleColumnLayoutComponentViewModel &&
           runtimeType == other.runtimeType &&
           nodeId == other.nodeId &&
+          createdAt == other.createdAt &&
           maxWidth == other.maxWidth &&
           padding == other.padding &&
-          opacity == other.opacity &&
-          const DeepCollectionEquality().equals(metadata, other.metadata);
+          opacity == other.opacity;
 
   @override
-  int get hashCode => nodeId.hashCode ^ maxWidth.hashCode ^ padding.hashCode ^ opacity.hashCode ^ metadata.hashCode;
+  int get hashCode => nodeId.hashCode ^ createdAt.hashCode ^ maxWidth.hashCode ^ padding.hashCode ^ opacity.hashCode;
 }

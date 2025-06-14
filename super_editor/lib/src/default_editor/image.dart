@@ -115,10 +115,10 @@ class ImageComponentBuilder implements ComponentBuilder {
 
     return ImageComponentViewModel(
       nodeId: node.id,
+      createdAt: node.metadata[NodeMetadata.createdAt],
       imageUrl: node.imageUrl,
       expectedSize: node.expectedBitmapSize,
       selectionColor: const Color(0x00000000),
-      metadata: node.metadata,
     );
   }
 
@@ -143,10 +143,10 @@ class ImageComponentBuilder implements ComponentBuilder {
 class ImageComponentViewModel extends SingleColumnLayoutComponentViewModel with SelectionAwareViewModelMixin {
   ImageComponentViewModel({
     required super.nodeId,
+    super.createdAt,
     super.maxWidth,
     super.padding = EdgeInsets.zero,
     super.opacity = 1.0,
-    super.metadata = const {},
     required this.imageUrl,
     this.expectedSize,
     DocumentNodeSelection? selection,
@@ -163,10 +163,10 @@ class ImageComponentViewModel extends SingleColumnLayoutComponentViewModel with 
   ImageComponentViewModel copy() {
     return ImageComponentViewModel(
       nodeId: nodeId,
+      createdAt: createdAt,
       maxWidth: maxWidth,
       padding: padding,
       opacity: opacity,
-      metadata: metadata,
       imageUrl: imageUrl,
       expectedSize: expectedSize,
       selection: selection,
@@ -181,13 +181,19 @@ class ImageComponentViewModel extends SingleColumnLayoutComponentViewModel with 
           other is ImageComponentViewModel &&
           runtimeType == other.runtimeType &&
           nodeId == other.nodeId &&
+          createdAt == other.createdAt &&
           imageUrl == other.imageUrl &&
           selection == other.selection &&
           selectionColor == other.selectionColor;
 
   @override
   int get hashCode =>
-      super.hashCode ^ nodeId.hashCode ^ imageUrl.hashCode ^ selection.hashCode ^ selectionColor.hashCode;
+      super.hashCode ^
+      nodeId.hashCode ^
+      createdAt.hashCode ^
+      imageUrl.hashCode ^
+      selection.hashCode ^
+      selectionColor.hashCode;
 }
 
 /// Displays an image in a document.

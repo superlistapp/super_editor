@@ -22,6 +22,7 @@ class ReadOnlyTaskComponentBuilder implements ComponentBuilder {
 
     return TaskComponentViewModel(
       nodeId: node.id,
+      createdAt: node.metadata[NodeMetadata.createdAt],
       padding: EdgeInsets.zero,
       indent: node.indent,
       isComplete: node.isComplete,

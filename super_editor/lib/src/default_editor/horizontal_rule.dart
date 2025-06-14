@@ -75,9 +75,9 @@ class HorizontalRuleComponentBuilder implements ComponentBuilder {
 
     return HorizontalRuleComponentViewModel(
       nodeId: node.id,
+      createdAt: node.metadata[NodeMetadata.createdAt],
       selectionColor: const Color(0x00000000),
       caretColor: const Color(0x00000000),
-      metadata: node.metadata,
     );
   }
 
@@ -102,10 +102,10 @@ class HorizontalRuleComponentBuilder implements ComponentBuilder {
 class HorizontalRuleComponentViewModel extends SingleColumnLayoutComponentViewModel with SelectionAwareViewModelMixin {
   HorizontalRuleComponentViewModel({
     required super.nodeId,
+    super.createdAt,
     super.maxWidth,
     super.padding = EdgeInsets.zero,
     super.opacity = 1.0,
-    super.metadata = const {},
     DocumentNodeSelection? selection,
     Color selectionColor = Colors.transparent,
     this.caret,
@@ -122,10 +122,10 @@ class HorizontalRuleComponentViewModel extends SingleColumnLayoutComponentViewMo
   HorizontalRuleComponentViewModel copy() {
     return HorizontalRuleComponentViewModel(
       nodeId: nodeId,
+      createdAt: createdAt,
       maxWidth: maxWidth,
       padding: padding,
       opacity: opacity,
-      metadata: metadata,
       selection: selection,
       selectionColor: selectionColor,
       caret: caret,
@@ -140,6 +140,7 @@ class HorizontalRuleComponentViewModel extends SingleColumnLayoutComponentViewMo
           other is HorizontalRuleComponentViewModel &&
           runtimeType == other.runtimeType &&
           nodeId == other.nodeId &&
+          createdAt == other.createdAt &&
           selection == other.selection &&
           selectionColor == other.selectionColor &&
           caret == other.caret &&
@@ -149,6 +150,7 @@ class HorizontalRuleComponentViewModel extends SingleColumnLayoutComponentViewMo
   int get hashCode =>
       super.hashCode ^
       nodeId.hashCode ^
+      createdAt.hashCode ^
       selection.hashCode ^
       selectionColor.hashCode ^
       caret.hashCode ^

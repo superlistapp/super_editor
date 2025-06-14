@@ -130,7 +130,8 @@ class ParagraphComponentBuilder implements ComponentBuilder {
 
     return ParagraphComponentViewModel(
       nodeId: node.id,
-      blockType: node.getMetadataValue('blockType'),
+      createdAt: node.metadata[NodeMetadata.createdAt],
+      blockType: node.getMetadataValue(NodeMetadata.blockType),
       indent: node.indent,
       indentCalculator: defaultParagraphIndentCalculator,
       text: node.text,
@@ -168,10 +169,10 @@ class ParagraphComponentBuilder implements ComponentBuilder {
 class ParagraphComponentViewModel extends SingleColumnLayoutComponentViewModel with TextComponentViewModel {
   ParagraphComponentViewModel({
     required super.nodeId,
+    super.createdAt,
     super.maxWidth,
     super.padding = EdgeInsets.zero,
     super.opacity = 1.0,
-    super.metadata,
     this.blockType,
     this.indent = 0,
     this.indentCalculator = defaultParagraphIndentCalculator,
@@ -234,16 +235,18 @@ class ParagraphComponentViewModel extends SingleColumnLayoutComponentViewModel w
 
   @override
   ParagraphComponentViewModel copy() {
-    return internalCopy(
+    final copy = internalCopy(
       ParagraphComponentViewModel(
         nodeId: nodeId,
-        metadata: metadata,
+        createdAt: createdAt,
         text: text.copy(),
         textStyleBuilder: textStyleBuilder,
         opacity: opacity,
         selectionColor: selectionColor,
       ),
     );
+
+    return copy;
   }
 
   @override
@@ -349,6 +352,7 @@ class HintComponentViewModel extends SingleColumnLayoutComponentViewModel with T
   }) {
     return HintComponentViewModel(
       nodeId: viewModel.nodeId,
+      createdAt: viewModel.createdAt,
       maxWidth: viewModel.maxWidth,
       padding: viewModel.padding,
       opacity: viewModel.opacity,
@@ -368,6 +372,7 @@ class HintComponentViewModel extends SingleColumnLayoutComponentViewModel with T
 
   HintComponentViewModel({
     required super.nodeId,
+    required super.createdAt,
     super.maxWidth,
     required super.padding,
     super.opacity = 1.0,
@@ -414,6 +419,7 @@ class HintComponentViewModel extends SingleColumnLayoutComponentViewModel with T
     return internalCopy(
       HintComponentViewModel(
         nodeId: nodeId,
+        createdAt: createdAt,
         padding: padding,
         text: text.copy(),
         textStyleBuilder: textStyleBuilder,

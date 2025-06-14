@@ -561,6 +561,7 @@ mixin TextComponentViewModel on SingleColumnLayoutComponentViewModel {
   @protected
   TextComponentViewModel internalCopy(covariant TextComponentViewModel subclassInstance) {
     subclassInstance
+      ..createdAt = createdAt
       ..maxWidth = maxWidth
       ..padding = padding
       ..text = text
