@@ -17,7 +17,7 @@ class ImageNode extends BlockNode {
     this.altText = '',
     super.metadata,
   }) {
-    initAddToMetadata({"blockType": const NamedAttribution("image")});
+    initAddToMetadata({NodeMetadata.blockType: const NamedAttribution("image")});
   }
 
   @override
@@ -115,6 +115,7 @@ class ImageComponentBuilder implements ComponentBuilder {
 
     return ImageComponentViewModel(
       nodeId: node.id,
+      createdAt: node.metadata[NodeMetadata.createdAt],
       imageUrl: node.imageUrl,
       expectedSize: node.expectedBitmapSize,
       selectionColor: const Color(0x00000000),
@@ -134,6 +135,7 @@ class ImageComponentBuilder implements ComponentBuilder {
       expectedSize: componentViewModel.expectedSize,
       selection: componentViewModel.selection?.nodeSelection as UpstreamDownstreamNodeSelection?,
       selectionColor: componentViewModel.selectionColor,
+      opacity: componentViewModel.opacity,
     );
   }
 }
@@ -141,8 +143,10 @@ class ImageComponentBuilder implements ComponentBuilder {
 class ImageComponentViewModel extends SingleColumnLayoutComponentViewModel with SelectionAwareViewModelMixin {
   ImageComponentViewModel({
     required super.nodeId,
+    super.createdAt,
     super.maxWidth,
     super.padding = EdgeInsets.zero,
+    super.opacity = 1.0,
     required this.imageUrl,
     this.expectedSize,
     DocumentNodeSelection? selection,
@@ -159,8 +163,10 @@ class ImageComponentViewModel extends SingleColumnLayoutComponentViewModel with 
   ImageComponentViewModel copy() {
     return ImageComponentViewModel(
       nodeId: nodeId,
+      createdAt: createdAt,
       maxWidth: maxWidth,
       padding: padding,
+      opacity: opacity,
       imageUrl: imageUrl,
       expectedSize: expectedSize,
       selection: selection,
@@ -175,13 +181,19 @@ class ImageComponentViewModel extends SingleColumnLayoutComponentViewModel with 
           other is ImageComponentViewModel &&
           runtimeType == other.runtimeType &&
           nodeId == other.nodeId &&
+          createdAt == other.createdAt &&
           imageUrl == other.imageUrl &&
           selection == other.selection &&
           selectionColor == other.selectionColor;
 
   @override
   int get hashCode =>
-      super.hashCode ^ nodeId.hashCode ^ imageUrl.hashCode ^ selection.hashCode ^ selectionColor.hashCode;
+      super.hashCode ^
+      nodeId.hashCode ^
+      createdAt.hashCode ^
+      imageUrl.hashCode ^
+      selection.hashCode ^
+      selectionColor.hashCode;
 }
 
 /// Displays an image in a document.
@@ -193,6 +205,7 @@ class ImageComponent extends StatelessWidget {
     this.expectedSize,
     this.selectionColor = Colors.blue,
     this.selection,
+    this.opacity = 1.0,
     this.imageBuilder,
   }) : super(key: key);
 
@@ -201,6 +214,8 @@ class ImageComponent extends StatelessWidget {
   final ExpectedSize? expectedSize;
   final Color selectionColor;
   final UpstreamDownstreamNodeSelection? selection;
+
+  final double opacity;
 
   /// Called to obtain the inner image for the given [imageUrl].
   ///
@@ -221,6 +236,7 @@ class ImageComponent extends StatelessWidget {
             selectionColor: selectionColor,
             child: BoxComponent(
               key: componentKey,
+              opacity: opacity,
               child: imageBuilder != null
                   ? imageBuilder!(context, imageUrl)
                   : Image.network(

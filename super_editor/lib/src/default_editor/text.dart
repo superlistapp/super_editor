@@ -15,6 +15,7 @@ import 'package:super_editor/src/core/edit_context.dart';
 import 'package:super_editor/src/core/editor.dart';
 import 'package:super_editor/src/core/styles.dart';
 import 'package:super_editor/src/default_editor/attributions.dart';
+import 'package:super_editor/src/default_editor/text_ai.dart';
 import 'package:super_editor/src/default_editor/text/custom_underlines.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/attributed_text_styles.dart';
@@ -560,9 +561,10 @@ mixin TextComponentViewModel on SingleColumnLayoutComponentViewModel {
   @protected
   TextComponentViewModel internalCopy(covariant TextComponentViewModel subclassInstance) {
     subclassInstance
+      ..createdAt = createdAt
       ..maxWidth = maxWidth
       ..padding = padding
-      ..text = text
+      ..text = text.copy()
       ..textStyleBuilder = textStyleBuilder
       ..inlineWidgetBuilders = inlineWidgetBuilders
       ..textDirection = textDirection
@@ -2007,19 +2009,29 @@ class ChangeSingleColumnLayoutComponentStylesCommand extends EditCommand {
 /// If the [plainText] contains any newlines, those newlines will be inserted
 /// as characters. This request doesn't insert any new nodes.
 class InsertPlainTextAtCaretRequest implements EditRequest {
-  const InsertPlainTextAtCaretRequest(this.plainText);
+  const InsertPlainTextAtCaretRequest(
+    this.plainText, {
+    this.createdAt,
+  });
 
   final String plainText;
+
+  /// An (optional) timestamp that describes when this text was inserted.
+  final DateTime? createdAt;
 }
 
 class InsertPlainTextAtCaretCommand extends EditCommand {
   const InsertPlainTextAtCaretCommand(
     this.plainText, {
     this.attributions = const {},
+    this.createdAt,
   });
 
   final String plainText;
   final Set<Attribution> attributions;
+
+  /// An (optional) timestamp that describes when this text was inserted.
+  final DateTime? createdAt;
 
   @override
   void execute(EditContext context, CommandExecutor executor) {
@@ -2044,6 +2056,7 @@ class InsertPlainTextAtCaretCommand extends EditCommand {
       InsertTextCommand(
         documentPosition: range.start,
         textToInsert: plainText,
+        createdAt: createdAt,
         attributions: attributions,
       ),
     );
@@ -2055,11 +2068,15 @@ class InsertTextRequest implements EditRequest {
     required this.documentPosition,
     required this.textToInsert,
     required this.attributions,
+    this.createdAt,
   }) : assert(documentPosition.nodePosition is TextPosition);
 
   final DocumentPosition documentPosition;
   final String textToInsert;
   final Set<Attribution> attributions;
+
+  /// An (optional) timestamp that describes when this text was inserted.
+  final DateTime? createdAt;
 }
 
 class InsertTextCommand extends EditCommand {
@@ -2067,11 +2084,13 @@ class InsertTextCommand extends EditCommand {
     required this.documentPosition,
     required this.textToInsert,
     required this.attributions,
+    this.createdAt,
   }) : assert(documentPosition.nodePosition is TextPosition);
 
   final DocumentPosition documentPosition;
   final String textToInsert;
   final Set<Attribution> attributions;
+  final DateTime? createdAt;
 
   @override
   HistoryBehavior get historyBehavior => HistoryBehavior.undoable;
@@ -2097,7 +2116,11 @@ class InsertTextCommand extends EditCommand {
       text: textNode.text.insertString(
         textToInsert: textToInsert,
         startOffset: textOffset,
-        applyAttributions: attributions,
+        applyAttributions: {
+          ...attributions,
+          if (createdAt != null) //
+            CreatedAtAttribution(start: createdAt!),
+        },
       ),
     );
     document.replaceNodeById(
@@ -2508,11 +2531,19 @@ abstract class BaseInsertNewlineAtCaretCommand extends EditCommand {
 /// If the selection is expanded, the selected content is deleted before
 /// the insertion.
 class InsertSoftNewlineAtCaretRequest implements EditRequest {
-  const InsertSoftNewlineAtCaretRequest();
+  const InsertSoftNewlineAtCaretRequest({
+    this.createdAt,
+  });
+
+  final DateTime? createdAt;
 }
 
 class InsertSoftNewlineCommand extends EditCommand {
-  const InsertSoftNewlineCommand();
+  const InsertSoftNewlineCommand({
+    this.createdAt,
+  });
+
+  final DateTime? createdAt;
 
   @override
   void execute(EditContext context, CommandExecutor executor) {
@@ -2535,7 +2566,10 @@ class InsertSoftNewlineCommand extends EditCommand {
       InsertTextCommand(
         documentPosition: caretPosition,
         textToInsert: "\n",
-        attributions: {},
+        attributions: {
+          if (createdAt != null) //
+            CreatedAtAttribution(start: createdAt!),
+        },
       ),
     );
   }
@@ -2591,20 +2625,29 @@ class ConvertTextNodeToParagraphCommand extends EditCommand {
 }
 
 class InsertAttributedTextRequest implements EditRequest {
-  const InsertAttributedTextRequest(this.documentPosition, this.textToInsert);
+  const InsertAttributedTextRequest(
+    this.documentPosition,
+    this.textToInsert, {
+    this.createdAt,
+  });
 
   final DocumentPosition documentPosition;
   final AttributedText textToInsert;
+
+  /// An (optional) timestamp that describes when this text was inserted.
+  final DateTime? createdAt;
 }
 
 class InsertAttributedTextCommand extends EditCommand {
   InsertAttributedTextCommand({
     required this.documentPosition,
     required this.textToInsert,
+    this.createdAt,
   }) : assert(documentPosition.nodePosition is TextPosition);
 
   final DocumentPosition documentPosition;
   final AttributedText textToInsert;
+  final DateTime? createdAt;
 
   @override
   HistoryBehavior get historyBehavior => HistoryBehavior.undoable;
@@ -2620,11 +2663,22 @@ class InsertAttributedTextCommand extends EditCommand {
 
     final textOffset = (documentPosition.nodePosition as TextPosition).offset;
 
+    late final AttributedText finalTextToInsert;
+    if (createdAt != null) {
+      finalTextToInsert = textToInsert.copy()
+        ..addAttribution(
+          CreatedAtAttribution(start: createdAt!),
+          SpanRange(0, textToInsert.length - 1),
+        );
+    } else {
+      finalTextToInsert = textToInsert;
+    }
+
     document.replaceNodeById(
       textNode.id,
       textNode.copyTextNodeWith(
         text: textNode.text.insert(
-          textToInsert: textToInsert,
+          textToInsert: finalTextToInsert,
           startOffset: textOffset,
         ),
       ),
@@ -2643,15 +2697,27 @@ class InsertAttributedTextCommand extends EditCommand {
 }
 
 class InsertStyledTextAtCaretRequest implements EditRequest {
-  const InsertStyledTextAtCaretRequest(this.text);
+  const InsertStyledTextAtCaretRequest(
+    this.text, {
+    this.createdAt,
+  });
 
   final AttributedText text;
+
+  /// An (optional) timestamp that describes when this text was inserted.
+  final DateTime? createdAt;
 }
 
 class InsertStyledTextAtCaretCommand extends EditCommand {
-  const InsertStyledTextAtCaretCommand(this.text);
+  const InsertStyledTextAtCaretCommand(
+    this.text, {
+    this.createdAt,
+  });
 
   final AttributedText text;
+
+  /// An (optional) timestamp that describes when this text was inserted.
+  final DateTime? createdAt;
 
   @override
   void execute(EditContext context, CommandExecutor executor) {
@@ -2667,11 +2733,22 @@ class InsertStyledTextAtCaretCommand extends EditCommand {
       return;
     }
 
+    late final AttributedText textToInsert;
+    if (createdAt != null) {
+      textToInsert = text.copy()
+        ..addAttribution(
+          CreatedAtAttribution(start: createdAt!),
+          SpanRange(0, text.length - 1),
+        );
+    } else {
+      textToInsert = text;
+    }
+
     executor
       ..executeCommand(
         InsertAttributedTextCommand(
           documentPosition: selection.extent,
-          textToInsert: text,
+          textToInsert: textToInsert,
         ),
       )
       ..executeCommand(
@@ -2691,23 +2768,161 @@ class InsertStyledTextAtCaretCommand extends EditCommand {
 }
 
 class InsertInlinePlaceholderAtCaretRequest implements EditRequest {
-  const InsertInlinePlaceholderAtCaretRequest(this.placeholder);
+  const InsertInlinePlaceholderAtCaretRequest(
+    this.placeholder, {
+    this.createdAt,
+  });
 
   final Object placeholder;
+
+  /// An (optional) timestamp that describes when this text was inserted.
+  final DateTime? createdAt;
 }
 
 class InsertInlinePlaceholderAtCaretCommand extends EditCommand {
-  const InsertInlinePlaceholderAtCaretCommand(this.placeholder);
+  const InsertInlinePlaceholderAtCaretCommand(
+    this.placeholder, {
+    this.createdAt,
+  });
 
   final Object placeholder;
 
+  final DateTime? createdAt;
+
   @override
   void execute(EditContext context, CommandExecutor executor) {
+    final createdAtAttribution = createdAt != null ? CreatedAtAttribution(start: createdAt!) : null;
+
     executor.executeCommand(
       InsertStyledTextAtCaretCommand(
-        AttributedText("", null, {
-          0: placeholder,
-        }),
+        AttributedText(
+          "",
+          createdAt != null
+              ? AttributedSpans(attributions: [
+                  SpanMarker(attribution: createdAtAttribution!, offset: 0, markerType: SpanMarkerType.start),
+                  SpanMarker(attribution: createdAtAttribution, offset: 0, markerType: SpanMarkerType.end),
+                ])
+              : null,
+          {
+            0: placeholder,
+          },
+        ),
+      ),
+    );
+  }
+}
+
+/// Inserts the given plain [text] at the end of the document.
+///
+/// If the document is empty, or ends with a non-text node, a [ParagraphNode]
+/// is inserted at the end of the document, and then [text] is inserted into
+/// that node.
+class InsertPlainTextAtEndOfDocumentRequest implements EditRequest {
+  InsertPlainTextAtEndOfDocumentRequest(
+    this.text, {
+    String? newNodeId,
+    this.createdAt,
+  }) {
+    // We let callers avoid giving us a `newNodeId`, if desired, because
+    // callers may not understand that this ID is for undo/redo. Also,
+    // callers may not be sure what value they're supposed to provide.
+    // So if we don't get one, we create one.
+    this.newNodeId = newNodeId ?? Editor.createNodeId();
+  }
+
+  final String text;
+
+  /// {@macro newNodeId}
+  late final String newNodeId;
+
+  /// An (optional) timestamp that describes when this text was inserted.
+  final DateTime? createdAt;
+}
+
+/// Inserts the given styled [text] at the end of the document.
+///
+/// If the document is empty, or ends with a non-text node, a [ParagraphNode]
+/// is inserted at the end of the document, and then [text] is inserted into
+/// that node.
+class InsertStyledTextAtEndOfDocumentRequest implements EditRequest {
+  InsertStyledTextAtEndOfDocumentRequest(
+    this.text, {
+    String? newNodeId,
+    this.createdAt,
+  }) {
+    // We let callers avoid giving us a `newNodeId`, if desired, because
+    // callers may not understand that this ID is for undo/redo. Also,
+    // callers may not be sure what value they're supposed to provide.
+    // So if we don't get one, we create one.
+    this.newNodeId = newNodeId ?? Editor.createNodeId();
+  }
+
+  final AttributedText text;
+
+  /// {@macro newNodeId}
+  late final String newNodeId;
+
+  /// An (optional) timestamp that describes when this text was inserted.
+  final DateTime? createdAt;
+}
+
+class InsertStyledTextAtEndOfDocumentCommand extends EditCommand {
+  const InsertStyledTextAtEndOfDocumentCommand(
+    this.text, {
+    required this.newNodeId,
+    this.createdAt,
+  });
+
+  final AttributedText text;
+
+  final String newNodeId;
+
+  /// An (optional) timestamp that describes when this text was inserted.
+  final DateTime? createdAt;
+
+  @override
+  void execute(EditContext context, CommandExecutor executor) {
+    late final AttributedText textToInsert;
+    if (createdAt != null) {
+      textToInsert = text.copy()
+        ..addAttribution(
+          CreatedAtAttribution(start: createdAt!),
+          SpanRange(0, text.length - 1),
+        );
+    } else {
+      textToInsert = text;
+    }
+
+    late final DocumentPosition endOfDocument;
+    final lastNode = context.document.lastOrNull;
+    if (lastNode == null || lastNode is! TextNode) {
+      // There's no text node at the end of the document. We need to insert
+      // one so we can insert the text.
+      executor.executeCommand(
+        InsertNodeAtIndexCommand(
+          nodeIndex: context.document.length,
+          newNode: ParagraphNode(
+            id: newNodeId,
+            text: AttributedText(),
+          ),
+        ),
+      );
+
+      endOfDocument = DocumentPosition(
+        nodeId: newNodeId,
+        nodePosition: const TextNodePosition(offset: 0),
+      );
+    } else {
+      endOfDocument = DocumentPosition(
+        nodeId: lastNode.id,
+        nodePosition: lastNode.endPosition,
+      );
+    }
+
+    executor.executeCommand(
+      InsertAttributedTextCommand(
+        documentPosition: endOfDocument,
+        textToInsert: textToInsert,
       ),
     );
   }

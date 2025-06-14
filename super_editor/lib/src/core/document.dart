@@ -1,5 +1,6 @@
 import 'package:collection/collection.dart';
 import 'package:flutter/widgets.dart';
+import 'package:super_editor/src/default_editor/text_ai.dart';
 
 /// A read-only document with styled text and multimedia elements.
 ///
@@ -503,8 +504,18 @@ abstract class NodePosition {
 
 /// Keys to access metadata on a [DocumentNode].
 class NodeMetadata {
-  /// Applies an [Attribution] to the node.
+  /// The specific type of node, when the node itself isn't self-explanatory.
+  ///
+  /// For example, a `ParagraphNode` can have a block type for a paragraph,
+  /// blockquote, header 1, header 2, etc.
   static const String blockType = 'blockType';
+
+  /// A timestamp for the moment that a given node was created.
+  ///
+  /// The value should be a [CreatedAtAttribution], which allows the concept
+  /// of a timestamp to work at the node level (with this metadata), as well
+  /// as the text level (within an `AttributedText`).
+  static const String createdAt = 'createdAt';
 
   /// Whether or not the node is deletable.
   ///
