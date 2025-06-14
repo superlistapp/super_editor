@@ -128,6 +128,7 @@ class _ActionTagsFeatureDemoState extends State<ActionTagsFeatureDemo> {
         },
         addRulesAfter: [
           ...darkModeStyles,
+          ...largeTextStyles,
         ],
       ),
       documentOverlayBuilders: [

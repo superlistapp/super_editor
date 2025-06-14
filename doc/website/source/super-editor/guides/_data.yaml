@@ -11,43 +11,104 @@ navigation:
     - title: Getting Started
       items:
         - title: Quickstart
-          url: super-editor/guides/quickstart
-        - title: Document from Markdown
-          url: super-editor/guides/document-from-markdown
-        - title: Assemble a Document
-          url: super-editor/guides/assemble-a-document
+          url: super-editor/guides/getting-started/quickstart
+        - title: Tour
+          url: super-editor/guides/getting-started/tour
+
+    - title: Document Editors
+      items:
+        - title: Overview
+          url: super-editor/guides/document-editors/overview
+
+    - title: Chat
+      items:
+        - title: Overview
+          url: super-editor/guides/chat/overview
+        - title: Screen Scaffold
+          url: super-editor/guides/chat/screen-scaffold
+        - title: Keyboard Toolbar
+          url: super-editor/guides/chat/keyboard-toolbar
+
+    - title: AI / GPT
+      items:
+        - title: Overview
+          url: super-editor/guides/ai/overview
+        - title: Fade-In Content
+          url: super-editor/guides/ai/fade-in-content
+
+    - title: Basics
+      items:
+        - title: Build an Editor
+          url: super-editor/guides/basics/build-an-editor
+        - title: Show a Hint
+          url: super-editor/guides/basics/show-a-hint
+
+    - title: Built-In Content
+      items:
+        - title: Paragraphs
+          url: super-editor/guides/built-in-content/paragraphs
+        - title: Headers
+          url: super-editor/guides/built-in-content/headers
+        - title: Blockquotes
+          url: super-editor/guides/built-in-content/blockquotes
+        - title: List Items
+          url: super-editor/guides/built-in-content/list-items
+        - title: Tasks
+          url: super-editor/guides/built-in-content/tasks
+        - title: Images
+          url: super-editor/guides/built-in-content/images
+        - title: Horizontal Rules
+          url: super-editor/guides/built-in-content/horizontal-rules
 
     - title: Markdown
       items:
-        - title: Parse Markdown
-          url: super-editor/guides/markdown/parsing
-        - title: Serialize to Markdown
-          url: super-editor/guides/markdown/serializing
+        - title: Import
+          url: super-editor/guides/markdown/import
+        - title: Export
+          url: super-editor/guides/markdown/export
+        - title: As You Type
+          url: super-editor/guides/markdown/as-you-type
 
     - title: Quill Deltas
       items:
-        - title: Parse Deltas
-          url: super-editor/guides/quill/parsing
-        - title: Serialize to Deltas
-          url: super-editor/guides/quill/serializing
+        - title: Import
+          url: super-editor/guides/quill/import
+        - title: Export
+          url: super-editor/guides/quill/export
+        - title: Multi-Player
+          url: super-editor/guides/quill/multi-player
 
     - title: Styling
       items:
         - title: Dark Mode & Light Mode
-          url: super-editor/guides/dark-mode-and-light-mode
+          url: super-editor/guides/styling/dark-mode-and-light-mode
         - title: Style a Document
           url: super-editor/guides/styling/style-a-document
         - title: Text Underlines
           url: super-editor/guides/styling/text-underlines
 
+    - title: Editing UI
+      items:
+        - title: Overlay Controls
+          url: super-editor/guides/editing-ui/overlay-controls
+        - title: Add a Popover Toolbar
+          url: super-editor/guides/editing-ui/add-a-popover-toolbar
+        - title: Add a Mobile Keyboard Toolbar
+          url: super-editor/guides/editing-ui/add-a-mobile-keyboard-toolbar
+
+    - title: The Viewport
+      items:
+        - title: Auto-Scrolling
+          url: super-editor/guides/viewport/auto-scrolling
+        - title: Embed in a Scrollview
+          url: super-editor/guides/viewport/embed-in-a-scrollview
+
     - title: Custom Content
       items:
         - title: Add New Type of Content
-          url: super-editor/guides/add-new-type-of-content
+          url: super-editor/guides/custom-content/add-new-type-of-content
 
-    - title: Editing UI
+    - title: Custom Rules
       items:
-        - title: Add a Popover Toolbar
-          url: super-editor/guides/add-a-popover-toolbar
-        - title: Add a Mobile Keyboard Toolbar
-          url: super-editor/guides/add-a-mobile-keyboard-toolbar
+        - title: Un-Deletable Content
+          url: super-editor/guides/custom-rules/undeletable-content

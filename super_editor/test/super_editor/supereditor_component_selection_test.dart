@@ -685,7 +685,7 @@ class _ButtonViewModel extends SingleColumnLayoutComponentViewModel with Selecti
     EdgeInsetsGeometry padding = EdgeInsets.zero,
     DocumentNodeSelection? selection,
     Color selectionColor = Colors.transparent,
-  }) : super(nodeId: nodeId, maxWidth: maxWidth, padding: padding) {
+  }) : super(nodeId: nodeId, createdAt: null, maxWidth: maxWidth, padding: padding) {
     this.selection = selection;
     this.selectionColor = selectionColor;
   }

@@ -69,6 +69,7 @@ class FeatherCodeComponentBuilder implements ComponentBuilder {
 class CodeBlockComponentViewModel extends SingleColumnLayoutComponentViewModel with TextComponentViewModel {
   CodeBlockComponentViewModel({
     required super.nodeId,
+    super.createdAt,
     super.maxWidth,
     super.padding = EdgeInsets.zero,
     required this.text,
@@ -126,7 +127,7 @@ class CodeBlockComponentViewModel extends SingleColumnLayoutComponentViewModel w
       nodeId: nodeId,
       maxWidth: maxWidth,
       padding: padding,
-      text: text,
+      text: text.copy(),
       textStyleBuilder: textStyleBuilder,
       inlineWidgetBuilders: inlineWidgetBuilders,
       textDirection: textDirection,

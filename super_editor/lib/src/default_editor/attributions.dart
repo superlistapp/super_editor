@@ -206,6 +206,35 @@ class CustomUnderlineAttribution implements Attribution {
   }
 }
 
+/// Attribution to be used within [AttributedText] to apply a given [opacity]
+/// to a span of text.
+class OpacityAttribution implements Attribution {
+  const OpacityAttribution(this.opacity);
+
+  @override
+  String get id => 'opacity';
+
+  final double opacity;
+
+  @override
+  bool canMergeWith(Attribution other) {
+    return this == other;
+  }
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is OpacityAttribution && runtimeType == other.runtimeType && opacity == other.opacity;
+
+  @override
+  int get hashCode => opacity.hashCode;
+
+  @override
+  String toString() {
+    return '[Opacity]: $opacity';
+  }
+}
+
 /// Attribution to be used within [AttributedText] to
 /// represent an inline span of a font size change.
 ///

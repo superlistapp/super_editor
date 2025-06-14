@@ -1667,7 +1667,18 @@ final defaultStylesheet = Stylesheet(
 );
 
 TextStyle defaultInlineTextStyler(Set<Attribution> attributions, TextStyle existingStyle) {
-  return existingStyle.merge(defaultStyleBuilder(attributions));
+  var newStyle = existingStyle.merge(defaultStyleBuilder(attributions));
+
+  // We apply opacity here instead of defaultStyleBuilder because opacity requires
+  // a color to be defined to apply itself.
+  final opacityAttribution = attributions.whereType<OpacityAttribution>().firstOrNull;
+  if (opacityAttribution != null) {
+    newStyle = newStyle.copyWith(
+      color: newStyle.color!.withValues(alpha: opacityAttribution.opacity),
+    );
+  }
+
+  return newStyle;
 }
 
 /// Creates [TextStyles] for the standard [SuperEditor].

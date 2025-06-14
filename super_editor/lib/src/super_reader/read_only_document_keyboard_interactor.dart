@@ -7,6 +7,7 @@ import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/keyboard.dart';
 import 'package:super_editor/src/infrastructure/platforms/platform.dart';
 
+import '../core/document_composer.dart';
 import 'reader_context.dart';
 
 /// Governs document input that comes from a physical keyboard.
@@ -139,14 +140,16 @@ final removeCollapsedSelectionWhenShiftIsReleased = createShortcut(
     required SuperReaderContext documentContext,
     required KeyEvent keyEvent,
   }) {
-    final selection = documentContext.selection.value;
+    final selection = documentContext.composer.selection;
     if (selection == null || !selection.isCollapsed) {
       return ExecutionInstruction.continueExecution;
     }
 
     // The selection is collapsed, and the shift key was released. We don't
     // want to retain the selection any longer. Remove it.
-    documentContext.selection.value = null;
+    documentContext.editor.execute([
+      const ClearSelectionRequest(),
+    ]);
     return ExecutionInstruction.haltExecution;
   },
   keyPressedOrReleased: LogicalKeyboardKey.shift,
@@ -196,9 +199,8 @@ final expandSelectionWithLeftArrow = createShortcut(
 
     // Move the caret left/upstream.
     final didMove = moveCaretUpstream(
-      document: documentContext.document,
+      editor: documentContext.editor,
       documentLayout: documentContext.documentLayout,
-      selectionNotifier: documentContext.selection,
       movementModifier: _getHorizontalMovementModifier(keyEvent),
       retainCollapsedSelection: HardwareKeyboard.instance.isShiftPressed,
     );
@@ -225,9 +227,8 @@ final expandSelectionWithRightArrow = createShortcut(
 
     // Move the caret right/downstream.
     final didMove = moveCaretDownstream(
-      document: documentContext.document,
+      editor: documentContext.editor,
       documentLayout: documentContext.documentLayout,
-      selectionNotifier: documentContext.selection,
       movementModifier: _getHorizontalMovementModifier(keyEvent),
       retainCollapsedSelection: HardwareKeyboard.instance.isShiftPressed,
     );
@@ -264,9 +265,8 @@ final expandSelectionWithUpArrow = createShortcut(
     }
 
     final didMove = moveCaretUp(
-      document: documentContext.document,
+      editor: documentContext.editor,
       documentLayout: documentContext.documentLayout,
-      selectionNotifier: documentContext.selection,
       retainCollapsedSelection: HardwareKeyboard.instance.isShiftPressed,
     );
 
@@ -289,9 +289,8 @@ final expandSelectionWithDownArrow = createShortcut(
     }
 
     final didMove = moveCaretDown(
-      document: documentContext.document,
+      editor: documentContext.editor,
       documentLayout: documentContext.documentLayout,
-      selectionNotifier: documentContext.selection,
       retainCollapsedSelection: HardwareKeyboard.instance.isShiftPressed,
     );
 
@@ -306,9 +305,8 @@ final expandSelectionToLineStartWithHomeOnWindowsAndLinux = createShortcut(
     required KeyEvent keyEvent,
   }) {
     final didMove = moveCaretUpstream(
-      document: documentContext.document,
+      editor: documentContext.editor,
       documentLayout: documentContext.documentLayout,
-      selectionNotifier: documentContext.selection,
       movementModifier: MovementModifier.line,
       retainCollapsedSelection: HardwareKeyboard.instance.isShiftPressed,
     );
@@ -326,9 +324,8 @@ final expandSelectionToLineEndWithEndOnWindowsAndLinux = createShortcut(
     required KeyEvent keyEvent,
   }) {
     final didMove = moveCaretDownstream(
-      document: documentContext.document,
+      editor: documentContext.editor,
       documentLayout: documentContext.documentLayout,
-      selectionNotifier: documentContext.selection,
       movementModifier: MovementModifier.line,
       retainCollapsedSelection: HardwareKeyboard.instance.isShiftPressed,
     );
@@ -346,9 +343,8 @@ final expandSelectionToLineStartWithCtrlAOnWindowsAndLinux = createShortcut(
     required KeyEvent keyEvent,
   }) {
     final didMove = moveCaretUpstream(
-      document: documentContext.document,
+      editor: documentContext.editor,
       documentLayout: documentContext.documentLayout,
-      selectionNotifier: documentContext.selection,
       movementModifier: MovementModifier.line,
       retainCollapsedSelection: HardwareKeyboard.instance.isShiftPressed,
     );
@@ -367,9 +363,8 @@ final expandSelectionToLineEndWithCtrlEOnWindowsAndLinux = createShortcut(
     required KeyEvent keyEvent,
   }) {
     final didMove = moveCaretDownstream(
-      document: documentContext.document,
+      editor: documentContext.editor,
       documentLayout: documentContext.documentLayout,
-      selectionNotifier: documentContext.selection,
       movementModifier: MovementModifier.line,
       retainCollapsedSelection: HardwareKeyboard.instance.isShiftPressed,
     );
@@ -387,7 +382,7 @@ final selectAllWhenCmdAIsPressedOnMac = createShortcut(
     required SuperReaderContext documentContext,
     required KeyEvent keyEvent,
   }) {
-    final didSelectAll = selectAll(documentContext.document, documentContext.selection);
+    final didSelectAll = selectAll(documentContext.editor);
     return didSelectAll ? ExecutionInstruction.haltExecution : ExecutionInstruction.continueExecution;
   },
   keyPressedOrReleased: LogicalKeyboardKey.keyA,
@@ -400,7 +395,7 @@ final selectAllWhenCtlAIsPressedOnWindowsAndLinux = createShortcut(
     required SuperReaderContext documentContext,
     required KeyEvent keyEvent,
   }) {
-    final didSelectAll = selectAll(documentContext.document, documentContext.selection);
+    final didSelectAll = selectAll(documentContext.editor);
     return didSelectAll ? ExecutionInstruction.haltExecution : ExecutionInstruction.continueExecution;
   },
   keyPressedOrReleased: LogicalKeyboardKey.keyA,
@@ -418,17 +413,17 @@ final copyWhenCmdCIsPressedOnMac = createShortcut(
     required SuperReaderContext documentContext,
     required KeyEvent keyEvent,
   }) {
-    if (documentContext.selection.value == null) {
+    if (documentContext.composer.selection == null) {
       return ExecutionInstruction.continueExecution;
     }
-    if (documentContext.selection.value!.isCollapsed) {
+    if (documentContext.composer.selection!.isCollapsed) {
       // Nothing to copy, but we technically handled the task.
       return ExecutionInstruction.haltExecution;
     }
 
     copy(
       document: documentContext.document,
-      selection: documentContext.selection.value!,
+      selection: documentContext.composer.selection!,
     );
 
     return ExecutionInstruction.haltExecution;
@@ -443,17 +438,17 @@ final copyWhenCtlCIsPressedOnWindowsAndLinux = createShortcut(
     required SuperReaderContext documentContext,
     required KeyEvent keyEvent,
   }) {
-    if (documentContext.selection.value == null) {
+    if (documentContext.composer.selection == null) {
       return ExecutionInstruction.continueExecution;
     }
-    if (documentContext.selection.value!.isCollapsed) {
+    if (documentContext.composer.selection!.isCollapsed) {
       // Nothing to copy, but we technically handled the task.
       return ExecutionInstruction.haltExecution;
     }
 
     copy(
       document: documentContext.document,
-      selection: documentContext.selection.value!,
+      selection: documentContext.composer.selection!,
     );
 
     return ExecutionInstruction.haltExecution;

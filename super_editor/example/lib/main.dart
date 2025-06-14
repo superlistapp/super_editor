@@ -3,11 +3,14 @@ import 'package:example/demos/components/demo_unselectable_hr.dart';
 import 'package:example/demos/debugging/simple_deltas_input.dart';
 import 'package:example/demos/demo_animated_task_height.dart';
 import 'package:example/demos/demo_app_shortcuts.dart';
+import 'package:example/demos/demo_attributed_text.dart';
+import 'package:example/demos/demo_document_loses_focus.dart';
 import 'package:example/demos/demo_empty_document.dart';
 import 'package:example/demos/demo_markdown_serialization.dart';
 import 'package:example/demos/demo_paragraphs.dart';
 import 'package:example/demos/demo_rtl.dart';
 import 'package:example/demos/demo_selectable_text.dart';
+import 'package:example/demos/demo_switch_document_content.dart';
 import 'package:example/demos/editor_configs/demo_mobile_editing_android.dart';
 import 'package:example/demos/editor_configs/demo_mobile_editing_ios.dart';
 import 'package:example/demos/example_editor/example_editor.dart';
@@ -15,6 +18,7 @@ import 'package:example/demos/flutter_features/demo_inline_widgets.dart';
 import 'package:example/demos/flutter_features/textinputclient/basic_text_input_client.dart';
 import 'package:example/demos/flutter_features/textinputclient/textfield.dart';
 import 'package:example/demos/in_the_lab/feature_action_tags.dart';
+import 'package:example/demos/in_the_lab/feature_ai_fade_in.dart';
 import 'package:example/demos/in_the_lab/feature_custom_underlines.dart';
 import 'package:example/demos/in_the_lab/feature_ios_native_context_menu.dart';
 import 'package:example/demos/in_the_lab/feature_pattern_tags.dart';
@@ -28,19 +32,15 @@ import 'package:example/demos/scrolling/demo_task_and_chat_with_customscrollview
 import 'package:example/demos/sliver_example_editor.dart';
 import 'package:example/demos/styles/demo_doc_styles.dart';
 import 'package:example/demos/super_reader/demo_super_reader.dart';
+import 'package:example/demos/super_reader/demo_super_reader_custom_scrollview.dart';
+import 'package:example/demos/super_reader/demo_super_reader_listview.dart';
+import 'package:example/demos/supertextfield/android/demo_superandroidtextfield.dart';
 import 'package:example/demos/supertextfield/demo_textfield.dart';
 import 'package:example/demos/supertextfield/ios/demo_superiostextfield.dart';
 import 'package:example/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
-import 'package:logging/logging.dart';
 import 'package:super_editor/super_editor.dart';
-
-import 'demos/demo_attributed_text.dart';
-import 'demos/demo_document_loses_focus.dart';
-import 'demos/demo_switch_document_content.dart';
-import 'demos/super_reader/demo_read_only_scrolling_document.dart';
-import 'demos/supertextfield/android/demo_superandroidtextfield.dart';
 
 /// Demo of a basic text editor, as well as various widgets that
 /// are available in this package.
@@ -341,6 +341,13 @@ final _menu = <_MenuGroup>[
           return const CustomUnderlinesDemo();
         },
       ),
+      _MenuItem(
+        icon: Icons.task,
+        title: 'AI Text Fade-In',
+        pageBuilder: (context) {
+          return const AiFadeInFeatureDemo();
+        },
+      ),
     ],
   ),
   _MenuGroup(
@@ -388,7 +395,14 @@ final _menu = <_MenuGroup>[
         icon: Icons.text_snippet,
         title: 'In CustomScrollView',
         pageBuilder: (context) {
-          return ReadOnlyCustomScrollViewDemo();
+          return SuperReaderCustomScrollViewDemo();
+        },
+      ),
+      _MenuItem(
+        icon: Icons.text_snippet,
+        title: 'In ListView',
+        pageBuilder: (context) {
+          return SuperReaderListViewDemo();
         },
       ),
     ],

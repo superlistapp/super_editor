@@ -1,2 +1,2 @@
-# slack
-A Flutter clone of Slack.
+# Slack Clone
+A Super Editor clone of Slack.

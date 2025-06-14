@@ -941,9 +941,6 @@ class DocumentEdit extends EditEvent {
 
 /// An object that's notified with a change list from one or more commands that were just
 /// executed.
-///
-/// An [EditReaction] can use the given [reactionExecutor] to spawn additional [EditCommand]s
-/// that should run in response to the [changeList].
 abstract class EditReaction {
   const EditReaction();
 

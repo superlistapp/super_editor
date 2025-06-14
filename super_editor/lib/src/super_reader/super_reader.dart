@@ -8,6 +8,7 @@ import 'package:super_editor/src/core/document_debug_paint.dart';
 import 'package:super_editor/src/core/document_interaction.dart';
 import 'package:super_editor/src/core/document_layout.dart';
 import 'package:super_editor/src/core/document_selection.dart';
+import 'package:super_editor/src/core/editor.dart';
 import 'package:super_editor/src/core/styles.dart';
 import 'package:super_editor/src/default_editor/attributions.dart';
 import 'package:super_editor/src/default_editor/blockquote.dart';
@@ -20,8 +21,8 @@ import 'package:super_editor/src/default_editor/layout_single_column/_styler_shy
 import 'package:super_editor/src/default_editor/layout_single_column/_styler_user_selection.dart';
 import 'package:super_editor/src/default_editor/list_items.dart';
 import 'package:super_editor/src/default_editor/paragraph.dart';
-import 'package:super_editor/src/default_editor/tasks.dart';
 import 'package:super_editor/src/default_editor/text.dart';
+import 'package:super_editor/src/default_editor/text/custom_underlines.dart';
 import 'package:super_editor/src/default_editor/unknown_component.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/content_layers.dart';
@@ -34,17 +35,15 @@ import 'package:super_editor/src/infrastructure/flutter/build_context.dart';
 import 'package:super_editor/src/infrastructure/links.dart';
 import 'package:super_editor/src/infrastructure/platforms/ios/ios_document_controls.dart';
 import 'package:super_editor/src/infrastructure/platforms/ios/toolbar.dart';
+import 'package:super_editor/src/infrastructure/platforms/mobile_documents.dart';
 import 'package:super_editor/src/infrastructure/platforms/platform.dart';
+import 'package:super_editor/src/infrastructure/text_input.dart';
+import 'package:super_editor/src/super_reader/read_only_document_android_touch_interactor.dart';
+import 'package:super_editor/src/super_reader/read_only_document_ios_touch_interactor.dart';
+import 'package:super_editor/src/super_reader/read_only_document_keyboard_interactor.dart';
+import 'package:super_editor/src/super_reader/read_only_document_mouse_interactor.dart';
+import 'package:super_editor/src/super_reader/reader_context.dart';
 import 'package:super_editor/src/super_reader/tasks.dart';
-
-import '../default_editor/text/custom_underlines.dart';
-import '../infrastructure/platforms/mobile_documents.dart';
-import '../infrastructure/text_input.dart';
-import 'read_only_document_android_touch_interactor.dart';
-import 'read_only_document_ios_touch_interactor.dart';
-import 'read_only_document_keyboard_interactor.dart';
-import 'read_only_document_mouse_interactor.dart';
-import 'reader_context.dart';
 
 class SuperReader extends StatefulWidget {
   SuperReader({
@@ -52,9 +51,8 @@ class SuperReader extends StatefulWidget {
     this.focusNode,
     this.autofocus = false,
     this.tapRegionGroupId,
-    required this.document,
+    required this.editor,
     this.documentLayoutKey,
-    this.selection,
     this.selectionLayerLinks,
     this.scrollController,
     Stylesheet? stylesheet,
@@ -97,8 +95,12 @@ class SuperReader extends StatefulWidget {
   /// {@endtemplate}
   final String? tapRegionGroupId;
 
-  /// The [Document] displayed in this [SuperReader], in read-only mode.
-  final Document document;
+  /// The [Editor] whose [Document] displayed in this [SuperReader].
+  ///
+  /// [SuperReader] prevents users from interacting with, and altering the [Document].
+  /// However, [SuperReader] takes an [Editor] so that developers can alter the [Document]
+  /// through code, such as contributing new content from an AI GPT.
+  final Editor editor;
 
   /// [GlobalKey] that's bound to the [DocumentLayout] within
   /// this [SuperReader].
@@ -106,8 +108,6 @@ class SuperReader extends StatefulWidget {
   /// This key can be used to lookup visual components in the document
   /// layout within this [SuperReader].
   final GlobalKey? documentLayoutKey;
-
-  final ValueNotifier<DocumentSelection?>? selection;
 
   /// Leader links that connect leader widgets near the user's selection
   /// to carets, handles, and other things that want to follow the selection.
@@ -219,11 +219,10 @@ class SuperReader extends StatefulWidget {
 
 class SuperReaderState extends State<SuperReader> {
   @visibleForTesting
-  Document get document => widget.document;
+  Document get document => widget.editor.document;
 
-  late final ValueNotifier<DocumentSelection?> _selection;
   @visibleForTesting
-  DocumentSelection? get selection => _selection.value;
+  DocumentSelection? get selection => widget.editor.composer.selection;
 
   // GlobalKey used to access the [DocumentLayoutState] to figure
   // out where in the document the user taps or drags.
@@ -260,8 +259,6 @@ class SuperReaderState extends State<SuperReader> {
   @override
   void initState() {
     super.initState();
-    _selection = widget.selection ?? ValueNotifier<DocumentSelection?>(null);
-
     _focusNode = (widget.focusNode ?? FocusNode())..addListener(_onFocusChange);
 
     _scroller = DocumentScroller();
@@ -281,10 +278,6 @@ class SuperReaderState extends State<SuperReader> {
   void didUpdateWidget(SuperReader oldWidget) {
     super.didUpdateWidget(oldWidget);
 
-    if (widget.selection != oldWidget.selection) {
-      _selection = widget.selection ?? ValueNotifier<DocumentSelection?>(null);
-    }
-
     if (widget.scrollController != oldWidget.scrollController) {
       _scrollController = widget.scrollController ?? ScrollController();
     }
@@ -293,9 +286,7 @@ class SuperReaderState extends State<SuperReader> {
       _selectionLinks = widget.selectionLayerLinks ?? SelectionLayerLinks();
     }
 
-    if (widget.document != oldWidget.document ||
-        widget.selection != oldWidget.selection ||
-        widget.scrollController != oldWidget.scrollController) {
+    if (widget.editor.document != oldWidget.editor.document || widget.scrollController != oldWidget.scrollController) {
       _createReaderContext();
     }
 
@@ -319,9 +310,8 @@ class SuperReaderState extends State<SuperReader> {
 
   void _createReaderContext() {
     _readerContext = SuperReaderContext(
-      document: widget.document,
+      editor: widget.editor,
       getDocumentLayout: () => _docLayoutKey.currentState as DocumentLayout,
-      selection: _selection,
       scroller: _scroller,
     );
 
@@ -341,14 +331,14 @@ class SuperReaderState extends State<SuperReader> {
     _docLayoutPerComponentBlockStyler = SingleColumnLayoutCustomComponentStyler();
 
     _docLayoutSelectionStyler = SingleColumnLayoutSelectionStyler(
-      document: widget.document,
-      selection: _selection,
+      document: widget.editor.document,
+      selection: widget.editor.composer.selectionNotifier,
       selectionStyles: widget.selectionStyles,
       selectedTextColorStrategy: widget.stylesheet.selectedTextColorStrategy,
     );
 
     _docLayoutPresenter = SingleColumnLayoutPresenter(
-      document: widget.document,
+      document: widget.editor.document,
       componentBuilders: widget.componentBuilders,
       pipeline: [
         _docStylesheetStyler,
@@ -475,7 +465,7 @@ class SuperReaderState extends State<SuperReader> {
             mobileToolbarKey,
             focalPoint,
             document,
-            _selection,
+            widget.editor.composer.selectionNotifier,
             SuperReaderIosControlsScope.rootOf(context),
           ),
           child: SuperReaderIosMagnifierOverlayManager(
@@ -484,7 +474,6 @@ class SuperReaderState extends State<SuperReader> {
         );
       case DocumentGestureMode.mouse:
       case DocumentGestureMode.android:
-      default:
         return child;
     }
   }
@@ -508,10 +497,9 @@ class SuperReaderState extends State<SuperReader> {
         return ReadOnlyAndroidDocumentTouchInteractor(
           focusNode: _focusNode,
           tapRegionGroupId: widget.tapRegionGroupId,
-          document: _readerContext.document,
+          readerContext: _readerContext,
           documentKey: _docLayoutKey,
           getDocumentLayout: () => _readerContext.documentLayout,
-          selection: _readerContext.selection,
           selectionLinks: _selectionLinks,
           contentTapHandler: _contentTapDelegate,
           scrollController: _scrollController,
@@ -526,10 +514,9 @@ class SuperReaderState extends State<SuperReader> {
       case DocumentGestureMode.iOS:
         return SuperReaderIosDocumentTouchInteractor(
           focusNode: _focusNode,
-          document: _readerContext.document,
+          readerContext: _readerContext,
           documentKey: _docLayoutKey,
           getDocumentLayout: () => _readerContext.documentLayout,
-          selection: _readerContext.selection,
           contentTapHandler: _contentTapDelegate,
           scrollController: _scrollController,
           fillViewport: fillViewport,
@@ -641,7 +628,7 @@ class _SelectionLeadersDocumentLayerBuilder implements SuperReaderDocumentLayerB
   ContentLayerWidget build(BuildContext context, SuperReaderContext readerContext) {
     return SelectionLeadersDocumentLayer(
       document: readerContext.document,
-      selection: readerContext.selection,
+      selection: readerContext.composer.selectionNotifier,
       links: links,
       showDebugLeaderBounds: showDebugLeaderBounds,
     );
@@ -664,7 +651,7 @@ class SuperReaderIosToolbarFocalPointDocumentLayerBuilder implements SuperReader
   ContentLayerWidget build(BuildContext context, SuperReaderContext readerContext) {
     return IosToolbarFocalPointDocumentLayer(
       document: readerContext.document,
-      selection: readerContext.selection,
+      selection: readerContext.composer.selectionNotifier,
       toolbarFocalPointLink: SuperReaderIosControlsScope.rootOf(context).toolbarFocalPoint,
       showDebugLeaderBounds: showDebugLeaderBounds,
     );
