@@ -564,7 +564,7 @@ mixin TextComponentViewModel on SingleColumnLayoutComponentViewModel {
       ..createdAt = createdAt
       ..maxWidth = maxWidth
       ..padding = padding
-      ..text = text
+      ..text = text.copy()
       ..textStyleBuilder = textStyleBuilder
       ..inlineWidgetBuilders = inlineWidgetBuilders
       ..textDirection = textDirection
