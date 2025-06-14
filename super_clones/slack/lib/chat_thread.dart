@@ -189,20 +189,51 @@ class _MessageTile extends StatefulWidget {
 }
 
 class _MessageTileState extends State<_MessageTile> {
-  final ValueNotifier<DocumentSelection?> _selection = ValueNotifier(null);
+  late Message _message;
+  late final Editor _editor;
   final GlobalKey _documentLayoutKey = GlobalKey();
 
   @override
+  void initState() {
+    super.initState();
+
+    _syncMessageWithLatestWidget();
+  }
+
+  @override
+  void didUpdateWidget(_MessageTile oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    if (widget.messages[widget.index] != _message) {
+      _editor.dispose();
+      _syncMessageWithLatestWidget();
+    }
+  }
+
+  void _syncMessageWithLatestWidget() {
+    _message = widget.messages[widget.index];
+    _editor = createDefaultDocumentEditor(
+      document: MutableDocument(nodes: _message.content.toList()),
+      composer: MutableDocumentComposer(),
+    );
+  }
+
+  @override
+  void dispose() {
+    _editor.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final message = widget.messages[widget.index];
     // The list is reversed, so the previous message is at index + 1.
     final previousMessage = widget.index < widget.messages.length - 1 //
         ? widget.messages[widget.index + 1]
         : null;
 
-    final user = fakeUsers.where((e) => e.id == message.userId).first;
-    final sameUserAsLastMessage = previousMessage != null && previousMessage.userId == message.userId;
-    final isSameDate = _isSameDate(message.sentAt, previousMessage?.sentAt ?? DateTime.now());
+    final user = fakeUsers.where((e) => e.id == _message.userId).first;
+    final sameUserAsLastMessage = previousMessage != null && previousMessage.userId == _message.userId;
+    final isSameDate = _isSameDate(_message.sentAt, previousMessage?.sentAt ?? DateTime.now());
 
     final shouldDisplayAvatar = !sameUserAsLastMessage || !isSameDate;
 
@@ -224,8 +255,9 @@ class _MessageTileState extends State<_MessageTile> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  if (shouldDisplayAvatar) _buildMessageHeader(message, user),
-                  _buildMessageContent(message),
+                  if (shouldDisplayAvatar) //
+                    _buildMessageHeader(user),
+                  _buildMessageContent(),
                 ],
               ),
             ),
@@ -249,7 +281,7 @@ class _MessageTileState extends State<_MessageTile> {
     );
   }
 
-  Widget _buildMessageHeader(Message message, User user) {
+  Widget _buildMessageHeader(User user) {
     return Padding(
       padding: const EdgeInsets.only(left: 10.0, top: 5.0),
       child: Row(
@@ -266,19 +298,18 @@ class _MessageTileState extends State<_MessageTile> {
             ),
           ),
           const SizedBox(width: 15),
-          _buildMessageTime(message.sentAt),
+          _buildMessageTime(_message.sentAt),
         ],
       ),
     );
   }
 
-  Widget _buildMessageContent(Message message) {
+  Widget _buildMessageContent() {
     return IntrinsicWidth(
       child: IgnorePointer(
         child: SuperEditorDryLayout(
           superEditor: SuperReader(
-            document: message.content,
-            selection: _selection,
+            editor: _editor,
             documentLayoutKey: _documentLayoutKey,
             stylesheet: defaultStylesheet.copyWith(
               documentPadding: const EdgeInsets.symmetric(

@@ -1,5 +1,4 @@
 import 'package:attributed_text/attributed_text.dart';
-import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:super_editor/src/core/styles.dart';
 import 'package:super_editor/src/default_editor/attributions.dart';
@@ -50,6 +49,7 @@ class BlockquoteComponentBuilder implements ComponentBuilder {
 
     return BlockquoteComponentViewModel(
       nodeId: node.id,
+      createdAt: node.metadata["createdAt"],
       text: node.text,
       textStyleBuilder: noStyleBuilder,
       indent: node.indent,
@@ -86,9 +86,11 @@ class BlockquoteComponentBuilder implements ComponentBuilder {
 
 class BlockquoteComponentViewModel extends SingleColumnLayoutComponentViewModel with TextComponentViewModel {
   BlockquoteComponentViewModel({
-    required String nodeId,
-    double? maxWidth,
-    EdgeInsetsGeometry padding = EdgeInsets.zero,
+    required super.nodeId,
+    super.createdAt,
+    super.maxWidth,
+    super.padding = EdgeInsets.zero,
+    super.opacity = 1.0,
     required this.text,
     required this.textStyleBuilder,
     this.inlineWidgetBuilders = const [],
@@ -107,7 +109,7 @@ class BlockquoteComponentViewModel extends SingleColumnLayoutComponentViewModel 
     List<TextRange> spellingErrors = const <TextRange>[],
     UnderlineStyle grammarErrorUnderlineStyle = const SquiggleUnderlineStyle(color: Colors.blue),
     List<TextRange> grammarErrors = const <TextRange>[],
-  }) : super(nodeId: nodeId, maxWidth: maxWidth, padding: padding) {
+  }) {
     this.composingRegion = composingRegion;
     this.showComposingRegionUnderline = showComposingRegionUnderline;
 
@@ -154,8 +156,10 @@ class BlockquoteComponentViewModel extends SingleColumnLayoutComponentViewModel 
     return internalCopy(
       BlockquoteComponentViewModel(
         nodeId: nodeId,
-        text: text,
+        createdAt: createdAt,
+        text: text.copy(),
         textStyleBuilder: textStyleBuilder,
+        opacity: opacity,
         selectionColor: selectionColor,
         backgroundColor: backgroundColor,
         borderRadius: borderRadius,

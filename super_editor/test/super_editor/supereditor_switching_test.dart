@@ -119,7 +119,7 @@ class _EditorReaderSwitchDemoState extends State<_EditorReaderSwitchDemo> {
       );
     } else {
       return SuperReader(
-        document: widget.document,
+        editor: _docEditor,
       );
     }
   }

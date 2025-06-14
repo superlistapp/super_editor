@@ -1,4 +1,5 @@
 import 'package:attributed_text/attributed_text.dart';
+import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:super_editor/src/core/document.dart';
@@ -450,11 +451,20 @@ class SingleColumnLayoutViewModel {
 abstract class SingleColumnLayoutComponentViewModel {
   SingleColumnLayoutComponentViewModel({
     required this.nodeId,
+    required this.createdAt,
     this.maxWidth,
     required this.padding,
+    this.opacity = 1.0,
   });
 
   final String nodeId;
+
+  /// When view model's corresponding node was created, which can be used for
+  /// making decisions about animated invalidations.
+  ///
+  /// Reporting the creation time is optional. Stylers must handle cases where
+  /// no creation timestamp is available.
+  DateTime? createdAt;
 
   /// The maximum width of this component in the layout, or `null` to
   /// defer to the layout's preference.
@@ -463,9 +473,13 @@ abstract class SingleColumnLayoutComponentViewModel {
   /// The padding applied around this component.
   EdgeInsetsGeometry padding;
 
+  /// The opacity of this whole node.
+  double opacity;
+
   void applyStyles(Map<String, dynamic> styles) {
     maxWidth = styles[Styles.maxWidth] ?? double.infinity;
     padding = (styles[Styles.padding] as CascadingPadding?)?.toEdgeInsets() ?? EdgeInsets.zero;
+    opacity = styles[Styles.opacity] ?? 1.0;
   }
 
   SingleColumnLayoutComponentViewModel copy();
@@ -476,9 +490,11 @@ abstract class SingleColumnLayoutComponentViewModel {
       other is SingleColumnLayoutComponentViewModel &&
           runtimeType == other.runtimeType &&
           nodeId == other.nodeId &&
+          createdAt == other.createdAt &&
           maxWidth == other.maxWidth &&
-          padding == other.padding;
+          padding == other.padding &&
+          opacity == other.opacity;
 
   @override
-  int get hashCode => nodeId.hashCode ^ maxWidth.hashCode ^ padding.hashCode;
+  int get hashCode => nodeId.hashCode ^ createdAt.hashCode ^ maxWidth.hashCode ^ padding.hashCode ^ opacity.hashCode;
 }

@@ -336,6 +336,9 @@ class Styles {
   /// Applies a [CascadingPadding] around the content.
   static const String padding = 'padding';
 
+  /// Applies an opacity to an entire node.
+  static const String opacity = 'opacity';
+
   /// Key to a `double` that defines the maximum width of the node.
   static const String maxWidth = 'maxWidth';
 

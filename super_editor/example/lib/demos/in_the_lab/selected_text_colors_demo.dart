@@ -75,6 +75,7 @@ class _SelectedTextColorsDemoState extends State<SelectedTextColorsDemo> {
         selectedTextColorStrategy: _selectedTextColorStrategy,
         addRulesAfter: [
           ...darkModeStyles,
+          ...largeTextStyles,
           StyleRule(
             BlockSelector.all,
             (doc, docNode) {

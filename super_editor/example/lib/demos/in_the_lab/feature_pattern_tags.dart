@@ -78,6 +78,7 @@ class _HashTagsFeatureDemoState extends State<HashTagsFeatureDemo> {
         },
         addRulesAfter: [
           ...darkModeStyles,
+          ...largeTextStyles,
         ],
       ),
       documentOverlayBuilders: [

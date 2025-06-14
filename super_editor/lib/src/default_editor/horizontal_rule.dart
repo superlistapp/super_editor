@@ -75,6 +75,7 @@ class HorizontalRuleComponentBuilder implements ComponentBuilder {
 
     return HorizontalRuleComponentViewModel(
       nodeId: node.id,
+      createdAt: node.metadata[NodeMetadata.createdAt],
       selectionColor: const Color(0x00000000),
       caretColor: const Color(0x00000000),
     );
@@ -93,6 +94,7 @@ class HorizontalRuleComponentBuilder implements ComponentBuilder {
       selectionColor: componentViewModel.selectionColor,
       showCaret: componentViewModel.caret != null,
       caretColor: componentViewModel.caretColor,
+      opacity: componentViewModel.opacity,
     );
   }
 }
@@ -100,8 +102,10 @@ class HorizontalRuleComponentBuilder implements ComponentBuilder {
 class HorizontalRuleComponentViewModel extends SingleColumnLayoutComponentViewModel with SelectionAwareViewModelMixin {
   HorizontalRuleComponentViewModel({
     required super.nodeId,
+    super.createdAt,
     super.maxWidth,
     super.padding = EdgeInsets.zero,
+    super.opacity = 1.0,
     DocumentNodeSelection? selection,
     Color selectionColor = Colors.transparent,
     this.caret,
@@ -118,8 +122,10 @@ class HorizontalRuleComponentViewModel extends SingleColumnLayoutComponentViewMo
   HorizontalRuleComponentViewModel copy() {
     return HorizontalRuleComponentViewModel(
       nodeId: nodeId,
+      createdAt: createdAt,
       maxWidth: maxWidth,
       padding: padding,
+      opacity: opacity,
       selection: selection,
       selectionColor: selectionColor,
       caret: caret,
@@ -134,6 +140,7 @@ class HorizontalRuleComponentViewModel extends SingleColumnLayoutComponentViewMo
           other is HorizontalRuleComponentViewModel &&
           runtimeType == other.runtimeType &&
           nodeId == other.nodeId &&
+          createdAt == other.createdAt &&
           selection == other.selection &&
           selectionColor == other.selectionColor &&
           caret == other.caret &&
@@ -143,6 +150,7 @@ class HorizontalRuleComponentViewModel extends SingleColumnLayoutComponentViewMo
   int get hashCode =>
       super.hashCode ^
       nodeId.hashCode ^
+      createdAt.hashCode ^
       selection.hashCode ^
       selectionColor.hashCode ^
       caret.hashCode ^
@@ -160,6 +168,7 @@ class HorizontalRuleComponent extends StatelessWidget {
     this.selection,
     required this.caretColor,
     this.showCaret = false,
+    this.opacity = 1.0,
   }) : super(key: key);
 
   final GlobalKey componentKey;
@@ -170,6 +179,8 @@ class HorizontalRuleComponent extends StatelessWidget {
   final Color caretColor;
   final bool showCaret;
 
+  final double opacity;
+
   @override
   Widget build(BuildContext context) {
     return IgnorePointer(
@@ -178,6 +189,7 @@ class HorizontalRuleComponent extends StatelessWidget {
         selectionColor: selectionColor,
         child: BoxComponent(
           key: componentKey,
+          opacity: opacity,
           child: Divider(
             color: color,
             thickness: thickness,

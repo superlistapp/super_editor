@@ -18,6 +18,7 @@ export 'src/core/styles.dart';
 export 'src/chat/message_page_scaffold.dart';
 
 // Super Editor
+export 'src/default_editor/ai/content_fading.dart';
 export 'src/default_editor/attributions.dart';
 export 'src/default_editor/blocks/indentation.dart';
 export 'src/default_editor/blockquote.dart';
@@ -50,6 +51,7 @@ export 'src/default_editor/selection_upstream_downstream.dart';
 export 'src/default_editor/super_editor.dart';
 export 'src/default_editor/tasks.dart';
 export 'src/default_editor/text.dart';
+export 'src/default_editor/text_ai.dart';
 export 'src/default_editor/text_tools.dart';
 export 'src/default_editor/text/custom_underlines.dart';
 export 'src/default_editor/text_tokenizing/action_tags.dart';

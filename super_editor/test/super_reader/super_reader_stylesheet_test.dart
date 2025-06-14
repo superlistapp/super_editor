@@ -47,7 +47,10 @@ Future<void> _pumpReader(
     MaterialApp(
       home: Scaffold(
         body: SuperReader(
-          document: singleParagraphDoc(),
+          editor: createDefaultDocumentEditor(
+            document: singleParagraphDoc(),
+            composer: MutableDocumentComposer(),
+          ),
           stylesheet: stylesheet,
         ),
       ),

@@ -167,6 +167,7 @@ class TaskComponentBuilder implements ComponentBuilder {
 
     return TaskComponentViewModel(
       nodeId: node.id,
+      createdAt: node.metadata[NodeMetadata.createdAt],
       padding: EdgeInsets.zero,
       indent: node.indent,
       isComplete: node.isComplete,
@@ -208,9 +209,11 @@ class TaskComponentBuilder implements ComponentBuilder {
 /// and caret appearance.
 class TaskComponentViewModel extends SingleColumnLayoutComponentViewModel with TextComponentViewModel {
   TaskComponentViewModel({
-    required String nodeId,
-    double? maxWidth,
-    required EdgeInsetsGeometry padding,
+    required super.nodeId,
+    super.createdAt,
+    super.maxWidth,
+    required super.padding,
+    super.opacity = 1.0,
     this.indent = 0,
     this.indentCalculator = defaultTaskIndentCalculator,
     required this.isComplete,
@@ -229,7 +232,7 @@ class TaskComponentViewModel extends SingleColumnLayoutComponentViewModel with T
     List<TextRange> spellingErrors = const <TextRange>[],
     UnderlineStyle grammarErrorUnderlineStyle = const SquiggleUnderlineStyle(color: Colors.blue),
     List<TextRange> grammarErrors = const <TextRange>[],
-  }) : super(nodeId: nodeId, maxWidth: maxWidth, padding: padding) {
+  }) {
     this.composingRegion = composingRegion;
     this.showComposingRegionUnderline = showComposingRegionUnderline;
 
@@ -268,9 +271,11 @@ class TaskComponentViewModel extends SingleColumnLayoutComponentViewModel with T
     return internalCopy(
       TaskComponentViewModel(
         nodeId: nodeId,
+        createdAt: createdAt,
         padding: padding,
-        text: text,
+        text: text.copy(),
         textStyleBuilder: textStyleBuilder,
+        opacity: opacity,
         selectionColor: selectionColor,
         indent: indent,
         isComplete: isComplete,
