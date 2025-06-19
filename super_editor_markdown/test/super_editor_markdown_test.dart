@@ -1285,6 +1285,35 @@ This is some code
         expect((document.getNodeAt(2)! as ListItemNode).text.toPlainText(), 'list item 3');
       });
 
+      test('unordered list items mixed with task items', () {
+        const markdown = '''
+- list item node 
+- [ ] task node
+- [x] completed task node
+- second list item node 
+- [ ] another task node
+- third list item node
+- fourth list item node 
+''';
+
+        final document = deserializeMarkdownToDocument(markdown);
+
+        expect(document.nodeCount, 7);
+        expect(document.getNodeAt(0)!, isA<ListItemNode>());
+        expect(document.getNodeAt(1)!, isA<TaskNode>());
+        expect((document.getNodeAt(1) as TaskNode).text.toPlainText(), 'task node');
+        expect((document.getNodeAt(1) as TaskNode).isComplete, isFalse);
+        expect(document.getNodeAt(2)!, isA<TaskNode>());
+        expect((document.getNodeAt(2) as TaskNode).text.toPlainText(), 'completed task node');
+        expect((document.getNodeAt(2) as TaskNode).isComplete, isTrue);
+        expect(document.getNodeAt(3)!, isA<ListItemNode>());
+        expect(document.getNodeAt(4)!, isA<TaskNode>());
+        expect((document.getNodeAt(4) as TaskNode).text.toPlainText(), 'another task node');
+        expect((document.getNodeAt(4) as TaskNode).isComplete, isFalse);
+        expect(document.getNodeAt(5)!, isA<ListItemNode>());
+        expect(document.getNodeAt(6)!, isA<ListItemNode>());
+      });
+
       test('ordered list', () {
         const markdown = '''
  1. list item 1

@@ -36,7 +36,7 @@ MutableDocument deserializeMarkdownToDocument(
         const _ParagraphWithAlignmentSyntax(),
       ],
       const _EmptyLinePreservingParagraphSyntax(),
-      const _TaskSyntax(),
+      const md.UnorderedListWithCheckboxSyntax(),
     ],
   );
   final blockParser = md.BlockParser(markdownLines, markdownDoc);
@@ -63,8 +63,8 @@ MutableDocument deserializeMarkdownToDocument(
 
   // Add 1 hanging line for every 2 blank lines at the end, need this to preserve behavior pre markdown 7.2.1
   final hangingEmptyLines = markdownLines.reversed.takeWhile((md.Line l) => l.isBlankLine);
-  if(hangingEmptyLines.isNotEmpty && documentNodes.lastOrNull is ListItemNode) {
-    for(var i = 0; i < hangingEmptyLines.length ~/ 2; i++) {
+  if (hangingEmptyLines.isNotEmpty && documentNodes.lastOrNull is ListItemNode) {
+    for (var i = 0; i < hangingEmptyLines.length ~/ 2; i++) {
       documentNodes.add(ParagraphNode(id: Editor.createNodeId(), text: AttributedText()));
     }
   }
@@ -201,6 +201,15 @@ class _MarkdownToDocument implements md.NodeVisitor {
           throw Exception('Tried to parse a markdown list item but the list item type was null');
         }
 
+        if (element.attributes['class'] == 'task-list-item') {
+          // We handle task deserialization using the built-in `UnorderedListWithCheckboxSyntax`. It's parsed
+          // as a list item with a checkbox input element.
+          _addTask(element);
+
+          // Skip any child elements because we already added the task node.
+          return false;
+        }
+
         // Mark that we are visiting a list item.
         _listItemVisitedCount += 1;
 
@@ -222,9 +231,6 @@ class _MarkdownToDocument implements md.NodeVisitor {
 
       case 'hr':
         _addHorizontalRule();
-        break;
-      case 'task':
-        _addTask(element);
         break;
     }
 
@@ -383,11 +389,19 @@ class _MarkdownToDocument implements md.NodeVisitor {
   }
 
   void _addTask(md.Element element) {
+    bool checked = false;
+    if (element.children != null && //
+        element.children!.isNotEmpty &&
+        element.children!.first is md.Element &&
+        (element.children!.first as md.Element).tag == 'input') {
+      checked = (element.children!.first as md.Element).attributes['checked'] == 'true';
+    }
+
     _content.add(
       TaskNode(
         id: Editor.createNodeId(),
         text: _parseInlineText(element.textContent),
-        isComplete: element.attributes['completed'] == 'true',
+        isComplete: checked,
       ),
     );
   }
@@ -536,7 +550,6 @@ abstract class ElementToNodeConverter {
 ///
 /// This [DelimiterSyntax] produces `Element`s with a `u` tag.
 class UnderlineSyntax extends md.DelimiterSyntax {
-
   /// According to the docs:
   ///
   /// https://pub.dev/documentation/markdown/latest/markdown/DelimiterSyntax-class.html
@@ -547,7 +560,7 @@ class UnderlineSyntax extends md.DelimiterSyntax {
   ///
   /// https://github.com/dart-lang/markdown/blob/d53feae0760a4f0aae5ffdfb12d8e6acccf14b40/lib/src/inline_syntaxes/delimiter_syntax.dart#L67
   /// https://github.com/dart-lang/markdown/blob/d53feae0760a4f0aae5ffdfb12d8e6acccf14b40/lib/src/inline_syntaxes/delimiter_syntax.dart#L319
-  static final _tags = [ md.DelimiterTag("u", 1) ];
+  static final _tags = [md.DelimiterTag("u", 1)];
 
   UnderlineSyntax() : super('¬', requiresDelimiterRun: true, allowIntraWord: true, tags: _tags);
 
@@ -560,7 +573,7 @@ class UnderlineSyntax extends md.DelimiterSyntax {
     required String tag,
   }) {
     final element = md.Element('u', getChildren());
-    return [ element ];
+    return [element];
   }
 }
 
@@ -579,7 +592,6 @@ class SingleStrikethroughSyntax extends md.DelimiterSyntax {
           tags: [md.DelimiterTag('del', 1)],
         );
 }
-
 
 /// Parses a paragraph preceded by an alignment token.
 class _ParagraphWithAlignmentSyntax extends _EmptyLinePreservingParagraphSyntax {
@@ -803,57 +815,6 @@ class _LineBreakSeparatedElement extends md.Element {
   }
 }
 
-/// A [md.BlockSyntax] that parses tasks.
-///
-/// A compled task starts with `- [x] ` followed by the task's content.
-///
-/// An incomplete task starts with `- [ ] ` followed by the task's content.
-///
-/// Tasks can have multiple lines of content.
-class _TaskSyntax extends md.BlockSyntax {
-  const _TaskSyntax();
-
-  /// Parses the first line of a task.
-  ///
-  /// `- [x] ` or `- [ ]` followed by any text.
-  @override
-  RegExp get pattern => RegExp(r'^- \[( |x)\] (.*)');
-
-  @override
-  md.Node? parse(md.BlockParser parser) {
-    final match = pattern.firstMatch(parser.current.content);
-    if (match == null) {
-      return null;
-    }
-
-    final completionToken = match.group(1)!;
-    final taskDescriptionFirstLine = match.group(2)!;
-
-    final buffer = StringBuffer(taskDescriptionFirstLine);
-
-    // Move to the second line.
-    parser.advance();
-
-    // Consume the following lines until we:
-    // - reach the end of the input OR
-    // - find a blank line OR
-    // - find the start of another block element (including another task)
-    while (!parser.isDone &&
-        !_blankLinePattern.hasMatch(parser.current.content) &&
-        !_standardNonParagraphBlockSyntaxes.any((syntax) => syntax.pattern.hasMatch(parser.current.content))) {
-      buffer.write('\n');
-      buffer.write(parser.current.content);
-
-      parser.advance();
-    }
-
-    return md.Element(
-      'task',
-      [md.Text(buffer.toString())],
-    )..attributes['completed'] = (completionToken == 'x').toString();
-  }
-}
-
 /// Parses a header preceded by an alignment token.
 ///
 /// Headers are represented by `_ParagraphWithAlignmentSyntax`s and therefore
@@ -943,7 +904,7 @@ const List<md.BlockSyntax> _standardNonParagraphBlockSyntaxes = [
   md.FencedCodeBlockSyntax(),
   md.BlockquoteSyntax(),
   md.HorizontalRuleSyntax(),
-  _TaskSyntax(),
+  md.UnorderedListWithCheckboxSyntax(),
   md.UnorderedListSyntax(),
   md.OrderedListSyntax(),
 ];
