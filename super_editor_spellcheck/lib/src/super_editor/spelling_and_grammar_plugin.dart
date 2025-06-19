@@ -177,6 +177,11 @@ class SpellingAndGrammarPlugin extends SuperEditorPlugin {
 
   final _popoverController = SpellCheckerPopoverController();
 
+  @Deprecated("This is a temporary behavior until we generalize the control (June 19, 2025)")
+  void setToolbarOrientation(SpellcheckToolbarOrientation orientation) => _popoverController.setOrientation(
+        orientation,
+      );
+
   @override
   List<SingleColumnLayoutStylePhase> get appendedStylePhases => [_styler];
 

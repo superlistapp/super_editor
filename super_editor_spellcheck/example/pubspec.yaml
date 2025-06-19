@@ -25,6 +25,7 @@ dependencies:
 dependency_overrides:
   super_editor:
     path: ../../super_editor
+  url_launcher_android: 6.3.16
 
 dev_dependencies:
   integration_test:
