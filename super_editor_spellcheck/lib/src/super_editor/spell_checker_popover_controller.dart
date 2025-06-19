@@ -6,7 +6,11 @@ import 'package:super_editor_spellcheck/src/super_editor/spelling_error_suggesti
 /// A [SpellCheckerPopoverController] must be attached to a [SpellCheckerPopoverDelegate],
 /// which will effectively show/hide the popover.
 class SpellCheckerPopoverController {
+  SpellCheckerPopoverController();
+
   SpellCheckerPopoverDelegate? _delegate;
+
+  var _orientation = SpellcheckToolbarOrientation.auto;
 
   /// Whether or not the popover is currently showing.
   bool get isShowing => _isShowing;
@@ -22,6 +26,7 @@ class SpellCheckerPopoverController {
     detach();
 
     _delegate = delegate;
+    _delegate!.setOrientation(_orientation);
   }
 
   /// Detaches this controller from the delegate.
@@ -55,6 +60,12 @@ class SpellCheckerPopoverController {
     _isShowing = true;
   }
 
+  @Deprecated("This is a temporary behavior until we generalize the control (June 19, 2025)")
+  void setOrientation(SpellcheckToolbarOrientation orientation) {
+    _orientation = orientation;
+    _delegate?.setOrientation(orientation);
+  }
+
   /// Hides the spelling suggestions popover if it's visible.
   void hide() {
     _delegate?.hideSuggestionsPopover();
@@ -67,6 +78,15 @@ class SpellCheckerPopoverController {
   SpellingError? findSuggestionsForWordAt(DocumentRange wordRange) {
     return _delegate?.findSuggestionsForWordAt(wordRange);
   }
+}
+
+enum SpellcheckToolbarOrientation {
+  // Use whatever the standard is.
+  auto,
+  // Display toolbar above the misspelled word.
+  above,
+  // Display toolbar below the misspelled word.
+  below,
 }
 
 /// Delegate that's attached to a [SpellCheckerPopoverController], to show/hide
@@ -108,6 +128,9 @@ abstract class SpellCheckerPopoverDelegate {
     SpellingError suggestions, {
     VoidCallback? onDismiss,
   }) {}
+
+  @Deprecated("This is a temporary behavior until we generalize the control (June 19, 2025)")
+  void setOrientation(SpellcheckToolbarOrientation orientation);
 
   /// Hides the spelling suggestions popover if it's visible.
   void hideSuggestionsPopover() {}
