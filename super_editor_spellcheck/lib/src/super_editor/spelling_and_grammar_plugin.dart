@@ -456,12 +456,80 @@ class SpellingAndGrammarReaction implements EditReaction {
         continue;
       }
 
-      if (change is TextDeletedEvent) {
-        _clearErrorForDeletedRange(change);
+      if (change is TextInsertionEvent) {
+        _updateExistingErrorsAfterTextInsertion(change);
+      } else if (change is TextDeletedEvent) {
+        _updateExistingErrorsAfterTextDeletion(change);
       }
 
       _scheduleSpellingAndGrammarCheck(textNode);
     }
+  }
+
+  void _updateExistingErrorsAfterTextInsertion(TextInsertionEvent change) {
+    final textPushbackStart = change.offset;
+    final pushbackAmount = change.text.length;
+    final previousErrors = _styler.getErrorsForNode(change.nodeId);
+    final updatedErrors = <TextError>{};
+
+    for (final previousError in previousErrors) {
+      if (previousError.range.start < textPushbackStart) {
+        // This error wasn't impacted by the text insertion.
+        updatedErrors.add(previousError);
+        continue;
+      }
+
+      // Push this error back by the insertion amount.
+      updatedErrors.add(
+        TextError(
+          nodeId: previousError.nodeId,
+          type: previousError.type,
+          value: previousError.value,
+          range: TextRange(
+            start: previousError.range.start + pushbackAmount,
+            end: previousError.range.end + pushbackAmount,
+          ),
+        ),
+      );
+    }
+
+    _styler.clearErrorsForNode(change.nodeId);
+    _styler.addErrors(change.nodeId, updatedErrors);
+  }
+
+  void _updateExistingErrorsAfterTextDeletion(TextDeletedEvent change) {
+    // Remove errors that overlap the deleted text.
+    _clearErrorForDeletedRange(change);
+
+    // Find all downstream errors and move them up by the deletion amount.
+    final textPushUpStart = change.offset + change.deletedText.length;
+    final pushUpAmount = change.deletedText.length;
+    final previousErrors = _styler.getErrorsForNode(change.nodeId);
+    final updatedErrors = <TextError>{};
+
+    for (final previousError in previousErrors) {
+      if (previousError.range.start < textPushUpStart) {
+        // This error wasn't impacted by the text insertion.
+        updatedErrors.add(previousError);
+        continue;
+      }
+
+      // Push this error up by the deletion amount.
+      updatedErrors.add(
+        TextError(
+          nodeId: previousError.nodeId,
+          type: previousError.type,
+          value: previousError.value,
+          range: TextRange(
+            start: previousError.range.start - pushUpAmount,
+            end: previousError.range.end - pushUpAmount,
+          ),
+        ),
+      );
+    }
+
+    _styler.clearErrorsForNode(change.nodeId);
+    _styler.addErrors(change.nodeId, updatedErrors);
   }
 
   /// Clears any pre-existing error for any word that was partially or entirely deleted by the given
