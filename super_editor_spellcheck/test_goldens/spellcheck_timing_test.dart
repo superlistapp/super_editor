@@ -11,7 +11,7 @@ import 'package:super_editor/super_editor_test.dart';
 import 'package:super_editor_spellcheck/super_editor_spellcheck.dart';
 
 void main() {
-  group('SuperEditor spellcheck > styling >', () {
+  group('SuperEditor spellcheck > timing >', () {
     testGoldenSceneOnAndroid(
       // ^ Test on mobile to prevent an attempt to talk to the native Mac spelling and grammar system.
       'does not automatically re-apply spellcheck underline after deleting misspelled word',
