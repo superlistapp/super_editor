@@ -33,7 +33,7 @@ dev_dependencies:
   flutter_test_goldens:
     git:
       url: https://github.com/flutter-bounty-hunters/flutter_test_goldens
-      ref: main
+      ref: e35c5d0ebb0cbf24bf33090199ec576671ebed26
   flutter_test_runners: ^0.0.4
   flutter_test_robots: ^0.0.24
   golden_bricks: ^1.0.0
