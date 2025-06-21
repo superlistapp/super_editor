@@ -11,14 +11,8 @@ dependencies:
   flutter:
     sdk: flutter
 
-  super_editor:
-    git:
-      url: https://github.com/superlistapp/super_editor.git
-      path: super_editor
-  super_editor_markdown:
-    git:
-      url: https://github.com/superlistapp/super_editor.git
-      path: super_editor_markdown
+  super_editor: any
+  super_editor_markdown: any
   follow_the_leader: ^0.0.4+2
   overlord: ^0.0.3+2
   markdown: ^7.2.1
@@ -30,6 +24,8 @@ dependencies:
   intl: ^0.20.2
 
 dependency_overrides:
+  super_editor_markdown:
+    path: ../../super_editor_markdown
   super_editor:
     path: ../../super_editor
   super_text_layout:
