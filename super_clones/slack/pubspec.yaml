@@ -29,13 +29,13 @@ dependencies:
   flutter_svg: ^2.1.0
   intl: ^0.20.2
 
-dependency_overrides:
-  super_editor:
-    path: ../../super_editor
-  super_text_layout:
-    path: ../../super_text_layout
-  attributed_text:
-    path: ../../attributed_text
+# dependency_overrides:
+#   super_editor:
+#     path: ../../super_editor
+#   super_text_layout:
+#     path: ../../super_text_layout
+#   attributed_text:
+#     path: ../../attributed_text
 
 dev_dependencies:
   flutter_test:
