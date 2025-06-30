@@ -36,7 +36,7 @@ final fakeMessages = <Message>[
     from: "2",
     dateTime: DateTime(2025, 5, 16, 17, 01),
     message:
-        "Oh, I've been on the YouTube channel! So many tutorials and demos. Also, here's a visual representation of Flutter's architecture I found useful:\n\n![Flutter Architecture](https://docs.flutter.dev/assets/images/docs/arch-overview/archdiagram.png)",
+        "Oh, I've been on the YouTube channel! So many tutorials and demos. Also, here's a visual representation of Flutter's architecture I found useful:\n\n", // Temp removed for golden tests:![Flutter Architecture](https://docs.flutter.dev/assets/images/docs/arch-overview/archdiagram.png)",
   ),
   _buildMessage(
     from: "1",

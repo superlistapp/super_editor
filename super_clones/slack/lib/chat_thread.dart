@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:golden_bricks/golden_bricks.dart';
 import 'package:intl/intl.dart';
 import 'package:slack/domain/message.dart';
 import 'package:slack/domain/user.dart';
@@ -272,11 +273,17 @@ class _MessageTileState extends State<_MessageTile> {
       padding: const EdgeInsets.only(top: 8.0, right: 10),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(6),
-        child: Image.network(
-          avatarUrl,
-          height: 36,
+        // Switched out network image for rectangle to be able to run golden tests.
+        child: Container(
           width: 36,
+          height: 36,
+          color: Colors.grey,
         ),
+        // child: Image.network(
+        //   avatarUrl,
+        //   height: 36,
+        //   width: 36,
+        // ),
       ),
     );
   }
@@ -351,7 +358,9 @@ class _MessageTileState extends State<_MessageTile> {
       );
     }
 
-    return style;
+    return style.copyWith(
+      fontFamily: goldenBricks,
+    );
   }
 }
 
