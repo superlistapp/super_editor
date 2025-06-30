@@ -82,7 +82,9 @@ class _SlackChatPageState extends State<SlackChatPage> {
         // ^ Don't add padding at the bottom of the screen because
         // we handle it ourselves.
         child: DefaultTextStyle(
-          style: const TextStyle(color: Colors.white),
+          style: DefaultTextStyle.of(context).style.copyWith(
+                color: Colors.white,
+              ),
           child: _buildBody(),
         ),
       ),
@@ -205,11 +207,17 @@ class _SlackChatMobileState extends State<_SlackChatMobile> {
                       children: [
                         ClipRRect(
                           borderRadius: BorderRadius.circular(12),
-                          child: Image.network(
-                            widget.user.avatarUrl,
-                            fit: BoxFit.cover,
+                          // Switched out network image for rectangle to be able to run golden tests.
+                          child: Container(
+                            width: 50,
                             height: 50,
+                            color: Colors.grey,
                           ),
+                          // child: Image.network(
+                          //   widget.user.avatarUrl,
+                          //   fit: BoxFit.cover,
+                          //   height: 50,
+                          // ),
                         ),
                         Positioned(
                           bottom: -1,

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:golden_bricks/golden_bricks.dart';
 import 'package:super_editor/super_editor.dart';
 
 const backgroundColor = Color(0xFF191E22);
@@ -74,7 +75,9 @@ final messageEditorStylesheet = defaultStylesheet.copyWith(
       style = style.copyWith(color: Colors.orange);
     }
 
-    return style;
+    return style.copyWith(
+      fontFamily: goldenBricks,
+    );
   },
 );
 
