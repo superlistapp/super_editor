@@ -188,12 +188,8 @@ class MarkdownInlineUpstreamSyntaxReaction extends EditReaction {
         SelectionChangeType.alteredContent,
         SelectionReason.contentChange,
       ),
-      ChangeComposingRegionRequest(
-        DocumentRange(
-          start: newCaretPosition,
-          end: newCaretPosition,
-        ),
-      ),
+      // Clear the composing region, if any, since the content was altered and the composing region is no longer valid.
+      ChangeComposingRegionRequest(null),
     ];
   }
 }
