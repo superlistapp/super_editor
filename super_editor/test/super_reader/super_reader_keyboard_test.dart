@@ -1,6 +1,8 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_test_robots/flutter_test_robots.dart';
+import 'package:flutter_test_runners/flutter_test_runners.dart';
 import 'package:super_editor/super_editor.dart';
 import 'package:super_editor/super_reader_test.dart';
 
@@ -8,8 +10,68 @@ import '../test_runners.dart';
 import 'reader_test_tools.dart';
 
 void main() {
-  group('SuperReader keyboard', () {
-    group('moves selection', () {
+  group('SuperReader keyboard >', () {
+    testWidgetsOnDesktop("copies text regardless of key order", (tester) async {
+      final testContext = await tester //
+          .createDocument()
+          .fromMarkdown("This is some testing text.") // Length is 26
+          .autoFocus(true)
+          .pump();
+
+      // Select "This".
+      final nodeId = testContext.documentContext.document.first.id;
+      await tester.doubleTapInParagraph(nodeId, 1);
+
+      // Press the "copy" shortcut in the standard key order.
+      tester.simulateClipboard();
+      if (defaultTargetPlatform == TargetPlatform.macOS) {
+        await tester.pressCmdC();
+      } else {
+        await tester.pressCtlC();
+      }
+
+      // Ensure that "This" was copied.
+      expect(tester.getSimulatedClipboardContent(), "This");
+
+      // Select "testing".
+      //
+      // When I wrote this test, double tapping to select another word wasn't
+      // working. Maybe there's some overlay from the earlier word selection.
+      // To get rid of whatever it is, we collapse the selection with the arrow
+      // key and then double tap after that to select a different word.
+      await tester.pressRightArrow();
+      await tester.doubleTapInParagraph(nodeId, 16);
+
+      // Press the "copy" shortcut, but release "CMD" before "C", which
+      // sometimes happens by accident with human users.
+      final keyEventPlatform = switch (defaultTargetPlatform) {
+        TargetPlatform.macOS => "macos",
+        TargetPlatform.windows => "windows",
+        TargetPlatform.linux => "linux",
+        TargetPlatform.fuchsia => "linux",
+        TargetPlatform.android => throw UnimplementedError(),
+        TargetPlatform.iOS => throw UnimplementedError(),
+      };
+
+      if (defaultTargetPlatform == TargetPlatform.macOS) {
+        await tester.sendKeyDownEvent(LogicalKeyboardKey.meta, platform: keyEventPlatform);
+      } else {
+        await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft, platform: keyEventPlatform);
+      }
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.keyC, platform: keyEventPlatform);
+      if (defaultTargetPlatform == TargetPlatform.macOS) {
+        await tester.sendKeyUpEvent(LogicalKeyboardKey.meta, platform: keyEventPlatform);
+      } else {
+        await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft, platform: keyEventPlatform);
+      }
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.keyC, platform: keyEventPlatform);
+      await tester.pumpAndSettle();
+
+      // Ensure that "testing" was copied.
+      expect(tester.getSimulatedClipboardContent(), "testing");
+    });
+
+    group('moves selection >', () {
       testAllInputsOnDesktop("left by one character and expands when SHIFT + LEFT_ARROW is pressed", (
         tester, {
         required TextInputSource inputSource,
