@@ -233,6 +233,35 @@ jobs:
       # Run all tests
       - run: flutter test
 
+  test_goldens_super_keyboard:
+    if: ${{ github.base_ref == 'main' }}
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./super_keyboard
+    steps:
+      # Checkout the PR branch
+      - uses: actions/checkout@v3
+
+      # Setup Flutter environment
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: "master"
+          architecture: x64
+
+      # Download all the packages that the app uses
+      - run: flutter pub get
+
+      # Run all golden tests
+      - run: flutter test test_goldens
+
+      # Archive golden failures
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: golden-failures
+          path: "**/failures/**/*.png"
+
   analyze_super_text_layout:
     runs-on: ubuntu-latest
     defaults:

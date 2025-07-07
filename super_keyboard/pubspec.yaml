@@ -36,6 +36,8 @@ dependencies:
 dev_dependencies:
   flutter_lints: ^4.0.0
 
+  flutter_test_goldens: 0.0.5
+
 flutter:
   # This section identifies this Flutter project as a plugin project.
   # The 'pluginClass' specifies the class (in Java, Kotlin, Swift, Objective-C, etc.)
