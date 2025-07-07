@@ -482,8 +482,8 @@ ReadOnlyDocumentKeyboardAction createShortcut(
   bool? isCmdPressed,
   bool? isCtlPressed,
   bool? isAltPressed,
-  bool onKeyUp = true,
-  bool onKeyDown = false,
+  bool onKeyUp = false,
+  bool onKeyDown = true,
   Set<TargetPlatform>? platforms,
 }) {
   if (onKeyUp == false && onKeyDown == false) {
