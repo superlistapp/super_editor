@@ -924,7 +924,6 @@ class SuperEditorState extends State<SuperEditor> {
           openKeyboardWhenTappingExistingSelection: widget.selectionPolicies.openKeyboardWhenTappingExistingSelection,
           openKeyboardOnSelectionChange: widget.imePolicies.openKeyboardOnSelectionChange,
           openSoftwareKeyboard: _openSoftwareKeyboard,
-          isImeConnected: _isImeConnected,
           contentTapHandlers: [
             ..._contentTapHandlers ?? [],
             for (final plugin in widget.plugins) //
