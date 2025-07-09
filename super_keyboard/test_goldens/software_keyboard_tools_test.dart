@@ -10,7 +10,7 @@ void main() {
       await Gallery(
         "Software Keyboard (Stationary)",
         fileName: "keyboard-tools_keyboard-widget_stationary",
-        layout: const GridGoldenSceneLayout(),
+        layout: ftlGridGoldenSceneLayout,
         // Item is the size of an iPhone 16 (DIP).
         itemConstraints: const BoxConstraints.tightFor(width: 393, height: 852),
         itemSetup: (tester) async => tester.pump(),
@@ -84,5 +84,46 @@ Widget _buildKeyboardSimulatorScaffold(WidgetTester tester) {
       ),
     ),
     debugShowCheckedModeBanner: false,
+  );
+}
+
+const ftlGridGoldenSceneLayout = GridGoldenSceneLayout(
+  spacing: GridSpacing(around: EdgeInsets.all(48), between: 24),
+  background: GoldenSceneBackground.color(Color(0xff01040d)),
+  itemDecorator: _itemDecorator,
+);
+
+Widget _itemDecorator(
+  BuildContext context,
+  GoldenScreenshotMetadata metadata,
+  Widget content,
+) {
+  return ColoredBox(
+    color: const Color(0xff020817),
+    child: IntrinsicWidth(
+      child: PixelSnapColumn(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          PixelSnapAlign(
+            alignment: Alignment.topLeft,
+            child: content,
+          ),
+          Padding(
+            padding: const EdgeInsets.all(24),
+            child: Text(
+              metadata.description,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                color: Color(0xff1e293b),
+                fontFamily: TestFonts.openSans,
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ],
+      ),
+    ),
   );
 }
