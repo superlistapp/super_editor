@@ -9,7 +9,7 @@ void main() {
     testGoldenSceneOnIOS("software keyboard stationary", (tester) async {
       await Gallery(
         "Software Keyboard (Stationary)",
-        fileName: "keyboard-tools_keyboard-widget_opens-and-closes",
+        fileName: "keyboard-tools_keyboard-widget_stationary",
         layout: const GridGoldenSceneLayout(),
         // Item is the size of an iPhone 16 (DIP).
         itemConstraints: const BoxConstraints.tightFor(width: 393, height: 852),
