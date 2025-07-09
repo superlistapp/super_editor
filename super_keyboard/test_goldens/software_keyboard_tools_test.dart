@@ -21,7 +21,25 @@ void main() {
               tester: tester,
               initialKeyboardState: KeyboardState.open,
               renderSimulatedKeyboard: true,
-              child: const ColoredBox(color: Colors.white),
+              child: const ColoredBox(color: Color(0xff020817)),
+            ),
+          )
+          .itemFromWidget(
+            description: "Two",
+            widget: SoftwareKeyboardHeightSimulator(
+              tester: tester,
+              initialKeyboardState: KeyboardState.open,
+              renderSimulatedKeyboard: true,
+              child: const ColoredBox(color: Color(0xff020817)),
+            ),
+          )
+          .itemFromWidget(
+            description: "Three",
+            widget: SoftwareKeyboardHeightSimulator(
+              tester: tester,
+              initialKeyboardState: KeyboardState.open,
+              renderSimulatedKeyboard: true,
+              child: const ColoredBox(color: Color(0xff020817)),
             ),
           )
           .run(tester);
