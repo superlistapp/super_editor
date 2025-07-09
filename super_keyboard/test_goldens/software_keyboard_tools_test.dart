@@ -1,10 +1,32 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_test_goldens/flutter_test_goldens.dart';
+import 'package:super_keyboard/super_keyboard.dart';
 import 'package:super_keyboard/super_keyboard_test.dart';
 
 void main() {
   group("Super Keyboard > software keyboard > tools >", () {
+    testGoldenSceneOnIOS("software keyboard stationary", (tester) async {
+      await Gallery(
+        "Software Keyboard (Stationary)",
+        fileName: "keyboard-tools_keyboard-widget_opens-and-closes",
+        layout: const GridGoldenSceneLayout(),
+        // Item is the size of an iPhone 16 (DIP).
+        itemConstraints: const BoxConstraints.tightFor(width: 393, height: 852),
+        itemSetup: (tester) async => tester.pump(),
+      )
+          .itemFromWidget(
+            description: "Open",
+            widget: SoftwareKeyboardHeightSimulator(
+              tester: tester,
+              initialKeyboardState: KeyboardState.open,
+              renderSimulatedKeyboard: true,
+              child: const ColoredBox(color: Colors.white),
+            ),
+          )
+          .run(tester);
+    });
+
     testGoldenSceneOnIOS("keyboard widget opens and closes", (tester) async {
       await Timeline(
         "Software Keyboard Opens/Closes",
