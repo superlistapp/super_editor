@@ -1,3 +1,9 @@
+## [0.3.0-dev.27]
+### July 10, 2025
+Locked down the following versions to avoid unexpected Pub upgrades:
+ * `follow_the_leader`: `v0.0.4.+8`
+ * `overlord`: `v0.0.3+5`
+
 ## [0.3.0-dev.26]
 ### July 7, 2025
  * FEATURE: Custom underline configuration
