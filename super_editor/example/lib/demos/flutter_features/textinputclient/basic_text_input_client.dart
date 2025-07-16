@@ -12,6 +12,7 @@ class BasicTextInputClientDemo extends StatefulWidget {
 
 class _BasicTextInputClientDemoState extends State<BasicTextInputClientDemo> {
   final _screenFocusNode = FocusNode();
+  final _textInputConnectionHolder = ValueNotifier<TextInputConnection?>(null);
 
   @override
   Widget build(BuildContext context) {
@@ -21,17 +22,51 @@ class _BasicTextInputClientDemoState extends State<BasicTextInputClientDemo> {
         _screenFocusNode.requestFocus();
       },
       behavior: HitTestBehavior.translucent,
-      child: Focus(
-        focusNode: _screenFocusNode,
-        child: Center(
-          child: _BareBonesTextFieldWithInputClient(),
-        ),
+      child: Column(
+        children: [
+          Expanded(
+            child: Focus(
+              focusNode: _screenFocusNode,
+              child: Center(
+                child: _BareBonesTextFieldWithInputClient(
+                  textInputConnectionHolder: _textInputConnectionHolder,
+                ),
+              ),
+            ),
+          ),
+          Container(
+            width: double.infinity,
+            color: Colors.grey,
+            child: Row(
+              children: [
+                IconButton(
+                  onPressed: () => SystemChannels.textInput.invokeListMethod("TextInput.hide"),
+                  icon: Icon(Icons.arrow_circle_down),
+                ),
+                IconButton(
+                  onPressed: () => _textInputConnectionHolder.value?.show(),
+                  icon: Icon(Icons.arrow_circle_up),
+                ),
+                IconButton(
+                  onPressed: () => _textInputConnectionHolder.value?.close(),
+                  icon: Icon(Icons.close),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
 }
 
 class _BareBonesTextFieldWithInputClient extends StatefulWidget {
+  const _BareBonesTextFieldWithInputClient({
+    required this.textInputConnectionHolder,
+  });
+
+  final ValueNotifier<TextInputConnection?> textInputConnectionHolder;
+
   @override
   _BareBonesTextFieldWithInputClientState createState() => _BareBonesTextFieldWithInputClientState();
 }
@@ -139,6 +174,8 @@ class _BareBonesTextFieldWithInputClientState extends State<_BareBonesTextFieldW
           _textInputConnection!
             ..show()
             ..setEditingState(currentTextEditingValue!);
+
+          widget.textInputConnectionHolder.value = _textInputConnection;
         });
       }
     } else {
@@ -146,6 +183,8 @@ class _BareBonesTextFieldWithInputClientState extends State<_BareBonesTextFieldW
       setState(() {
         _textInputConnection?.close();
         _textInputConnection = null;
+
+        widget.textInputConnectionHolder.value = null;
       });
     }
   }
