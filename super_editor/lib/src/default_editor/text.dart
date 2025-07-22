@@ -2040,21 +2040,46 @@ class InsertPlainTextAtCaretCommand extends EditCommand {
       // Can't insert at caret if there is no caret.
       return;
     }
+
     final range = selection.normalize(context.document);
-    if (range.start.nodePosition is! TextNodePosition) {
-      // The effective insertion position isn't a TextNode. Fizzle.
+    if (range.start.nodeId == range.end.nodeId && range.start.nodePosition is! TextNodePosition) {
+      // Selection is in a single node, and it's not a text node. We can't insert text here.
       return;
     }
 
-    if (!range.isCollapsed) {
+    late final DocumentPosition insertionPosition;
+    if (range.isCollapsed) {
+      // Insertion position is at caret.
+      insertionPosition = selection.extent;
+    } else {
+      // Inserting text with an expanded selection should delete the currently
+      // selected content. Do that now.
       executor.executeCommand(
-        DeleteContentCommand(documentRange: range),
+        DeleteSelectionCommand(affinity: TextAffinity.upstream),
       );
+
+      final caret = context.composer.selection!.extent;
+      if (caret.nodePosition is! TextNodePosition) {
+        // After deleting an expanded selection, we ended up with a caret
+        // sitting in a non-text node. Insert a text node to accept the new
+        // text.
+        final newTextNodeId = Editor.createNodeId();
+        executor.executeCommand(
+          InsertNodeAfterNodeCommand(
+            existingNodeId: caret.nodeId,
+            newNode: ParagraphNode(id: newTextNodeId, text: AttributedText()),
+          ),
+        );
+
+        insertionPosition = DocumentPosition(nodeId: newTextNodeId, nodePosition: const TextNodePosition(offset: 0));
+      } else {
+        insertionPosition = caret;
+      }
     }
 
     executor.executeCommand(
       InsertTextCommand(
-        documentPosition: range.start,
+        documentPosition: insertionPosition,
         textToInsert: plainText,
         createdAt: createdAt,
         attributions: attributions,
