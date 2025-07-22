@@ -389,6 +389,7 @@ class TextDeltasDocumentEditor {
   }
 
   void replace(TextRange replacedRange, String replacementText) {
+    editorImeLog.fine("Replacing content in IME range: $replacedRange, with new text: '$replacementText'");
     final replacementSelection = _serializedDoc.imeToDocumentSelection(TextSelection(
       baseOffset: replacedRange.start,
       // TODO: the delta API is wrong for TextRange.end, it should be exclusive,
