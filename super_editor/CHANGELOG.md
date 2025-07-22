@@ -1,3 +1,8 @@
+## [0.3.0-dev.28]
+### July 22, 2025
+ * FIX: Inserting character (via IME) with a block node and text selected, now correctly deletes the selected content
+   before inserting the new character.
+
 ## [0.3.0-dev.27]
 ### July 10, 2025
 Locked down the following versions to avoid unexpected Pub upgrades:
