@@ -1221,7 +1221,7 @@ class DeleteSelectionCommand extends EditCommand {
 
         if (affinity == TextAffinity.upstream) {
           // The user is trying to delete using backspace (we assume this because the deletion is in
-          // downstream direction). Do nothing.
+          // upstream direction). Do nothing.
           return;
         }
 
