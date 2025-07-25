@@ -1,14 +1,16 @@
 import 'package:flutter/painting.dart';
 import 'package:super_editor/src/core/styles.dart';
 
-import '../../core/document.dart';
-import '_presenter.dart';
+import 'package:super_editor/src/core/document.dart';
+import 'package:super_editor/src/default_editor/layout_single_column/_presenter.dart';
 
 /// Style phase that applies a given [Stylesheet] to the document view model.
 class SingleColumnStylesheetStyler extends SingleColumnLayoutStylePhase {
   SingleColumnStylesheetStyler({
     required Stylesheet stylesheet,
-  }) : _stylesheet = stylesheet;
+    TextStyle? defaultTextStyle,
+  })  : _stylesheet = stylesheet,
+        _defaultTextStyle = defaultTextStyle;
 
   Stylesheet _stylesheet;
 
@@ -27,6 +29,28 @@ class SingleColumnStylesheetStyler extends SingleColumnLayoutStylePhase {
     }
 
     _stylesheet = newStylesheet;
+    markDirty();
+  }
+
+  TextStyle? _defaultTextStyle;
+
+  /// Sets the [TextStyle] that's used by this styler to merge with
+  /// the styles obtained by the stylesheet's rules to each component.
+  ///
+  /// If [newDefaultTextStyle] is the same as the existing default text style,
+  /// this method does nothing.
+  ///
+  /// If [newDefaultTextStyle] is different than the existing default text style,
+  /// this method marks this style phase a dirty, which will cause the associated presenter
+  /// to re-run this style phase, and all presentation phases after it.
+  ///
+  /// Has no effect if [Stylesheet.inheritDefaultTextStyle] is `false`.
+  set defaultTextStyle(TextStyle? newDefaultTextStyle) {
+    if (newDefaultTextStyle == _defaultTextStyle) {
+      return;
+    }
+
+    _defaultTextStyle = newDefaultTextStyle;
     markDirty();
   }
 
@@ -56,6 +80,17 @@ class SingleColumnStylesheetStyler extends SingleColumnLayoutStylePhase {
       Styles.inlineTextStyler: _stylesheet.inlineTextStyler,
       Styles.inlineWidgetBuilders: _stylesheet.inlineWidgetBuilders,
     };
+
+    if (_stylesheet.inheritDefaultTextStyle && _defaultTextStyle != null) {
+      // We have a default text style, use it as the base for all text
+      // styles. If the stylesheet has rules that apply text styles,
+      // those rules will merge with the default text style, overriding
+      // any conflicting styles. For example, if both the default text style
+      // and a stylesheet rule specify the font family, the rule's font family
+      // will be used.
+      aggregateStyles[Styles.textStyle] = _defaultTextStyle!;
+    }
+
     for (final rule in _stylesheet.rules) {
       if (rule.selector.matches(document, node)) {
         _mergeStyles(
