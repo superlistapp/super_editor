@@ -630,7 +630,12 @@ class SuperAndroidTextFieldState extends State<SuperAndroidTextField>
 
   Widget _buildSelectableText() {
     final textSpan = _textEditingController.text.isNotEmpty
-        ? _textEditingController.text.computeInlineSpan(context, widget.textStyleBuilder, widget.inlineWidgetBuilders)
+        ? _textEditingController.text.computeInlineSpan(
+            context,
+            widget.textStyleBuilder,
+            widget.inlineWidgetBuilders,
+            inheritDefaultTextStyle: true,
+          )
         : TextSpan(text: "", style: widget.textStyleBuilder({}));
 
     return Directionality(

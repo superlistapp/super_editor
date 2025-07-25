@@ -529,7 +529,12 @@ class SuperDesktopTextFieldState extends State<SuperDesktopTextField> implements
       textDirection: _textDirection,
       child: SuperText(
         key: _textKey,
-        richText: _controller.text.computeInlineSpan(context, widget.textStyleBuilder, widget.inlineWidgetBuilders),
+        richText: _controller.text.computeInlineSpan(
+          context,
+          widget.textStyleBuilder,
+          widget.inlineWidgetBuilders,
+          inheritDefaultTextStyle: true,
+        ),
         textAlign: _textAlign,
         textDirection: _textDirection,
         textScaler: _textScaler,
