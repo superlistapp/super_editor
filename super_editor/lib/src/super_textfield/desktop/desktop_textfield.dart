@@ -52,6 +52,7 @@ class SuperDesktopTextField extends StatefulWidget {
     this.textController,
     this.textStyleBuilder = defaultTextFieldStyleBuilder,
     this.inlineWidgetBuilders = const [],
+    this.inheritDefaultTextStyle = false,
     this.textAlign = TextAlign.left,
     this.hintBehavior = HintBehavior.displayHintUntilFocus,
     this.hintBuilder,
@@ -95,6 +96,9 @@ class SuperDesktopTextField extends StatefulWidget {
 
   /// {@macro super_text_field_inline_widget_builders}
   final InlineWidgetBuilderChain inlineWidgetBuilders;
+
+  /// {@macro super_text_field_inherit_default_text_style}
+  final bool inheritDefaultTextStyle;
 
   /// Policy for when the hint should be displayed.
   final HintBehavior hintBehavior;
@@ -533,7 +537,7 @@ class SuperDesktopTextFieldState extends State<SuperDesktopTextField> implements
           context,
           widget.textStyleBuilder,
           widget.inlineWidgetBuilders,
-          inheritDefaultTextStyle: true,
+          inheritDefaultTextStyle: widget.inheritDefaultTextStyle,
         ),
         textAlign: _textAlign,
         textDirection: _textDirection,

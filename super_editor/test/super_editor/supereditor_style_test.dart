@@ -333,16 +333,16 @@ A paragraph
           )
           .pump();
 
-      final spanStyle = _findSpanAtOffset(tester, offset: 0).style!;
+      final appliedStyle = _findSpanAtOffset(tester, offset: 0).style!;
 
       // Ensure the font family from the default text style was applied.
       expect(
-        spanStyle.fontFamily,
+        appliedStyle.fontFamily,
         goldenBricks,
       );
 
       // Ensure the font size from the style rule was applied.
-      expect(spanStyle.fontSize, 24);
+      expect(appliedStyle.fontSize, 24);
     });
 
     testWidgetsOnArbitraryDesktop('changes visual text when the enclosing default text style changes', (tester) async {
