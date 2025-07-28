@@ -111,6 +111,18 @@ export 'src/super_reader/read_only_document_mouse_interactor.dart';
 export 'src/super_reader/reader_context.dart';
 export 'src/super_reader/super_reader.dart';
 
+// HTML Serialization
+export 'src/infrastructure/serialization/html/document_to_html.dart';
+export 'src/infrastructure/serialization/html/html_blockquotes.dart';
+export 'src/infrastructure/serialization/html/html_code.dart';
+export 'src/infrastructure/serialization/html/html_headers.dart';
+export 'src/infrastructure/serialization/html/html_horizontal_rules.dart';
+export 'src/infrastructure/serialization/html/html_images.dart';
+export 'src/infrastructure/serialization/html/html_inline_text_styles.dart';
+export 'src/infrastructure/serialization/html/html_list_items.dart';
+export 'src/infrastructure/serialization/html/html_paragraphs.dart';
+export 'src/infrastructure/serialization/plain_text/document_to_plain_text.dart';
+
 // Export from super_text_layout so that downstream clients don't
 // have to add this package to get access to these classes.
 export 'package:super_text_layout/super_text_layout.dart'
