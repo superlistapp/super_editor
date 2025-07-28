@@ -12,11 +12,7 @@ dependencies:
   flutter:
     sdk: flutter
   super_clipboard: ^0.9.1
-  super_editor: 0.3.0-dev.28
-
-dependency_overrides:
-  super_editor:
-    path: ../super_editor
+  super_editor: 0.3.0-dev.29
 
 dev_dependencies:
   flutter_test:
