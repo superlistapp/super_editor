@@ -1,3 +1,7 @@
+## [0.3.0-dev.29]
+### July 27, 2025
+ * FEATURE: Serialize `Document`s to HTML.
+
 ## [0.3.0-dev.28]
 ### July 22, 2025
  * FIX: Inserting character (via IME) with a block node and text selected, now correctly deletes the selected content
