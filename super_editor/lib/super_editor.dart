@@ -121,6 +121,7 @@ export 'src/infrastructure/serialization/html/html_images.dart';
 export 'src/infrastructure/serialization/html/html_inline_text_styles.dart';
 export 'src/infrastructure/serialization/html/html_list_items.dart';
 export 'src/infrastructure/serialization/html/html_paragraphs.dart';
+export 'src/infrastructure/serialization/plain_text/document_to_plain_text.dart';
 
 // Export from super_text_layout so that downstream clients don't
 // have to add this package to get access to these classes.
