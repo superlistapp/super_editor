@@ -110,6 +110,7 @@ export 'src/super_reader/read_only_document_keyboard_interactor.dart';
 export 'src/super_reader/read_only_document_mouse_interactor.dart';
 export 'src/super_reader/reader_context.dart';
 export 'src/super_reader/super_reader.dart';
+export 'src/super_reader/tasks.dart';
 
 // Export from super_text_layout so that downstream clients don't
 // have to add this package to get access to these classes.
