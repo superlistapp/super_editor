@@ -1,3 +1,5 @@
+import 'package:super_editor/src/core/document.dart';
+import 'package:super_editor/src/core/document_selection.dart';
 import 'package:super_editor/src/infrastructure/serialization/html/html_blockquotes.dart';
 import 'package:super_editor/src/infrastructure/serialization/html/html_code.dart';
 import 'package:super_editor/src/infrastructure/serialization/html/html_headers.dart';
@@ -6,7 +8,6 @@ import 'package:super_editor/src/infrastructure/serialization/html/html_images.d
 import 'package:super_editor/src/infrastructure/serialization/html/html_inline_text_styles.dart';
 import 'package:super_editor/src/infrastructure/serialization/html/html_list_items.dart';
 import 'package:super_editor/src/infrastructure/serialization/html/html_paragraphs.dart';
-import 'package:super_editor/super_editor.dart';
 
 extension HtmlSerialization on Document {
   /// Converts this [Document] to an HTML representation.
