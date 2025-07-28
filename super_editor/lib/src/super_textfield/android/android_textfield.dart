@@ -633,17 +633,18 @@ class SuperAndroidTextFieldState extends State<SuperAndroidTextField>
   }
 
   Widget _buildSelectableText() {
+    final defaultTextStyle = widget.inheritDefaultTextStyle ? DefaultTextStyle.of(context).style : null;
     final textSpan = _textEditingController.text.isNotEmpty
         ? _textEditingController.text.computeInlineSpan(
             context,
             widget.textStyleBuilder,
             widget.inlineWidgetBuilders,
-            inheritDefaultTextStyle: widget.inheritDefaultTextStyle,
+            defaultTextStyle: defaultTextStyle,
           )
         : TextSpan(
             text: "",
-            style: widget.inheritDefaultTextStyle
-                ? DefaultTextStyle.of(context).style.merge(widget.textStyleBuilder({}))
+            style: defaultTextStyle != null
+                ? defaultTextStyle.merge(widget.textStyleBuilder({}))
                 : widget.textStyleBuilder({}),
           );
 

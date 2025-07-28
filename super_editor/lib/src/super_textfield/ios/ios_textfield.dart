@@ -637,7 +637,7 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField>
       context,
       widget.textStyleBuilder,
       widget.inlineWidgetBuilders,
-      inheritDefaultTextStyle: widget.inheritDefaultTextStyle,
+      defaultTextStyle: widget.inheritDefaultTextStyle ? DefaultTextStyle.of(context).style : null,
     );
 
     CaretStyle caretStyle = widget.caretStyle;

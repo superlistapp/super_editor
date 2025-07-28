@@ -537,7 +537,7 @@ class SuperDesktopTextFieldState extends State<SuperDesktopTextField> implements
           context,
           widget.textStyleBuilder,
           widget.inlineWidgetBuilders,
-          inheritDefaultTextStyle: widget.inheritDefaultTextStyle,
+          defaultTextStyle: widget.inheritDefaultTextStyle ? DefaultTextStyle.of(context).style : null,
         ),
         textAlign: _textAlign,
         textDirection: _textDirection,
