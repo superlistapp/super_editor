@@ -1,8 +1,10 @@
 import 'dart:convert';
 
+import 'package:collection/collection.dart';
 import 'package:markdown/markdown.dart' as md;
 import 'package:super_editor/super_editor.dart';
-import 'package:super_editor_markdown/src/image_syntax.dart';
+import 'package:super_editor_markdown/src/markdown_inline_parser.dart';
+import 'package:super_editor_markdown/src/table.dart';
 import 'package:super_editor_markdown/super_editor_markdown.dart';
 
 import 'super_editor_syntax.dart';
@@ -23,26 +25,16 @@ MutableDocument deserializeMarkdownToDocument(
   List<ElementToNodeConverter> customElementToNodeConverters = const [],
   bool encodeHtml = false,
 }) {
-  final markdownLines = const LineSplitter().convert(markdown).map<md.Line>((String l) {
-    return md.Line(l);
-  }).toList();
-
-  final markdownDoc = md.Document(
-    encodeHtml: encodeHtml,
-    blockSyntaxes: [
-      ...customBlockSyntax,
-      if (syntax == MarkdownSyntax.superEditor) ...[
-        _HeaderWithAlignmentSyntax(),
-        const _ParagraphWithAlignmentSyntax(),
-      ],
-      const _EmptyLinePreservingParagraphSyntax(),
-      const md.UnorderedListWithCheckboxSyntax(),
-    ],
-  );
-  final blockParser = md.BlockParser(markdownLines, markdownDoc);
+  final lines = const LineSplitter().convert(markdown);
 
   // Parse markdown string to structured markdown.
-  final markdownNodes = blockParser.parseLines();
+  final markdownNodes = _parseMarkdownLines(
+    lines,
+    syntax: syntax,
+    customBlockSyntax: customBlockSyntax,
+    customElementToNodeConverters: customElementToNodeConverters,
+    encodeHtml: encodeHtml,
+  );
 
   // Convert structured markdown to a Document.
   final nodeVisitor = _MarkdownToDocument(customElementToNodeConverters, encodeHtml, syntax);
@@ -62,7 +54,8 @@ MutableDocument deserializeMarkdownToDocument(
   }
 
   // Add 1 hanging line for every 2 blank lines at the end, need this to preserve behavior pre markdown 7.2.1
-  final hangingEmptyLines = markdownLines.reversed.takeWhile((md.Line l) => l.isBlankLine);
+  final emptyPattern = RegExp(r'^(?:[ \t]*)$');
+  final hangingEmptyLines = lines.reversed.takeWhile((line) => emptyPattern.hasMatch(line));
   if (hangingEmptyLines.isNotEmpty && documentNodes.lastOrNull is ListItemNode) {
     for (var i = 0; i < hangingEmptyLines.length ~/ 2; i++) {
       documentNodes.add(ParagraphNode(id: Editor.createNodeId(), text: AttributedText()));
@@ -70,6 +63,59 @@ MutableDocument deserializeMarkdownToDocument(
   }
 
   return MutableDocument(nodes: documentNodes);
+}
+
+/// Parses the given [markdown] without converting it to a [MutableDocument].
+///
+/// The given [syntax] controls how the [markdown] is parsed, e.g., [MarkdownSyntax.normal]
+/// for strict Markdown parsing, or [MarkdownSyntax.superEditor] to use Super Editor's
+/// extended syntax.
+///
+/// To add support for parsing non-standard Markdown blocks, provide [customBlockSyntax]s
+/// that parse Markdown text into [md.Element]s, and provide [customElementToNodeConverters] that
+/// turn those [md.Element]s into [DocumentNode]s.
+///
+/// Returns the parsed nodes.
+List<md.Node> parseMarkdownNodes(
+  String markdown, {
+  MarkdownSyntax syntax = MarkdownSyntax.superEditor,
+  List<md.BlockSyntax> customBlockSyntax = const [],
+  List<ElementToNodeConverter> customElementToNodeConverters = const [],
+  bool encodeHtml = false,
+}) {
+  final lines = const LineSplitter().convert(markdown);
+
+  return _parseMarkdownLines(lines);
+}
+
+List<md.Node> _parseMarkdownLines(
+  List<String> lines, {
+  MarkdownSyntax syntax = MarkdownSyntax.superEditor,
+  List<md.BlockSyntax> customBlockSyntax = const [],
+  List<ElementToNodeConverter> customElementToNodeConverters = const [],
+  bool encodeHtml = false,
+}) {
+  final markdownLines = lines.map<md.Line>((String l) {
+    return md.Line(l);
+  }).toList();
+
+  final markdownDoc = md.Document(
+    encodeHtml: encodeHtml,
+    blockSyntaxes: [
+      ...customBlockSyntax,
+      if (syntax == MarkdownSyntax.superEditor) ...[
+        _HeaderWithAlignmentSyntax(),
+        const _ParagraphWithAlignmentSyntax(),
+      ],
+      const _EmptyLinePreservingParagraphSyntax(),
+      const md.UnorderedListWithCheckboxSyntax(),
+      const md.TableSyntax(),
+    ],
+  );
+  final blockParser = md.BlockParser(markdownLines, markdownDoc);
+
+  // Parse markdown string to structured markdown.
+  return blockParser.parseLines();
 }
 
 /// Converts structured markdown to a list of [DocumentNode]s.
@@ -161,7 +207,7 @@ class _MarkdownToDocument implements md.NodeVisitor {
         _addHeader(element, level: 6);
         break;
       case 'p':
-        final inlineVisitor = _parseInline(element.textContent);
+        final inlineVisitor = parseInlineMarkdown(element.textContent);
 
         if (inlineVisitor.isImage) {
           _addImage(
@@ -232,6 +278,11 @@ class _MarkdownToDocument implements md.NodeVisitor {
       case 'hr':
         _addHorizontalRule();
         break;
+      case 'table':
+        _addTable(element);
+
+        // Skip any children because we already added processed the whole table.
+        return false;
     }
 
     return true;
@@ -406,132 +457,19 @@ class _MarkdownToDocument implements md.NodeVisitor {
     );
   }
 
+  void _addTable(md.Element element) {
+    // ignore: unused_local_variable
+    final table = convertTable(element);
+
+    // TODO: add table node to _content.
+  }
+
   AttributedText _parseInlineText(String text) {
-    final inlineVisitor = _parseInline(text);
-    return inlineVisitor.attributedText;
-  }
-
-  _InlineMarkdownToDocument _parseInline(String text) {
-    final inlineParser = md.InlineParser(
+    return parseInlineMarkdown(
       text,
-      md.Document(
-        inlineSyntaxes: [
-          SingleStrikethroughSyntax(), // this needs to be before md.StrikethroughSyntax to be recognized
-          md.StrikethroughSyntax(),
-          UnderlineSyntax(),
-          if (syntax == MarkdownSyntax.superEditor) //
-            SuperEditorImageSyntax(),
-        ],
-        encodeHtml: _encodeHtml,
-      ),
-    );
-    final inlineVisitor = _InlineMarkdownToDocument();
-    final inlineNodes = inlineParser.parse();
-    for (final inlineNode in inlineNodes) {
-      inlineNode.accept(inlineVisitor);
-    }
-    return inlineVisitor;
-  }
-}
-
-/// Parses inline markdown content.
-///
-/// Apply [_InlineMarkdownToDocument] to a text [Element] to
-/// obtain an [AttributedText] that represents the inline
-/// styles within the given text.
-///
-/// Apply [_InlineMarkdownToDocument] to an [Element] whose
-/// content is an image tag to obtain image data.
-///
-/// [_InlineMarkdownToDocument] does not support parsing text
-/// that contains image tags. If any non-image text is found,
-/// the content is treated as styled text.
-class _InlineMarkdownToDocument implements md.NodeVisitor {
-  _InlineMarkdownToDocument();
-
-  // For our purposes, we only support block-level images. Therefore,
-  // if we find an image without any text, we're parsing an image.
-  // Otherwise, if there is any text, then we're parsing a paragraph
-  // and we ignore the image.
-  bool get isImage => _imageUrl != null && attributedText.isEmpty;
-
-  String? _imageUrl;
-  String? get imageUrl => _imageUrl;
-
-  String? _imageAltText;
-  String? get imageAltText => _imageAltText;
-
-  String? get width => _width;
-  String? _width;
-
-  String? get height => _height;
-  String? _height;
-
-  AttributedText get attributedText => _textStack.first;
-
-  final List<AttributedText> _textStack = [AttributedText()];
-
-  @override
-  bool visitElementBefore(md.Element element) {
-    if (element.tag == 'img') {
-      // TODO: handle missing "src" attribute
-      _imageUrl = element.attributes['src']!;
-      _imageAltText = element.attributes['alt'] ?? '';
-      _width = element.attributes['width'];
-      _height = element.attributes['height'];
-      return true;
-    }
-
-    _textStack.add(AttributedText());
-
-    return true;
-  }
-
-  @override
-  void visitText(md.Text text) {
-    final attributedText = _textStack.removeLast();
-    _textStack.add(attributedText.copyAndAppend(AttributedText(text.text)));
-  }
-
-  @override
-  void visitElementAfter(md.Element element) {
-    // Reset to normal text style because a plain text element does
-    // not receive a call to visitElementBefore().
-    final styledText = _textStack.removeLast();
-
-    if (element.tag == 'strong') {
-      styledText.addAttribution(
-        boldAttribution,
-        SpanRange(0, styledText.length - 1),
-      );
-    } else if (element.tag == 'em') {
-      styledText.addAttribution(
-        italicsAttribution,
-        SpanRange(0, styledText.length - 1),
-      );
-    } else if (element.tag == "del") {
-      styledText.addAttribution(
-        strikethroughAttribution,
-        SpanRange(0, styledText.length - 1),
-      );
-    } else if (element.tag == "u") {
-      styledText.addAttribution(
-        underlineAttribution,
-        SpanRange(0, styledText.length - 1),
-      );
-    } else if (element.tag == 'a') {
-      styledText.addAttribution(
-        LinkAttribution.fromUri(Uri.parse(element.attributes['href']!)),
-        SpanRange(0, styledText.length - 1),
-      );
-    }
-
-    if (_textStack.isNotEmpty) {
-      final surroundingText = _textStack.removeLast();
-      _textStack.add(surroundingText.copyAndAppend(styledText));
-    } else {
-      _textStack.add(styledText);
-    }
+      syntax: syntax,
+      encodeHtml: _encodeHtml,
+    ).attributedText;
   }
 }
 
