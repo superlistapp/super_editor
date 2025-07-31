@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:collection/collection.dart';
 import 'package:markdown/markdown.dart' as md;
 import 'package:super_editor/super_editor.dart';
+import 'package:super_editor_markdown/src/image_syntax.dart';
 import 'package:super_editor_markdown/src/markdown_inline_parser.dart';
 import 'package:super_editor_markdown/src/table.dart';
 import 'package:super_editor_markdown/super_editor_markdown.dart';
@@ -54,8 +55,7 @@ MutableDocument deserializeMarkdownToDocument(
   }
 
   // Add 1 hanging line for every 2 blank lines at the end, need this to preserve behavior pre markdown 7.2.1
-  final emptyPattern = RegExp(r'^(?:[ \t]*)$');
-  final hangingEmptyLines = lines.reversed.takeWhile((line) => emptyPattern.hasMatch(line));
+  final hangingEmptyLines = lines.reversed.takeWhile((line) => _blankLinePattern.hasMatch(line));
   if (hangingEmptyLines.isNotEmpty && documentNodes.lastOrNull is ListItemNode) {
     for (var i = 0; i < hangingEmptyLines.length ~/ 2; i++) {
       documentNodes.add(ParagraphNode(id: Editor.createNodeId(), text: AttributedText()));
@@ -65,7 +65,7 @@ MutableDocument deserializeMarkdownToDocument(
   return MutableDocument(nodes: documentNodes);
 }
 
-/// Parses the given [markdown] without converting it to a [MutableDocument].
+/// Parses the given [markdown] to a tree representing the HTML structure of the markdown.
 ///
 /// The given [syntax] controls how the [markdown] is parsed, e.g., [MarkdownSyntax.normal]
 /// for strict Markdown parsing, or [MarkdownSyntax.superEditor] to use Super Editor's
@@ -207,23 +207,14 @@ class _MarkdownToDocument implements md.NodeVisitor {
         _addHeader(element, level: 6);
         break;
       case 'p':
-        final inlineVisitor = parseInlineMarkdown(element.textContent, syntax: syntax, encodeHtml: _encodeHtml);
-
-        if (inlineVisitor.isImage) {
-          _addImage(
-            // TODO: handle null image URL
-            imageUrl: inlineVisitor.imageUrl!,
-            altText: inlineVisitor.imageAltText!,
-            expectedBitmapSize: inlineVisitor.width != null || inlineVisitor.height != null
-                ? ExpectedSize(
-                    inlineVisitor.width != null ? int.tryParse(inlineVisitor.width!) : null,
-                    inlineVisitor.height != null ? int.tryParse(inlineVisitor.height!) : null,
-                  )
-                : null,
-          );
+        final blockImage = _maybeParseBlockImage(element.textContent);
+        if (blockImage != null) {
+          _addImage(blockImage);
         } else {
-          _addParagraph(inlineVisitor.attributedText, element.attributes);
+          final attributedText = parseInlineMarkdown(element.textContent, syntax: syntax, encodeHtml: _encodeHtml);
+          _addParagraph(attributedText, element.attributes);
         }
+
         break;
       case 'blockquote':
         _addBlockquote(element);
@@ -281,7 +272,7 @@ class _MarkdownToDocument implements md.NodeVisitor {
       case 'table':
         _addTable(element);
 
-        // Skip any children because we already added processed the whole table.
+        // Skip any children because we already processed the whole table.
         return false;
     }
 
@@ -391,17 +382,18 @@ class _MarkdownToDocument implements md.NodeVisitor {
     );
   }
 
-  void _addImage({
-    required String imageUrl,
-    required String altText,
-    ExpectedSize? expectedBitmapSize,
-  }) {
+  void _addImage(_MarkdownImage image) {
     _content.add(
       ImageNode(
         id: Editor.createNodeId(),
-        imageUrl: imageUrl,
-        altText: altText,
-        expectedBitmapSize: expectedBitmapSize,
+        imageUrl: image.url,
+        altText: image.altText ?? '',
+        expectedBitmapSize: image.width != null || image.height != null
+            ? ExpectedSize(
+                image.width != null ? int.tryParse(image.width!) : null,
+                image.height != null ? int.tryParse(image.height!) : null,
+              )
+            : null,
       ),
     );
   }
@@ -469,7 +461,39 @@ class _MarkdownToDocument implements md.NodeVisitor {
       text,
       syntax: syntax,
       encodeHtml: _encodeHtml,
-    ).attributedText;
+    );
+  }
+
+  _MarkdownImage? _maybeParseBlockImage(String markdown) {
+    if (!markdown.startsWith("![")) {
+      // A block image should start with the image syntax at the beginning of the line.
+      return null;
+    }
+
+    final inlineParser = md.InlineParser(
+      markdown,
+      md.Document(
+        inlineSyntaxes: [
+          if (syntax == MarkdownSyntax.superEditor) //
+            SuperEditorImageSyntax(),
+        ],
+      ),
+    );
+    final inlineVisitor = InlineMarkdownToDocument();
+    final inlineNodes = inlineParser.parse();
+    for (final inlineNode in inlineNodes) {
+      inlineNode.accept(inlineVisitor);
+    }
+    if (!inlineVisitor.isImage) {
+      return null;
+    }
+
+    return _MarkdownImage(
+      url: inlineVisitor.imageUrl!,
+      altText: inlineVisitor.imageAltText,
+      width: inlineVisitor.width,
+      height: inlineVisitor.height,
+    );
   }
 }
 
@@ -831,6 +855,20 @@ class _HeaderWithAlignmentSyntax extends md.BlockSyntax {
         return 'left';
     }
   }
+}
+
+class _MarkdownImage {
+  _MarkdownImage({
+    required this.url,
+    this.altText,
+    this.width,
+    this.height,
+  });
+
+  final String url;
+  final String? altText;
+  final String? width;
+  final String? height;
 }
 
 /// Matches empty lines or lines containing only whitespace.

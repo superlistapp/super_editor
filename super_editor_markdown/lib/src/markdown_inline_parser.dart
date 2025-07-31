@@ -5,12 +5,12 @@ import 'package:super_editor_markdown/super_editor_markdown.dart';
 
 /// Parses inline markdown content.
 ///
-/// Supports strikethrough, underline, bold, italics, underlines links and images.
+/// Supports strikethrough, underline, bold, italics, code, links and images.
 ///
 /// The given [syntax] controls how the [text] is parsed, e.g., [MarkdownSyntax.normal]
 /// for strict Markdown parsing, or [MarkdownSyntax.superEditor] to use Super Editor's
 /// extended syntax.
-InlineMarkdownToDocument parseInlineMarkdown(
+AttributedText parseInlineMarkdown(
   String text, {
   MarkdownSyntax syntax = MarkdownSyntax.superEditor,
   bool encodeHtml = false,
@@ -33,7 +33,7 @@ InlineMarkdownToDocument parseInlineMarkdown(
   for (final inlineNode in inlineNodes) {
     inlineNode.accept(inlineVisitor);
   }
-  return inlineVisitor;
+  return inlineVisitor.attributedText;
 }
 
 /// Parses inline markdown content.
@@ -114,6 +114,11 @@ class InlineMarkdownToDocument implements md.NodeVisitor {
     } else if (element.tag == "del") {
       styledText.addAttribution(
         strikethroughAttribution,
+        SpanRange(0, styledText.length - 1),
+      );
+    } else if (element.tag == "code") {
+      styledText.addAttribution(
+        codeAttribution,
         SpanRange(0, styledText.length - 1),
       );
     } else if (element.tag == "u") {

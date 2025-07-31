@@ -19,7 +19,7 @@ MarkdownTable convertTable(md.Element element) {
     throw Exception('A table must have at least one child element');
   }
 
-  final headers = <MarkdownColumn>[];
+  final headers = <MarkdownHeader>[];
   final rows = <List<AttributedText>>[];
 
   final headerElement = element.children![0];
@@ -40,8 +40,8 @@ MarkdownTable convertTable(md.Element element) {
       throw Exception('Table header cells must be <th> elements');
     }
     headers.add(
-      MarkdownColumn(
-        header: parseInlineMarkdown(headerCell.textContent).attributedText,
+      MarkdownHeader(
+        header: parseInlineMarkdown(headerCell.textContent),
         textAlign: switch (headerCell.attributes['align']) {
           'left' => TextAlign.left,
           'center' => TextAlign.center,
@@ -69,7 +69,7 @@ MarkdownTable convertTable(md.Element element) {
         if (cellElement is! md.Element || cellElement.tag != 'td') {
           throw Exception('Table body cells must be <td> elements');
         }
-        row.add(parseInlineMarkdown(cellElement.textContent).attributedText);
+        row.add(parseInlineMarkdown(cellElement.textContent));
       }
       rows.add(row);
     }
@@ -87,7 +87,7 @@ class MarkdownTable {
     required this.rows,
   });
 
-  final List<MarkdownColumn> headers;
+  final List<MarkdownHeader> headers;
   final List<List<AttributedText>> rows;
 
   @override
@@ -107,8 +107,8 @@ class MarkdownTable {
   int get hashCode => headers.hashCode ^ rows.hashCode;
 }
 
-class MarkdownColumn {
-  MarkdownColumn({
+class MarkdownHeader {
+  MarkdownHeader({
     required this.header,
     this.textAlign = TextAlign.left,
   });
@@ -124,7 +124,7 @@ class MarkdownColumn {
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      other is MarkdownColumn &&
+      other is MarkdownHeader &&
           runtimeType == other.runtimeType &&
           header == other.header &&
           textAlign == other.textAlign;
