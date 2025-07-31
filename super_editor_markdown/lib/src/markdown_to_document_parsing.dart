@@ -207,7 +207,7 @@ class _MarkdownToDocument implements md.NodeVisitor {
         _addHeader(element, level: 6);
         break;
       case 'p':
-        final inlineVisitor = parseInlineMarkdown(element.textContent);
+        final inlineVisitor = parseInlineMarkdown(element.textContent, syntax: syntax, encodeHtml: _encodeHtml);
 
         if (inlineVisitor.isImage) {
           _addImage(
