@@ -8,6 +8,7 @@ import 'package:super_editor/src/infrastructure/serialization/html/html_images.d
 import 'package:super_editor/src/infrastructure/serialization/html/html_inline_text_styles.dart';
 import 'package:super_editor/src/infrastructure/serialization/html/html_list_items.dart';
 import 'package:super_editor/src/infrastructure/serialization/html/html_paragraphs.dart';
+import 'package:super_editor/src/infrastructure/serialization/html/html_table.dart';
 
 extension HtmlSerialization on Document {
   /// Converts this [Document] to an HTML representation.
@@ -98,6 +99,7 @@ const NodeHtmlSerializerChain defaultNodeHtmlSerializerChain = [
   defaultBlockquoteToHtmlSerializer,
   defaultCodeBlockToHtmlSerializer,
   defaultParagraphToHtmlSerializer,
+  defaultTableToHtmlSerializer,
 ];
 
 /// A priority-order list of [NodeHtmlSerializer]s, which can be used to serialize
