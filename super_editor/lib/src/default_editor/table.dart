@@ -6,53 +6,65 @@ import 'package:super_editor/src/default_editor/box_component.dart';
 import 'package:super_editor/src/default_editor/selection_upstream_downstream.dart';
 import 'package:super_editor/src/default_editor/text.dart';
 
+/// A [DocumentNode] that represents a read-only block table.
+///
+/// Being a block node means that the table is either fully selected or not selected at all,
+/// i.e., there is no selection of individual cells.
 @immutable
 class TableBlockNode extends BlockNode {
+  /// Creates a [TableBlockNode] with the given [cells].
+  ///
+  /// [cells] is a list of rows, and each row is a list of [TextNode]s
+  /// representing the cells in that row. Indexed as `[row][column]`.
   TableBlockNode({
     required this.id,
-    required List<List<TextNode>> rows,
+    required List<List<TextNode>> cells,
     super.metadata,
-  }) : _rows = List.from(rows.map((row) => List<TextNode>.from(row))) {
-    initAddToMetadata({"blockType": const NamedAttribution("tableBlock")});
-  }
-
-  List<List<TextNode>> get rows => UnmodifiableListView(_rows);
-  final List<List<TextNode>> _rows;
-
-  List<TextNode> getRow(int index) {
-    if (index < 0 || index >= _rows.length) {
-      throw RangeError.range(index, 0, _rows.length - 1, 'index');
-    }
-    return UnmodifiableListView(_rows[index]);
-  }
-
-  List<TextNode> getColumn(int index) {
-    if (_rows.isEmpty || index < 0 || index >= _rows[0].length) {
-      throw RangeError.range(index, 0, _rows[0].length - 1, 'index');
-    }
-    return UnmodifiableListView(_rows.map((row) => row[index]));
-  }
-
-  TextNode getCell(int rowIndex, int cellIndex) {
-    if (rowIndex < 0 || rowIndex >= _rows.length) {
-      throw RangeError.range(rowIndex, 0, _rows.length - 1, 'rowIndex');
-    }
-    final row = _rows[rowIndex];
-    if (cellIndex < 0 || cellIndex >= row.length) {
-      throw RangeError.range(cellIndex, 0, row.length - 1, 'cellIndex');
-    }
-    return row[cellIndex];
+  }) : _cells = List.from(cells.map((row) => List<TextNode>.from(row))) {
+    initAddToMetadata({NodeMetadata.blockType: tableBlockAttribution});
   }
 
   @override
   final String id;
+
+  int get rowCount => _cells.length;
+
+  final List<List<TextNode>> _cells;
+
+  List<TextNode> getRow(int index) {
+    if (index < 0 || index >= _cells.length) {
+      throw RangeError.range(index, 0, _cells.length - 1, 'index');
+    }
+    return UnmodifiableListView(_cells[index]);
+  }
+
+  List<TextNode> getColumn(int index) {
+    if (_cells.isEmpty || index < 0 || index >= _cells[0].length) {
+      throw RangeError.range(index, 0, _cells[0].length - 1, 'index');
+    }
+    return UnmodifiableListView(_cells.map((row) => row[index]));
+  }
+
+  TextNode getCell({
+    required int rowIndex,
+    required int columnIndex,
+  }) {
+    if (rowIndex < 0 || rowIndex >= _cells.length) {
+      throw RangeError.range(rowIndex, 0, _cells.length - 1, 'rowIndex');
+    }
+    final row = _cells[rowIndex];
+    if (columnIndex < 0 || columnIndex >= row.length) {
+      throw RangeError.range(columnIndex, 0, row.length - 1, 'cellIndex');
+    }
+    return row[columnIndex];
+  }
 
   @override
   DocumentNode copyAndReplaceMetadata(Map<String, dynamic> newMetadata) {
     return TableBlockNode(
       id: id,
       metadata: newMetadata,
-      rows: _rows,
+      cells: _cells,
     );
   }
 
@@ -60,7 +72,7 @@ class TableBlockNode extends BlockNode {
   DocumentNode copyWithAddedMetadata(Map<String, dynamic> newProperties) {
     return TableBlockNode(
       id: id,
-      rows: _rows,
+      cells: _cells,
       metadata: {
         ...metadata,
         ...newProperties,
@@ -81,11 +93,11 @@ class TableBlockNode extends BlockNode {
     }
 
     final buffer = StringBuffer();
-    for (int i = 0; i < _rows.length; i++) {
-      final row = _rows[i];
+    for (int i = 0; i < _cells.length; i++) {
+      final row = _cells[i];
       if (i > 0) {
         // Separate rows with a newline.
-        buffer.write('\n');
+        buffer.writeln('');
       }
 
       for (int j = 0; j < row.length; j++) {
@@ -107,9 +119,12 @@ class TableBlockNode extends BlockNode {
       other is TableBlockNode &&
           runtimeType == other.runtimeType &&
           id == other.id &&
-          const DeepCollectionEquality().equals(_rows, other._rows) &&
-          metadata == other.metadata;
+          metadata == other.metadata &&
+          const DeepCollectionEquality().equals(_cells, other._cells);
 
   @override
-  int get hashCode => id.hashCode ^ _rows.hashCode ^ metadata.hashCode;
+  int get hashCode => id.hashCode ^ _cells.hashCode ^ metadata.hashCode;
 }
+
+const tableBlockAttribution = NamedAttribution("tableBlock");
+const tableHeaderAttribution = NamedAttribution("tableHeader");

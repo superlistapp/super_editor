@@ -7,6 +7,8 @@ import 'super_editor_syntax.dart';
 
 /// Serializes the given [doc] to Markdown text.
 ///
+/// When [selection] is provided, only the selected range of the document is serialized.
+///
 /// The given [syntax] controls how the [doc] is serialized, e.g., [MarkdownSyntax.normal]
 /// for standard Markdown syntax, or [MarkdownSyntax.superEditor] to use Super Editor's
 /// extended syntax.
@@ -70,6 +72,7 @@ String serializeDocumentToMarkdown(
         extent: selectedRange.end.nodePosition,
       );
     } else {
+      // The node is fully selected, so we don't need to specify a selection.
       nodeSelection = null;
     }
 
@@ -92,6 +95,12 @@ String serializeDocumentToMarkdown(
 
 /// Serializes a given [DocumentNode] to a Markdown `String`.
 abstract class DocumentNodeMarkdownSerializer {
+  /// Serializes the given [node] to a Markdown `String`.
+  ///
+  /// When [selection] is `null`, the entire node is converted to markdown. When
+  /// [selection] is non-`null`, only the selected range is converted to markdown.
+  ///
+  /// Returns `null` if the [node] is not supported by this serializer.
   String? serialize(
     Document document,
     DocumentNode node, {
@@ -352,7 +361,7 @@ class TaskNodeSerializer extends NodeTypedDocumentNodeMarkdownSerializer<TaskNod
         ? node.text.copyText(textSelection.start, textSelection.end)
         : node.text;
 
-    return '- [${node.isComplete ? 'x' : ' '}] ${textToConvert.toPlainText()}';
+    return '- [${node.isComplete ? 'x' : ' '}] ${textToConvert.toMarkdown()}';
   }
 }
 
@@ -644,14 +653,14 @@ class TableBlockNodeSerializer extends NodeTypedDocumentNodeMarkdownSerializer<T
       }
     }
 
-    if (node.rows.isEmpty) {
+    if (node.rowCount == 0) {
       // The table must have at least one row (the header row) to be serialized.
       return '';
     }
 
     final buffer = StringBuffer();
 
-    final headerRow = node.rows.first;
+    final headerRow = node.getRow(0);
 
     // Serialize the header values.
     buffer.write('|');
@@ -667,8 +676,8 @@ class TableBlockNodeSerializer extends NodeTypedDocumentNodeMarkdownSerializer<T
     for (int i = 0; i < headerRow.length; i++) {
       buffer.write(' ');
 
-      final firstDataCell = node.rows.length > 1 //
-          ? node.rows[1][i]
+      final firstDataCell = node.rowCount > 1 //
+          ? node.getCell(rowIndex: 1, columnIndex: i)
           : null;
 
       buffer.write(_getHeaderSeparatorColumnContent(firstDataCell));
@@ -676,10 +685,10 @@ class TableBlockNodeSerializer extends NodeTypedDocumentNodeMarkdownSerializer<T
     }
 
     // Serialize the data rows.
-    if (node.rows.length > 1) {
-      for (int i = 1; i < node.rows.length; i++) {
+    if (node.rowCount > 1) {
+      for (int i = 1; i < node.rowCount; i++) {
         buffer.writeln();
-        final row = node.rows[i];
+        final row = node.getRow(i);
 
         buffer.write('|');
         for (final cell in row) {

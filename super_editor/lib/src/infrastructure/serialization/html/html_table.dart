@@ -21,8 +21,9 @@ String? defaultTableToHtmlSerializer(
     }
     if (selection.isCollapsed) {
       // This selection doesn't include the table - it's a collapsed selection
-      // either on the upstream or downstream edge.
-      return null;
+      // either on the upstream or downstream edge. Return an empty string to
+      // signal we handled the serialization, but there's no content to include.
+      return '';
     }
   }
 
@@ -33,40 +34,71 @@ extension TableBlockNodeToHtml on TableBlockNode {
   String toHtml(Document document, InlineHtmlSerializerChain inlineSerializers) {
     final htmlBuffer = StringBuffer();
     htmlBuffer.write('<table>');
-    if (rows.isNotEmpty) {
-      final headerRow = rows.first;
-      htmlBuffer.write('<thead>');
-      htmlBuffer.write('<tr>');
-      for (final cell in headerRow) {
-        final cellContent = cell.text.toHtml(
-          serializers: inlineSerializers,
-        );
-        htmlBuffer.write('<th${_getTextAlignAttribute(cell)}>$cellContent</th>');
-      }
-      htmlBuffer.write('</tr>');
-      htmlBuffer.write('</thead>');
 
-      if (rows.length > 1) {
-        htmlBuffer.write('<tbody>');
-        for (int i = 1; i < rows.length; i++) {
-          final row = rows[i];
-          htmlBuffer.write('<tr>');
-          for (final cell in row) {
-            final cellContent = cell.text.toHtml(
-              serializers: inlineSerializers,
-            );
-            htmlBuffer.write('<td${_getTextAlignAttribute(cell)}>$cellContent</td>');
-          }
-          htmlBuffer.write('</tr>');
+    final headers = <List<TextNode>>[];
+    final dataRows = <List<TextNode>>[];
+
+    for (int i = 0; i < rowCount; i++) {
+      final row = getRow(i);
+
+      if (dataRows.isNotEmpty) {
+        // We already have data rows. Each row after the first data row is also
+        // a data row.
+        dataRows.add(row);
+        continue;
+      }
+
+      bool doesRowContainOnlyHeaders = true;
+      for (final cell in row) {
+        if (cell.getMetadataValue(NodeMetadata.blockType) != tableHeaderAttribution) {
+          doesRowContainOnlyHeaders = false;
+          break;
         }
-        htmlBuffer.write('</tbody>');
+      }
+
+      if (doesRowContainOnlyHeaders) {
+        headers.add(row);
+      } else {
+        dataRows.add(row);
       }
     }
+
+    if (headers.isNotEmpty) {
+      htmlBuffer.write('<thead>');
+      for (final headerRow in headers) {
+        htmlBuffer.write('<tr>');
+        for (final cell in headerRow) {
+          final cellContent = cell.text.toHtml(
+            serializers: inlineSerializers,
+          );
+          htmlBuffer.write('<th${_getTextAlignStyle(cell)}>$cellContent</th>');
+        }
+        htmlBuffer.write('</tr>');
+      }
+      htmlBuffer.write('</thead>');
+    }
+
+    if (dataRows.isNotEmpty) {
+      htmlBuffer.write('<tbody>');
+      for (final row in dataRows) {
+        htmlBuffer.write('<tr>');
+        for (final cell in row) {
+          final cellContent = cell.text.toHtml(
+            serializers: inlineSerializers,
+          );
+          final tag = cell.getMetadataValue(NodeMetadata.blockType) == tableHeaderAttribution ? 'th' : 'td';
+          htmlBuffer.write('<$tag${_getTextAlignStyle(cell)}>$cellContent</$tag>');
+        }
+        htmlBuffer.write('</tr>');
+      }
+      htmlBuffer.write('</tbody>');
+    }
+
     htmlBuffer.write('</table>');
     return htmlBuffer.toString();
   }
 
-  String _getTextAlignAttribute(TextNode cell) {
+  String _getTextAlignStyle(TextNode cell) {
     final textAlign = cell.getMetadataValue('textAlign');
     if (textAlign == TextAlign.left) {
       // Default alignment is left, so we don't need to specify it.
