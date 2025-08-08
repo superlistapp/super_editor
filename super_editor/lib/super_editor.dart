@@ -110,6 +110,7 @@ export 'src/super_reader/read_only_document_keyboard_interactor.dart';
 export 'src/super_reader/read_only_document_mouse_interactor.dart';
 export 'src/super_reader/reader_context.dart';
 export 'src/super_reader/super_reader.dart';
+export 'src/super_reader/tasks.dart';
 
 // HTML Serialization
 export 'src/infrastructure/serialization/html/document_to_html.dart';
