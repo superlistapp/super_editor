@@ -1,5 +1,6 @@
 import 'package:super_clipboard/super_clipboard.dart';
 import 'package:super_editor/super_editor.dart';
+import 'package:super_editor_markdown/super_editor_markdown.dart';
 
 extension RichTextCopy on Document {
   Future<void> copyAsRichText({
@@ -20,9 +21,10 @@ extension RichTextCopy on Document {
       inlineSerializers: SuperEditorClipboardConfig.inlineHtmlSerializers,
     )));
 
-    // Serialize a backup copy in plain text so that this clipboard content
-    // can be pasted into plain-text apps, too.
-    item.add(Formats.plainText(toPlainText(selection: selection)));
+    // Serialize to Markdown as a plain text representation of rich text.
+    item.add(Formats.plainText(
+      serializeDocumentToMarkdown(this, selection: selection),
+    ));
 
     // Write the document to the clipboard.
     await clipboard.write([item]);

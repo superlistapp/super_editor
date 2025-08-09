@@ -14,8 +14,7 @@ import 'package:super_editor/src/default_editor/text.dart';
 class TableBlockNode extends BlockNode {
   /// Creates a [TableBlockNode] with the given [cells].
   ///
-  /// [cells] is a list of rows, and each row is a list of [TextNode]s
-  /// representing the cells in that row. Indexed as `[row][column]`.
+  /// The [cells] grid is indexed as `cells[row][column]`.
   TableBlockNode({
     required this.id,
     required List<List<TextNode>> cells,
@@ -27,9 +26,10 @@ class TableBlockNode extends BlockNode {
   @override
   final String id;
 
-  int get rowCount => _cells.length;
-
   final List<List<TextNode>> _cells;
+
+  int get rowCount => _cells.length;
+  int get columnCount => _cells.isEmpty ? 0 : _cells[0].length;
 
   List<TextNode> getRow(int index) {
     if (index < 0 || index >= _cells.length) {

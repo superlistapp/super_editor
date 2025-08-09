@@ -5,6 +5,17 @@ import 'package:super_editor/src/default_editor/table.dart';
 import 'package:super_editor/src/default_editor/text.dart';
 import 'package:super_editor/src/infrastructure/serialization/html/html_inline_text_styles.dart';
 
+/// Serializes a [TableBlockNode] to HTML.
+///
+/// Table rows that contain only header cells (i.e., cells with the [tableHeaderAttribution]
+/// metadata) and appear at the beginning of the table are serialized inside a `<thead>` element.
+///
+/// All other rows are serialized inside a `<tbody>` element.
+///
+/// Each cell with the [tableHeaderAttribution] metadata is serialized as a `<th>` element.
+///
+/// If the [selection] is non-`null`, it must be an [UpstreamDownstreamNodeSelection]. Returns
+/// an empty string if the selection is collapsed.
 String? defaultTableToHtmlSerializer(
   Document document,
   DocumentNode node,

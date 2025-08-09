@@ -283,33 +283,35 @@ class ParagraphNodeSerializer extends NodeTypedDocumentNodeMarkdownSerializer<Pa
       // Selection is collapsed. Nothing is selected for copy.
       return '';
     }
-    final textToConvert = textSelection != null //
-        ? node.text.copyText(textSelection.start, textSelection.end)
-        : node.text;
 
     final buffer = StringBuffer();
 
     final Attribution? blockType = node.getMetadataValue('blockType');
 
+    final inlineMarkdown = (textSelection != null //
+            ? node.text.copyText(textSelection.start, textSelection.end)
+            : node.text)
+        .toMarkdown();
+
     if (blockType == header1Attribution) {
-      buffer.write('# ${textToConvert.toMarkdown()}');
+      buffer.write('# $inlineMarkdown');
     } else if (blockType == header2Attribution) {
-      buffer.write('## ${textToConvert.toMarkdown()}');
+      buffer.write('## $inlineMarkdown');
     } else if (blockType == header3Attribution) {
-      buffer.write('### ${textToConvert.toMarkdown()}');
+      buffer.write('### $inlineMarkdown');
     } else if (blockType == header4Attribution) {
-      buffer.write('#### ${textToConvert.toMarkdown()}');
+      buffer.write('#### $inlineMarkdown');
     } else if (blockType == header5Attribution) {
-      buffer.write('##### ${textToConvert.toMarkdown()}');
+      buffer.write('##### $inlineMarkdown');
     } else if (blockType == header6Attribution) {
-      buffer.write('###### ${textToConvert.toMarkdown()}');
+      buffer.write('###### $inlineMarkdown');
     } else if (blockType == blockquoteAttribution) {
       // TODO: handle multiline
-      buffer.write('> ${textToConvert.toMarkdown()}');
+      buffer.write('> $inlineMarkdown');
     } else if (blockType == codeAttribution) {
       buffer //
         ..writeln('```') //
-        ..writeln(textToConvert.toMarkdown()) //
+        ..writeln(inlineMarkdown) //
         ..write('```');
     } else {
       final String? textAlign = node.getMetadataValue('textAlign');
@@ -320,7 +322,7 @@ class ParagraphNodeSerializer extends NodeTypedDocumentNodeMarkdownSerializer<Pa
           buffer.writeln(alignmentToken);
         }
       }
-      buffer.write(textToConvert.toMarkdown());
+      buffer.write(inlineMarkdown);
     }
 
     // We're not at the end of the document yet. Add a blank line after the
