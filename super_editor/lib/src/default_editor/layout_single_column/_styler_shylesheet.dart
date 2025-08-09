@@ -6,6 +6,13 @@ import 'package:super_editor/src/default_editor/layout_single_column/_presenter.
 
 /// Style phase that applies a given [Stylesheet] to the document view model.
 class SingleColumnStylesheetStyler extends SingleColumnLayoutStylePhase {
+  /// Creates a [SingleColumnStylesheetStyler] that applies the given [stylesheet]
+  /// to the document view model.
+  ///
+  /// The `defaultTextStyle` is Flutter's default text style, which should be provided
+  /// as the result of `DefaultTextStyle.of(context)`. If it's `non-null`, the stylesheet text
+  /// styles are applied on top of the base style, taking priority. If `null`,  the stylesheet
+  /// text styles are applied directly. Has no effect if [Stylesheet.inheritDefaultTextStyle] is `false`.
   SingleColumnStylesheetStyler({
     required Stylesheet stylesheet,
     TextStyle? defaultTextStyle,
@@ -34,8 +41,16 @@ class SingleColumnStylesheetStyler extends SingleColumnLayoutStylePhase {
 
   TextStyle? _defaultTextStyle;
 
-  /// Sets the [TextStyle] that's used by this styler to merge with
-  /// the styles obtained by the stylesheet's rules to each component.
+  /// The default Flutter text style that applies to the document that this presenter is styling,
+  /// which users must set to `DefaultTextStyle.of(context)`.
+  ///
+  /// Stylesheets include the concept of "inheriting the default text style". This requires that
+  /// stylesheets have access to the default text style. However, stylesheets are not given access
+  /// to the widget tree, and therefore they can't query this value on their own. Instead, users
+  /// of `SingleColumnStylesheetStyler` must provide the default text style to this styler, so that
+  /// this styler can provide it to the stylesheet.
+  ///
+  /// Has no effect if [Stylesheet.inheritDefaultTextStyle] is `false`.
   ///
   /// If [newDefaultTextStyle] is the same as the existing default text style,
   /// this method does nothing.
@@ -43,8 +58,6 @@ class SingleColumnStylesheetStyler extends SingleColumnLayoutStylePhase {
   /// If [newDefaultTextStyle] is different than the existing default text style,
   /// this method marks this style phase a dirty, which will cause the associated presenter
   /// to re-run this style phase, and all presentation phases after it.
-  ///
-  /// Has no effect if [Stylesheet.inheritDefaultTextStyle] is `false`.
   set defaultTextStyle(TextStyle? newDefaultTextStyle) {
     if (newDefaultTextStyle == _defaultTextStyle) {
       return;
@@ -82,12 +95,9 @@ class SingleColumnStylesheetStyler extends SingleColumnLayoutStylePhase {
     };
 
     if (_stylesheet.inheritDefaultTextStyle && _defaultTextStyle != null) {
-      // We have a default text style, use it as the base for all text
-      // styles. If the stylesheet has rules that apply text styles,
-      // those rules will merge with the default text style, overriding
-      // any conflicting styles. For example, if both the default text style
-      // and a stylesheet rule specify the font family, the rule's font family
-      // will be used.
+      // We have a default text style, use it as the base for all text styles.
+      //
+      // Stylesheet text styles are applied on top of the base style, taking priority.
       aggregateStyles[Styles.textStyle] = _defaultTextStyle!;
     }
 

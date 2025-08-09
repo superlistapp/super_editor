@@ -22,8 +22,8 @@ extension ComputeTextSpan on AttributedText {
   /// The given [inlineWidgetBuilders] interprets every placeholder `Object`
   /// and builds a corresponding inline widget.
   ///
-  /// If [defaultTextStyle] is non-`null`, the resulting [TextStyle]s
-  /// will be merged with it.
+  /// If [defaultTextStyle] is non-`null`, the [TextStyle] computed by [styleBuilder]
+  /// is applied on top of the [defaultTextStyle], taking priority.
   InlineSpan computeInlineSpan(
     BuildContext context,
     AttributionStyleBuilder styleBuilder,
