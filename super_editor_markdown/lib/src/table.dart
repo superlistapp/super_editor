@@ -5,80 +5,82 @@ import 'package:markdown/markdown.dart' as md;
 import 'package:super_editor/super_editor.dart';
 import 'package:super_editor_markdown/src/markdown_inline_parser.dart';
 
-/// Converts a [md.Element] representing a table into a [MarkdownTable].
-///
-/// The [md.Element] must have a `table` tag.
-///
-/// Throws an exception if the element is not a valid table structure.
-MarkdownTable convertTable(md.Element element) {
-  if (element.tag != 'table') {
-    throw Exception('Cannot parse a table from an element with tag "${element.tag}"');
-  }
-
-  if (element.children == null || element.children!.isEmpty) {
-    throw Exception('A table must have at least one child element');
-  }
-
-  final headers = <MarkdownHeader>[];
-  final rows = <List<AttributedText>>[];
-
-  final headerElement = element.children![0];
-  if (headerElement is! md.Element || headerElement.tag != 'thead') {
-    throw Exception('Table header must be a <thead> element');
-  }
-  if (headerElement.children == null || headerElement.children!.isEmpty) {
-    throw Exception('Table header must have a row');
-  }
-
-  final headerRow = headerElement.children![0];
-  if (headerRow is! md.Element || headerRow.tag != 'tr') {
-    throw Exception('Table header row must be a <tr> element');
-  }
-
-  for (final headerCell in headerRow.children!) {
-    if (headerCell is! md.Element || headerCell.tag != 'th') {
-      throw Exception('Table header cells must be <th> elements');
+extension ElementTableExtension on md.Element {
+  /// Converts this element to a [MarkdownTable].
+  ///
+  /// The element must have a `table` tag.
+  ///
+  /// Throws an exception if the element is not a valid table structure.
+  MarkdownTable asTable() {
+    if (tag != 'table') {
+      throw Exception('Cannot parse a table from an element with tag "$tag"');
     }
-    headers.add(
-      MarkdownHeader(
-        header: parseInlineMarkdown(headerCell.textContent),
-        textAlign: switch (headerCell.attributes['align']) {
-          'left' => TextAlign.left,
-          'center' => TextAlign.center,
-          'right' => TextAlign.right,
-          _ => TextAlign.left,
-        },
-      ),
+
+    if (children == null || children!.isEmpty) {
+      throw Exception('A table must have at least one child element');
+    }
+
+    final headers = <MarkdownHeader>[];
+    final rows = <List<AttributedText>>[];
+
+    final headerElement = children![0];
+    if (headerElement is! md.Element || headerElement.tag != 'thead') {
+      throw Exception('Table header must be a <thead> element');
+    }
+    if (headerElement.children == null || headerElement.children!.isEmpty) {
+      throw Exception('Table header must have a row');
+    }
+
+    final headerRow = headerElement.children![0];
+    if (headerRow is! md.Element || headerRow.tag != 'tr') {
+      throw Exception('Table header row must be a <tr> element');
+    }
+
+    for (final headerCell in headerRow.children!) {
+      if (headerCell is! md.Element || headerCell.tag != 'th') {
+        throw Exception('Table header cells must be <th> elements');
+      }
+      headers.add(
+        MarkdownHeader(
+          header: parseInlineMarkdown(headerCell.textContent),
+          textAlign: switch (headerCell.attributes['align']) {
+            'left' => TextAlign.left,
+            'center' => TextAlign.center,
+            'right' => TextAlign.right,
+            _ => TextAlign.left,
+          },
+        ),
+      );
+    }
+
+    if (children!.length >= 2) {
+      // The table contains the table body element.
+      final bodyElement = children![1];
+      if (bodyElement is! md.Element || bodyElement.tag != 'tbody') {
+        throw Exception('Table body must be a <tbody> element');
+      }
+
+      for (final rowElement in bodyElement.children!) {
+        if (rowElement is! md.Element || rowElement.tag != 'tr') {
+          throw Exception('Table body rows must be <tr> elements');
+        }
+
+        final row = <AttributedText>[];
+        for (final cellElement in rowElement.children!) {
+          if (cellElement is! md.Element || cellElement.tag != 'td') {
+            throw Exception('Table body cells must be <td> elements');
+          }
+          row.add(parseInlineMarkdown(cellElement.textContent));
+        }
+        rows.add(row);
+      }
+    }
+
+    return MarkdownTable(
+      headers: headers,
+      rows: rows,
     );
   }
-
-  if (element.children!.length >= 2) {
-    // The table contains the table body element.
-    final bodyElement = element.children![1];
-    if (bodyElement is! md.Element || bodyElement.tag != 'tbody') {
-      throw Exception('Table body must be a <tbody> element');
-    }
-
-    for (final rowElement in bodyElement.children!) {
-      if (rowElement is! md.Element || rowElement.tag != 'tr') {
-        throw Exception('Table body rows must be <tr> elements');
-      }
-
-      final row = <AttributedText>[];
-      for (final cellElement in rowElement.children!) {
-        if (cellElement is! md.Element || cellElement.tag != 'td') {
-          throw Exception('Table body cells must be <td> elements');
-        }
-        row.add(parseInlineMarkdown(cellElement.textContent));
-      }
-      rows.add(row);
-    }
-  }
-
-  return MarkdownTable(
-    headers: headers,
-    rows: rows,
-  );
 }
 
 class MarkdownTable {

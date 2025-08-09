@@ -5,11 +5,14 @@ import 'package:super_editor_markdown/super_editor_markdown.dart';
 
 /// Parses inline markdown content.
 ///
-/// Supports strikethrough, underline, bold, italics, code, links and images.
+/// Supports strikethrough, underline, bold, italics, code and links.
 ///
 /// The given [syntax] controls how the [text] is parsed, e.g., [MarkdownSyntax.normal]
 /// for strict Markdown parsing, or [MarkdownSyntax.superEditor] to use Super Editor's
 /// extended syntax.
+///
+/// If [encodeHtml] is `true`, it escapes HTML symbols like &, <, and >. For example,
+/// `&` becomes `&amp;`, `<` becomes `&lt;`, and `>` becomes `&gt;`.
 AttributedText parseInlineMarkdown(
   String text, {
   MarkdownSyntax syntax = MarkdownSyntax.superEditor,
@@ -28,7 +31,7 @@ AttributedText parseInlineMarkdown(
       encodeHtml: encodeHtml,
     ),
   );
-  final inlineVisitor = InlineMarkdownToDocument();
+  final inlineVisitor = _InlineMarkdownToDocument();
   final inlineNodes = inlineParser.parse();
   for (final inlineNode in inlineNodes) {
     inlineNode.accept(inlineVisitor);
@@ -38,36 +41,15 @@ AttributedText parseInlineMarkdown(
 
 /// Parses inline markdown content.
 ///
-/// Apply [InlineMarkdownToDocument] to a text [md.Element] to
+/// Apply [_InlineMarkdownToDocument] to a text [md.Element] to
 /// obtain an [AttributedText] that represents the inline
 /// styles within the given text.
 ///
-/// Apply [InlineMarkdownToDocument] to an [md.Element] whose
-/// content is an image tag to obtain image data.
-///
-/// [InlineMarkdownToDocument] does not support parsing text
+/// [_InlineMarkdownToDocument] does not support parsing text
 /// that contains image tags. If any non-image text is found,
 /// the content is treated as styled text.
-class InlineMarkdownToDocument implements md.NodeVisitor {
-  InlineMarkdownToDocument();
-
-  // For our purposes, we only support block-level images. Therefore,
-  // if we find an image without any text, we're parsing an image.
-  // Otherwise, if there is any text, then we're parsing a paragraph
-  // and we ignore the image.
-  bool get isImage => _imageUrl != null && attributedText.isEmpty;
-
-  String? _imageUrl;
-  String? get imageUrl => _imageUrl;
-
-  String? _imageAltText;
-  String? get imageAltText => _imageAltText;
-
-  String? get width => _width;
-  String? _width;
-
-  String? get height => _height;
-  String? _height;
+class _InlineMarkdownToDocument implements md.NodeVisitor {
+  _InlineMarkdownToDocument();
 
   AttributedText get attributedText => _textStack.first;
 
@@ -75,15 +57,6 @@ class InlineMarkdownToDocument implements md.NodeVisitor {
 
   @override
   bool visitElementBefore(md.Element element) {
-    if (element.tag == 'img') {
-      // TODO: handle missing "src" attribute
-      _imageUrl = element.attributes['src']!;
-      _imageAltText = element.attributes['alt'] ?? '';
-      _width = element.attributes['width'];
-      _height = element.attributes['height'];
-      return true;
-    }
-
     _textStack.add(AttributedText());
 
     return true;

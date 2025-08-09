@@ -519,7 +519,7 @@ paragraph''',
 /// All subsequent elements are ignored.
 MarkdownTable _parseMarkdownTable(String markdown) {
   final nodes = parseMarkdownNodes(markdown);
-  final table = convertTable(nodes[0] as Element);
+  final table = (nodes[0] as Element).asTable();
 
   return MarkdownTable(
     headers: table.headers,
