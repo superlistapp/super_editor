@@ -76,6 +76,7 @@ MutableDocument deserializeMarkdownToDocument(
 /// turn those [md.Element]s into [DocumentNode]s.
 ///
 /// Returns the parsed nodes.
+@Deprecated('This is a temporary method that will be removed after the table node is implemented')
 List<md.Node> parseMarkdownNodes(
   String markdown, {
   MarkdownSyntax syntax = MarkdownSyntax.superEditor,
