@@ -23,7 +23,7 @@ ExecutionInstruction copyAsRichTextWhenCmdCOrCtrlCIsPressed({
     return ExecutionInstruction.haltExecution;
   }
 
-  editContext.document.copyAsRichText(
+  editContext.document.copyAsRichTextWithPlainTextFallback(
     selection: editContext.composer.selection!,
   );
 
