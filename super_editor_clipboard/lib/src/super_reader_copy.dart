@@ -14,7 +14,7 @@ final copyAsRichTextWhenCmdCIsPressedOnMac = createShortcut(
       return ExecutionInstruction.haltExecution;
     }
 
-    documentContext.document.copyAsRichText(
+    documentContext.document.copyAsRichTextWithPlainTextFallback(
       selection: documentContext.composer.selection!,
     );
 
@@ -37,7 +37,7 @@ final copyAsRichTextWhenCtrlCIsPressedOnWindowsAndLinux = createShortcut(
       return ExecutionInstruction.haltExecution;
     }
 
-    documentContext.document.copyAsRichText(
+    documentContext.document.copyAsRichTextWithPlainTextFallback(
       selection: documentContext.composer.selection!,
     );
 

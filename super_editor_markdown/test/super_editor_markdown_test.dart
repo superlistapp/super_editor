@@ -749,11 +749,23 @@ Paragraph3""");
           serializeDocumentToMarkdown(doc),
           '''
 - [x] Task 1
-- [ ] Task 2
+- [ ] Task 2  
 with multiple lines
 - [ ] Task 3
 - [x] Task 4''',
         );
+      });
+
+      test('task with styles', () {
+        final doc = MutableDocument(nodes: [
+          TaskNode(
+            id: '1',
+            text: attributedTextFromMarkdown('**Task** 1'),
+            isComplete: false,
+          ),
+        ]);
+
+        expect(serializeDocumentToMarkdown(doc), '- [ ] **Task** 1');
       });
 
       test('example doc', () {
@@ -1454,7 +1466,7 @@ This is some code
         const markdown = '''
 - [x] Task 1
 - [ ] Task 2
-- [ ] Task 3
+- [ ] Task 3  
 with multiple lines
 - [x] Task 4''';
 
