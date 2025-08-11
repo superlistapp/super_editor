@@ -1,6 +1,6 @@
+import 'dart:ui';
+
 import 'package:flutter_test/flutter_test.dart';
-import 'package:super_editor/src/infrastructure/serialization/html/document_to_html.dart';
-import 'package:super_editor/src/infrastructure/serialization/html/html_inline_text_styles.dart';
 import 'package:super_editor/super_editor.dart';
 import 'package:super_editor_markdown/super_editor_markdown.dart';
 
@@ -276,6 +276,497 @@ void main() {
         ).toHtml(),
         '<p>This paragraph contains many inline styles: <strong>bold</strong>, <i>italics</i>, <u>underline</u>, <s>strikethrough</s>, <a href="https://someplace.com">link</a>.</p>',
       );
+    });
+
+    group('tables >', () {
+      test("with header and body", () {
+        final document = MutableDocument(
+          nodes: [
+            TableBlockNode(id: "1", cells: [
+              [
+                TextNode(
+                  id: "1.0.1",
+                  text: AttributedText("Column 1"),
+                  metadata: const {NodeMetadata.blockType: tableHeaderAttribution},
+                ),
+                TextNode(
+                  id: "1.0.2",
+                  text: AttributedText("Column 2"),
+                  metadata: const {NodeMetadata.blockType: tableHeaderAttribution},
+                ),
+                TextNode(
+                  id: "1.0.3",
+                  text: AttributedText("Column 3"),
+                  metadata: const {NodeMetadata.blockType: tableHeaderAttribution},
+                ),
+              ],
+              [
+                TextNode(id: "1.1.1", text: AttributedText("Value 1.1")),
+                TextNode(id: "1.1.2", text: AttributedText("Value 1.2")),
+                TextNode(id: "1.1.3", text: AttributedText("Value 1.3")),
+              ],
+              [
+                TextNode(id: "1.2.1", text: AttributedText("Value 2.1")),
+                TextNode(id: "1.2.2", text: AttributedText("Value 2.2")),
+                TextNode(id: "1.2.3", text: AttributedText("Value 2.3")),
+              ],
+            ]),
+          ],
+        );
+
+        expect(
+          document.toHtml(),
+          [
+            '<table>',
+            '<thead>',
+            '<tr>',
+            '<th>Column 1</th>',
+            '<th>Column 2</th>',
+            '<th>Column 3</th>',
+            '</tr>',
+            '</thead>',
+            '<tbody>',
+            '<tr>',
+            '<td>Value 1.1</td>',
+            '<td>Value 1.2</td>',
+            '<td>Value 1.3</td>',
+            '</tr>',
+            '<tr>',
+            '<td>Value 2.1</td>',
+            '<td>Value 2.2</td>',
+            '<td>Value 2.3</td>',
+            '</tr>',
+            '</tbody>',
+            '</table>',
+          ].join(),
+        );
+      });
+
+      test("with multiple header rows", () {
+        final document = MutableDocument(
+          nodes: [
+            TableBlockNode(
+              id: "1",
+              cells: [
+                [
+                  TextNode(
+                    id: "1.0.1",
+                    text: AttributedText("Column 1"),
+                    metadata: const {NodeMetadata.blockType: tableHeaderAttribution},
+                  ),
+                  TextNode(
+                    id: "1.0.2",
+                    text: AttributedText("Column 2"),
+                    metadata: const {NodeMetadata.blockType: tableHeaderAttribution},
+                  ),
+                ],
+                [
+                  TextNode(
+                    id: "2.0.1",
+                    text: AttributedText("Another Column 1"),
+                    metadata: const {NodeMetadata.blockType: tableHeaderAttribution},
+                  ),
+                  TextNode(
+                    id: "2.0.2",
+                    text: AttributedText("Another Column 2"),
+                    metadata: const {NodeMetadata.blockType: tableHeaderAttribution},
+                  ),
+                ],
+                [
+                  TextNode(
+                    id: "1.1.1",
+                    text: AttributedText("Value 1.1"),
+                  ),
+                  TextNode(
+                    id: "1.1.2",
+                    text: AttributedText("Value 1.2"),
+                  ),
+                ],
+              ],
+            ),
+          ],
+        );
+
+        expect(
+          document.toHtml(),
+          [
+            '<table>',
+            '<thead>',
+            '<tr>',
+            '<th>Column 1</th>',
+            '<th>Column 2</th>',
+            '</tr>',
+            '<tr>',
+            '<th>Another Column 1</th>',
+            '<th>Another Column 2</th>',
+            '</tr>',
+            '</thead>',
+            '<tbody>',
+            '<tr>',
+            '<td>Value 1.1</td>',
+            '<td>Value 1.2</td>',
+            '</tr>',
+            '</tbody>',
+            '</table>',
+          ].join(),
+        );
+      });
+
+      test("rows after the first data row are serialized inside <tbody>", () {
+        final document = MutableDocument(
+          nodes: [
+            TableBlockNode(
+              id: "1",
+              cells: [
+                [
+                  TextNode(
+                    id: "1.1",
+                    text: AttributedText("Column 1"),
+                    metadata: const {NodeMetadata.blockType: tableHeaderAttribution},
+                  ),
+                  TextNode(
+                    id: "1.2",
+                    text: AttributedText("Column 2"),
+                    metadata: const {NodeMetadata.blockType: tableHeaderAttribution},
+                  ),
+                ],
+                [
+                  TextNode(
+                    id: "2.1",
+                    text: AttributedText("Value 1"),
+                  ),
+                  TextNode(
+                    id: "2.2",
+                    text: AttributedText("Value 2"),
+                  ),
+                ],
+                [
+                  TextNode(
+                    id: "3.1",
+                    text: AttributedText("Value 3"),
+                    metadata: const {NodeMetadata.blockType: tableHeaderAttribution},
+                  ),
+                  TextNode(
+                    id: "3.2",
+                    text: AttributedText("Value 4"),
+                    metadata: const {NodeMetadata.blockType: tableHeaderAttribution},
+                  ),
+                ],
+              ],
+            ),
+          ],
+        );
+
+        expect(
+          document.toHtml(),
+          [
+            '<table>',
+            '<thead>',
+            '<tr>',
+            '<th>Column 1</th>',
+            '<th>Column 2</th>',
+            '</tr>',
+            '</thead>',
+            '<tbody>',
+            '<tr>',
+            '<td>Value 1</td>',
+            '<td>Value 2</td>',
+            '</tr>',
+            '<tr>',
+            '<th>Value 3</th>',
+            '<th>Value 4</th>',
+            '</tr>',
+            '</tbody>',
+            '</table>',
+          ].join(),
+        );
+      });
+
+      test("rows containing data cells are serialized inside <tbody>", () {
+        final document = MutableDocument(
+          nodes: [
+            TableBlockNode(
+              id: "1",
+              cells: [
+                [
+                  TextNode(
+                    id: "1.1",
+                    text: AttributedText("Column 1"),
+                    metadata: const {NodeMetadata.blockType: tableHeaderAttribution},
+                  ),
+                  TextNode(
+                    id: "1.2",
+                    text: AttributedText("Column 2"),
+                    metadata: const {NodeMetadata.blockType: tableHeaderAttribution},
+                  ),
+                ],
+                [
+                  TextNode(
+                    id: "2.1",
+                    text: AttributedText("Value 1"),
+                    metadata: const {NodeMetadata.blockType: tableHeaderAttribution},
+                  ),
+                  TextNode(
+                    id: "2.2",
+                    text: AttributedText("Value 2"),
+                  ),
+                ],
+                [
+                  TextNode(
+                    id: "3.1",
+                    text: AttributedText("Value 3"),
+                  ),
+                  TextNode(
+                    id: "3.2",
+                    text: AttributedText("Value 4"),
+                  ),
+                ],
+              ],
+            ),
+          ],
+        );
+
+        expect(
+          document.toHtml(),
+          [
+            '<table>',
+            '<thead>',
+            '<tr>',
+            '<th>Column 1</th>',
+            '<th>Column 2</th>',
+            '</tr>',
+            '</thead>',
+            '<tbody>',
+            '<tr>',
+            '<th>Value 1</th>',
+            '<td>Value 2</td>',
+            '</tr>',
+            '<tr>',
+            '<td>Value 3</td>',
+            '<td>Value 4</td>',
+            '</tr>',
+            '</tbody>',
+            '</table>',
+          ].join(),
+        );
+      });
+
+      test("without body", () {
+        final document = MutableDocument(
+          nodes: [
+            TableBlockNode(id: "1", cells: [
+              [
+                TextNode(
+                  id: "1.0.1",
+                  text: AttributedText("Column 1"),
+                  metadata: const {NodeMetadata.blockType: tableHeaderAttribution},
+                ),
+                TextNode(
+                  id: "1.0.2",
+                  text: AttributedText("Column 2"),
+                  metadata: const {NodeMetadata.blockType: tableHeaderAttribution},
+                ),
+                TextNode(
+                  id: "1.0.3",
+                  text: AttributedText("Column 3"),
+                  metadata: const {NodeMetadata.blockType: tableHeaderAttribution},
+                ),
+              ],
+            ]),
+          ],
+        );
+
+        expect(
+          document.toHtml(),
+          [
+            '<table>',
+            '<thead>',
+            '<tr>',
+            '<th>Column 1</th>',
+            '<th>Column 2</th>',
+            '<th>Column 3</th>',
+            '</tr>',
+            '</thead>',
+            '</table>',
+          ].join(),
+        );
+      });
+
+      test("with header cell inside data row", () {
+        final document = MutableDocument(
+          nodes: [
+            TableBlockNode(
+              id: "1",
+              cells: [
+                [
+                  TextNode(
+                    id: "1.1",
+                    text: AttributedText("Value 1.1"),
+                    metadata: const {NodeMetadata.blockType: tableHeaderAttribution},
+                  ),
+                  TextNode(
+                    id: "1.2",
+                    text: AttributedText("Value 1.2"),
+                  ),
+                ],
+                [
+                  TextNode(
+                    id: "2.1",
+                    text: AttributedText("Value 2.1"),
+                  ),
+                  TextNode(
+                    id: "2.2",
+                    text: AttributedText("Value 2.2"),
+                    metadata: const {NodeMetadata.blockType: tableHeaderAttribution},
+                  ),
+                ],
+              ],
+            ),
+          ],
+        );
+
+        expect(
+          document.toHtml(),
+          [
+            '<table>',
+            '<tbody>',
+            '<tr>',
+            '<th>Value 1.1</th>',
+            '<td>Value 1.2</td>',
+            '</tr>',
+            '<tr>',
+            '<td>Value 2.1</td>',
+            '<th>Value 2.2</th>',
+            '</tr>',
+            '</tbody>',
+            '</table>',
+          ].join(),
+        );
+      });
+
+      test("with alignment", () {
+        final document = MutableDocument(
+          nodes: [
+            TableBlockNode(
+              id: "1",
+              cells: [
+                [
+                  TextNode(
+                    id: "1.0.1",
+                    text: AttributedText("Column 1"),
+                    metadata: const {NodeMetadata.blockType: tableHeaderAttribution},
+                  ),
+                  TextNode(
+                    id: "1.0.2",
+                    text: AttributedText("Column 2"),
+                    metadata: const {NodeMetadata.blockType: tableHeaderAttribution},
+                  ),
+                ],
+                [
+                  TextNode(
+                    id: "1.1.1",
+                    text: AttributedText("Value 1.1"),
+                    metadata: const {"textAlign": TextAlign.right},
+                  ),
+                  TextNode(
+                    id: "1.1.2",
+                    text: AttributedText("Value 1.2"),
+                    metadata: const {"textAlign": TextAlign.center},
+                  ),
+                ],
+              ],
+            ),
+          ],
+        );
+
+        expect(
+          document.toHtml(),
+          [
+            '<table>',
+            '<thead>',
+            '<tr>',
+            '<th>Column 1</th>',
+            '<th>Column 2</th>',
+            '</tr>',
+            '</thead>',
+            '<tbody>',
+            '<tr>',
+            '<td style="text-align:right">Value 1.1</td>',
+            '<td style="text-align:center">Value 1.2</td>',
+            '</tr>',
+            '</tbody>',
+            '</table>',
+          ].join(),
+        );
+      });
+
+      test("with inline styles", () {
+        final document = MutableDocument(
+          nodes: [
+            TableBlockNode(
+              id: "1",
+              cells: [
+                [
+                  TextNode(
+                    id: "1.0.1",
+                    text: AttributedText("Column 1"),
+                    metadata: const {NodeMetadata.blockType: tableHeaderAttribution},
+                  ),
+                  TextNode(
+                    id: "1.0.2",
+                    text: AttributedText("Column 2"),
+                    metadata: const {NodeMetadata.blockType: tableHeaderAttribution},
+                  ),
+                ],
+                [
+                  TextNode(
+                    id: "1.1.1",
+                    text: AttributedText(
+                      "Value 1.1",
+                      AttributedSpans(
+                        attributions: const [
+                          SpanMarker(attribution: boldAttribution, offset: 0, markerType: SpanMarkerType.start),
+                          SpanMarker(attribution: boldAttribution, offset: 8, markerType: SpanMarkerType.end),
+                        ],
+                      ),
+                    ),
+                  ),
+                  TextNode(
+                    id: "1.1.2",
+                    text: AttributedText(
+                      "Value 1.2",
+                      AttributedSpans(
+                        attributions: const [
+                          SpanMarker(attribution: italicsAttribution, offset: 0, markerType: SpanMarkerType.start),
+                          SpanMarker(attribution: italicsAttribution, offset: 8, markerType: SpanMarkerType.end),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ],
+        );
+
+        expect(
+          document.toHtml(),
+          [
+            '<table>',
+            '<thead><tr>',
+            '<th>Column 1</th>',
+            '<th>Column 2</th>',
+            '</tr></thead>',
+            '<tbody>',
+            '<tr>',
+            '<td><strong>Value 1.1</strong></td>',
+            '<td><i>Value 1.2</i></td>',
+            '</tr>',
+            '</tbody>',
+            '</table>',
+          ].join(),
+        );
+      });
     });
 
     group("custom serialization >", () {
