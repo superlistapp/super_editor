@@ -5,7 +5,7 @@ import 'package:super_editor/super_editor.dart';
 import 'package:super_editor_markdown/src/markdown_inline_parser.dart';
 
 extension ElementTableExtension on md.Element {
-  /// Converts this element to a [MarkdownTable].
+  /// Converts this element to a [TableBlockNode].
   ///
   /// The element must have a `table` tag.
   ///
