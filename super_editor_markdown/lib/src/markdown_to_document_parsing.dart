@@ -26,16 +26,28 @@ MutableDocument deserializeMarkdownToDocument(
   List<ElementToNodeConverter> customElementToNodeConverters = const [],
   bool encodeHtml = false,
 }) {
-  final markdownLines = const LineSplitter().convert(markdown);
+  final markdownLines = const LineSplitter().convert(markdown).map<md.Line>(
+    (String l) {
+      return md.Line(l);
+    },
+  ).toList();
 
   // Parse markdown string to structured markdown.
-  final markdownNodes = _parseMarkdownLines(
-    markdownLines,
-    syntax: syntax,
-    customBlockSyntax: customBlockSyntax,
-    customElementToNodeConverters: customElementToNodeConverters,
+  final markdownDoc = md.Document(
     encodeHtml: encodeHtml,
+    blockSyntaxes: [
+      ...customBlockSyntax,
+      if (syntax == MarkdownSyntax.superEditor) ...[
+        _HeaderWithAlignmentSyntax(),
+        const _ParagraphWithAlignmentSyntax(),
+      ],
+      const _EmptyLinePreservingParagraphSyntax(),
+      const md.UnorderedListWithCheckboxSyntax(),
+      const md.TableSyntax(),
+    ],
   );
+  final blockParser = md.BlockParser(markdownLines, markdownDoc);
+  final markdownNodes = blockParser.parseLines();
 
   // Convert structured markdown to a Document.
   final nodeVisitor = _MarkdownToDocument(customElementToNodeConverters, encodeHtml, syntax);
@@ -55,7 +67,7 @@ MutableDocument deserializeMarkdownToDocument(
   }
 
   // Add 1 hanging line for every 2 blank lines at the end, need this to preserve behavior pre markdown 7.2.1
-  final hangingEmptyLines = markdownLines.reversed.takeWhile((line) => _blankLinePattern.hasMatch(line));
+  final hangingEmptyLines = markdownLines.reversed.takeWhile((line) => _blankLinePattern.hasMatch(line.content));
   if (hangingEmptyLines.isNotEmpty && documentNodes.lastOrNull is ListItemNode) {
     for (var i = 0; i < hangingEmptyLines.length ~/ 2; i++) {
       documentNodes.add(ParagraphNode(id: Editor.createNodeId(), text: AttributedText()));
@@ -63,60 +75,6 @@ MutableDocument deserializeMarkdownToDocument(
   }
 
   return MutableDocument(nodes: documentNodes);
-}
-
-/// Parses the given [markdown] to a tree representing the HTML structure of the markdown.
-///
-/// The given [syntax] controls how the [markdown] is parsed, e.g., [MarkdownSyntax.normal]
-/// for strict Markdown parsing, or [MarkdownSyntax.superEditor] to use Super Editor's
-/// extended syntax.
-///
-/// To add support for parsing non-standard Markdown blocks, provide [customBlockSyntax]s
-/// that parse Markdown text into [md.Element]s, and provide [customElementToNodeConverters] that
-/// turn those [md.Element]s into [DocumentNode]s.
-///
-/// Returns the parsed nodes.
-@Deprecated('This is a temporary method that will be removed after the table node is implemented')
-List<md.Node> parseMarkdownNodes(
-  String markdown, {
-  MarkdownSyntax syntax = MarkdownSyntax.superEditor,
-  List<md.BlockSyntax> customBlockSyntax = const [],
-  List<ElementToNodeConverter> customElementToNodeConverters = const [],
-  bool encodeHtml = false,
-}) {
-  final markdownLines = const LineSplitter().convert(markdown);
-
-  return _parseMarkdownLines(markdownLines);
-}
-
-List<md.Node> _parseMarkdownLines(
-  List<String> lines, {
-  MarkdownSyntax syntax = MarkdownSyntax.superEditor,
-  List<md.BlockSyntax> customBlockSyntax = const [],
-  List<ElementToNodeConverter> customElementToNodeConverters = const [],
-  bool encodeHtml = false,
-}) {
-  final markdownLines = lines.map<md.Line>((String l) {
-    return md.Line(l);
-  }).toList();
-
-  final markdownDoc = md.Document(
-    encodeHtml: encodeHtml,
-    blockSyntaxes: [
-      ...customBlockSyntax,
-      if (syntax == MarkdownSyntax.superEditor) ...[
-        _HeaderWithAlignmentSyntax(),
-        const _ParagraphWithAlignmentSyntax(),
-      ],
-      const _EmptyLinePreservingParagraphSyntax(),
-      const md.UnorderedListWithCheckboxSyntax(),
-      const md.TableSyntax(),
-    ],
-  );
-  final blockParser = md.BlockParser(markdownLines, markdownDoc);
-
-  // Parse markdown string to structured markdown.
-  return blockParser.parseLines();
 }
 
 /// Converts structured markdown to a list of [DocumentNode]s.
@@ -451,10 +409,7 @@ class _MarkdownToDocument implements md.NodeVisitor {
   }
 
   void _addTable(md.Element element) {
-    // ignore: unused_local_variable
-    final table = element.asTable();
-
-    // TODO: add table node to _content.
+    _content.add(element.asTable());
   }
 
   AttributedText _parseInlineText(String text) {
