@@ -1,8 +1,11 @@
 import 'dart:convert';
 
+import 'package:collection/collection.dart';
 import 'package:markdown/markdown.dart' as md;
 import 'package:super_editor/super_editor.dart';
 import 'package:super_editor_markdown/src/image_syntax.dart';
+import 'package:super_editor_markdown/src/markdown_inline_parser.dart';
+import 'package:super_editor_markdown/src/table.dart';
 import 'package:super_editor_markdown/super_editor_markdown.dart';
 
 import 'super_editor_syntax.dart';
@@ -23,10 +26,13 @@ MutableDocument deserializeMarkdownToDocument(
   List<ElementToNodeConverter> customElementToNodeConverters = const [],
   bool encodeHtml = false,
 }) {
-  final markdownLines = const LineSplitter().convert(markdown).map<md.Line>((String l) {
-    return md.Line(l);
-  }).toList();
+  final markdownLines = const LineSplitter().convert(markdown).map<md.Line>(
+    (String l) {
+      return md.Line(l);
+    },
+  ).toList();
 
+  // Parse markdown string to structured markdown.
   final markdownDoc = md.Document(
     encodeHtml: encodeHtml,
     blockSyntaxes: [
@@ -37,11 +43,10 @@ MutableDocument deserializeMarkdownToDocument(
       ],
       const _EmptyLinePreservingParagraphSyntax(),
       const md.UnorderedListWithCheckboxSyntax(),
+      const md.TableSyntax(),
     ],
   );
   final blockParser = md.BlockParser(markdownLines, markdownDoc);
-
-  // Parse markdown string to structured markdown.
   final markdownNodes = blockParser.parseLines();
 
   // Convert structured markdown to a Document.
@@ -62,7 +67,7 @@ MutableDocument deserializeMarkdownToDocument(
   }
 
   // Add 1 hanging line for every 2 blank lines at the end, need this to preserve behavior pre markdown 7.2.1
-  final hangingEmptyLines = markdownLines.reversed.takeWhile((md.Line l) => l.isBlankLine);
+  final hangingEmptyLines = markdownLines.reversed.takeWhile((line) => _blankLinePattern.hasMatch(line.content));
   if (hangingEmptyLines.isNotEmpty && documentNodes.lastOrNull is ListItemNode) {
     for (var i = 0; i < hangingEmptyLines.length ~/ 2; i++) {
       documentNodes.add(ParagraphNode(id: Editor.createNodeId(), text: AttributedText()));
@@ -161,23 +166,14 @@ class _MarkdownToDocument implements md.NodeVisitor {
         _addHeader(element, level: 6);
         break;
       case 'p':
-        final inlineVisitor = _parseInline(element.textContent);
-
-        if (inlineVisitor.isImage) {
-          _addImage(
-            // TODO: handle null image URL
-            imageUrl: inlineVisitor.imageUrl!,
-            altText: inlineVisitor.imageAltText!,
-            expectedBitmapSize: inlineVisitor.width != null || inlineVisitor.height != null
-                ? ExpectedSize(
-                    inlineVisitor.width != null ? int.tryParse(inlineVisitor.width!) : null,
-                    inlineVisitor.height != null ? int.tryParse(inlineVisitor.height!) : null,
-                  )
-                : null,
-          );
+        final blockImage = _maybeParseBlockImage(element.textContent);
+        if (blockImage != null) {
+          _addImage(blockImage);
         } else {
-          _addParagraph(inlineVisitor.attributedText, element.attributes);
+          final attributedText = parseInlineMarkdown(element.textContent, syntax: syntax, encodeHtml: _encodeHtml);
+          _addParagraph(attributedText, element.attributes);
         }
+
         break;
       case 'blockquote':
         _addBlockquote(element);
@@ -232,6 +228,11 @@ class _MarkdownToDocument implements md.NodeVisitor {
       case 'hr':
         _addHorizontalRule();
         break;
+      case 'table':
+        _addTable(element);
+
+        // Skip any children because we already processed the whole table.
+        return false;
     }
 
     return true;
@@ -340,17 +341,18 @@ class _MarkdownToDocument implements md.NodeVisitor {
     );
   }
 
-  void _addImage({
-    required String imageUrl,
-    required String altText,
-    ExpectedSize? expectedBitmapSize,
-  }) {
+  void _addImage(_MarkdownImage image) {
     _content.add(
       ImageNode(
         id: Editor.createNodeId(),
-        imageUrl: imageUrl,
-        altText: altText,
-        expectedBitmapSize: expectedBitmapSize,
+        imageUrl: image.url,
+        altText: image.altText ?? '',
+        expectedBitmapSize: image.width != null || image.height != null
+            ? ExpectedSize(
+                image.width != null ? int.tryParse(image.width!) : null,
+                image.height != null ? int.tryParse(image.height!) : null,
+              )
+            : null,
       ),
     );
   }
@@ -406,132 +408,28 @@ class _MarkdownToDocument implements md.NodeVisitor {
     );
   }
 
+  void _addTable(md.Element element) {
+    _content.add(element.asTable());
+  }
+
   AttributedText _parseInlineText(String text) {
-    final inlineVisitor = _parseInline(text);
-    return inlineVisitor.attributedText;
-  }
-
-  _InlineMarkdownToDocument _parseInline(String text) {
-    final inlineParser = md.InlineParser(
+    return parseInlineMarkdown(
       text,
-      md.Document(
-        inlineSyntaxes: [
-          SingleStrikethroughSyntax(), // this needs to be before md.StrikethroughSyntax to be recognized
-          md.StrikethroughSyntax(),
-          UnderlineSyntax(),
-          if (syntax == MarkdownSyntax.superEditor) //
-            SuperEditorImageSyntax(),
-        ],
-        encodeHtml: _encodeHtml,
-      ),
+      syntax: syntax,
+      encodeHtml: _encodeHtml,
     );
-    final inlineVisitor = _InlineMarkdownToDocument();
-    final inlineNodes = inlineParser.parse();
-    for (final inlineNode in inlineNodes) {
-      inlineNode.accept(inlineVisitor);
-    }
-    return inlineVisitor;
-  }
-}
-
-/// Parses inline markdown content.
-///
-/// Apply [_InlineMarkdownToDocument] to a text [Element] to
-/// obtain an [AttributedText] that represents the inline
-/// styles within the given text.
-///
-/// Apply [_InlineMarkdownToDocument] to an [Element] whose
-/// content is an image tag to obtain image data.
-///
-/// [_InlineMarkdownToDocument] does not support parsing text
-/// that contains image tags. If any non-image text is found,
-/// the content is treated as styled text.
-class _InlineMarkdownToDocument implements md.NodeVisitor {
-  _InlineMarkdownToDocument();
-
-  // For our purposes, we only support block-level images. Therefore,
-  // if we find an image without any text, we're parsing an image.
-  // Otherwise, if there is any text, then we're parsing a paragraph
-  // and we ignore the image.
-  bool get isImage => _imageUrl != null && attributedText.isEmpty;
-
-  String? _imageUrl;
-  String? get imageUrl => _imageUrl;
-
-  String? _imageAltText;
-  String? get imageAltText => _imageAltText;
-
-  String? get width => _width;
-  String? _width;
-
-  String? get height => _height;
-  String? _height;
-
-  AttributedText get attributedText => _textStack.first;
-
-  final List<AttributedText> _textStack = [AttributedText()];
-
-  @override
-  bool visitElementBefore(md.Element element) {
-    if (element.tag == 'img') {
-      // TODO: handle missing "src" attribute
-      _imageUrl = element.attributes['src']!;
-      _imageAltText = element.attributes['alt'] ?? '';
-      _width = element.attributes['width'];
-      _height = element.attributes['height'];
-      return true;
-    }
-
-    _textStack.add(AttributedText());
-
-    return true;
   }
 
-  @override
-  void visitText(md.Text text) {
-    final attributedText = _textStack.removeLast();
-    _textStack.add(attributedText.copyAndAppend(AttributedText(text.text)));
-  }
-
-  @override
-  void visitElementAfter(md.Element element) {
-    // Reset to normal text style because a plain text element does
-    // not receive a call to visitElementBefore().
-    final styledText = _textStack.removeLast();
-
-    if (element.tag == 'strong') {
-      styledText.addAttribution(
-        boldAttribution,
-        SpanRange(0, styledText.length - 1),
-      );
-    } else if (element.tag == 'em') {
-      styledText.addAttribution(
-        italicsAttribution,
-        SpanRange(0, styledText.length - 1),
-      );
-    } else if (element.tag == "del") {
-      styledText.addAttribution(
-        strikethroughAttribution,
-        SpanRange(0, styledText.length - 1),
-      );
-    } else if (element.tag == "u") {
-      styledText.addAttribution(
-        underlineAttribution,
-        SpanRange(0, styledText.length - 1),
-      );
-    } else if (element.tag == 'a') {
-      styledText.addAttribution(
-        LinkAttribution.fromUri(Uri.parse(element.attributes['href']!)),
-        SpanRange(0, styledText.length - 1),
-      );
+  _MarkdownImage? _maybeParseBlockImage(String markdown) {
+    if (!markdown.startsWith("![")) {
+      // Text doesn't start with Markdown image syntax. Return.
+      return null;
     }
 
-    if (_textStack.isNotEmpty) {
-      final surroundingText = _textStack.removeLast();
-      _textStack.add(surroundingText.copyAndAppend(styledText));
-    } else {
-      _textStack.add(styledText);
-    }
+    return _MarkdownBlockImageParser().maybeParseBlockImage(
+      markdown,
+      syntax: syntax,
+    );
   }
 }
 
@@ -893,6 +791,123 @@ class _HeaderWithAlignmentSyntax extends md.BlockSyntax {
         return 'left';
     }
   }
+}
+
+class _MarkdownImage {
+  _MarkdownImage({
+    required this.url,
+    this.altText,
+    this.width,
+    this.height,
+  });
+
+  final String url;
+  final String? altText;
+  final String? width;
+  final String? height;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is _MarkdownImage &&
+          runtimeType == other.runtimeType &&
+          url == other.url &&
+          altText == other.altText &&
+          width == other.width &&
+          height == other.height;
+
+  @override
+  int get hashCode => url.hashCode ^ altText.hashCode ^ width.hashCode ^ height.hashCode;
+}
+
+class _MarkdownBlockImageParser {
+  /// Parses a block-level image from the given [markdown].
+  ///
+  /// A block-level image is a paragraph that contains an image tag
+  /// and no other text.
+  _MarkdownImage? maybeParseBlockImage(
+    String markdown, {
+    MarkdownSyntax syntax = MarkdownSyntax.superEditor,
+  }) {
+    final inlineParser = md.InlineParser(
+      markdown,
+      md.Document(
+        inlineSyntaxes: [
+          if (syntax == MarkdownSyntax.superEditor) //
+            SuperEditorImageSyntax(),
+        ],
+      ),
+    );
+    final inlineVisitor = _InlineMarkdownImageVisitor();
+    final inlineNodes = inlineParser.parse();
+    for (final inlineNode in inlineNodes) {
+      inlineNode.accept(inlineVisitor);
+    }
+    if (!inlineVisitor.isImage) {
+      return null;
+    }
+
+    return _MarkdownImage(
+      url: inlineVisitor.imageUrl!,
+      altText: inlineVisitor.imageAltText,
+      width: inlineVisitor.width,
+      height: inlineVisitor.height,
+    );
+  }
+}
+
+/// A [md.NodeVisitor] that extracts an image from inline Markdown nodes.
+class _InlineMarkdownImageVisitor implements md.NodeVisitor {
+  _InlineMarkdownImageVisitor();
+
+  /// Returns `true` if the parsed image is a block-level image.
+  ///
+  /// A block-level image is an image that is not part of a paragraph.
+  /// It has no text content, and it is not inline with other text.
+  ///
+  // For our purposes, we only support block-level images. Therefore,
+  // if we find an image without any text, we're parsing an image.
+  // Otherwise, if there is any text, then we're parsing a paragraph
+  // and we ignore the image.
+  bool get isImage => _imageUrl != null && _textStack.first.isEmpty;
+
+  String? _imageUrl;
+  String? get imageUrl => _imageUrl;
+
+  String? _imageAltText;
+  String? get imageAltText => _imageAltText;
+
+  String? get width => _width;
+  String? _width;
+
+  String? get height => _height;
+  String? _height;
+
+  final List<AttributedText> _textStack = [AttributedText()];
+
+  @override
+  bool visitElementBefore(md.Element element) {
+    if (element.tag == 'img' && element.attributes.containsKey('src')) {
+      _imageUrl = element.attributes['src']!;
+      _imageAltText = element.attributes['alt'] ?? '';
+      _width = element.attributes['width'];
+      _height = element.attributes['height'];
+      return true;
+    }
+
+    _textStack.add(AttributedText());
+
+    return true;
+  }
+
+  @override
+  void visitText(md.Text text) {
+    final attributedText = _textStack.removeLast();
+    _textStack.add(attributedText.copyAndAppend(AttributedText(text.text)));
+  }
+
+  @override
+  void visitElementAfter(md.Element element) {}
 }
 
 /// Matches empty lines or lines containing only whitespace.
