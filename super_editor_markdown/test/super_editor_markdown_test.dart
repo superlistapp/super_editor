@@ -1583,6 +1583,18 @@ with multiple lines
         expect(styledText.getAllAttributionsAt(7).contains(underlineAttribution), false);
       });
 
+      test('paragraph with inline code', () {
+        final doc = deserializeMarkdownToDocument('`This is` a paragraph.');
+        final styledText = (doc.getNodeAt(0)! as ParagraphNode).text;
+
+        // Ensure text within the range is attributed.
+        expect(styledText.getAllAttributionsAt(0).contains(codeAttribution), true);
+        expect(styledText.getAllAttributionsAt(6).contains(codeAttribution), true);
+
+        // Ensure text outside the range isn't attributed.
+        expect(styledText.getAllAttributionsAt(7).contains(codeAttribution), false);
+      });
+
       test('paragraph with left alignment', () {
         final doc = deserializeMarkdownToDocument(':---\nParagraph1');
 

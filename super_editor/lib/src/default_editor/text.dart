@@ -677,6 +677,12 @@ mixin TextComponentViewModel on SingleColumnLayoutComponentViewModel {
       showComposingRegionUnderline.hashCode;
 }
 
+/// Keys to access metadata that are specific to a [TextNode].
+class TextNodeMetadata {
+  /// The [TextAlign] of the [TextNode].
+  static const String textAlign = 'textAlign';
+}
+
 /// Document component that displays hint text when its content text
 /// is empty.
 ///
