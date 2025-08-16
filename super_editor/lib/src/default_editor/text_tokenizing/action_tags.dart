@@ -2,6 +2,7 @@ import 'dart:math';
 
 import 'package:attributed_text/attributed_text.dart';
 import 'package:characters/characters.dart';
+import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:super_editor/src/core/document.dart';
@@ -323,6 +324,12 @@ class ActionTagComposingReaction extends EditReaction {
       _cancelComposingTag(requestDispatcher);
       editorContext.composingActionTag.value = null;
       _onUpdateComposingActionTag(null);
+      return;
+    }
+
+    if (changeList.none((event) => event is DocumentEdit)) {
+      // Action tags are composed while the user is typing. Since the
+      // are no edits, the user is not typing.
       return;
     }
 

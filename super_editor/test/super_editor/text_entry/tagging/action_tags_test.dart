@@ -768,6 +768,34 @@ void main() {
         // Ensure that we received a notification when the tag was cancelled.
         expect(tagNotificationCount, 7);
       });
+
+      testWidgetsOnAllPlatforms("does not start composing when placing the caret at an existing tag pattern",
+          (tester) async {
+        await _pumpTestEditor(
+          tester,
+          MutableDocument(
+            nodes: [
+              ParagraphNode(
+                id: "1",
+                text: AttributedText("This is origin/main branch"),
+              ),
+            ],
+          ),
+        );
+
+        // Place the caret at "mai|n"
+        await tester.placeCaretInParagraph("1", 18);
+
+        // Ensure that we are not composing a tag.
+        final text = SuperEditorInspector.findTextInComponent("1");
+        expect(
+          text.getAttributionSpansInRange(
+            attributionFilter: (attribution) => attribution == actionTagComposingAttribution,
+            range: const SpanRange(0, 26),
+          ),
+          isEmpty,
+        );
+      });
     });
 
     group("submissions >", () {
