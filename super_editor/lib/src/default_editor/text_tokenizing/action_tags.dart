@@ -327,9 +327,14 @@ class ActionTagComposingReaction extends EditReaction {
       return;
     }
 
-    if (changeList.none((event) => event is DocumentEdit)) {
-      // Action tags are composed while the user is typing. Since the
-      // are no edits, the user is not typing.
+    final hasComposingTagAttribution = textNode!.text
+        .getAttributionSpansInRange(
+          attributionFilter: (attribution) => attribution == actionTagComposingAttribution,
+          range: SpanRange(tagAroundPosition.indexedTag.startOffset, tagAroundPosition.indexedTag.endOffset),
+        )
+        .isNotEmpty;
+    if (changeList.none((event) => event is DocumentEdit) && !hasComposingTagAttribution) {
+      // The user is neither typing nor moving the caret within an existing composing tag.
       return;
     }
 
