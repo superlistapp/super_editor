@@ -662,7 +662,8 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
           selection.extent.nodeId == docPosition.nodeId &&
           selection.extent.nodePosition.isEquivalentTo(docPosition.nodePosition);
 
-      if (didTapOnExistingSelection && SuperKeyboard.instance.state.value == KeyboardState.open) {
+      if (didTapOnExistingSelection &&
+          SuperKeyboard.instance.mobileGeometry.value.keyboardState == KeyboardState.open) {
         // Toggle the toolbar display when the user taps on the collapsed caret,
         // or on top of an existing selection.
         //
