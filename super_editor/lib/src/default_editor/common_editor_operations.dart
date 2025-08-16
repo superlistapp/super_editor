@@ -272,7 +272,7 @@ class CommonEditorOperations {
   /// in [movementModifier]. To move to the beginning of a line, pass
   /// [MovementModifier.line] in [movementModifier].
   ///
-  /// Clears any composing region.
+  /// Clears the composing region.
   ///
   /// Returns [true] if the extent moved, or the selection changed, e.g., the
   /// selection collapsed but the extent stayed in the same place. Returns
