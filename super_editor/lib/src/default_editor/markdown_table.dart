@@ -1,0 +1,507 @@
+import 'package:attributed_text/attributed_text.dart';
+import 'package:collection/collection.dart';
+import 'package:flutter/material.dart';
+import 'package:super_editor/src/core/document.dart';
+import 'package:super_editor/src/core/styles.dart';
+import 'package:super_editor/src/default_editor/box_component.dart';
+import 'package:super_editor/src/default_editor/layout_single_column/layout_single_column.dart';
+import 'package:super_editor/src/default_editor/layout_single_column/selection_aware_viewmodel.dart';
+import 'package:super_editor/src/default_editor/selection_upstream_downstream.dart';
+import 'package:super_editor/src/default_editor/table.dart';
+import 'package:super_editor/src/infrastructure/attributed_text_styles.dart';
+import 'package:super_text_layout/super_text_layout.dart';
+
+/// Builds [MarkdownTableViewModel]s and [MarkdownTableComponent]s for every [TableBlockNode]
+/// in a document.
+///
+/// The [MarkdownTableComponent] uses block level selection, which means that the table is either
+/// fully selected or not selected at all, i.e., there is no selection of individual cells.
+///
+/// See [TableStyles] for the styles that can be applied to the table through a [Stylesheet].
+class MarkdownTableComponentBuilder implements ComponentBuilder {
+  const MarkdownTableComponentBuilder();
+
+  @override
+  SingleColumnLayoutComponentViewModel? createViewModel(Document document, DocumentNode node) {
+    if (node is! TableBlockNode) {
+      return null;
+    }
+
+    final rows = [
+      for (int i = 0; i < node.rowCount; i += 1) node.getRow(i),
+    ];
+
+    return MarkdownTableViewModel(
+      nodeId: node.id,
+      createdAt: node.metadata[NodeMetadata.createdAt],
+      padding: EdgeInsets.zero,
+      cellPadding: const EdgeInsets.all(8.0),
+      cells: rows
+          .map(
+            (row) => [
+              for (final cell in row)
+                MarkdownTableCellViewModel(
+                  text: cell.text,
+                  textAlign: cell.getMetadataValue('textAlign') ?? TextAlign.left,
+                  textStyleBuilder: noStyleBuilder,
+                  metadata: cell.metadata,
+                )
+            ],
+          )
+          .toList(),
+      selectionColor: const Color(0x00000000),
+      caretColor: const Color(0x00000000),
+    );
+  }
+
+  @override
+  Widget? createComponent(
+      SingleColumnDocumentComponentContext componentContext, SingleColumnLayoutComponentViewModel componentViewModel) {
+    if (componentViewModel is! MarkdownTableViewModel) {
+      return null;
+    }
+
+    return MarkdownTableComponent(
+      componentKey: componentContext.componentKey,
+      cells: componentViewModel.cells,
+      border: componentViewModel.border,
+      rowDecorator: componentViewModel.rowDecorator,
+      inlineWidgetBuilders: componentViewModel.inlineWidgetBuilders,
+      selection: componentViewModel.selection?.nodeSelection as UpstreamDownstreamNodeSelection?,
+      selectionColor: componentViewModel.selectionColor,
+      showCaret: componentViewModel.caret != null,
+      caretColor: componentViewModel.caretColor,
+      opacity: componentViewModel.opacity,
+    );
+  }
+}
+
+/// View model that configures the appearance of a [MarkdownTableComponent].
+///
+/// View models move through various style phases, which fill out
+/// various properties in the view model. For example, one phase applies
+/// all [StyleRule]s, and another phase configures content selection
+/// and caret appearance.
+class MarkdownTableViewModel extends SingleColumnLayoutComponentViewModel with SelectionAwareViewModelMixin {
+  MarkdownTableViewModel({
+    required super.nodeId,
+    required super.createdAt,
+    super.maxWidth,
+    required super.padding,
+    super.opacity,
+    required this.cells,
+    this.border,
+    this.rowDecorator,
+    this.cellPadding = EdgeInsets.zero,
+    this.inlineWidgetBuilders = const [],
+    this.caret,
+    required this.caretColor,
+    DocumentNodeSelection? selection,
+    Color selectionColor = Colors.transparent,
+  }) {
+    super.selection = selection;
+    super.selectionColor = selectionColor;
+  }
+
+  /// The cells of the table, indexed as `[rowIndex][columnIndex]`.
+  ///
+  /// The first row is considered the header row.
+  ///
+  /// The remaining rows are considered to be data rows.
+  final List<List<MarkdownTableCellViewModel>> cells;
+
+  /// The border to draw around the table and its cells.
+  ///
+  /// Configurable through [TableStyles.border].
+  TableBorder? border;
+
+  /// A function that decorates each row in the table.
+  ///
+  /// Can be used, for example, to apply alternating background colors to rows.
+  ///
+  /// Configurable through [TableStyles.rowDecorator].
+  ///
+  /// See also:
+  ///   - [TableStyles.cellDecorator], which can be used to apply a [TableCellDecorator]
+  ///      to decorate individual cells.
+  TableRowDecorator? rowDecorator;
+
+  /// The padding to apply to each cell in the table.
+  EdgeInsets cellPadding;
+
+  /// A chain of builders that create inline widgets that can be embedded
+  /// inside the table's cells.
+  InlineWidgetBuilderChain inlineWidgetBuilders;
+
+  /// The caret position.
+  ///
+  /// A [MarkdownTableComponent] uses block-level selection, which means that
+  /// the table is either fully selected or not selected at all, i.e., there is
+  /// no selection of individual cells. Therefore, the caret can only be
+  /// positioned before or after the table.
+  UpstreamDownstreamNodePosition? caret;
+
+  /// The color to use when painting the caret.
+  Color caretColor;
+
+  @override
+  SingleColumnLayoutComponentViewModel copy() {
+    return MarkdownTableViewModel(
+      nodeId: nodeId,
+      createdAt: createdAt,
+      maxWidth: maxWidth,
+      padding: padding,
+      opacity: opacity,
+      cells: [for (final row in cells) row.map((e) => e.copy()).toList()],
+      border: border,
+      rowDecorator: rowDecorator,
+      cellPadding: cellPadding,
+      inlineWidgetBuilders: inlineWidgetBuilders,
+      caret: caret,
+      caretColor: caretColor,
+      selection: selection,
+      selectionColor: selectionColor,
+    );
+  }
+
+  @override
+  void applyStyles(Map<String, dynamic> styles) {
+    super.applyStyles(styles);
+
+    if (cells.isEmpty) {
+      // There is no cell, so we're not rendering anything. Fizzle.
+      return;
+    }
+
+    border = styles[TableStyles.border] as TableBorder? ?? border;
+    rowDecorator = styles[TableStyles.rowDecorator] as TableRowDecorator? ?? rowDecorator;
+    inlineWidgetBuilders = styles[Styles.inlineWidgetBuilders] ?? inlineWidgetBuilders;
+    final inlineTextStyler = styles[Styles.inlineTextStyler] as AttributionStyleAdjuster;
+
+    final baseTextStyle = (styles[Styles.textStyle] ?? noStyleBuilder({})) as TextStyle;
+    final headerTextStyles = styles[TableStyles.headerTextStyle] as TextStyle?;
+    final cellDecorator = styles[TableStyles.cellDecorator] as TableCellDecorator?;
+    final cascadingPadding = styles[TableStyles.cellPadding] as CascadingPadding?;
+    if (cascadingPadding != null) {
+      cellPadding = cascadingPadding.toEdgeInsets();
+    }
+
+    // Apply the styles to the header.
+    final headerRow = cells[0];
+    for (int i = 0; i < headerRow.length; i += 1) {
+      final headerCell = headerRow[i];
+      // Applies the header text style on top of the base style.
+      headerCell.textStyleBuilder = (attributions) {
+        return inlineTextStyler(
+          attributions,
+          headerTextStyles != null //
+              ? baseTextStyle.merge(headerTextStyles)
+              : baseTextStyle,
+        );
+      };
+      headerCell.padding = cellPadding;
+      headerCell.decoration = cellDecorator?.call(
+            rowIndex: 0,
+            columnIndex: i,
+            cellText: headerCell.text,
+            cellMetadata: headerCell.metadata,
+          ) ??
+          const BoxDecoration();
+    }
+
+    // Apply the styles to the data rows.
+    for (int i = 1; i < cells.length; i += 1) {
+      final dataRow = cells[i];
+      for (int j = 0; j < dataRow.length; j += 1) {
+        final dataCell = dataRow[j];
+        dataCell.textStyleBuilder = (attributions) {
+          return inlineTextStyler(attributions, baseTextStyle);
+        };
+        dataCell.padding = cellPadding;
+        dataCell.decoration = cellDecorator?.call(
+              rowIndex: i,
+              columnIndex: j,
+              cellText: dataCell.text,
+              cellMetadata: dataCell.metadata,
+            ) ??
+            const BoxDecoration();
+      }
+    }
+  }
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is MarkdownTableViewModel &&
+          runtimeType == other.runtimeType &&
+          nodeId == other.nodeId &&
+          createdAt == other.createdAt &&
+          maxWidth == other.maxWidth &&
+          padding == other.padding &&
+          opacity == other.opacity &&
+          caret == other.caret &&
+          caretColor == other.caretColor &&
+          selection == other.selection &&
+          selectionColor == other.selectionColor &&
+          border == other.border &&
+          cellPadding == other.cellPadding &&
+          const DeepCollectionEquality().equals(cells, other.cells);
+
+  @override
+  int get hashCode =>
+      nodeId.hashCode ^
+      createdAt.hashCode ^
+      maxWidth.hashCode ^
+      padding.hashCode ^
+      opacity.hashCode ^
+      caret.hashCode ^
+      caretColor.hashCode ^
+      selection.hashCode ^
+      selectionColor.hashCode ^
+      border.hashCode ^
+      cellPadding.hashCode ^
+      cells.hashCode;
+}
+
+/// View model that configures the appearance of a [MarkdownTableComponent]'s cell.
+class MarkdownTableCellViewModel {
+  MarkdownTableCellViewModel({
+    required this.text,
+    this.textAlign = TextAlign.left,
+    this.textStyleBuilder = noStyleBuilder,
+    this.padding = EdgeInsets.zero,
+    this.decoration,
+    required this.metadata,
+  });
+
+  final AttributedText text;
+  TextAlign textAlign;
+  AttributionStyleBuilder textStyleBuilder;
+  EdgeInsetsGeometry padding;
+  BoxDecoration? decoration;
+  Map<String, dynamic> metadata;
+
+  MarkdownTableCellViewModel copy() {
+    return MarkdownTableCellViewModel(
+      text: text,
+      textAlign: textAlign,
+      textStyleBuilder: textStyleBuilder,
+      padding: padding,
+      decoration: decoration,
+      metadata: Map<String, dynamic>.from(metadata),
+    );
+  }
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is MarkdownTableCellViewModel &&
+          runtimeType == other.runtimeType &&
+          text == other.text &&
+          textAlign == other.textAlign &&
+          padding == other.padding &&
+          decoration == other.decoration &&
+          const DeepCollectionEquality().equals(metadata, other.metadata);
+
+  @override
+  int get hashCode =>
+      super.hashCode ^ //
+      text.hashCode ^
+      textAlign.hashCode ^
+      padding.hashCode ^
+      decoration.hashCode ^
+      metadata.hashCode;
+}
+
+/// A component that displays a read-only table with block level selection.
+///
+/// A block level selection means that the table is either fully selected or not selected at all,
+/// i.e., there is no selection of individual cells.
+///
+/// The table automatically expands to fill the available width, and shrinks to fit when it is wider
+/// than the available width.
+class MarkdownTableComponent extends StatelessWidget {
+  const MarkdownTableComponent({
+    super.key,
+    required this.componentKey,
+    required this.cells,
+    this.border,
+    this.rowDecorator,
+    required this.inlineWidgetBuilders,
+    required this.selectionColor,
+    this.selection,
+    required this.caretColor,
+    required this.showCaret,
+    required this.opacity,
+  });
+
+  final GlobalKey componentKey;
+
+  /// The cells of the table, indexed as `[rowIndex][columnIndex]`.
+  final List<List<MarkdownTableCellViewModel>> cells;
+
+  /// The border to draw around the table and its cells.
+  ///
+  /// Defaults to a border around the entire table and each cell.
+  final TableBorder? border;
+
+  /// A function that decorates each row in the table.
+  ///
+  /// Can be used, for example, to apply alternating background colors to rows.
+  final TableRowDecorator? rowDecorator;
+
+  final InlineWidgetBuilderChain inlineWidgetBuilders;
+
+  final Color selectionColor;
+  final UpstreamDownstreamNodeSelection? selection;
+  final Color caretColor;
+  final bool showCaret;
+
+  final double opacity;
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      cursor: SystemMouseCursors.basic,
+      hitTestBehavior: HitTestBehavior.translucent,
+      child: IgnorePointer(
+        //   ^ Without `IgnorePointer` gestures like taping to place the caret or double tapping
+        //     to select the whole table.
+        child: SelectableBox(
+          selection: selection,
+          selectionColor: selectionColor,
+          child: BoxComponent(
+            key: componentKey,
+            opacity: opacity,
+            child: LayoutBuilder(builder: (context, constraints) {
+              return FittedBox(
+                fit: BoxFit.scaleDown,
+                //  ^ Shrink to fit when the table is wider than the viewport.
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(
+                    minWidth: constraints.maxWidth,
+                    // ^ Expand to fill when the table is narrower than the viewport.
+                  ),
+                  child: Table(
+                    border: border ?? TableBorder.all(),
+                    defaultColumnWidth: const IntrinsicColumnWidth(),
+                    children: [
+                      for (int i = 0; i < cells.length; i += 1)
+                        _buildRow(
+                          context,
+                          cells[i],
+                          i,
+                        ),
+                    ],
+                  ),
+                ),
+              );
+            }),
+          ),
+        ),
+      ),
+    );
+  }
+
+  TableRow _buildRow(BuildContext context, List<MarkdownTableCellViewModel> row, int rowIndex) {
+    return TableRow(
+      decoration: rowDecorator?.call(rowIndex: rowIndex),
+      children: [
+        for (final cell in row)
+          _buildCell(
+            context,
+            cell,
+          ),
+      ],
+    );
+  }
+
+  Widget _buildCell(
+    BuildContext context,
+    MarkdownTableCellViewModel cell,
+  ) {
+    return DecoratedBox(
+      decoration: cell.decoration ?? const BoxDecoration(),
+      child: Padding(
+        padding: cell.padding,
+        child: SuperText(
+          richText: cell.text.computeInlineSpan(
+            context,
+            cell.textStyleBuilder,
+            inlineWidgetBuilders,
+          ),
+          textAlign: cell.textAlign,
+        ),
+      ),
+    );
+  }
+}
+
+/// A function that decorates a table row.
+///
+/// Can be used, for example, to apply alternating background colors to rows.
+///
+/// The header row has [rowIndex] 0, the first data row has [rowIndex] 1, and so on.
+///
+/// Returning `null` means that no decoration is applied to the row.
+typedef TableRowDecorator = BoxDecoration? Function({
+  required int rowIndex,
+});
+
+/// A function that decorates a table cell.
+///
+/// The header row has [rowIndex] 0, the first data row has [rowIndex] 1, and so on.
+///
+/// Returning `null` means that no decoration is applied to the cell, which means
+/// the decoration of the row is applied, if any.
+typedef TableCellDecorator = BoxDecoration? Function({
+  required int rowIndex,
+  required int columnIndex,
+  required AttributedText cellText,
+  required Map<String, dynamic> cellMetadata,
+});
+
+/// The default styles that are applied to a table through a [Stylesheet].
+///
+/// Applies a border around the entire table and each cell, a bold text style to the header row,
+/// and padding to each cell.
+final markdownTableStyles = StyleRule(
+  BlockSelector(tableBlockAttribution.name),
+  (document, node) {
+    if (node is! TableBlockNode) {
+      return {};
+    }
+
+    return {
+      Styles.padding: const CascadingPadding.only(top: 24),
+      TableStyles.headerTextStyle: const TextStyle(
+        fontWeight: FontWeight.w600,
+        color: Colors.black,
+      ),
+      TableStyles.cellPadding: const CascadingPadding.all(4.0),
+      TableStyles.border: TableBorder.all(color: Colors.black, width: 1),
+    };
+  },
+);
+
+/// The keys to the style metadata used to style a table.
+class TableStyles {
+  /// Applies a [TextStyle] to the cells of the header row.
+  static const String headerTextStyle = 'tableHeaderTextStyle';
+
+  /// Applies a [TableBorder] to the table.
+  static const String border = 'tableBorder';
+
+  /// Applies a [TableRowDecorator] to each row in the table.
+  static const String rowDecorator = 'tableRowDecorator';
+
+  /// Applies a [TableCellDecorator] to each cell in the table.
+  ///
+  /// A [TableCellDecorator] is applied after the [TableStyles.rowDecorator],
+  /// which means that the cell decorator can paint the cell with a different
+  /// background color than its parent row.
+  static const String cellDecorator = 'tableCellDecorator';
+
+  /// Applies padding to each cell in the table.
+  static const String cellPadding = 'tableCellPadding';
+}
