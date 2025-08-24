@@ -52,6 +52,7 @@ export 'src/default_editor/super_editor.dart';
 export 'src/default_editor/table.dart';
 export 'src/default_editor/tasks.dart';
 export 'src/default_editor/text.dart';
+export 'src/default_editor/markdown_table.dart';
 export 'src/default_editor/text_ai.dart';
 export 'src/default_editor/text_tools.dart';
 export 'src/default_editor/text/custom_underlines.dart';
