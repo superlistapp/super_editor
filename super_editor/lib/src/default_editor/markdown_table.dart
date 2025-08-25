@@ -8,6 +8,7 @@ import 'package:super_editor/src/default_editor/layout_single_column/layout_sing
 import 'package:super_editor/src/default_editor/layout_single_column/selection_aware_viewmodel.dart';
 import 'package:super_editor/src/default_editor/selection_upstream_downstream.dart';
 import 'package:super_editor/src/default_editor/table.dart';
+import 'package:super_editor/src/default_editor/text.dart';
 import 'package:super_editor/src/infrastructure/attributed_text_styles.dart';
 import 'package:super_text_layout/super_text_layout.dart';
 
@@ -28,22 +29,25 @@ class MarkdownTableComponentBuilder implements ComponentBuilder {
     }
 
     final rows = [
-      for (int i = 0; i < node.rowCount; i += 1) node.getRow(i),
+      for (int i = 0; i < node.rowCount; i += 1) //
+        node.getRow(i),
     ];
 
     return MarkdownTableViewModel(
       nodeId: node.id,
       createdAt: node.metadata[NodeMetadata.createdAt],
       padding: EdgeInsets.zero,
-      cellPadding: const EdgeInsets.all(8.0),
       cells: rows
           .map(
             (row) => [
               for (final cell in row)
                 MarkdownTableCellViewModel(
+                  nodeId: cell.id,
+                  createdAt: cell.metadata[NodeMetadata.createdAt],
                   text: cell.text,
-                  textAlign: cell.getMetadataValue('textAlign') ?? TextAlign.left,
+                  textAlign: cell.getMetadataValue(TextNodeMetadata.textAlign) ?? TextAlign.left,
                   textStyleBuilder: noStyleBuilder,
+                  padding: const EdgeInsets.all(8.0),
                   metadata: cell.metadata,
                 )
             ],
@@ -63,13 +67,10 @@ class MarkdownTableComponentBuilder implements ComponentBuilder {
 
     return MarkdownTableComponent(
       componentKey: componentContext.componentKey,
-      cells: componentViewModel.cells,
-      border: componentViewModel.border,
-      rowDecorator: componentViewModel.rowDecorator,
-      inlineWidgetBuilders: componentViewModel.inlineWidgetBuilders,
+      viewModel: componentViewModel,
       selection: componentViewModel.selection?.nodeSelection as UpstreamDownstreamNodeSelection?,
       selectionColor: componentViewModel.selectionColor,
-      showCaret: componentViewModel.caret != null,
+      showCaret: componentViewModel.selection != null,
       caretColor: componentViewModel.caretColor,
       opacity: componentViewModel.opacity,
     );
@@ -92,9 +93,7 @@ class MarkdownTableViewModel extends SingleColumnLayoutComponentViewModel with S
     required this.cells,
     this.border,
     this.rowDecorator,
-    this.cellPadding = EdgeInsets.zero,
     this.inlineWidgetBuilders = const [],
-    this.caret,
     required this.caretColor,
     DocumentNodeSelection? selection,
     Color selectionColor = Colors.transparent,
@@ -126,20 +125,9 @@ class MarkdownTableViewModel extends SingleColumnLayoutComponentViewModel with S
   ///      to decorate individual cells.
   TableRowDecorator? rowDecorator;
 
-  /// The padding to apply to each cell in the table.
-  EdgeInsets cellPadding;
-
   /// A chain of builders that create inline widgets that can be embedded
   /// inside the table's cells.
   InlineWidgetBuilderChain inlineWidgetBuilders;
-
-  /// The caret position.
-  ///
-  /// A [MarkdownTableComponent] uses block-level selection, which means that
-  /// the table is either fully selected or not selected at all, i.e., there is
-  /// no selection of individual cells. Therefore, the caret can only be
-  /// positioned before or after the table.
-  UpstreamDownstreamNodePosition? caret;
 
   /// The color to use when painting the caret.
   Color caretColor;
@@ -152,12 +140,13 @@ class MarkdownTableViewModel extends SingleColumnLayoutComponentViewModel with S
       maxWidth: maxWidth,
       padding: padding,
       opacity: opacity,
-      cells: [for (final row in cells) row.map((e) => e.copy()).toList()],
+      cells: [
+        for (final row in cells) //
+          row.map((e) => e.copy()).toList(),
+      ],
       border: border,
       rowDecorator: rowDecorator,
-      cellPadding: cellPadding,
       inlineWidgetBuilders: inlineWidgetBuilders,
-      caret: caret,
       caretColor: caretColor,
       selection: selection,
       selectionColor: selectionColor,
@@ -181,6 +170,8 @@ class MarkdownTableViewModel extends SingleColumnLayoutComponentViewModel with S
     final baseTextStyle = (styles[Styles.textStyle] ?? noStyleBuilder({})) as TextStyle;
     final headerTextStyles = styles[TableStyles.headerTextStyle] as TextStyle?;
     final cellDecorator = styles[TableStyles.cellDecorator] as TableCellDecorator?;
+
+    EdgeInsets cellPadding = const EdgeInsets.all(0);
     final cascadingPadding = styles[TableStyles.cellPadding] as CascadingPadding?;
     if (cascadingPadding != null) {
       cellPadding = cascadingPadding.toEdgeInsets();
@@ -239,12 +230,10 @@ class MarkdownTableViewModel extends SingleColumnLayoutComponentViewModel with S
           maxWidth == other.maxWidth &&
           padding == other.padding &&
           opacity == other.opacity &&
-          caret == other.caret &&
           caretColor == other.caretColor &&
           selection == other.selection &&
           selectionColor == other.selectionColor &&
           border == other.border &&
-          cellPadding == other.cellPadding &&
           const DeepCollectionEquality().equals(cells, other.cells);
 
   @override
@@ -254,35 +243,37 @@ class MarkdownTableViewModel extends SingleColumnLayoutComponentViewModel with S
       maxWidth.hashCode ^
       padding.hashCode ^
       opacity.hashCode ^
-      caret.hashCode ^
       caretColor.hashCode ^
       selection.hashCode ^
       selectionColor.hashCode ^
       border.hashCode ^
-      cellPadding.hashCode ^
       cells.hashCode;
 }
 
 /// View model that configures the appearance of a [MarkdownTableComponent]'s cell.
-class MarkdownTableCellViewModel {
+class MarkdownTableCellViewModel extends SingleColumnLayoutComponentViewModel {
   MarkdownTableCellViewModel({
+    required super.nodeId,
     required this.text,
     this.textAlign = TextAlign.left,
     this.textStyleBuilder = noStyleBuilder,
-    this.padding = EdgeInsets.zero,
+    required super.padding,
     this.decoration,
     required this.metadata,
+    required super.createdAt,
   });
 
   final AttributedText text;
   TextAlign textAlign;
   AttributionStyleBuilder textStyleBuilder;
-  EdgeInsetsGeometry padding;
   BoxDecoration? decoration;
   Map<String, dynamic> metadata;
 
+  @override
   MarkdownTableCellViewModel copy() {
     return MarkdownTableCellViewModel(
+      nodeId: nodeId,
+      createdAt: createdAt,
       text: text,
       textAlign: textAlign,
       textStyleBuilder: textStyleBuilder,
@@ -297,6 +288,7 @@ class MarkdownTableCellViewModel {
       identical(this, other) ||
       other is MarkdownTableCellViewModel &&
           runtimeType == other.runtimeType &&
+          super == other &&
           text == other.text &&
           textAlign == other.textAlign &&
           padding == other.padding &&
@@ -324,10 +316,7 @@ class MarkdownTableComponent extends StatelessWidget {
   const MarkdownTableComponent({
     super.key,
     required this.componentKey,
-    required this.cells,
-    this.border,
-    this.rowDecorator,
-    required this.inlineWidgetBuilders,
+    required this.viewModel,
     required this.selectionColor,
     this.selection,
     required this.caretColor,
@@ -337,20 +326,7 @@ class MarkdownTableComponent extends StatelessWidget {
 
   final GlobalKey componentKey;
 
-  /// The cells of the table, indexed as `[rowIndex][columnIndex]`.
-  final List<List<MarkdownTableCellViewModel>> cells;
-
-  /// The border to draw around the table and its cells.
-  ///
-  /// Defaults to a border around the entire table and each cell.
-  final TableBorder? border;
-
-  /// A function that decorates each row in the table.
-  ///
-  /// Can be used, for example, to apply alternating background colors to rows.
-  final TableRowDecorator? rowDecorator;
-
-  final InlineWidgetBuilderChain inlineWidgetBuilders;
+  final MarkdownTableViewModel viewModel;
 
   final Color selectionColor;
   final UpstreamDownstreamNodeSelection? selection;
@@ -364,9 +340,12 @@ class MarkdownTableComponent extends StatelessWidget {
     return MouseRegion(
       cursor: SystemMouseCursors.basic,
       hitTestBehavior: HitTestBehavior.translucent,
+      //               ^ Without `HitTestBehavior.translucent` the `MouseRegion` seems to be stealing
+      //                 the pointer events, making it impossible to place the caret.
       child: IgnorePointer(
         //   ^ Without `IgnorePointer` gestures like taping to place the caret or double tapping
-        //     to select the whole table.
+        //     to select the whole table don't work. The `SelectableBox` seems to be stealing
+        //     the pointer events.
         child: SelectableBox(
           selection: selection,
           selectionColor: selectionColor,
@@ -383,15 +362,11 @@ class MarkdownTableComponent extends StatelessWidget {
                     // ^ Expand to fill when the table is narrower than the viewport.
                   ),
                   child: Table(
-                    border: border ?? TableBorder.all(),
+                    border: viewModel.border ?? TableBorder.all(),
                     defaultColumnWidth: const IntrinsicColumnWidth(),
                     children: [
-                      for (int i = 0; i < cells.length; i += 1)
-                        _buildRow(
-                          context,
-                          cells[i],
-                          i,
-                        ),
+                      for (int i = 0; i < viewModel.cells.length; i += 1) //
+                        _buildRow(context, viewModel.cells[i], i),
                     ],
                   ),
                 ),
@@ -405,13 +380,10 @@ class MarkdownTableComponent extends StatelessWidget {
 
   TableRow _buildRow(BuildContext context, List<MarkdownTableCellViewModel> row, int rowIndex) {
     return TableRow(
-      decoration: rowDecorator?.call(rowIndex: rowIndex),
+      decoration: viewModel.rowDecorator?.call(rowIndex: rowIndex),
       children: [
-        for (final cell in row)
-          _buildCell(
-            context,
-            cell,
-          ),
+        for (final cell in row) //
+          _buildCell(context, cell),
       ],
     );
   }
@@ -428,7 +400,7 @@ class MarkdownTableComponent extends StatelessWidget {
           richText: cell.text.computeInlineSpan(
             context,
             cell.textStyleBuilder,
-            inlineWidgetBuilders,
+            viewModel.inlineWidgetBuilders,
           ),
           textAlign: cell.textAlign,
         ),
@@ -479,7 +451,7 @@ final markdownTableStyles = StyleRule(
         color: Colors.black,
       ),
       TableStyles.cellPadding: const CascadingPadding.all(4.0),
-      TableStyles.border: TableBorder.all(color: Colors.black, width: 1),
+      TableStyles.border: TableBorder.all(color: Colors.grey, width: 1),
     };
   },
 );
