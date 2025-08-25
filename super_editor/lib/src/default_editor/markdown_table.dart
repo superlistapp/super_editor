@@ -48,6 +48,7 @@ class MarkdownTableComponentBuilder implements ComponentBuilder {
                   textAlign: cell.getMetadataValue(TextNodeMetadata.textAlign) ?? TextAlign.left,
                   textStyleBuilder: noStyleBuilder,
                   padding: const EdgeInsets.all(8.0),
+                  //       ^ Default padding, can be overridden through the stylesheet.
                   metadata: cell.metadata,
                 )
             ],
@@ -92,7 +93,6 @@ class MarkdownTableViewModel extends SingleColumnLayoutComponentViewModel with S
     super.opacity,
     required this.cells,
     this.border,
-    this.rowDecorator,
     this.inlineWidgetBuilders = const [],
     required this.caretColor,
     DocumentNodeSelection? selection,
@@ -114,17 +114,6 @@ class MarkdownTableViewModel extends SingleColumnLayoutComponentViewModel with S
   /// Configurable through [TableStyles.border].
   TableBorder? border;
 
-  /// A function that decorates each row in the table.
-  ///
-  /// Can be used, for example, to apply alternating background colors to rows.
-  ///
-  /// Configurable through [TableStyles.rowDecorator].
-  ///
-  /// See also:
-  ///   - [TableStyles.cellDecorator], which can be used to apply a [TableCellDecorator]
-  ///      to decorate individual cells.
-  TableRowDecorator? rowDecorator;
-
   /// A chain of builders that create inline widgets that can be embedded
   /// inside the table's cells.
   InlineWidgetBuilderChain inlineWidgetBuilders;
@@ -145,7 +134,6 @@ class MarkdownTableViewModel extends SingleColumnLayoutComponentViewModel with S
           row.map((e) => e.copy()).toList(),
       ],
       border: border,
-      rowDecorator: rowDecorator,
       inlineWidgetBuilders: inlineWidgetBuilders,
       caretColor: caretColor,
       selection: selection,
@@ -163,7 +151,6 @@ class MarkdownTableViewModel extends SingleColumnLayoutComponentViewModel with S
     }
 
     border = styles[TableStyles.border] as TableBorder? ?? border;
-    rowDecorator = styles[TableStyles.rowDecorator] as TableRowDecorator? ?? rowDecorator;
     inlineWidgetBuilders = styles[Styles.inlineWidgetBuilders] ?? inlineWidgetBuilders;
     final inlineTextStyler = styles[Styles.inlineTextStyler] as AttributionStyleAdjuster;
 
@@ -380,7 +367,6 @@ class MarkdownTableComponent extends StatelessWidget {
 
   TableRow _buildRow(BuildContext context, List<MarkdownTableCellViewModel> row, int rowIndex) {
     return TableRow(
-      decoration: viewModel.rowDecorator?.call(rowIndex: rowIndex),
       children: [
         for (final cell in row) //
           _buildCell(context, cell),
@@ -463,9 +449,6 @@ class TableStyles {
 
   /// Applies a [TableBorder] to the table.
   static const String border = 'tableBorder';
-
-  /// Applies a [TableRowDecorator] to each row in the table.
-  static const String rowDecorator = 'tableRowDecorator';
 
   /// Applies a [TableCellDecorator] to each cell in the table.
   ///

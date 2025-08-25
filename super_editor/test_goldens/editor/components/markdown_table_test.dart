@@ -243,8 +243,11 @@ void main() {
                 BlockSelector(tableBlockAttribution.name),
                 (document, node) {
                   return {
-                    TableStyles.rowDecorator: ({
+                    TableStyles.cellDecorator: ({
                       required int rowIndex,
+                      required int columnIndex,
+                      required AttributedText cellText,
+                      required Map<String, dynamic> cellMetadata,
                     }) {
                       if (rowIndex == 0) {
                         // Header row.
@@ -272,8 +275,11 @@ void main() {
                 BlockSelector(tableBlockAttribution.name),
                 (document, node) {
                   return {
-                    TableStyles.rowDecorator: ({
+                    TableStyles.cellDecorator: ({
                       required int rowIndex,
+                      required int columnIndex,
+                      required AttributedText cellText,
+                      required Map<String, dynamic> cellMetadata,
                     }) {
                       if (rowIndex > 0 && rowIndex % 2 == 0) {
                         // Even data row.
@@ -323,42 +329,6 @@ void main() {
         );
 
         await screenMatchesGolden(tester, 'super_editor_markdown_table_customization_cell_decoration');
-      }, windowSize: goldenSizeMedium);
-
-      testGoldensOnMac('row and cell decoration', (tester) async {
-        await _pumpCustomizationTestApp(
-          tester,
-          stylesheet: markdownTableStylesheet.copyWith(
-            addRulesAfter: [
-              StyleRule(
-                BlockSelector(tableBlockAttribution.name),
-                (document, node) {
-                  return {
-                    TableStyles.rowDecorator: ({
-                      required int rowIndex,
-                    }) {
-                      return const BoxDecoration(color: Colors.blue);
-                    },
-                    TableStyles.cellDecorator: ({
-                      required int rowIndex,
-                      required int columnIndex,
-                      required AttributedText cellText,
-                      required Map<String, dynamic> cellMetadata,
-                    }) {
-                      if (rowIndex == 1 && columnIndex == 1) {
-                        return const BoxDecoration(color: Colors.red);
-                      }
-
-                      return null;
-                    },
-                  };
-                },
-              ),
-            ],
-          ),
-        );
-
-        await screenMatchesGolden(tester, 'super_editor_markdown_table_customization_row_and_cell_decoration');
       }, windowSize: goldenSizeMedium);
     });
   });
