@@ -1590,7 +1590,11 @@ class AddTextAttributionsCommand extends EditCommand {
           node.id,
           node.copyTextNodeWith(
             text: AttributedText(
-              node.text.toPlainText(),
+              node.text.toPlainText(
+                // Don't include placeholder characters, because we're providing
+                // actual placeholders down below.
+                includePlaceholders: false,
+              ),
               node.text.spans.copy()
                 ..addAttribution(
                   newAttribution: attribution,
@@ -1718,13 +1722,18 @@ class RemoveTextAttributionsCommand extends EditCommand {
         // see that we made a change, and re-renders the text in the document.
         node = node.copyTextNodeWith(
           text: AttributedText(
-            node.text.toPlainText(),
+            node.text.toPlainText(
+              // Don't include placeholder characters, because we're providing
+              // actual placeholders down below.
+              includePlaceholders: false,
+            ),
             node.text.spans.copy()
               ..removeAttribution(
                 attributionToRemove: attribution,
                 start: range.start,
                 end: range.end,
               ),
+            Map.from(node.text.placeholders),
           ),
         );
 
