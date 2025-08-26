@@ -12,8 +12,8 @@ dependencies:
   flutter:
     sdk: flutter
   super_clipboard: ^0.9.1
-  super_editor: 0.3.0-dev.29
-  super_editor_markdown: 0.1.8
+  super_editor: 0.3.0-dev.31
+  super_editor_markdown: 0.1.9
 
 dependency_overrides:
   super_editor:
