@@ -104,7 +104,8 @@ class ParagraphComponentBuilder implements ComponentBuilder {
   const ParagraphComponentBuilder();
 
   @override
-  SingleColumnLayoutComponentViewModel? createViewModel(Document document, DocumentNode node) {
+  SingleColumnLayoutComponentViewModel? createViewModel(
+      PresenterContext context, Document document, DocumentNode node) {
     if (node is! ParagraphNode) {
       return null;
     }
@@ -158,6 +159,9 @@ class ParagraphComponentBuilder implements ComponentBuilder {
     } else {
       editorLayoutLog.finer(' - not painting any text selection');
     }
+
+    print(
+        "Building a ParagraphComponent (ID: ${componentViewModel.nodeId}) with component key: ${componentContext.componentKey}");
 
     return ParagraphComponent(
       key: componentContext.componentKey,
@@ -291,6 +295,7 @@ class HintComponentBuilder extends ParagraphComponentBuilder {
 
   @override
   SingleColumnLayoutComponentViewModel? createViewModel(
+    PresenterContext context,
     Document document,
     DocumentNode node,
   ) {
@@ -314,7 +319,7 @@ class HintComponentBuilder extends ParagraphComponentBuilder {
     }
 
     return HintComponentViewModel.fromParagraphViewModel(
-      super.createViewModel(document, node)! as ParagraphComponentViewModel,
+      super.createViewModel(context, document, node)! as ParagraphComponentViewModel,
       hintText: hint,
     );
   }

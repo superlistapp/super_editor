@@ -1,5 +1,4 @@
 import 'package:attributed_text/attributed_text.dart';
-import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:super_editor/src/core/document.dart';
@@ -14,6 +13,7 @@ class SingleColumnDocumentComponentContext {
   const SingleColumnDocumentComponentContext({
     required this.context,
     required this.componentKey,
+    required this.buildChildComponent,
   });
 
   /// The [BuildContext] for the parent of the [DocumentComponent]
@@ -26,7 +26,14 @@ class SingleColumnDocumentComponentContext {
   /// The [componentKey] is used by the [DocumentLayout] to query for
   /// node-specific information, like node positions and selections.
   final GlobalKey componentKey;
+
+  /// Builds a child [DocumentComponent] for the component that owns this context.
+  final ComponentWidgetBuilder buildChildComponent;
 }
+
+/// Finds and creates the component widget that presents the given [node].
+typedef ComponentWidgetBuilder = (GlobalKey<DocumentComponent>, Widget) Function(
+    SingleColumnLayoutComponentViewModel viewModel);
 
 /// Produces [SingleColumnLayoutViewModel]s to be displayed by a
 /// [SingleColumnDocumentLayout].
@@ -164,15 +171,10 @@ class SingleColumnLayoutPresenter {
     if (newViewModel == null) {
       // The document changed. All view models were invalidated. Create a
       // new base document view model.
+      final presenterContext = PresenterContext(_document, _componentBuilders);
       final viewModels = <SingleColumnLayoutComponentViewModel>[];
       for (final node in _document) {
-        SingleColumnLayoutComponentViewModel? viewModel;
-        for (final builder in _componentBuilders) {
-          viewModel = builder.createViewModel(_document, node);
-          if (viewModel != null) {
-            break;
-          }
-        }
+        final viewModel = presenterContext.createViewModel(node);
         if (viewModel == null) {
           throw Exception("Couldn't find styler to create component for document node: ${node.runtimeType}");
         }
@@ -361,12 +363,18 @@ typedef ViewModelChangeCallback = void Function({
   required List<String> removedComponents,
 });
 
-/// Creates view models and components to display various [DocumentNode]s
-/// in a [Document].
+/// Creates view models and components to display various [DocumentNode]s in a [Document].
 abstract class ComponentBuilder {
-  /// Produces a [SingleColumnLayoutComponentViewModel] with default styles for the given
+  /// Creates a [SingleColumnLayoutComponentViewModel] with default styles for the given
   /// [node], or returns `null` if this builder doesn't apply to the given node.
-  SingleColumnLayoutComponentViewModel? createViewModel(Document document, DocumentNode node);
+  ///
+  /// A [PresenterContext] is provided so that a component with children can create view
+  /// models for their children, too, and include those in the returned view model.
+  SingleColumnLayoutComponentViewModel? createViewModel(
+    PresenterContext presenterContext,
+    Document document,
+    DocumentNode node,
+  );
 
   /// Creates a visual component that renders the given [viewModel],
   /// or returns `null` if this builder doesn't apply to the given [viewModel].
@@ -381,7 +389,27 @@ abstract class ComponentBuilder {
   /// See [ComponentContext] for expectations about how to use the context
   /// to build a component widget.
   Widget? createComponent(
-      SingleColumnDocumentComponentContext componentContext, SingleColumnLayoutComponentViewModel componentViewModel);
+    SingleColumnDocumentComponentContext componentContext,
+    SingleColumnLayoutComponentViewModel componentViewModel,
+  );
+}
+
+/// A context provided to [ComponentBuilder]s when constructing view models.
+class PresenterContext {
+  const PresenterContext(this._document, this._componentBuilders);
+
+  final Document _document;
+  final List<ComponentBuilder> _componentBuilders;
+
+  SingleColumnLayoutComponentViewModel? createViewModel(DocumentNode node) {
+    for (final builder in _componentBuilders) {
+      final viewModel = builder.createViewModel(this, _document, node);
+      if (viewModel != null) {
+        return viewModel;
+      }
+    }
+    return null;
+  }
 }
 
 /// A single phase of style rules, which are applied in a pipeline to

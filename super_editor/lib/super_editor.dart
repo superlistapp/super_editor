@@ -45,6 +45,7 @@ export 'src/default_editor/layout_single_column/super_editor_dry_layout.dart';
 export 'src/default_editor/list_items.dart';
 export 'src/default_editor/multi_node_editing.dart';
 export 'src/default_editor/paragraph.dart';
+export 'src/default_editor/layout_single_column/column_component.dart';
 export 'src/default_editor/layout_single_column/selection_aware_viewmodel.dart';
 export 'src/default_editor/selection_binary.dart';
 export 'src/default_editor/selection_upstream_downstream.dart';
