@@ -28,32 +28,26 @@ class MarkdownTableComponentBuilder implements ComponentBuilder {
       return null;
     }
 
-    final rows = [
-      for (int i = 0; i < node.rowCount; i += 1) //
-        node.getRow(i),
-    ];
-
     return MarkdownTableViewModel(
       nodeId: node.id,
       createdAt: node.metadata[NodeMetadata.createdAt],
       padding: EdgeInsets.zero,
-      cells: rows
-          .map(
-            (row) => [
-              for (final cell in row)
-                MarkdownTableCellViewModel(
-                  nodeId: cell.id,
-                  createdAt: cell.metadata[NodeMetadata.createdAt],
-                  text: cell.text,
-                  textAlign: cell.getMetadataValue(TextNodeMetadata.textAlign) ?? TextAlign.left,
-                  textStyleBuilder: noStyleBuilder,
-                  padding: const EdgeInsets.all(8.0),
-                  //       ^ Default padding, can be overridden through the stylesheet.
-                  metadata: cell.metadata,
-                )
-            ],
-          )
-          .toList(),
+      cells: [
+        for (int i = 0; i < node.rowCount; i += 1) //
+          [
+            for (final cell in node.getRow(i))
+              MarkdownTableCellViewModel(
+                nodeId: cell.id,
+                createdAt: cell.metadata[NodeMetadata.createdAt],
+                text: cell.text,
+                textAlign: cell.getMetadataValue(TextNodeMetadata.textAlign) ?? TextAlign.left,
+                textStyleBuilder: noStyleBuilder,
+                padding: const EdgeInsets.all(8.0),
+                //       ^ Default padding, can be overridden through the stylesheet.
+                metadata: cell.metadata,
+              )
+          ],
+      ],
       selectionColor: const Color(0x00000000),
       caretColor: const Color(0x00000000),
     );
