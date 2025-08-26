@@ -1,3 +1,17 @@
+## [0.3.0-dev.31]
+### Aug 26, 2025
+* FEATURE: Block/Markdown Tables
+   * Created a table node that holds styled text (no internal blocks), and supports upstream/downstream selection.
+   * Parses a table node from Markdown, with super_editor_markdown 0.1.9.
+   * Visual component for displaying Markdown tables.
+* FIX: Placeholder bug when adding/removing attributions.
+* FIX: No longer hides toolbar when releasing a long press in an editor.
+* ADJUSTMENT: Publicly export ReadOnlyTaskComponentBuilder.
+
+## [0.3.0-dev.30]
+### Aug 26, 2025
+Messed up release from wrong branch.
+
 ## [0.3.0-dev.29]
 ### July 27, 2025
  * FEATURE: Serialize `Document`s to HTML.
