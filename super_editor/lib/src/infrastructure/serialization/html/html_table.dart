@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:super_editor/src/core/document.dart';
 import 'package:super_editor/src/default_editor/selection_upstream_downstream.dart';
-import 'package:super_editor/src/default_editor/table.dart';
+import 'package:super_editor/src/default_editor/tables/table_block.dart';
 import 'package:super_editor/src/default_editor/text.dart';
 import 'package:super_editor/src/infrastructure/serialization/html/html_inline_text_styles.dart';
 
