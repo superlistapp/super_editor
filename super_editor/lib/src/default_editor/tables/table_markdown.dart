@@ -78,8 +78,7 @@ class MarkdownTableComponentBuilder implements ComponentBuilder {
 /// various properties in the view model. For example, one phase applies
 /// all [StyleRule]s, and another phase configures content selection
 /// and caret appearance.
-class MarkdownTableViewModel extends SingleColumnLayoutComponentViewModel
-    with SelectionAwareViewModelMixin<UpstreamDownstreamNodeSelection> {
+class MarkdownTableViewModel extends SingleColumnLayoutComponentViewModel with SelectionAwareViewModelMixin {
   MarkdownTableViewModel({
     required super.nodeId,
     required super.createdAt,
@@ -90,7 +89,7 @@ class MarkdownTableViewModel extends SingleColumnLayoutComponentViewModel
     this.border,
     this.inlineWidgetBuilders = const [],
     required this.caretColor,
-    DocumentNodeSelection<UpstreamDownstreamNodeSelection>? selection,
+    DocumentNodeSelection? selection,
     Color selectionColor = Colors.transparent,
   }) {
     super.selection = selection;
@@ -316,7 +315,9 @@ class MarkdownTableComponent extends StatelessWidget {
         //     to select the whole table don't work. The `SelectableBox` seems to be stealing
         //     the pointer events.
         child: SelectableBox(
-          selection: viewModel.selection?.nodeSelection,
+          selection: viewModel.selection?.nodeSelection is UpstreamDownstreamNodeSelection
+              ? viewModel.selection?.nodeSelection as UpstreamDownstreamNodeSelection
+              : null,
           selectionColor: viewModel.selectionColor,
           child: BoxComponent(
             key: componentKey,

@@ -12,9 +12,9 @@ import 'package:super_editor/src/default_editor/layout_single_column/layout_sing
 ///
 /// In the [SingleColumnLayoutComponentViewModel.copy] subclass implementation, both [selection] and
 /// [selectionColor] must be copied to the new instance.
-mixin SelectionAwareViewModelMixin<SelectionType extends NodeSelection> on SingleColumnLayoutComponentViewModel {
+mixin SelectionAwareViewModelMixin on SingleColumnLayoutComponentViewModel {
   /// The selection within the node represented by this view model.
-  DocumentNodeSelection<SelectionType>? selection;
+  DocumentNodeSelection? selection;
 
   /// The color to be applied to the selection.
   ///
