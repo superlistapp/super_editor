@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:super_editor/src/core/document.dart' show NodeSelection;
 import 'package:super_editor/src/core/styles.dart';
 import 'package:super_editor/src/default_editor/layout_single_column/layout_single_column.dart';
 
@@ -11,9 +12,9 @@ import 'package:super_editor/src/default_editor/layout_single_column/layout_sing
 ///
 /// In the [SingleColumnLayoutComponentViewModel.copy] subclass implementation, both [selection] and
 /// [selectionColor] must be copied to the new instance.
-mixin SelectionAwareViewModelMixin on SingleColumnLayoutComponentViewModel {
+mixin SelectionAwareViewModelMixin<SelectionType extends NodeSelection> on SingleColumnLayoutComponentViewModel {
   /// The selection within the node represented by this view model.
-  DocumentNodeSelection? selection;
+  DocumentNodeSelection<SelectionType>? selection;
 
   /// The color to be applied to the selection.
   ///
