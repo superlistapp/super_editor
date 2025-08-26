@@ -1,5 +1,4 @@
 import 'package:attributed_text/attributed_text.dart';
-import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:super_editor/src/core/document.dart';
@@ -14,6 +13,7 @@ class SingleColumnDocumentComponentContext {
   const SingleColumnDocumentComponentContext({
     required this.context,
     required this.componentKey,
+    required this.buildChildComponent,
   });
 
   /// The [BuildContext] for the parent of the [DocumentComponent]
@@ -27,14 +27,13 @@ class SingleColumnDocumentComponentContext {
   /// node-specific information, like node positions and selections.
   final GlobalKey componentKey;
 
-  /// Finds and creates the component widget that presents the given [node],
-  /// which is provided in this context so that a component with children
-  /// can build
-  final ComponentWidgetBuilder buildComponent;
+  /// Builds a child [DocumentComponent] for the component that owns this context.
+  final ComponentWidgetBuilder buildChildComponent;
 }
 
 /// Finds and creates the component widget that presents the given [node].
-typedef ComponentWidgetBuilder = Widget Function(SingleColumnLayoutComponentViewModel viewModel);
+typedef ComponentWidgetBuilder = (GlobalKey<DocumentComponent>, Widget) Function(
+    SingleColumnLayoutComponentViewModel viewModel);
 
 /// Produces [SingleColumnLayoutViewModel]s to be displayed by a
 /// [SingleColumnDocumentLayout].
@@ -397,14 +396,14 @@ abstract class ComponentBuilder {
 
 /// A context provided to [ComponentBuilder]s when constructing view models.
 class PresenterContext {
-  const PresenterContext(this.document, this.componentBuilders);
+  const PresenterContext(this._document, this._componentBuilders);
 
-  final Document document;
-  final List<ComponentBuilder> componentBuilders;
+  final Document _document;
+  final List<ComponentBuilder> _componentBuilders;
 
   SingleColumnLayoutComponentViewModel? createViewModel(DocumentNode node) {
-    for (final builder in componentBuilders) {
-      final viewModel = builder.createViewModel(this, document, node);
+    for (final builder in _componentBuilders) {
+      final viewModel = builder.createViewModel(this, _document, node);
       if (viewModel != null) {
         return viewModel;
       }

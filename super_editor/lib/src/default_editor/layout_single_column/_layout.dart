@@ -208,6 +208,7 @@ class _SingleColumnDocumentLayoutState extends State<SingleColumnDocumentLayout>
     }
 
     final componentKey = _topToBottomComponentKeys.first;
+    print("_isAboveStartOfContent - key: $componentKey");
     final componentBox = componentKey.currentContext!.findRenderObject() as RenderBox;
     final offsetAtComponent = _componentOffset(componentBox, documentOffset);
 
@@ -405,6 +406,7 @@ class _SingleColumnDocumentLayoutState extends State<SingleColumnDocumentLayout>
       final componentOverlap = _getLocalOverlapWithComponent(region, component);
 
       if (componentOverlap != null) {
+        print("Found overlapping component (index $i): $componentOverlap");
         editorLayoutLog.fine(' - drag intersects: $componentKey}');
         editorLayoutLog.fine(' - intersection: $componentOverlap');
         final componentBaseOffset = _componentOffset(
@@ -422,6 +424,7 @@ class _SingleColumnDocumentLayoutState extends State<SingleColumnDocumentLayout>
           // Because we're iterating through components from top to bottom, the
           // first intersecting component that we find must be the top node of
           // the selected area.
+          print("This is the top node ($i)");
           topNodeId = _componentKeysToNodeIds[componentKey];
           topNodeBasePosition = _getNodePositionForComponentOffset(component, componentBaseOffset);
           topNodeExtentPosition = _getNodePositionForComponentOffset(component, componentExtentOffset);
@@ -430,6 +433,7 @@ class _SingleColumnDocumentLayoutState extends State<SingleColumnDocumentLayout>
         // intersection that we find. This way, when the iteration ends,
         // the last bottom node that we assigned must be the actual bottom
         // node within the selected area.
+        print("Updating bottom node with component $i position");
         bottomNodeId = _componentKeysToNodeIds[componentKey];
         bottomNodeBasePosition = _getNodePositionForComponentOffset(component, componentBaseOffset);
         bottomNodeExtentPosition = _getNodePositionForComponentOffset(component, componentExtentOffset);
@@ -935,7 +939,7 @@ class _PresenterComponentBuilderState extends State<_PresenterComponentBuilder> 
 /// Builds a component widget for the given [componentViewModel] and
 /// binds it to the given [componentKey].
 ///
-/// The specific widget that's build is determined by the given
+/// The specific widget that's built is determined by the given
 /// [componentBuilders]. The component widget is rebuilt whenever the
 /// given [presenter] reports that the
 class _Component extends StatelessWidget {
@@ -973,7 +977,28 @@ class _Component extends StatelessWidget {
     final componentContext = SingleColumnDocumentComponentContext(
       context: context,
       componentKey: componentKey,
+      buildChildComponent: _createChildBuilder(context),
     );
+
+    final component = _buildComponent(
+      componentContext,
+      componentBuilders,
+      componentViewModel,
+      showDebugPaint: showDebugPaint,
+    );
+    if (component != null) {
+      return component;
+    }
+
+    return const SizedBox();
+  }
+
+  Widget? _buildComponent(
+    SingleColumnDocumentComponentContext componentContext,
+    List<ComponentBuilder> componentBuilders,
+    SingleColumnLayoutComponentViewModel componentViewModel, {
+    bool showDebugPaint = false,
+  }) {
     for (final componentBuilder in componentBuilders) {
       var component = componentBuilder.createComponent(componentContext, componentViewModel);
       if (component != null) {
@@ -993,7 +1018,31 @@ class _Component extends StatelessWidget {
         return showDebugPaint ? _wrapWithDebugWidget(component) : component;
       }
     }
-    return const SizedBox();
+
+    return null;
+  }
+
+  ComponentWidgetBuilder _createChildBuilder(BuildContext context) {
+    return (SingleColumnLayoutComponentViewModel componentViewModel) {
+      final childComponentKey = GlobalKey<DocumentComponent>();
+
+      return (
+        childComponentKey,
+        _buildComponent(
+              SingleColumnDocumentComponentContext(
+                context: context,
+                // FIXME: Normally this key is tied to a node and is cached. But child components don't have nodes...
+                componentKey: childComponentKey,
+                // Recursively generate functions to build deeper and deeper children.
+                buildChildComponent: _createChildBuilder(context),
+              ),
+              componentBuilders,
+              componentViewModel,
+              showDebugPaint: showDebugPaint,
+            ) ??
+            const SizedBox(),
+      );
+    };
   }
 
   Widget _wrapWithDebugWidget(Widget component) {

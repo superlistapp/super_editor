@@ -228,7 +228,7 @@ class TableComponentBuilder implements ComponentBuilder {
 
     return TableDocumentComponent(
       viewModel: componentViewModel,
-      componentBuilder: componentContext.buildComponent,
+      componentBuilder: componentContext.buildChildComponent,
     );
   }
 }

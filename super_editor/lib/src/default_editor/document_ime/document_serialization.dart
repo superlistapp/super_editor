@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:flutter/services.dart';
 import 'package:super_editor/src/core/document.dart';
 import 'package:super_editor/src/core/document_selection.dart';
+import 'package:super_editor/src/default_editor/layout_single_column/column_component.dart';
 import 'package:super_editor/src/default_editor/selection_upstream_downstream.dart';
 import 'package:super_editor/src/default_editor/text.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
@@ -67,6 +68,8 @@ class DocumentImeSerializer {
 
     selectedNodes.clear();
     selectedNodes.addAll(_doc.getNodesInContentOrder(selection));
+    print("Serializing document to IME...");
+    print(" - selected nodes: $selectedNodes");
     for (int i = 0; i < selectedNodes.length; i += 1) {
       // Append a newline character before appending another node's text.
       //
@@ -79,6 +82,10 @@ class DocumentImeSerializer {
       }
 
       final node = selectedNodes[i];
+      // FIXME: I think we need nodes to serialize themselves, so that a Banner, Table,
+      // etc can serialize. But document structure probably shouldn't depend on IME behavior,
+      // so we might want an interface for ImeSerializable. If that's implemented, we call it,
+      // and if it's not implemented, we do the "~" block representation.
       if (node is! TextNode) {
         buffer.write('~');
         characterCount += 1;
@@ -351,7 +358,13 @@ class DocumentImeSerializer {
       throw Exception("No such document position in the IME content: $docPosition");
     }
 
-    final nodePosition = docPosition.nodePosition;
+    var nodePosition = docPosition.nodePosition;
+
+    // If the node position is a composite node, recursively dig into that position until
+    // we have a leaf-node position, such as a TextNodePosition or an UpstreamDownstreamNodePosition.
+    while (nodePosition is CompositeNodePosition) {
+      nodePosition = nodePosition.childNodePosition;
+    }
 
     if (nodePosition is UpstreamDownstreamNodePosition) {
       if (nodePosition.affinity == TextAffinity.upstream) {
@@ -368,7 +381,7 @@ class DocumentImeSerializer {
     }
 
     if (nodePosition is TextNodePosition) {
-      return TextPosition(offset: imeRange.start + (docPosition.nodePosition as TextNodePosition).offset);
+      return TextPosition(offset: imeRange.start + nodePosition.offset);
     }
 
     throw Exception("Super Editor doesn't know how to convert a $nodePosition into an IME-compatible selection");
