@@ -331,6 +331,7 @@ class HintComponentBuilder extends ParagraphComponentBuilder {
     return TextWithHintComponent(
       key: componentContext.componentKey,
       text: componentViewModel.text,
+      inlineWidgetBuilders: componentViewModel.inlineWidgetBuilders,
       textStyleBuilder: componentViewModel.textStyleBuilder,
       hintText: AttributedText(componentViewModel.hintText),
       hintStyleBuilder: (attributions) => hintStyleBuilder(componentContext.context),
@@ -422,6 +423,7 @@ class HintComponentViewModel extends SingleColumnLayoutComponentViewModel with T
         createdAt: createdAt,
         padding: padding,
         text: text.copy(),
+        inlineWidgetBuilders: inlineWidgetBuilders,
         textStyleBuilder: textStyleBuilder,
         opacity: opacity,
         selectionColor: selectionColor,
