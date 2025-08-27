@@ -1,3 +1,7 @@
+## [0.3.0-dev.32]
+### Aug 27, 2025
+* FIX: `HintTextComponent` now uses its given inline widget builders.
+
 ## [0.3.0-dev.31]
 ### Aug 26, 2025
 * FEATURE: Block/Markdown Tables
