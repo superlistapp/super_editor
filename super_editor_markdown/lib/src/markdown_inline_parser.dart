@@ -87,8 +87,8 @@ class _InlineMarkdownToDocument implements md.NodeVisitor {
     final styledText = _textStack.removeLast();
 
     for (final inlineHtmlSyntax in inlineHtmlSyntaxes) {
-      final didApply = inlineHtmlSyntax(element, styledText);
-      if (didApply) {
+      final finalText = inlineHtmlSyntax(element, styledText);
+      if (finalText != null) {
         break;
       }
     }
@@ -111,76 +111,76 @@ const defaultInlineHtmlSyntaxes = [
   codeInlineHtmlSyntax,
 ];
 
-typedef InlineHtmlSyntax = bool Function(md.Element element, AttributedText text);
+typedef InlineHtmlSyntax = AttributedText? Function(md.Element element, AttributedText text);
 
-bool boldHtmlSyntax(md.Element element, AttributedText text) {
+AttributedText? boldHtmlSyntax(md.Element element, AttributedText text) {
   if (element.tag != 'strong') {
-    return false;
+    return null;
   }
 
-  text.addAttribution(
-    boldAttribution,
-    SpanRange(0, text.length - 1),
-  );
-  return true;
+  return text
+    ..addAttribution(
+      boldAttribution,
+      SpanRange(0, text.length - 1),
+    );
 }
 
-bool italicHtmlSyntax(md.Element element, AttributedText text) {
+AttributedText? italicHtmlSyntax(md.Element element, AttributedText text) {
   if (element.tag != 'em') {
-    return false;
+    return null;
   }
 
-  text.addAttribution(
-    italicsAttribution,
-    SpanRange(0, text.length - 1),
-  );
-  return true;
+  return text
+    ..addAttribution(
+      italicsAttribution,
+      SpanRange(0, text.length - 1),
+    );
 }
 
-bool underlineHtmlSyntax(md.Element element, AttributedText text) {
+AttributedText? underlineHtmlSyntax(md.Element element, AttributedText text) {
   if (element.tag != 'u') {
-    return false;
+    return null;
   }
 
-  text.addAttribution(
-    underlineAttribution,
-    SpanRange(0, text.length - 1),
-  );
-  return true;
+  return text
+    ..addAttribution(
+      underlineAttribution,
+      SpanRange(0, text.length - 1),
+    );
 }
 
-bool strikethroughHtmlSyntax(md.Element element, AttributedText text) {
+AttributedText? strikethroughHtmlSyntax(md.Element element, AttributedText text) {
   if (element.tag != 'del') {
-    return false;
+    return null;
   }
 
-  text.addAttribution(
-    strikethroughAttribution,
-    SpanRange(0, text.length - 1),
-  );
-  return true;
+  return text
+    ..addAttribution(
+      strikethroughAttribution,
+      SpanRange(0, text.length - 1),
+    );
 }
 
-bool anchorHtmlSyntax(md.Element element, AttributedText text) {
+AttributedText? anchorHtmlSyntax(md.Element element, AttributedText text) {
   if (element.tag != 'a') {
-    return false;
+    return null;
   }
 
-  text.addAttribution(
-    LinkAttribution.fromUri(Uri.parse(element.attributes['href']!)),
-    SpanRange(0, text.length - 1),
-  );
-  return true;
+  return text
+    ..addAttribution(
+      LinkAttribution.fromUri(Uri.parse(element.attributes['href']!)),
+      SpanRange(0, text.length - 1),
+    );
 }
 
-bool codeInlineHtmlSyntax(md.Element element, AttributedText text) {
+AttributedText? codeInlineHtmlSyntax(md.Element element, AttributedText text) {
   if (element.tag != 'code') {
-    return false;
+    return null;
   }
 
-  text.addAttribution(
-    codeAttribution,
-    SpanRange(0, text.length - 1),
-  );
-  return true;
+  return text
+    ..addAttribution(
+      codeAttribution,
+      SpanRange(0, text.length - 1),
+    );
 }
