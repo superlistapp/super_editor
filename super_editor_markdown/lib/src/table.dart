@@ -10,7 +10,10 @@ extension ElementTableExtension on md.Element {
   /// The element must have a `table` tag.
   ///
   /// Throws an exception if the element is not a valid table structure.
-  TableBlockNode asTable() {
+  TableBlockNode asTable({
+    Iterable<md.InlineSyntax>? inlineMarkdownSyntaxes,
+    Iterable<InlineHtmlSyntax>? inlineHtmlSyntaxes,
+  }) {
     if (tag != 'table') {
       throw Exception('Cannot parse a table from an element with tag "$tag"');
     }
@@ -42,7 +45,11 @@ extension ElementTableExtension on md.Element {
       headerNodes.add(
         TextNode(
           id: Editor.createNodeId(),
-          text: parseInlineMarkdown(headerCell.textContent),
+          text: parseInlineMarkdown(
+            headerCell.textContent,
+            inlineMarkdownSyntaxes: inlineMarkdownSyntaxes,
+            inlineHtmlSyntaxes: inlineHtmlSyntaxes,
+          ),
           metadata: const {
             NodeMetadata.blockType: tableHeaderAttribution,
             TextNodeMetadata.textAlign: TextAlign.center,

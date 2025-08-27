@@ -5,39 +5,47 @@ import 'package:super_editor_markdown/super_editor_markdown.dart';
 
 /// Parses inline markdown content.
 ///
-/// Supports strikethrough, underline, bold, italics, code and links.
+/// {@macro markdown_two_phase}
 ///
-/// The given [syntax] controls how the [text] is parsed, e.g., [MarkdownSyntax.normal]
-/// for strict Markdown parsing, or [MarkdownSyntax.superEditor] to use Super Editor's
-/// extended syntax.
+/// {@macro inline_markdown_syntaxes}
 ///
 /// If [encodeHtml] is `true`, it escapes HTML symbols like &, <, and >. For example,
 /// `&` becomes `&amp;`, `<` becomes `&lt;`, and `>` becomes `&gt;`.
 AttributedText parseInlineMarkdown(
   String text, {
-  MarkdownSyntax syntax = MarkdownSyntax.superEditor,
+  Iterable<md.InlineSyntax>? inlineMarkdownSyntaxes,
+  Iterable<InlineHtmlSyntax>? inlineHtmlSyntaxes,
   bool encodeHtml = false,
 }) {
   final inlineParser = md.InlineParser(
     text,
     md.Document(
-      inlineSyntaxes: [
-        SingleStrikethroughSyntax(), // this needs to be before md.StrikethroughSyntax to be recognized
-        md.StrikethroughSyntax(),
-        UnderlineSyntax(),
-        if (syntax == MarkdownSyntax.superEditor) //
-          SuperEditorImageSyntax(),
-      ],
+      inlineSyntaxes: inlineMarkdownSyntaxes ?? defaultSuperEditorInlineSyntaxes,
       encodeHtml: encodeHtml,
     ),
   );
-  final inlineVisitor = _InlineMarkdownToDocument();
+  final inlineVisitor = _InlineMarkdownToDocument(
+    inlineHtmlSyntaxes: inlineHtmlSyntaxes ?? defaultInlineHtmlSyntaxes,
+  );
   final inlineNodes = inlineParser.parse();
   for (final inlineNode in inlineNodes) {
     inlineNode.accept(inlineVisitor);
   }
   return inlineVisitor.attributedText;
 }
+
+final defaultSuperEditorInlineSyntaxes = [
+  SingleStrikethroughSyntax(), // this needs to be before md.StrikethroughSyntax to be recognized
+  md.StrikethroughSyntax(),
+  UnderlineSyntax(),
+  SuperEditorImageSyntax(),
+];
+
+final defaultNonSuperEditorInlineSyntaxes = [
+  SingleStrikethroughSyntax(), // this needs to be before md.StrikethroughSyntax to be recognized
+  md.StrikethroughSyntax(),
+  UnderlineSyntax(),
+];
 
 /// Parses inline markdown content.
 ///
@@ -49,7 +57,11 @@ AttributedText parseInlineMarkdown(
 /// that contains image tags. If any non-image text is found,
 /// the content is treated as styled text.
 class _InlineMarkdownToDocument implements md.NodeVisitor {
-  _InlineMarkdownToDocument();
+  _InlineMarkdownToDocument({
+    required this.inlineHtmlSyntaxes,
+  });
+
+  final Iterable<InlineHtmlSyntax> inlineHtmlSyntaxes;
 
   AttributedText get attributedText => _textStack.first;
 
@@ -74,36 +86,11 @@ class _InlineMarkdownToDocument implements md.NodeVisitor {
     // not receive a call to visitElementBefore().
     final styledText = _textStack.removeLast();
 
-    if (element.tag == 'strong') {
-      styledText.addAttribution(
-        boldAttribution,
-        SpanRange(0, styledText.length - 1),
-      );
-    } else if (element.tag == 'em') {
-      styledText.addAttribution(
-        italicsAttribution,
-        SpanRange(0, styledText.length - 1),
-      );
-    } else if (element.tag == "del") {
-      styledText.addAttribution(
-        strikethroughAttribution,
-        SpanRange(0, styledText.length - 1),
-      );
-    } else if (element.tag == "code") {
-      styledText.addAttribution(
-        codeAttribution,
-        SpanRange(0, styledText.length - 1),
-      );
-    } else if (element.tag == "u") {
-      styledText.addAttribution(
-        underlineAttribution,
-        SpanRange(0, styledText.length - 1),
-      );
-    } else if (element.tag == 'a') {
-      styledText.addAttribution(
-        LinkAttribution.fromUri(Uri.parse(element.attributes['href']!)),
-        SpanRange(0, styledText.length - 1),
-      );
+    for (final inlineHtmlSyntax in inlineHtmlSyntaxes) {
+      final didApply = inlineHtmlSyntax(element, styledText);
+      if (didApply) {
+        break;
+      }
     }
 
     if (_textStack.isNotEmpty) {
@@ -113,4 +100,87 @@ class _InlineMarkdownToDocument implements md.NodeVisitor {
       _textStack.add(styledText);
     }
   }
+}
+
+const defaultInlineHtmlSyntaxes = [
+  boldHtmlSyntax,
+  italicHtmlSyntax,
+  underlineHtmlSyntax,
+  strikethroughHtmlSyntax,
+  anchorHtmlSyntax,
+  codeInlineHtmlSyntax,
+];
+
+typedef InlineHtmlSyntax = bool Function(md.Element element, AttributedText text);
+
+bool boldHtmlSyntax(md.Element element, AttributedText text) {
+  if (element.tag != 'strong') {
+    return false;
+  }
+
+  text.addAttribution(
+    boldAttribution,
+    SpanRange(0, text.length - 1),
+  );
+  return true;
+}
+
+bool italicHtmlSyntax(md.Element element, AttributedText text) {
+  if (element.tag != 'em') {
+    return false;
+  }
+
+  text.addAttribution(
+    italicsAttribution,
+    SpanRange(0, text.length - 1),
+  );
+  return true;
+}
+
+bool underlineHtmlSyntax(md.Element element, AttributedText text) {
+  if (element.tag != 'u') {
+    return false;
+  }
+
+  text.addAttribution(
+    underlineAttribution,
+    SpanRange(0, text.length - 1),
+  );
+  return true;
+}
+
+bool strikethroughHtmlSyntax(md.Element element, AttributedText text) {
+  if (element.tag != 'del') {
+    return false;
+  }
+
+  text.addAttribution(
+    strikethroughAttribution,
+    SpanRange(0, text.length - 1),
+  );
+  return true;
+}
+
+bool anchorHtmlSyntax(md.Element element, AttributedText text) {
+  if (element.tag != 'a') {
+    return false;
+  }
+
+  text.addAttribution(
+    LinkAttribution.fromUri(Uri.parse(element.attributes['href']!)),
+    SpanRange(0, text.length - 1),
+  );
+  return true;
+}
+
+bool codeInlineHtmlSyntax(md.Element element, AttributedText text) {
+  if (element.tag != 'code') {
+    return false;
+  }
+
+  text.addAttribution(
+    codeAttribution,
+    SpanRange(0, text.length - 1),
+  );
+  return true;
 }
