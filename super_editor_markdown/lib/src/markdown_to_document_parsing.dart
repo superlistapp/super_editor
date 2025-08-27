@@ -12,18 +12,44 @@ import 'super_editor_syntax.dart';
 
 /// Parses the given [markdown] and deserializes it into a [MutableDocument].
 ///
-/// The given [syntax] controls how the [markdown] is parsed, e.g., [MarkdownSyntax.normal]
-/// for strict Markdown parsing, or [MarkdownSyntax.superEditor] to use Super Editor's
-/// extended syntax.
+/// ## Parsing
+/// {@template markdown_two_phase}
+/// Markdown parsing is a two-phase process:
+///  1. Parse Markdown syntax to HTML
+///  2. Convert HTML to [AttributedText]
+/// {@endtemplate}
 ///
+/// This two-phase process is true for both block-level parsing, e.g., blockquotes,
+/// code blocks, and also for inline parsing, e.g., bold, italics, links.
+///
+/// ### Custom Block Parsing
 /// To add support for parsing non-standard Markdown blocks, provide [customBlockSyntax]s
 /// that parse Markdown text into [md.Element]s, and provide [customElementToNodeConverters] that
 /// turn those [md.Element]s into [DocumentNode]s.
+///
+/// ### Custom Inline Parsing
+/// {@template inline_markdown_syntaxes}
+/// By default, when no syntaxes are provided, this method parses Markdown to
+/// HTML with [defaultSuperEditorInlineSyntaxes]. Then, this method configures
+/// the [AttributedText] based on the HTML, using [defaultInlineHtmlSyntaxes].
+///
+/// To customize the supported Markdown syntaxes, provide a custom chain of
+/// responsibility for [inlineMarkdownSyntaxes].
+///
+/// To customize the supported HTML, which configures the final [AttributedText],
+/// provide a custom chain of responsibility for [inlineHtmlSyntaxes].
+/// {@endtemplate}
+///
+/// The given [syntax] further adjusts how the Markdown is interpreted, e.g., [MarkdownSyntax.normal]
+/// for strict Markdown parsing, or [MarkdownSyntax.superEditor] to use Super Editor's
+/// extended syntax.
 MutableDocument deserializeMarkdownToDocument(
   String markdown, {
   MarkdownSyntax syntax = MarkdownSyntax.superEditor,
   List<md.BlockSyntax> customBlockSyntax = const [],
   List<ElementToNodeConverter> customElementToNodeConverters = const [],
+  Iterable<md.InlineSyntax>? inlineMarkdownSyntaxes,
+  Iterable<InlineHtmlSyntax>? inlineHtmlSyntaxes,
   bool encodeHtml = false,
 }) {
   final markdownLines = const LineSplitter().convert(markdown).map<md.Line>(
@@ -50,7 +76,13 @@ MutableDocument deserializeMarkdownToDocument(
   final markdownNodes = blockParser.parseLines();
 
   // Convert structured markdown to a Document.
-  final nodeVisitor = _MarkdownToDocument(customElementToNodeConverters, encodeHtml, syntax);
+  final nodeVisitor = _MarkdownToDocument(
+    elementToNodeConverters: customElementToNodeConverters,
+    inlineMarkdownSyntaxes: inlineMarkdownSyntaxes,
+    inlineHtmlSyntaxes: inlineHtmlSyntaxes,
+    encodeHtml: encodeHtml,
+    syntax: syntax,
+  );
   for (final node in markdownNodes) {
     node.accept(nodeVisitor);
   }
@@ -86,15 +118,20 @@ MutableDocument deserializeMarkdownToDocument(
 /// contains [DocumentNode]s that correspond to the visited
 /// markdown content.
 class _MarkdownToDocument implements md.NodeVisitor {
-  _MarkdownToDocument([
-    this._elementToNodeConverters = const [],
-    this._encodeHtml = false,
+  _MarkdownToDocument({
+    this.elementToNodeConverters = const [],
+    this.inlineMarkdownSyntaxes,
+    this.inlineHtmlSyntaxes,
+    this.encodeHtml = false,
     this.syntax = MarkdownSyntax.normal,
-  ]);
+  });
 
   final MarkdownSyntax syntax;
 
-  final List<ElementToNodeConverter> _elementToNodeConverters;
+  final List<ElementToNodeConverter> elementToNodeConverters;
+
+  final Iterable<md.InlineSyntax>? inlineMarkdownSyntaxes;
+  final Iterable<InlineHtmlSyntax>? inlineHtmlSyntaxes;
 
   final _content = <DocumentNode>[];
   List<DocumentNode> get content => _content;
@@ -119,11 +156,11 @@ class _MarkdownToDocument implements md.NodeVisitor {
   /// symbols are left as-is.
   ///
   /// Example: "&" -> "&amp;", "<" -> "&lt;", ">" -> "&gt;"
-  final bool _encodeHtml;
+  final bool encodeHtml;
 
   @override
   bool visitElementBefore(md.Element element) {
-    for (final converter in _elementToNodeConverters) {
+    for (final converter in elementToNodeConverters) {
       final node = converter.handleElement(element);
       if (node != null) {
         _content.add(node);
@@ -170,7 +207,12 @@ class _MarkdownToDocument implements md.NodeVisitor {
         if (blockImage != null) {
           _addImage(blockImage);
         } else {
-          final attributedText = parseInlineMarkdown(element.textContent, syntax: syntax, encodeHtml: _encodeHtml);
+          final attributedText = parseInlineMarkdown(
+            element.textContent,
+            inlineMarkdownSyntaxes: inlineMarkdownSyntaxes,
+            inlineHtmlSyntaxes: inlineHtmlSyntaxes,
+            encodeHtml: encodeHtml,
+          );
           _addParagraph(attributedText, element.attributes);
         }
 
@@ -415,8 +457,9 @@ class _MarkdownToDocument implements md.NodeVisitor {
   AttributedText _parseInlineText(String text) {
     return parseInlineMarkdown(
       text,
-      syntax: syntax,
-      encodeHtml: _encodeHtml,
+      inlineMarkdownSyntaxes: inlineMarkdownSyntaxes,
+      inlineHtmlSyntaxes: inlineHtmlSyntaxes,
+      encodeHtml: encodeHtml,
     );
   }
 
