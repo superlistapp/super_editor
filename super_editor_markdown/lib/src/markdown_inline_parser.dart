@@ -84,11 +84,12 @@ class _InlineMarkdownToDocument implements md.NodeVisitor {
   void visitElementAfter(md.Element element) {
     // Reset to normal text style because a plain text element does
     // not receive a call to visitElementBefore().
-    final styledText = _textStack.removeLast();
+    var styledText = _textStack.removeLast();
 
     for (final inlineHtmlSyntax in inlineHtmlSyntaxes) {
       final finalText = inlineHtmlSyntax(element, styledText);
       if (finalText != null) {
+        styledText = finalText;
         break;
       }
     }
