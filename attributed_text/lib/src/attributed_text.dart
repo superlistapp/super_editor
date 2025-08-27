@@ -70,7 +70,10 @@ class AttributedText {
       final buffer = StringBuffer();
       int start = 0;
       int insertedPlaceholders = 0;
-      for (final entry in this.placeholders.entries) {
+
+      final placeholderEntriesInContentOrder = this.placeholders.entries.sorted((a, b) => a.key - b.key);
+
+      for (final entry in placeholderEntriesInContentOrder) {
         final textSegment = _text.substring(start - insertedPlaceholders, entry.key - insertedPlaceholders);
         buffer.write(textSegment);
         start += textSegment.length;
