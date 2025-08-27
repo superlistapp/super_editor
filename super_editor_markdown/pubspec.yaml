@@ -1,6 +1,6 @@
 name: super_editor_markdown
 description: Markdown (de)serialization for super_editor documents.
-version: 0.1.9
+version: 0.2.0
 homepage: https://github.com/superlistapp/super_editor
 funding:
   - https://flutterbountyhunters.com

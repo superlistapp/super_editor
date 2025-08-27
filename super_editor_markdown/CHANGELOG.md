@@ -1,3 +1,7 @@
+## [0.2.0]
+### Aug 27, 2025
+* ADJUSTMENT: Inline Markdown parsing is now configurable with a couple properties added to the document parser.
+
 ## [0.1.9]
 ### Aug 26, 2025
 * FEATURE: Added table parsing.
