@@ -1,3 +1,7 @@
+## [0.3.0-dev.33]
+### Aug 27, 2025
+* ADJUSTMENT: Upgrade `attributed_text` dependency to `v0.4.5`. 
+
 ## [0.3.0-dev.32]
 ### Aug 27, 2025
 * FIX: `HintTextComponent` now uses its given inline widget builders.
