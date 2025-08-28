@@ -1,3 +1,7 @@
+## [0.1.3]
+### Aug 27, 2025
+* ADJUSTMENT: Upgraded `super_editor` dependency to `^0.3.0-dev.33`.
+
 ## [0.1.2]
 ### Aug 27, 2025
 * ADJUSTMENT: Upgraded `super_editor` dependency to `0.3.0-dev.32`.
