@@ -1271,7 +1271,12 @@ abstract class SuperEditorPlugin {
   }
 
   void _detachFromSuperEditor(Editor editor) {
-    _attachCount[editor] = _attachCount[editor]! - 1;
+    final currentCount = _attachCount[editor];
+    if (currentCount == null || currentCount <= 0) {
+      return;
+    }
+
+    _attachCount[editor] = currentCount - 1;
 
     if (_attachCount[editor] == 0) {
       detach(editor);
