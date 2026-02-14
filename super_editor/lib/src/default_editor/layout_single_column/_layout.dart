@@ -910,10 +910,13 @@ class _SingleColumnDocumentLayoutState extends State<SingleColumnDocumentLayout>
 
     if (component == null) {
       final key = _nodeIdsToComponentKeys[position.nodeId];
-      final index = _topToBottomComponentKeys.indexOf(key!);
+      final scrollController = scrollable.widget.controller;
+      if (key == null || scrollController == null) return;
+      final index = _topToBottomComponentKeys.indexOf(key);
+      if (index < 0) return;
       _listController.jumpToItem(
         index: index,
-        scrollController: scrollable.widget.controller!,
+        scrollController: scrollController,
         alignment: 0.0,
       );
       return;
