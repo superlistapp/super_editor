@@ -47,6 +47,20 @@ class TextDeltasDocumentEditor {
   late TextEditingValue _previousImeValue;
   TextEditingValue? _nextImeValue;
 
+  /// Re-creates the [DocumentImeSerializer] from the current document state,
+  /// overriding [DocumentImeSerializer.imeText] with the IME's view of the
+  /// text to keep range mappings consistent with what the platform thinks.
+  void _refreshSerializer() {
+    _serializedDoc = DocumentImeSerializer(
+      document,
+      selection.value!,
+      composingRegion.value,
+      _serializedDoc.didPrependPlaceholder
+          ? PrependedCharacterPolicy.include
+          : PrependedCharacterPolicy.exclude,
+    )..imeText = _previousImeValue.text;
+  }
+
   /// Applies the given [textEditingDeltas] to the [Document].
   void applyDeltas(List<TextEditingDelta> textEditingDeltas) {
     // Check for GBoard aggressive trailing space deletion, which prevents
@@ -151,6 +165,7 @@ class TextDeltasDocumentEditor {
       // End the editor transaction for all deltas in this call.
       editorImeLog.info("Done with deltas. Ending transaction.");
       editor.endTransaction();
+      _nextImeValue = null;
     }
 
     // Re-serialize document after end of transaction because reactions may have
@@ -178,8 +193,6 @@ class TextDeltasDocumentEditor {
       ]);
     }
     editorImeLog.fine("Document composing region: ${composingRegion.value}");
-
-    _nextImeValue = null;
   }
 
   /// Returns `true` if we believe the given batch of [deltas] represent a GBoard
@@ -330,15 +343,7 @@ class TextDeltasDocumentEditor {
     insert(insertionSelection, delta.textInserted);
 
     // Update the IME to document serialization based on the insertion changes.
-    // We override imeText with the previous IME value's text to keep the
-    // serializer's range mappings consistent with what the IME thinks the
-    // text is, preventing position mapping failures.
-    _serializedDoc = DocumentImeSerializer(
-      document,
-      selection.value!,
-      composingRegion.value,
-      _serializedDoc.didPrependPlaceholder ? PrependedCharacterPolicy.include : PrependedCharacterPolicy.exclude,
-    )..imeText = _previousImeValue.text;
+    _refreshSerializer();
   }
 
   void _applyReplacement(TextEditingDeltaReplacement delta) {
@@ -374,17 +379,9 @@ class TextDeltasDocumentEditor {
     _previousImeValue = delta.apply(_previousImeValue);
 
     // Update the IME to document serialization based on the replacement changes.
-    // It's possible that the replacement text have a different length from the replaced text.
-    // Therefore, we need to update our mapping from the IME positions to document positions.
-    // We override imeText with the previous IME value's text to keep the
-    // serializer's range mappings consistent with what the IME thinks the
-    // text is, preventing position mapping failures.
-    _serializedDoc = DocumentImeSerializer(
-      document,
-      selection.value!,
-      composingRegion.value,
-      _serializedDoc.didPrependPlaceholder ? PrependedCharacterPolicy.include : PrependedCharacterPolicy.exclude,
-    )..imeText = _previousImeValue.text;
+    // It's possible that the replacement text have a different length from the
+    // replaced text, so we need to update our IME-to-document mappings.
+    _refreshSerializer();
   }
 
   void _applyDeletion(TextEditingDeltaDeletion delta) {
@@ -400,15 +397,9 @@ class TextDeltasDocumentEditor {
     // Update the local IME value that changes with each delta.
     _previousImeValue = delta.apply(_previousImeValue);
 
-    // Update the IME to document serialization based on the deletion changes.
     // A deletion can change the document structure (e.g., merging nodes), so
     // we need to re-create the serializer to keep range mappings in sync.
-    _serializedDoc = DocumentImeSerializer(
-      document,
-      selection.value!,
-      composingRegion.value,
-      _serializedDoc.didPrependPlaceholder ? PrependedCharacterPolicy.include : PrependedCharacterPolicy.exclude,
-    )..imeText = _previousImeValue.text;
+    _refreshSerializer();
 
     editorImeLog.fine("Deletion operation complete");
   }
