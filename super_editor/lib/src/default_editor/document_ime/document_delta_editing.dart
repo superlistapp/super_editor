@@ -330,12 +330,15 @@ class TextDeltasDocumentEditor {
     insert(insertionSelection, delta.textInserted);
 
     // Update the IME to document serialization based on the insertion changes.
+    // We override imeText with the previous IME value's text to keep the
+    // serializer's range mappings consistent with what the IME thinks the
+    // text is, preventing position mapping failures.
     _serializedDoc = DocumentImeSerializer(
       document,
       selection.value!,
       composingRegion.value,
       _serializedDoc.didPrependPlaceholder ? PrependedCharacterPolicy.include : PrependedCharacterPolicy.exclude,
-    );
+    )..imeText = _previousImeValue.text;
   }
 
   void _applyReplacement(TextEditingDeltaReplacement delta) {
@@ -373,12 +376,15 @@ class TextDeltasDocumentEditor {
     // Update the IME to document serialization based on the replacement changes.
     // It's possible that the replacement text have a different length from the replaced text.
     // Therefore, we need to update our mapping from the IME positions to document positions.
+    // We override imeText with the previous IME value's text to keep the
+    // serializer's range mappings consistent with what the IME thinks the
+    // text is, preventing position mapping failures.
     _serializedDoc = DocumentImeSerializer(
       document,
       selection.value!,
       composingRegion.value,
       _serializedDoc.didPrependPlaceholder ? PrependedCharacterPolicy.include : PrependedCharacterPolicy.exclude,
-    );
+    )..imeText = _previousImeValue.text;
   }
 
   void _applyDeletion(TextEditingDeltaDeletion delta) {
@@ -393,6 +399,16 @@ class TextDeltasDocumentEditor {
 
     // Update the local IME value that changes with each delta.
     _previousImeValue = delta.apply(_previousImeValue);
+
+    // Update the IME to document serialization based on the deletion changes.
+    // A deletion can change the document structure (e.g., merging nodes), so
+    // we need to re-create the serializer to keep range mappings in sync.
+    _serializedDoc = DocumentImeSerializer(
+      document,
+      selection.value!,
+      composingRegion.value,
+      _serializedDoc.didPrependPlaceholder ? PrependedCharacterPolicy.include : PrependedCharacterPolicy.exclude,
+    )..imeText = _previousImeValue.text;
 
     editorImeLog.fine("Deletion operation complete");
   }
