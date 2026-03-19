@@ -42,6 +42,20 @@ class TextDeltasDocumentEditor {
   late TextEditingValue _previousImeValue;
   TextEditingValue? _nextImeValue;
 
+  /// Re-creates the [DocumentImeSerializer] from the current document state,
+  /// overriding [DocumentImeSerializer.imeText] with the IME's view of the
+  /// text to keep range mappings consistent with what the platform thinks.
+  void _refreshSerializer() {
+    _serializedDoc = DocumentImeSerializer(
+      document,
+      selection.value!,
+      composingRegion.value,
+      _serializedDoc.didPrependPlaceholder
+          ? PrependedCharacterPolicy.include
+          : PrependedCharacterPolicy.exclude,
+    )..imeText = _previousImeValue.text;
+  }
+
   /// Applies the given [textEditingDeltas] to the [Document].
   void applyDeltas(List<TextEditingDelta> textEditingDeltas) {
     editorImeLog.info("Applying ${textEditingDeltas.length} IME deltas to document");
@@ -110,25 +124,13 @@ class TextDeltasDocumentEditor {
         ]);
       }
       editorImeLog.fine("Document composing region: ${composingRegion.value}");
-    } catch (exception, stackTrace) {
-      // If an exception occurs during delta processing (e.g., an IME position
-      // that can't be mapped to a document position), log it and re-throw.
-      // The finally block ensures endTransaction() runs even when re-throwing,
-      // preventing the editor from being left in a broken transaction state.
-      editorImeLog.shout(
-        "Error applying IME deltas to document. The editor transaction will be "
-        "closed to prevent the editor from being left in a broken state.",
-      );
-      editorImeLog.shout("Error: $exception\n$stackTrace");
-      rethrow;
     } finally {
       // End the editor transaction for all deltas in this call.
       // This MUST run even if an exception occurred, to prevent the editor
       // from being stuck in an open transaction.
       editor.endTransaction();
+      _nextImeValue = null;
     }
-
-    _nextImeValue = null;
   }
 
   void _applyInsertion(TextEditingDeltaInsertion delta) {
@@ -195,15 +197,7 @@ class TextDeltasDocumentEditor {
     insert(insertionSelection, delta.textInserted);
 
     // Update the IME to document serialization based on the insertion changes.
-    // We override imeText with the previous IME value's text to keep the
-    // serializer's range mappings consistent with what the IME thinks the
-    // text is, preventing position mapping failures.
-    _serializedDoc = DocumentImeSerializer(
-      document,
-      selection.value!,
-      composingRegion.value,
-      _serializedDoc.didPrependPlaceholder ? PrependedCharacterPolicy.include : PrependedCharacterPolicy.exclude,
-    )..imeText = _previousImeValue.text;
+    _refreshSerializer();
   }
 
   void _applyReplacement(TextEditingDeltaReplacement delta) {
@@ -239,17 +233,9 @@ class TextDeltasDocumentEditor {
     _previousImeValue = delta.apply(_previousImeValue);
 
     // Update the IME to document serialization based on the replacement changes.
-    // It's possible that the replacement text have a different length from the replaced text.
-    // Therefore, we need to update our mapping from the IME positions to document positions.
-    // We override imeText with the previous IME value's text to keep the
-    // serializer's range mappings consistent with what the IME thinks the
-    // text is, preventing position mapping failures.
-    _serializedDoc = DocumentImeSerializer(
-      document,
-      selection.value!,
-      composingRegion.value,
-      _serializedDoc.didPrependPlaceholder ? PrependedCharacterPolicy.include : PrependedCharacterPolicy.exclude,
-    )..imeText = _previousImeValue.text;
+    // It's possible that the replacement text have a different length from the
+    // replaced text, so we need to update our IME-to-document mappings.
+    _refreshSerializer();
   }
 
   void _applyDeletion(TextEditingDeltaDeletion delta) {
@@ -265,15 +251,9 @@ class TextDeltasDocumentEditor {
     // Update the local IME value that changes with each delta.
     _previousImeValue = delta.apply(_previousImeValue);
 
-    // Update the IME to document serialization based on the deletion changes.
     // A deletion can change the document structure (e.g., merging nodes), so
     // we need to re-create the serializer to keep range mappings in sync.
-    _serializedDoc = DocumentImeSerializer(
-      document,
-      selection.value!,
-      composingRegion.value,
-      _serializedDoc.didPrependPlaceholder ? PrependedCharacterPolicy.include : PrependedCharacterPolicy.exclude,
-    )..imeText = _previousImeValue.text;
+    _refreshSerializer();
 
     editorImeLog.fine("Deletion operation complete");
   }
