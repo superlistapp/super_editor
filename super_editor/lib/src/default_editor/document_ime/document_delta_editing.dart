@@ -71,47 +71,62 @@ class TextDeltasDocumentEditor {
     // application is considered a single undo-able change.
     editor.startTransaction();
 
-    for (final delta in textEditingDeltas) {
-      editorImeLog.info("---------------------------------------------------");
+    try {
+      for (final delta in textEditingDeltas) {
+        editorImeLog.info("---------------------------------------------------");
 
-      editorImeLog.info("Applying delta: $delta");
+        editorImeLog.info("Applying delta: $delta");
 
-      _nextImeValue = delta.apply(_previousImeValue);
-      if (delta is TextEditingDeltaInsertion) {
-        _applyInsertion(delta);
-      } else if (delta is TextEditingDeltaReplacement) {
-        _applyReplacement(delta);
-      } else if (delta is TextEditingDeltaDeletion) {
-        _applyDeletion(delta);
-      } else if (delta is TextEditingDeltaNonTextUpdate) {
-        _applyNonTextChange(delta);
-      } else {
-        editorImeLog.shout("Unknown IME delta type: ${delta.runtimeType}");
+        _nextImeValue = delta.apply(_previousImeValue);
+        if (delta is TextEditingDeltaInsertion) {
+          _applyInsertion(delta);
+        } else if (delta is TextEditingDeltaReplacement) {
+          _applyReplacement(delta);
+        } else if (delta is TextEditingDeltaDeletion) {
+          _applyDeletion(delta);
+        } else if (delta is TextEditingDeltaNonTextUpdate) {
+          _applyNonTextChange(delta);
+        } else {
+          editorImeLog.shout("Unknown IME delta type: ${delta.runtimeType}");
+        }
+
+        editorImeLog.info("---------------------------------------------------");
       }
 
-      editorImeLog.info("---------------------------------------------------");
+      // Update the editor's IME composing region based on the composing region
+      // for the last delta. If the version of our document serialized hidden
+      // characters in the IME, adjust for those hidden characters before setting
+      // the IME composing region.
+      editorImeLog.fine("After applying all deltas, converting the final composing region to a document range.");
+      editorImeLog.fine("Raw IME delta composing region: ${textEditingDeltas.last.composing}");
+
+      DocumentRange? docComposingRegion = _calculateNewComposingRegion(textEditingDeltas);
+
+      if (docComposingRegion != composingRegion.value) {
+        editor.execute([
+          ChangeComposingRegionRequest(
+            docComposingRegion,
+          ),
+        ]);
+      }
+      editorImeLog.fine("Document composing region: ${composingRegion.value}");
+    } catch (exception, stackTrace) {
+      // If an exception occurs during delta processing (e.g., an IME position
+      // that can't be mapped to a document position), log it and re-throw.
+      // The finally block ensures endTransaction() runs even when re-throwing,
+      // preventing the editor from being left in a broken transaction state.
+      editorImeLog.shout(
+        "Error applying IME deltas to document. The editor transaction will be "
+        "closed to prevent the editor from being left in a broken state.",
+      );
+      editorImeLog.shout("Error: $exception\n$stackTrace");
+      rethrow;
+    } finally {
+      // End the editor transaction for all deltas in this call.
+      // This MUST run even if an exception occurred, to prevent the editor
+      // from being stuck in an open transaction.
+      editor.endTransaction();
     }
-
-    // Update the editor's IME composing region based on the composing region
-    // for the last delta. If the version of our document serialized hidden
-    // characters in the IME, adjust for those hidden characters before setting
-    // the IME composing region.
-    editorImeLog.fine("After applying all deltas, converting the final composing region to a document range.");
-    editorImeLog.fine("Raw IME delta composing region: ${textEditingDeltas.last.composing}");
-
-    DocumentRange? docComposingRegion = _calculateNewComposingRegion(textEditingDeltas);
-
-    if (docComposingRegion != composingRegion.value) {
-      editor.execute([
-        ChangeComposingRegionRequest(
-          docComposingRegion,
-        ),
-      ]);
-    }
-    editorImeLog.fine("Document composing region: ${composingRegion.value}");
-
-    // End the editor transaction for all deltas in this call.
-    editor.endTransaction();
 
     _nextImeValue = null;
   }
@@ -180,12 +195,15 @@ class TextDeltasDocumentEditor {
     insert(insertionSelection, delta.textInserted);
 
     // Update the IME to document serialization based on the insertion changes.
+    // We override imeText with the previous IME value's text to keep the
+    // serializer's range mappings consistent with what the IME thinks the
+    // text is, preventing position mapping failures.
     _serializedDoc = DocumentImeSerializer(
       document,
       selection.value!,
       composingRegion.value,
       _serializedDoc.didPrependPlaceholder ? PrependedCharacterPolicy.include : PrependedCharacterPolicy.exclude,
-    );
+    )..imeText = _previousImeValue.text;
   }
 
   void _applyReplacement(TextEditingDeltaReplacement delta) {
@@ -223,12 +241,15 @@ class TextDeltasDocumentEditor {
     // Update the IME to document serialization based on the replacement changes.
     // It's possible that the replacement text have a different length from the replaced text.
     // Therefore, we need to update our mapping from the IME positions to document positions.
+    // We override imeText with the previous IME value's text to keep the
+    // serializer's range mappings consistent with what the IME thinks the
+    // text is, preventing position mapping failures.
     _serializedDoc = DocumentImeSerializer(
       document,
       selection.value!,
       composingRegion.value,
       _serializedDoc.didPrependPlaceholder ? PrependedCharacterPolicy.include : PrependedCharacterPolicy.exclude,
-    );
+    )..imeText = _previousImeValue.text;
   }
 
   void _applyDeletion(TextEditingDeltaDeletion delta) {
@@ -243,6 +264,16 @@ class TextDeltasDocumentEditor {
 
     // Update the local IME value that changes with each delta.
     _previousImeValue = delta.apply(_previousImeValue);
+
+    // Update the IME to document serialization based on the deletion changes.
+    // A deletion can change the document structure (e.g., merging nodes), so
+    // we need to re-create the serializer to keep range mappings in sync.
+    _serializedDoc = DocumentImeSerializer(
+      document,
+      selection.value!,
+      composingRegion.value,
+      _serializedDoc.didPrependPlaceholder ? PrependedCharacterPolicy.include : PrependedCharacterPolicy.exclude,
+    )..imeText = _previousImeValue.text;
 
     editorImeLog.fine("Deletion operation complete");
   }

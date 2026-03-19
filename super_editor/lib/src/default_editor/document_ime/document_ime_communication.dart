@@ -229,12 +229,22 @@ class DocumentImeInputClient extends TextInputConnectionDecorator with TextInput
     // Update our local knowledge of what the platform thinks the IME value is right now.
     _updatePlatformImeValueWithDeltas(textEditingDeltas);
 
-    // Apply the deltas to our document, selection, and composing region.
-    textDeltasDocumentEditor.applyDeltas(textEditingDeltas);
-    editorImeLog.fine("===================================================");
-    _isApplyingDeltas = false;
+    try {
+      // Apply the deltas to our document, selection, and composing region.
+      textDeltasDocumentEditor.applyDeltas(textEditingDeltas);
+    } catch (exception, stackTrace) {
+      // An error occurred while applying deltas (e.g., IME position couldn't
+      // be mapped to a document position). Log the error for Sentry reporting
+      // but recover gracefully by re-syncing the IME with the current document
+      // state.
+      editorImeLog.shout("Error applying deltas to document: $exception\n$stackTrace");
+    } finally {
+      editorImeLog.fine("===================================================");
+      _isApplyingDeltas = false;
+    }
 
-    // Send latest doc and selection to IME
+    // Send latest doc and selection to IME.
+    // This runs even after an error to re-sync the IME with the document state.
     _sendDocumentToIme();
   }
 
