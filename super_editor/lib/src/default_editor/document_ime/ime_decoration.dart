@@ -48,10 +48,9 @@ abstract class TextInputConnectionDecorator implements TextInputConnection {
           textDirection: textDirection,
           textAlign: textAlign);
 
-  // Flutter 3.44 moved the body of `setStyle` into `updateStyle`, so the
-  // decorator has to forward it too (see flutter/flutter#180436).
-  @override
-  void updateStyle(TextInputStyle style) => client?.updateStyle(style);
+  // Kept untyped and dynamic-forwarded to preserve compatibility with Flutter
+  // versions where updateStyle/TextInputStyle don't exist.
+  void updateStyle(dynamic style) => (client as dynamic)?.updateStyle(style);
 
   @override
   void requestAutofill() => client?.requestAutofill();
