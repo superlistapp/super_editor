@@ -48,6 +48,11 @@ abstract class TextInputConnectionDecorator implements TextInputConnection {
           textDirection: textDirection,
           textAlign: textAlign);
 
+  // Flutter 3.44 moved the body of `setStyle` into `updateStyle`, so the
+  // decorator has to forward it too (see flutter/flutter#180436).
+  @override
+  void updateStyle(TextInputStyle style) => client?.updateStyle(style);
+
   @override
   void requestAutofill() => client?.requestAutofill();
 
