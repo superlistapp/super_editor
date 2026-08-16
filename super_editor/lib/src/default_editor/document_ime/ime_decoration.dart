@@ -48,8 +48,14 @@ abstract class TextInputConnectionDecorator implements TextInputConnection {
           textDirection: textDirection,
           textAlign: textAlign);
 
-  @override
-  void updateStyle(TextInputStyle style) => client?.updateStyle(style);
+  // FORK-LOCAL (Superlist): upstream's `updateStyle(TextInputStyle)` override
+  // (b422c326, #2950) targets a `TextInputConnection` API that doesn't exist in
+  // Flutter 3.38.3, which is what Superlist pins in `.flutter`. Keeping the
+  // override makes the whole package fail to compile against that SDK.
+  //
+  // Restore the override verbatim from upstream as soon as Superlist's Flutter
+  // is bumped past the release that introduced `TextInputStyle`; this shim is
+  // the only thing holding the fork back from a clean upstream diff here.
 
   @override
   void requestAutofill() => client?.requestAutofill();
