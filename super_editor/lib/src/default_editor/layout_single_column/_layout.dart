@@ -303,9 +303,10 @@ class _SingleColumnDocumentLayoutState extends State<SingleColumnDocumentLayout>
     final componentCaret = component.getCaretForPosition(position.nodePosition);
 
     final componentBox = component.context.findRenderObject() as RenderBox;
-    final componentOffsetInDocument = componentBox.localToGlobal(Offset.zero, ancestor: boxContext.findRenderObject());
+    final componentOffsetInDocument = componentBox.localToGlobal(Offset.zero, ancestor: context.findRenderObject());
 
-    return componentCaret.translate(componentOffsetInDocument);
+    double scrollOffset = (context.findRenderObject() as RenderSliver).constraints.scrollOffset;
+    return componentCaret.translate(componentOffsetInDocument.translate(0, scrollOffset));
   }
 
   @override
