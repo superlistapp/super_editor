@@ -451,6 +451,7 @@ void main() {
       await tester.pump();
 
       await tester.typeKeyboardText("a");
+      await tester.pumpAndSettle();
 
       final layout = SuperEditorInspector.findDocumentLayout();
       final caretRect = layout.getRectForPosition(SuperEditorInspector.findDocumentSelection()!.extent)!;
@@ -458,6 +459,35 @@ void main() {
       final viewportBottom = tester.getRect(find.byType(SuperEditor)).bottom;
 
       expect(viewportBottom - caretBottom, greaterThanOrEqualTo(boundary));
+    });
+
+    testWidgetsOnDesktop("keeps the selection extent auto-scroll boundary clear of the viewport's top",
+        (tester) async {
+      const boundary = 48.0;
+      final scrollController = ScrollController();
+
+      await tester //
+          .createDocument()
+          .withSingleParagraph()
+          .withScrollController(scrollController)
+          .withInputSource(TextInputSource.keyboard)
+          .withEditorSize(const Size(600, 300))
+          .withSelectionExtentAutoScrollBoundary(const AxisOffset(leading: boundary, trailing: 0))
+          .pump();
+
+      await tester.placeCaretInParagraph("1", 200);
+      scrollController.position.jumpTo(scrollController.position.maxScrollExtent);
+      await tester.pump();
+
+      await tester.typeKeyboardText("a");
+      await tester.pumpAndSettle();
+
+      final layout = SuperEditorInspector.findDocumentLayout();
+      final caretRect = layout.getRectForPosition(SuperEditorInspector.findDocumentSelection()!.extent)!;
+      final caretTop = layout.getGlobalOffsetFromDocumentOffset(caretRect.topLeft).dy;
+      final viewportTop = tester.getRect(find.byType(SuperEditor)).top;
+
+      expect(caretTop - viewportTop, greaterThanOrEqualTo(boundary));
     });
 
     testWidgetsOnDesktop("doesn't auto-scroll for selection changes that aren't user interactions", (tester) async {
