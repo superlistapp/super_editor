@@ -1,0 +1,40 @@
+name: Set up Flutter
+description: >
+  Installs the Flutter revision the Superlist app ships, so a green run means
+  super_editor compiles against the SDK it is actually consumed with.
+
+inputs:
+  revision:
+    description: Revision of superlistapp/flutter to install.
+    required: false
+    default: "3b60946182d204e4f0a9f50ffb91818ec07d2624"
+
+runs:
+  using: composite
+  steps:
+    - name: Restore the SDK from the cache
+      id: cache
+      uses: actions/cache@v4
+      with:
+        path: ${{ runner.tool_cache }}/superlist-flutter
+        key: superlist-flutter-${{ runner.os }}-${{ runner.arch }}-${{ inputs.revision }}
+
+    - name: Fetch the SDK
+      if: steps.cache.outputs.cache-hit != 'true'
+      shell: bash
+      run: |
+        set -euo pipefail
+        # Blobless clone: keeps the commit and tag graph that `flutter --version`
+        # needs, without paying for every blob in Flutter's history.
+        git clone --filter=blob:none https://github.com/superlistapp/flutter.git \
+          "${{ runner.tool_cache }}/superlist-flutter"
+        git -C "${{ runner.tool_cache }}/superlist-flutter" \
+          checkout --detach "${{ inputs.revision }}"
+
+    - name: Put the SDK on PATH
+      shell: bash
+      run: echo "${{ runner.tool_cache }}/superlist-flutter/bin" >> "$GITHUB_PATH"
+
+    - name: Report the SDK in use
+      shell: bash
+      run: flutter --version
