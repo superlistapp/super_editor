@@ -24,6 +24,7 @@ import 'package:super_editor/src/default_editor/tap_handlers/tap_handlers.dart';
 import 'package:super_editor/src/default_editor/tasks.dart';
 import 'package:super_editor/src/default_editor/text/custom_underlines.dart';
 import 'package:super_editor/src/infrastructure/content_layers.dart';
+import 'package:super_editor/src/infrastructure/document_gestures.dart';
 import 'package:super_editor/src/infrastructure/documents/document_scaffold.dart';
 import 'package:super_editor/src/infrastructure/documents/document_scroller.dart';
 import 'package:super_editor/src/infrastructure/documents/selection_leader_document_layer.dart';
@@ -142,6 +143,7 @@ class SuperEditor extends StatefulWidget {
     this.plugins = const {},
     this.debugPaint = const DebugPaintConfig(),
     this.shrinkWrap = false,
+    this.selectionExtentAutoScrollBoundary = AxisOffset.zero,
   })  : stylesheet = stylesheet ?? defaultStylesheet,
         selectionStyles = selectionStyle ?? defaultSelectionStyle,
         componentBuilders = [
@@ -382,6 +384,9 @@ class SuperEditor extends StatefulWidget {
   /// Whether the scroll view used by the editor should shrink-wrap its contents.
   /// Only used when editor is not inside an scrollable.
   final bool shrinkWrap;
+
+  /// See [SingleColumnDocumentLayout.selectionExtentAutoScrollBoundary].
+  final AxisOffset selectionExtentAutoScrollBoundary;
 
   @override
   SuperEditorState createState() => SuperEditorState();
@@ -736,6 +741,7 @@ class SuperEditorState extends State<SuperEditor> {
               presenter: presenter,
               componentBuilders: widget.componentBuilders,
               shrinkWrap: widget.shrinkWrap,
+              selectionExtentAutoScrollBoundary: widget.selectionExtentAutoScrollBoundary,
               underlays: [
                 // Add all underlays from plugins.
                 for (final plugin in widget.plugins) //

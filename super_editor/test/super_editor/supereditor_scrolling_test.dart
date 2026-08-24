@@ -432,6 +432,38 @@ void main() {
       expect(scrollController.position.pixels, scrollController.position.maxScrollExtent);
     });
 
+    testWidgetsOnDesktop("keeps the selection extent auto-scroll boundary clear of the viewport's bottom",
+        (tester) async {
+      const boundary = 48.0;
+      final scrollController = ScrollController();
+
+      await tester //
+          .createDocument()
+          .withSingleParagraph()
+          .withScrollController(scrollController)
+          .withInputSource(TextInputSource.keyboard)
+          .withEditorSize(const Size(600, 300))
+          .withSelectionExtentAutoScrollBoundary(const AxisOffset(leading: 0, trailing: boundary))
+          .pump();
+
+      // Put the caret mid-document, then scroll it back out of view so that
+      // typing has to reveal it again.
+      await tester.placeCaretInParagraph("1", 200);
+      scrollController.position.jumpTo(0);
+      await tester.pump();
+
+      await tester.typeKeyboardText("a");
+
+      // The caret came to rest a boundary's distance above the viewport's
+      // bottom edge, rather than flush against it.
+      final layout = SuperEditorInspector.findDocumentLayout();
+      final caretRect = layout.getRectForPosition(SuperEditorInspector.findDocumentSelection()!.extent)!;
+      final caretBottom = layout.getGlobalOffsetFromDocumentOffset(caretRect.bottomLeft).dy;
+      final viewportBottom = tester.getRect(find.byType(SuperEditor)).bottom;
+
+      expect(viewportBottom - caretBottom, greaterThanOrEqualTo(boundary));
+    });
+
     testWidgetsOnDesktop("doesn't auto-scroll for selection changes that aren't user interactions", (tester) async {
       final scrollController = ScrollController();
 

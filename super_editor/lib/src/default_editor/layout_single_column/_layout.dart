@@ -7,6 +7,7 @@ import 'package:super_editor/src/core/document.dart';
 import 'package:super_editor/src/core/document_layout.dart';
 import 'package:super_editor/src/core/document_selection.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
+import 'package:super_editor/src/infrastructure/document_gestures.dart';
 import 'package:super_editor/src/infrastructure/render_sliver_ext.dart';
 import 'package:super_sliver_list/super_sliver_list.dart';
 
@@ -51,6 +52,7 @@ class SingleColumnDocumentLayout extends StatefulWidget {
     this.wrapWithSliverAdapter = true,
     this.showDebugPaint = false,
     this.documentSelection,
+    this.selectionExtentAutoScrollBoundary = AxisOffset.zero,
   }) : super(key: key);
 
   /// Presenter that provides a view model for a complete single-column
@@ -83,6 +85,21 @@ class SingleColumnDocumentLayout extends StatefulWidget {
   final bool showDebugPaint;
 
   final ValueListenable<DocumentSelection?>? documentSelection;
+
+  /// The closest a document position can get to the leading and trailing edges
+  /// of the viewport when [ScrollableDocumentLayout.ensureVisible] scrolls it
+  /// into view.
+  ///
+  /// Defaults to [AxisOffset.zero], which lets a position come to rest flush
+  /// against the viewport's edge. A positive value reserves that much space
+  /// between the position and the edge, which keeps the caret clear of
+  /// whatever an app floats over the viewport — a keyboard toolbar, or a
+  /// floating button. It reserves scroll distance only; it doesn't inset the
+  /// viewport, so the document still paints edge to edge.
+  ///
+  /// Keep this small relative to the viewport. Values approaching the
+  /// viewport's height leave no room to satisfy both edges at once.
+  final AxisOffset selectionExtentAutoScrollBoundary;
 
   @override
   State createState() => _SingleColumnDocumentLayoutState();
@@ -911,6 +928,24 @@ class _SingleColumnDocumentLayoutState extends State<SingleColumnDocumentLayout>
     final componentRect = component.getRectForPosition(position.nodePosition); // .translate(padding.left, padding.top);
     // print('CR $index $componentRect');
 
+    // Revealing these rects, rather than `componentRect`, is what keeps the
+    // boundary clear: the reveal aligns the rect's edge with the viewport's
+    // edge, so growing the rect past the position by `boundary` leaves that
+    // much space between the position and the viewport edge.
+    final boundary = widget.selectionExtentAutoScrollBoundary;
+    final leadingRect = Rect.fromLTRB(
+      componentRect.left,
+      componentRect.top - boundary.leading,
+      componentRect.right,
+      componentRect.bottom,
+    );
+    final trailingRect = Rect.fromLTRB(
+      componentRect.left,
+      componentRect.top,
+      componentRect.right,
+      componentRect.bottom + boundary.trailing,
+    );
+
     {
       final viewport = RenderAbstractViewport.maybeOf(context.findRenderObject());
       if (viewport == null) return;
@@ -920,7 +955,7 @@ class _SingleColumnDocumentLayoutState extends State<SingleColumnDocumentLayout>
           .getOffsetToRevealExt(
             target!,
             0.0,
-            rect: componentRect,
+            rect: leadingRect,
             esimationOnly: true,
           )
           .offset;
@@ -932,19 +967,19 @@ class _SingleColumnDocumentLayoutState extends State<SingleColumnDocumentLayout>
             .getOffsetToRevealExt(
               target,
               0.0,
-              rect: componentRect,
+              rect: leadingRect,
               esimationOnly: false,
             )
             .offset;
         scrollable.position.moveTo(offset);
       } else {
-        final maxOffset = viewport.getOffsetToRevealExt(target, 1.0, rect: componentRect).offset;
+        final maxOffset = viewport.getOffsetToRevealExt(target, 1.0, rect: trailingRect).offset;
         if (position.pixels < maxOffset) {
           final offset = viewport
               .getOffsetToRevealExt(
                 target,
                 1.0,
-                rect: componentRect,
+                rect: trailingRect,
                 esimationOnly: false,
               )
               .offset;
