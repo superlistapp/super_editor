@@ -86,19 +86,8 @@ class SingleColumnDocumentLayout extends StatefulWidget {
 
   final ValueListenable<DocumentSelection?>? documentSelection;
 
-  /// The closest a document position can get to the leading and trailing edges
-  /// of the viewport when [ScrollableDocumentLayout.ensureVisible] scrolls it
-  /// into view.
-  ///
-  /// Defaults to [AxisOffset.zero], which lets a position come to rest flush
-  /// against the viewport's edge. A positive value reserves that much space
-  /// between the position and the edge, which keeps the caret clear of
-  /// whatever an app floats over the viewport — a keyboard toolbar, or a
-  /// floating button. It reserves scroll distance only; it doesn't inset the
-  /// viewport, so the document still paints edge to edge.
-  ///
-  /// Keep this small relative to the viewport. Values approaching the
-  /// viewport's height leave no room to satisfy both edges at once.
+  /// Space [ScrollableDocumentLayout.ensureVisible] keeps between a revealed
+  /// position and the viewport's edges. Costs scroll distance, not viewport.
   final AxisOffset selectionExtentAutoScrollBoundary;
 
   @override
@@ -928,10 +917,6 @@ class _SingleColumnDocumentLayoutState extends State<SingleColumnDocumentLayout>
     final componentRect = component.getRectForPosition(position.nodePosition); // .translate(padding.left, padding.top);
     // print('CR $index $componentRect');
 
-    // Revealing these rects, rather than `componentRect`, is what keeps the
-    // boundary clear: the reveal aligns the rect's edge with the viewport's
-    // edge, so growing the rect past the position by `boundary` leaves that
-    // much space between the position and the viewport edge.
     final boundary = widget.selectionExtentAutoScrollBoundary;
     final leadingRect = Rect.fromLTRB(
       componentRect.left,

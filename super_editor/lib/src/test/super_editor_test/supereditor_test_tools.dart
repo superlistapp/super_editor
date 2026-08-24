@@ -318,8 +318,6 @@ class TestSuperEditorConfigurator {
     return this;
   }
 
-  /// Configures the [SuperEditor] to keep the given space between the caret and
-  /// the viewport's edges when it scrolls the caret into view.
   TestSuperEditorConfigurator withSelectionExtentAutoScrollBoundary(AxisOffset boundary) {
     _config.selectionExtentAutoScrollBoundary = boundary;
     return this;
