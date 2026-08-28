@@ -35,6 +35,32 @@ runs:
       shell: bash
       run: echo "${{ runner.tool_cache }}/superlist-flutter/bin" >> "$GITHUB_PATH"
 
+    - name: Verify the SDK is at the pinned revision
+      shell: bash
+      env:
+        SDK: ${{ runner.tool_cache }}/superlist-flutter
+        REVISION: ${{ inputs.revision }}
+        # Commits and trees are local in a blobless clone, so resolving a revision
+        # never needs the network. Fail fast instead of attempting a doomed fetch
+        # when the revision genuinely isn't there.
+        GIT_NO_LAZY_FETCH: "1"
+      run: |
+        set -euo pipefail
+
+        if ! pinned="$(git -C "$SDK" rev-parse --verify --quiet "$REVISION^{commit}")"; then
+          echo "::error::Revision $REVISION is not in the Flutter SDK at $SDK."
+          exit 1
+        fi
+
+        checked_out="$(git -C "$SDK" rev-parse HEAD)"
+        if [ "$checked_out" != "$pinned" ]; then
+          echo "::error::Flutter SDK is at $checked_out, but this action pins $pinned." \
+            "A cache entry saved under this key with different contents is the likely cause."
+          exit 1
+        fi
+
+        echo "Flutter SDK verified at $checked_out"
+
     - name: Report the SDK in use
       shell: bash
       run: flutter --version
