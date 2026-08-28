@@ -1,5 +1,6 @@
 import 'package:flutter/widgets.dart';
 import 'package:super_editor/src/core/editor.dart';
+import 'package:super_editor/src/infrastructure/document_gestures.dart';
 
 import 'document.dart';
 import 'document_selection.dart';
@@ -110,7 +111,13 @@ abstract class DocumentLayout {
 }
 
 abstract class ScrollableDocumentLayout extends DocumentLayout {
-  void ensureVisible(DocumentPosition position);
+  /// Scrolls the minimum distance needed to reveal [position] within the viewport.
+  ///
+  /// [boundary] is space that's kept between [position] and the viewport's leading
+  /// and trailing edges. It costs scroll distance, not viewport size, so the document
+  /// still paints edge to edge. Callers that float content over the editor, e.g., a
+  /// mobile drag handle beneath the caret, pass the space they need.
+  void ensureVisible(DocumentPosition position, {AxisOffset boundary = AxisOffset.zero});
   void animateToBeginningOfDocument({required Duration duration, required Curve curve});
   void animateToEndOfDocument({required Duration duration, required Curve curve});
 }

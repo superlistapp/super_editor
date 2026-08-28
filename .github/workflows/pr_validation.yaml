@@ -12,10 +12,7 @@ jobs:
       - uses: actions/checkout@v3
 
       # Setup Flutter environment
-      - uses: subosito/flutter-action@v2
-        with:
-          channel: "master"
-          architecture: x64
+      - uses: ./.github/actions/setup-flutter
 
       # Download all the packages that the app uses
       - run: flutter pub get
@@ -36,9 +33,7 @@ jobs:
       - uses: actions/checkout@v3
 
       # Setup Flutter environment
-      - uses: subosito/flutter-action@v2
-        with:
-          channel: "master"
+      - uses: ./.github/actions/setup-flutter
 
       # Download all the packages that the app uses
       - run: flutter pub get
@@ -59,9 +54,7 @@ jobs:
       - uses: actions/checkout@v3
 
       # Setup Flutter environment
-      - uses: subosito/flutter-action@v2
-        with:
-          channel: "master"
+      - uses: ./.github/actions/setup-flutter
 
       # Download all the packages that the app uses
       - run: flutter pub get
@@ -82,10 +75,7 @@ jobs:
       - uses: actions/checkout@v3
 
       # Setup Flutter environment
-      - uses: subosito/flutter-action@v2
-        with:
-          channel: "master"
-          architecture: x64
+      - uses: ./.github/actions/setup-flutter
 
       # Download all the packages that the app uses
       - run: flutter pub get
@@ -110,9 +100,7 @@ jobs:
       - uses: actions/checkout@v3
 
       # Setup Flutter environment
-      - uses: subosito/flutter-action@v2
-        with:
-          channel: "master"
+      - uses: ./.github/actions/setup-flutter
 
       # Download all the packages that the app uses
       - run: flutter pub get
@@ -132,9 +120,7 @@ jobs:
       - uses: actions/checkout@v3
 
       # Setup Flutter environment
-      - uses: subosito/flutter-action@v2
-        with:
-          channel: "master"
+      - uses: ./.github/actions/setup-flutter
 
       # Download all the packages that the app uses
       - run: flutter pub get
@@ -154,9 +140,7 @@ jobs:
       - uses: actions/checkout@v3
 
       # Setup Flutter environment
-      - uses: subosito/flutter-action@v2
-        with:
-          channel: "master"
+      - uses: ./.github/actions/setup-flutter
 
       # Download all the packages that the app uses
       - run: flutter pub get
@@ -175,10 +159,7 @@ jobs:
       - uses: actions/checkout@v3
 
       # Setup Flutter environment
-      - uses: subosito/flutter-action@v2
-        with:
-          channel: "master"
-          architecture: x64
+      - uses: ./.github/actions/setup-flutter
 
       # Download all the packages that the app uses
       - run: flutter pub get
@@ -203,9 +184,7 @@ jobs:
       - uses: actions/checkout@v3
 
       # Setup Flutter environment
-      - uses: subosito/flutter-action@v2
-        with:
-          channel: "master"
+      - uses: ./.github/actions/setup-flutter
 
       # Download all the packages that the app uses
       - run: flutter pub get
@@ -223,9 +202,7 @@ jobs:
       - uses: actions/checkout@v3
 
       # Setup Flutter environment
-      - uses: subosito/flutter-action@v2
-        with:
-          channel: "master"
+      - uses: ./.github/actions/setup-flutter
 
       # Download all the packages that the app uses
       - run: flutter pub get
@@ -243,9 +220,7 @@ jobs:
       - uses: actions/checkout@v3
 
       # Setup Flutter environment
-      - uses: subosito/flutter-action@v2
-        with:
-          channel: "master"
+      - uses: ./.github/actions/setup-flutter
 
       # Download all the packages that the app uses
       - run: flutter pub get
@@ -263,9 +238,7 @@ jobs:
       - uses: actions/checkout@v3
 
       # Setup Flutter environment
-      - uses: subosito/flutter-action@v2
-        with:
-          channel: "master"
+      - uses: ./.github/actions/setup-flutter
 
       # Download all the packages that the app uses
       - run: flutter pub get
@@ -284,10 +257,7 @@ jobs:
       - uses: actions/checkout@v3
 
       # Setup Flutter environment
-      - uses: subosito/flutter-action@v2
-        with:
-          channel: "master"
-          architecture: x64
+      - uses: ./.github/actions/setup-flutter
 
       # Download all the packages that the app uses
       - run: flutter pub get
@@ -312,9 +282,7 @@ jobs:
       - uses: actions/checkout@v3
 
       # Setup Flutter environment
-      - uses: subosito/flutter-action@v2
-        with:
-          channel: "master"
+      - uses: ./.github/actions/setup-flutter
 
       # Download all the packages that the app uses
       - run: flutter pub get
@@ -332,9 +300,7 @@ jobs:
       - uses: actions/checkout@v3
 
       # Setup Flutter environment
-      - uses: subosito/flutter-action@v2
-        with:
-          channel: "master"
+      - uses: ./.github/actions/setup-flutter
 
       # Download all the packages that the app uses
       - run: flutter pub get
@@ -353,10 +319,7 @@ jobs:
       - uses: actions/checkout@v3
 
       # Setup Flutter environment
-      - uses: subosito/flutter-action@v2
-        with:
-          channel: "master"
-          architecture: x64
+      - uses: ./.github/actions/setup-flutter
 
       # Download all the packages that the app uses
       - run: flutter pub get

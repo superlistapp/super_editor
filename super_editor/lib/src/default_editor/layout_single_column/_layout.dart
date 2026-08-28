@@ -893,7 +893,7 @@ class _SingleColumnDocumentLayoutState extends State<SingleColumnDocumentLayout>
   }
 
   @override
-  void ensureVisible(DocumentPosition position) {
+  void ensureVisible(DocumentPosition position, {AxisOffset boundary = AxisOffset.zero}) {
     final component = getComponentByNodeId(position.nodeId);
 
     final scrollable = Scrollable.maybeOf(context);
@@ -917,10 +917,20 @@ class _SingleColumnDocumentLayoutState extends State<SingleColumnDocumentLayout>
     final componentRect = component.getRectForPosition(position.nodePosition); // .translate(padding.left, padding.top);
     // print('CR $index $componentRect');
 
-    final boundary = widget.selectionExtentAutoScrollBoundary;
+    // Revealing a rect aligns that rect's edge with the viewport's edge. Growing the
+    // rect past the position therefore leaves that much space between the position and
+    // the edge, without shrinking the viewport. Each direction grows only on the side
+    // it reveals, so that a boundary never pushes the position away from the edge it's
+    // being revealed at.
+    //
+    // The caller's boundary and the widget's boundary both measure from the same edge,
+    // so the larger of the two satisfies both.
+    final appBoundary = widget.selectionExtentAutoScrollBoundary;
+    final leadingBoundary = max(boundary.leading, appBoundary.leading);
+    final trailingBoundary = max(boundary.trailing, appBoundary.trailing);
     final leadingRect = Rect.fromLTRB(
       componentRect.left,
-      componentRect.top - boundary.leading,
+      componentRect.top - leadingBoundary,
       componentRect.right,
       componentRect.bottom,
     );
@@ -928,7 +938,7 @@ class _SingleColumnDocumentLayoutState extends State<SingleColumnDocumentLayout>
       componentRect.left,
       componentRect.top,
       componentRect.right,
-      componentRect.bottom + boundary.trailing,
+      componentRect.bottom + trailingBoundary,
     );
 
     {

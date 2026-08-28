@@ -161,9 +161,17 @@ class _ReadOnlyDocumentMouseInteractorState extends State<ReadOnlyDocumentMouseI
       onNextFrame((_) {
         readerGesturesLog.finer("Ensuring selection extent is visible because the doc selection changed");
 
-        final globalExtentRect = _getSelectionExtentAsGlobalRect();
-        if (globalExtentRect != null) {
-          widget.autoScroller.ensureGlobalRectIsVisible(globalExtentRect);
+        final layout = _docLayout;
+        if (layout is ScrollableDocumentLayout) {
+          final selection = widget.readerContext.composer.selection;
+          if (selection != null) {
+            layout.ensureVisible(selection.extent);
+          }
+        } else {
+          final globalExtentRect = _getSelectionExtentAsGlobalRect();
+          if (globalExtentRect != null) {
+            widget.autoScroller.ensureGlobalRectIsVisible(globalExtentRect);
+          }
         }
       });
     }
