@@ -459,8 +459,11 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
 
     final layout = widget.getDocumentLayout();
     if (layout is ScrollableDocumentLayout) {
-      layout.ensureVisible(selection.base);
-      layout.ensureVisible(selection.extent);
+      // Keep the same distance from the viewport edges that the drag handle
+      // auto-scroller keeps, so that a caret revealed near an edge still has room
+      // for the handle that hangs off it.
+      layout.ensureVisible(selection.base, boundary: widget.dragAutoScrollBoundary);
+      layout.ensureVisible(selection.extent, boundary: widget.dragAutoScrollBoundary);
       return;
     }
 
