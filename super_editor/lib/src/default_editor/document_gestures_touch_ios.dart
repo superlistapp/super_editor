@@ -352,14 +352,6 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
   bool get _isLongPressInProgress => _longPressStrategy != null;
   IosLongPressSelectionStrategy? _longPressStrategy;
 
-  /// Whether a long-press selection was ended during the gesture that's still
-  /// in flight.
-  ///
-  /// A long-press that ends without a drag is torn down by whichever of
-  /// [_onPanCancel] and [_onTapUp] runs first, and both can run for the same
-  /// pointer. This flag lets the second one know the work is already done, so
-  /// that [_onTapUp] doesn't treat the release as a fresh tap on the
-  /// long-press selection and toggle the just-revealed toolbar back off.
   bool _didEndLongPressDuringCurrentGesture = false;
 
   // Cached view metrics to ignore unnecessary didChangeMetrics calls.
@@ -423,11 +415,6 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
 
-    // The long-press timer is armed on every tap-down and lives outside the
-    // gesture arena, so it can outlive this State. Its callback touches both
-    // `_interactor.currentContext` (gone) and the controls controller (owned by
-    // an ancestor scope, so very much alive) — leaving a magnifier showing that
-    // no interactor is left to hide.
     _tapDownLongPressTimer?.cancel();
     _tapDownLongPressTimer = null;
 
@@ -627,24 +614,18 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
       ..hideMagnifier()
       ..blinkCaret();
 
-    // This release concludes a long-press selection rather than being a fresh
-    // tap, so end the long-press (unless [_onPanCancel] already did, which
-    // happens when the pan recognizer sees the same pointer go away) and leave
-    // the resulting selection and toolbar alone. Falling through would treat
-    // the release as a tap inside the selection and toggle the toolbar that
-    // ending the long-press just revealed straight back off.
     if (_isLongPressInProgress || _didEndLongPressDuringCurrentGesture) {
       if (_isLongPressInProgress) {
         _onLongPressEnd();
       }
       _didEndLongPressDuringCurrentGesture = false;
 
-      // Lifting off a long-press always leaves the toolbar up, including when
-      // the selection it produced is collapsed — long-pressing an empty
-      // paragraph, for example. [_onLongPressEnd] only reveals the toolbar for
-      // expanded selections, because the drag-selection path it also serves
-      // shouldn't pop a toolbar for a caret.
-      _controlsController!.showToolbar();
+      if (widget.selection.value != null) {
+        _controlsController!.showToolbar();
+        if (widget.openKeyboardWhenTappingExistingSelection) {
+          widget.openSoftwareKeyboard();
+        }
+      }
       return;
     }
 
@@ -1178,6 +1159,12 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
   }
 
   void _onPanCancel() {
+    if (_dragMode != null) {
+      _onDragSelectionEnd();
+    } else if (_isLongPressInProgress) {
+      _onLongPressEnd();
+    }
+
     if (widget.contentTapHandlers != null) {
       for (final handler in widget.contentTapHandlers!) {
         final result = handler.onPanCancel();
@@ -1189,20 +1176,6 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
       }
     }
 
-    if (_dragMode != null) {
-      _onDragSelectionEnd();
-    } else if (_isLongPressInProgress) {
-      // A long-press selection started, but the pointer was taken away before
-      // it ever became a drag — so `_dragMode` was never set, and the usual
-      // teardown ([_onDragSelectionEnd] -> [_onLongPressEnd]) can't run.
-      //
-      // Leaving it in progress is what strands the editor: `_longPressStrategy`
-      // stays non-null, so `EagerPanGestureRecognizer.shouldAccept` claims the
-      // *next*, unrelated pan as a long-press drag-selection — magnifier up,
-      // auto-scroller running — with no matching drag end to take either back
-      // down. Android ends the long-press on this same signal.
-      _onLongPressEnd();
-    }
     _controlsController!.handleBeingDragged.value = null;
   }
 
@@ -1234,10 +1207,6 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
 
   void _updateOverlayControlsAfterFinishingDragSelection() {
     _controlsController!.hideMagnifier();
-    // Null-safe on the selection: this now also runs from [_onTapUp] and
-    // [_onPanCancel], which can fire after the selection was cleared (e.g.
-    // focus moved elsewhere). A null-assert here would turn a stale long-press
-    // into a crash.
     if (widget.selection.value?.isCollapsed == false) {
       _controlsController!.showToolbar();
     }
