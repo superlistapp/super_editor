@@ -121,6 +121,30 @@ void main() {
           _expectHandlesAndToolbar();
         });
 
+        testWidgetsOnIos("stops selecting by long-press when the press is cancelled", (tester) async {
+          await _pumpAppWithLongText(tester);
+
+          final longPress = await tester.longPressDownInParagraph("1", 33);
+          await tester.pumpAndSettle();
+          expect(SuperEditorInspector.findDocumentSelection(), _wordConsecteturSelection);
+
+          await longPress.cancel();
+          await tester.pumpAndSettle();
+
+          final drag = await tester.startGesture(tester.getCenter(find.byType(SuperEditor)));
+          await tester.pump(kTapMinTime);
+          for (int i = 0; i < 5; i += 1) {
+            await drag.moveBy(const Offset(20, 0));
+            await tester.pump();
+          }
+
+          expect(find.byType(IOSRoundedRectangleMagnifyingGlass), findsNothing);
+          expect(SuperEditorInspector.findDocumentSelection(), _wordConsecteturSelection);
+
+          await drag.up();
+          await tester.pumpAndSettle();
+        });
+
         testWidgetsOnIos("does nothing with hack global property", (tester) async {
           disableLongPressSelectionForSuperlist = true;
           addTearDown(() => disableLongPressSelectionForSuperlist = false);

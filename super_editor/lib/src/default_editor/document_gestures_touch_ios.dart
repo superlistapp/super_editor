@@ -352,6 +352,8 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
   bool get _isLongPressInProgress => _longPressStrategy != null;
   IosLongPressSelectionStrategy? _longPressStrategy;
 
+  bool _didEndLongPressDuringCurrentGesture = false;
+
   // Cached view metrics to ignore unnecessary didChangeMetrics calls.
   Size? _lastSize;
   ViewPadding? _lastInsets;
@@ -412,6 +414,9 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+
+    _tapDownLongPressTimer?.cancel();
+    _tapDownLongPressTimer = null;
 
     _controlsController!.floatingCursorController.removeListener(_floatingCursorListener);
     _controlsController!.floatingCursorController.cursorGeometryInViewport
@@ -548,6 +553,7 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
 
   void _onTapDown(TapDownDetails details) {
     _globalTapDownOffset = details.globalPosition;
+    _didEndLongPressDuringCurrentGesture = false;
     _tapDownLongPressTimer?.cancel();
     if (!disableLongPressSelectionForSuperlist) {
       _tapDownLongPressTimer = Timer(kLongPressTimeout, _onLongPressDown);
@@ -606,9 +612,25 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
     // Stop waiting for a long-press to start.
     _globalTapDownOffset = null;
     _tapDownLongPressTimer?.cancel();
+    _tapDownLongPressTimer = null;
     _controlsController!
       ..hideMagnifier()
       ..blinkCaret();
+
+    if (_isLongPressInProgress || _didEndLongPressDuringCurrentGesture) {
+      if (_isLongPressInProgress) {
+        _onLongPressEnd();
+      }
+      _didEndLongPressDuringCurrentGesture = false;
+
+      if (widget.selection.value != null) {
+        _controlsController!.showToolbar();
+        if (widget.openKeyboardWhenTappingExistingSelection) {
+          widget.openSoftwareKeyboard();
+        }
+      }
+      return;
+    }
 
     editorGesturesLog.info("Tap down on document");
     final docOffset = _interactorOffsetToDocumentOffset(details.localPosition);
@@ -1140,6 +1162,12 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
   }
 
   void _onPanCancel() {
+    if (_dragMode != null) {
+      _onDragSelectionEnd();
+    } else if (_isLongPressInProgress) {
+      _onLongPressEnd();
+    }
+
     if (widget.contentTapHandlers != null) {
       for (final handler in widget.contentTapHandlers!) {
         final result = handler.onPanCancel();
@@ -1151,9 +1179,6 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
       }
     }
 
-    if (_dragMode != null) {
-      _onDragSelectionEnd();
-    }
     _controlsController!.handleBeingDragged.value = null;
   }
 
@@ -1172,6 +1197,7 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
     _longPressStrategy!.onLongPressEnd();
     _longPressStrategy = null;
     _dragMode = null;
+    _didEndLongPressDuringCurrentGesture = true;
 
     _updateOverlayControlsAfterFinishingDragSelection();
   }
@@ -1184,7 +1210,7 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
 
   void _updateOverlayControlsAfterFinishingDragSelection() {
     _controlsController!.hideMagnifier();
-    if (!widget.selection.value!.isCollapsed) {
+    if (widget.selection.value?.isCollapsed == false) {
       _controlsController!.showToolbar();
     }
   }
