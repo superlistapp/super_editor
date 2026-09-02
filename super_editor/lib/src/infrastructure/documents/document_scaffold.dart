@@ -30,7 +30,7 @@ class DocumentScaffold<ContextType> extends StatefulWidget {
     required this.componentBuilders,
     required this.shrinkWrap,
     this.documentSelection,
-    this.selectionExtentAutoScrollBoundary = AxisOffset.zero,
+    this.selectionExtentAutoScrollBoundary,
     this.underlays = const [],
     this.overlays = const [],
     this.debugPaint = const DebugPaintConfig(),
@@ -93,7 +93,7 @@ class DocumentScaffold<ContextType> extends StatefulWidget {
   final ValueListenable<DocumentSelection?>? documentSelection;
 
   /// See [SingleColumnDocumentLayout.selectionExtentAutoScrollBoundary].
-  final AxisOffset selectionExtentAutoScrollBoundary;
+  final AxisOffset? selectionExtentAutoScrollBoundary;
 
   @override
   State<DocumentScaffold> createState() => _DocumentScaffoldState();

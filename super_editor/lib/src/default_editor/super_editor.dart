@@ -143,7 +143,7 @@ class SuperEditor extends StatefulWidget {
     this.plugins = const {},
     this.debugPaint = const DebugPaintConfig(),
     this.shrinkWrap = false,
-    this.selectionExtentAutoScrollBoundary = AxisOffset.zero,
+    this.selectionExtentAutoScrollBoundary,
   })  : stylesheet = stylesheet ?? defaultStylesheet,
         selectionStyles = selectionStyle ?? defaultSelectionStyle,
         componentBuilders = [
@@ -385,8 +385,20 @@ class SuperEditor extends StatefulWidget {
   /// Only used when editor is not inside an scrollable.
   final bool shrinkWrap;
 
-  /// See [SingleColumnDocumentLayout.selectionExtentAutoScrollBoundary].
-  final AxisOffset selectionExtentAutoScrollBoundary;
+  /// The minimum space to keep between the selection extent and the viewport's
+  /// edges when this editor auto-scrolls to reveal it.
+  ///
+  /// Set this when the app floats content over the editor - a keyboard toolbar, a
+  /// floating button - so that the caret isn't revealed underneath it. It costs
+  /// scroll distance, not viewport size.
+  ///
+  /// This is the configuration point for that space. Where an internal caller
+  /// passes a boundary of its own to [ScrollableDocumentLayout.ensureVisible], the
+  /// larger of the two wins.
+  ///
+  /// See [SingleColumnDocumentLayout.selectionExtentAutoScrollBoundary] for how
+  /// the two combine, and for what `null` means.
+  final AxisOffset? selectionExtentAutoScrollBoundary;
 
   @override
   SuperEditorState createState() => SuperEditorState();

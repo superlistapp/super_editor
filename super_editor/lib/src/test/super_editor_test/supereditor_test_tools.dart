@@ -318,7 +318,7 @@ class TestSuperEditorConfigurator {
     return this;
   }
 
-  TestSuperEditorConfigurator withSelectionExtentAutoScrollBoundary(AxisOffset boundary) {
+  TestSuperEditorConfigurator withSelectionExtentAutoScrollBoundary(AxisOffset? boundary) {
     _config.selectionExtentAutoScrollBoundary = boundary;
     return this;
   }
@@ -768,7 +768,7 @@ class SuperEditorTestConfiguration {
   List<ComponentBuilder>? componentBuilders;
   Stylesheet? stylesheet;
   ScrollController? scrollController;
-  AxisOffset selectionExtentAutoScrollBoundary = AxisOffset.zero;
+  AxisOffset? selectionExtentAutoScrollBoundary;
   bool insideCustomScrollView = false;
   DocumentGestureMode? gestureMode;
   bool isHistoryEnabled = false;
