@@ -24,6 +24,7 @@ import 'package:super_editor/src/default_editor/tap_handlers/tap_handlers.dart';
 import 'package:super_editor/src/default_editor/tasks.dart';
 import 'package:super_editor/src/default_editor/text/custom_underlines.dart';
 import 'package:super_editor/src/infrastructure/content_layers.dart';
+import 'package:super_editor/src/infrastructure/document_gestures.dart';
 import 'package:super_editor/src/infrastructure/documents/document_scaffold.dart';
 import 'package:super_editor/src/infrastructure/documents/document_scroller.dart';
 import 'package:super_editor/src/infrastructure/documents/selection_leader_document_layer.dart';
@@ -142,6 +143,7 @@ class SuperEditor extends StatefulWidget {
     this.plugins = const {},
     this.debugPaint = const DebugPaintConfig(),
     this.shrinkWrap = false,
+    this.selectionExtentAutoScrollBoundary,
   })  : stylesheet = stylesheet ?? defaultStylesheet,
         selectionStyles = selectionStyle ?? defaultSelectionStyle,
         componentBuilders = [
@@ -382,6 +384,21 @@ class SuperEditor extends StatefulWidget {
   /// Whether the scroll view used by the editor should shrink-wrap its contents.
   /// Only used when editor is not inside an scrollable.
   final bool shrinkWrap;
+
+  /// The minimum space to keep between the selection extent and the viewport's
+  /// edges when this editor auto-scrolls to reveal it.
+  ///
+  /// Set this when the app floats content over the editor - a keyboard toolbar, a
+  /// floating button - so that the caret isn't revealed underneath it. It costs
+  /// scroll distance, not viewport size.
+  ///
+  /// This is the configuration point for that space. Where an internal caller
+  /// passes a boundary of its own to [ScrollableDocumentLayout.ensureVisible], the
+  /// larger of the two wins.
+  ///
+  /// See [SingleColumnDocumentLayout.selectionExtentAutoScrollBoundary] for how
+  /// the two combine, and for what `null` means.
+  final AxisOffset? selectionExtentAutoScrollBoundary;
 
   @override
   SuperEditorState createState() => SuperEditorState();
@@ -736,6 +753,7 @@ class SuperEditorState extends State<SuperEditor> {
               presenter: presenter,
               componentBuilders: widget.componentBuilders,
               shrinkWrap: widget.shrinkWrap,
+              selectionExtentAutoScrollBoundary: widget.selectionExtentAutoScrollBoundary,
               underlays: [
                 // Add all underlays from plugins.
                 for (final plugin in widget.plugins) //

@@ -52,6 +52,7 @@ class SingleColumnDocumentLayout extends StatefulWidget {
     this.wrapWithSliverAdapter = true,
     this.showDebugPaint = false,
     this.documentSelection,
+    this.selectionExtentAutoScrollBoundary,
   }) : super(key: key);
 
   /// Presenter that provides a view model for a complete single-column
@@ -84,6 +85,26 @@ class SingleColumnDocumentLayout extends StatefulWidget {
   final bool showDebugPaint;
 
   final ValueListenable<DocumentSelection?>? documentSelection;
+
+  /// The minimum space that [ScrollableDocumentLayout.ensureVisible] keeps
+  /// between a revealed position and the viewport's edges.
+  ///
+  /// Set this when the app floats content over the editor - a keyboard toolbar,
+  /// a floating button - so that the caret isn't revealed underneath it.
+  ///
+  /// This costs scroll distance, not viewport size. The document still paints
+  /// edge to edge; it's scrolled a little further instead.
+  ///
+  /// Callers of [ScrollableDocumentLayout.ensureVisible] may pass a boundary of
+  /// their own - the mobile touch interactors pass their `dragAutoScrollBoundary`
+  /// to leave room for the drag handle that hangs off the caret. Both measure
+  /// from the same viewport edge, so the larger of the two wins per direction.
+  ///
+  /// When `null`, the layout imposes no minimum and the caller's boundary is used
+  /// as given, including a negative one, which reveals a position past the edge.
+  /// A negative boundary shrinks the revealed rect rather than growing it, so it
+  /// reveals past the edge by at most that rect's own height.
+  final AxisOffset? selectionExtentAutoScrollBoundary;
 
   @override
   State createState() => _SingleColumnDocumentLayoutState();
@@ -917,9 +938,17 @@ class _SingleColumnDocumentLayoutState extends State<SingleColumnDocumentLayout>
     // the edge, without shrinking the viewport. Each direction grows only on the side
     // it reveals, so that a boundary never pushes the position away from the edge it's
     // being revealed at.
+    //
+    // The layout's boundary is a minimum. It and the caller's boundary both measure
+    // from the same edge, so the larger of the two satisfies both. With no layout
+    // boundary the caller's is used as given, so a negative one still reveals past
+    // the edge.
+    final minimum = widget.selectionExtentAutoScrollBoundary ?? boundary;
+    final leadingBoundary = max(boundary.leading, minimum.leading);
+    final trailingBoundary = max(boundary.trailing, minimum.trailing);
     final leadingRect = Rect.fromLTRB(
       componentRect.left,
-      componentRect.top - boundary.leading,
+      componentRect.top - leadingBoundary,
       componentRect.right,
       componentRect.bottom,
     );
@@ -927,7 +956,7 @@ class _SingleColumnDocumentLayoutState extends State<SingleColumnDocumentLayout>
       componentRect.left,
       componentRect.top,
       componentRect.right,
-      componentRect.bottom + boundary.trailing,
+      componentRect.bottom + trailingBoundary,
     );
 
     {

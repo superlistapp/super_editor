@@ -432,6 +432,127 @@ void main() {
       expect(scrollController.position.pixels, scrollController.position.maxScrollExtent);
     });
 
+    testWidgetsOnDesktop("keeps the selection extent auto-scroll boundary clear of the viewport's bottom",
+        (tester) async {
+      const boundary = 48.0;
+      final scrollController = ScrollController();
+
+      await tester //
+          .createDocument()
+          .withSingleParagraph()
+          .withScrollController(scrollController)
+          .withInputSource(TextInputSource.keyboard)
+          .withEditorSize(const Size(600, 300))
+          .withSelectionExtentAutoScrollBoundary(const AxisOffset(leading: 0, trailing: boundary))
+          .pump();
+
+      await tester.placeCaretInParagraph("1", 200);
+      scrollController.position.jumpTo(0);
+      await tester.pump();
+
+      await tester.typeKeyboardText("a");
+      await tester.pumpAndSettle();
+
+      final layout = SuperEditorInspector.findDocumentLayout();
+      final caretRect = layout.getRectForPosition(SuperEditorInspector.findDocumentSelection()!.extent)!;
+      final caretBottom = layout.getGlobalOffsetFromDocumentOffset(caretRect.bottomLeft).dy;
+      final viewportBottom = tester.getRect(find.byType(SuperEditor)).bottom;
+
+      expect(viewportBottom - caretBottom, greaterThanOrEqualTo(boundary));
+    });
+
+    testWidgetsOnDesktop("keeps the selection extent auto-scroll boundary clear of the viewport's top", (tester) async {
+      const boundary = 48.0;
+      final scrollController = ScrollController();
+
+      await tester //
+          .createDocument()
+          .withSingleParagraph()
+          .withScrollController(scrollController)
+          .withInputSource(TextInputSource.keyboard)
+          .withEditorSize(const Size(600, 300))
+          .withSelectionExtentAutoScrollBoundary(const AxisOffset(leading: boundary, trailing: 0))
+          .pump();
+
+      await tester.placeCaretInParagraph("1", 200);
+      scrollController.position.jumpTo(scrollController.position.maxScrollExtent);
+      await tester.pump();
+
+      await tester.typeKeyboardText("a");
+      await tester.pumpAndSettle();
+
+      final layout = SuperEditorInspector.findDocumentLayout();
+      final caretRect = layout.getRectForPosition(SuperEditorInspector.findDocumentSelection()!.extent)!;
+      final caretTop = layout.getGlobalOffsetFromDocumentOffset(caretRect.topLeft).dy;
+      final viewportTop = tester.getRect(find.byType(SuperEditor)).top;
+
+      expect(caretTop - viewportTop, greaterThanOrEqualTo(boundary));
+    });
+
+    testWidgetsOnDesktop("keeps the caller's auto-scroll boundary when it's larger than the layout's", (tester) async {
+      final clearance = await _trailingClearanceAfterReveal(
+        tester,
+        layoutBoundary: const AxisOffset(leading: 0, trailing: 20),
+        callerBoundary: const AxisOffset.symmetric(54),
+      );
+
+      // 74 would mean the two were summed, 20 that the caller's was ignored.
+      expect(clearance, closeTo(54, 1));
+    });
+
+    testWidgetsOnDesktop("keeps the layout's auto-scroll boundary when it's larger than the caller's", (tester) async {
+      final clearance = await _trailingClearanceAfterReveal(
+        tester,
+        layoutBoundary: const AxisOffset(leading: 0, trailing: 100),
+        callerBoundary: const AxisOffset.symmetric(54),
+      );
+
+      // 154 would mean the two were summed, 54 that the layout's was ignored.
+      expect(clearance, closeTo(100, 1));
+    });
+
+    testWidgetsOnDesktop("reveals past the viewport's edge for a negative caller auto-scroll boundary", (tester) async {
+      final clearance = await _trailingClearanceAfterReveal(
+        tester,
+        layoutBoundary: null,
+        callerBoundary: const AxisOffset.symmetric(-8),
+      );
+
+      // 0 would mean the negative boundary was clamped away by the layout's default.
+      expect(clearance, closeTo(-8, 1));
+    });
+
+    testWidgetsOnDesktop("keeps the larger auto-scroll boundary in the leading direction too", (tester) async {
+      final scrollController = ScrollController();
+
+      await tester //
+          .createDocument()
+          .withSingleParagraph()
+          .withScrollController(scrollController)
+          .withInputSource(TextInputSource.keyboard)
+          .withEditorSize(const Size(600, 300))
+          .withSelectionExtentAutoScrollBoundary(const AxisOffset(leading: 100, trailing: 0))
+          .pump();
+
+      await tester.placeCaretInParagraph("1", 200);
+      scrollController.position.jumpTo(scrollController.position.maxScrollExtent);
+      await tester.pumpAndSettle();
+
+      final layout = SuperEditorInspector.findDocumentLayout() as ScrollableDocumentLayout;
+      final caret = SuperEditorInspector.findDocumentSelection()!.extent;
+      layout.ensureVisible(caret, boundary: const AxisOffset.symmetric(54));
+      await tester.pumpAndSettle();
+
+      final caretRect = layout.getRectForPosition(caret)!;
+      final caretTop = layout.getGlobalOffsetFromDocumentOffset(caretRect.topLeft).dy;
+      final viewportTop = tester.getRect(find.byType(SuperEditor)).top;
+
+      // 154 would mean the two were summed, 54 that the layout's was ignored. The
+      // layout's trailing boundary is zero here, so this also fails if the two
+      // directions are crossed.
+      expect(caretTop - viewportTop, closeTo(100, 1));
+    });
+
     testWidgetsOnDesktop("doesn't auto-scroll for selection changes that aren't user interactions", (tester) async {
       final scrollController = ScrollController();
 
@@ -1599,6 +1720,53 @@ class _SliverTestEditorState extends State<_SliverTestEditor> {
 }
 
 /// Slowly reduces window size to imitate the appearance of a keyboard.
+/// Reveals the caret with [callerBoundary], within an editor whose layout is
+/// configured with [layoutBoundary], and returns the space left between the caret
+/// and the viewport's bottom edge.
+Future<double> _trailingClearanceAfterReveal(
+  WidgetTester tester, {
+  required AxisOffset? layoutBoundary,
+  required AxisOffset callerBoundary,
+}) async {
+  final scrollController = ScrollController();
+
+  final testContext = await tester //
+      .createDocument()
+      .withSingleParagraph()
+      .withScrollController(scrollController)
+      .withInputSource(TextInputSource.keyboard)
+      .withEditorSize(const Size(600, 300))
+      .withSelectionExtentAutoScrollBoundary(layoutBoundary)
+      .pump();
+
+  // Place the caret without tapping, because at the top of the document this
+  // position is off screen, and scroll back to the top afterwards. Revealing it then
+  // requires a scroll for every boundary measured here, and leaves room to scroll
+  // past flush for a negative one.
+  final caret = DocumentPosition(
+    nodeId: "1",
+    nodePosition: const TextNodePosition(offset: 350),
+  );
+  testContext.editor.execute([
+    ChangeSelectionRequest(
+      DocumentSelection.collapsed(position: caret),
+      SelectionChangeType.placeCaret,
+      SelectionReason.userInteraction,
+    ),
+  ]);
+  await tester.pumpAndSettle();
+  scrollController.position.jumpTo(0);
+  await tester.pumpAndSettle();
+
+  final layout = SuperEditorInspector.findDocumentLayout() as ScrollableDocumentLayout;
+  layout.ensureVisible(caret, boundary: callerBoundary);
+  await tester.pumpAndSettle();
+
+  final caretRect = layout.getRectForPosition(caret)!;
+  final caretBottom = layout.getGlobalOffsetFromDocumentOffset(caretRect.bottomLeft).dy;
+  return tester.getRect(find.byType(SuperEditor)).bottom - caretBottom;
+}
+
 Future<void> _simulateKeyboardAppearance({
   required WidgetTester tester,
   required Size initialScreenSize,

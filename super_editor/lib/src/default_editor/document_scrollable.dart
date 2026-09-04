@@ -292,7 +292,6 @@ class _DocumentScrollableState extends State<DocumentScrollable> with SingleTick
 class AutoScrollController with ChangeNotifier {
   AutoScrollController({
     double maxScrollSpeed = 20.0,
-    this.selectionExtentAutoScrollBoundary = AxisOffset.zero,
     AxisOffset gutter = const AxisOffset(leading: 100, trailing: 100),
   })  : _maxScrollSpeed = maxScrollSpeed,
         _gutter = gutter;
@@ -305,30 +304,6 @@ class AutoScrollController with ChangeNotifier {
 
   final double _maxScrollSpeed;
 
-  /// The closest distance between the user's selection extent (caret)
-  /// and the boundary of a document before the document auto-scrolls
-  /// to make room for the caret.
-  ///
-  /// The default value is zero for the leading and trailing boundaries.
-  /// This means that the top of the caret is permitted to touch the top
-  /// of the scrolling region, but if the caret goes above the viewport
-  /// boundary then the document scrolls up. If the caret goes below the
-  /// bottom of the viewport boundary then the document scrolls down.
-  ///
-  /// A positive value for each boundary creates a buffer zone at each
-  /// edge of the viewport. For example, a value of `100.0` would cause
-  /// the document to auto-scroll whenever the caret sits within 100
-  /// pixels of the edge of a document.
-  ///
-  /// A negative value allows the caret to move outside the viewport
-  /// before auto-scrolling.
-  ///
-  /// See also:
-  ///
-  ///  * [dragAutoScrollBoundary], which defines how close the user's
-  ///    drag gesture can get to the document boundary before auto-scrolling.
-  final AxisOffset selectionExtentAutoScrollBoundary;
-
   /// The closest that the user's selection drag gesture can get to the
   /// document boundary before auto-scrolling.
   ///
@@ -337,10 +312,9 @@ class AutoScrollController with ChangeNotifier {
   ///
   /// See also:
   ///
-  ///  * [selectionExtentAutoScrollBoundary], which defines how close the
-  ///    selection extent can get to the document boundary before
-  ///    auto-scrolling. For example, when the user taps into some text, or
-  ///    when the user presses up/down arrows to move the selection extent.
+  ///  * `SingleColumnDocumentLayout.selectionExtentAutoScrollBoundary`, which
+  ///    defines how close the selection extent can get to the viewport's edges
+  ///    when the document auto-scrolls to reveal it.
   final AxisOffset _gutter;
 
   Ticker? _ticker;

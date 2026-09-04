@@ -7,6 +7,7 @@ import 'package:super_editor/src/default_editor/layout_single_column/_layout.dar
 import 'package:super_editor/src/default_editor/layout_single_column/_presenter.dart';
 import 'package:super_editor/src/infrastructure/content_layers.dart';
 import 'package:super_editor/src/infrastructure/content_layers_for_slivers.dart';
+import 'package:super_editor/src/infrastructure/document_gestures.dart';
 import 'package:super_editor/src/infrastructure/documents/document_scroller.dart';
 
 /// A scaffold that combines pieces to create a scrolling single-column document, with
@@ -29,6 +30,7 @@ class DocumentScaffold<ContextType> extends StatefulWidget {
     required this.componentBuilders,
     required this.shrinkWrap,
     this.documentSelection,
+    this.selectionExtentAutoScrollBoundary,
     this.underlays = const [],
     this.overlays = const [],
     this.debugPaint = const DebugPaintConfig(),
@@ -90,6 +92,9 @@ class DocumentScaffold<ContextType> extends StatefulWidget {
 
   final ValueListenable<DocumentSelection?>? documentSelection;
 
+  /// See [SingleColumnDocumentLayout.selectionExtentAutoScrollBoundary].
+  final AxisOffset? selectionExtentAutoScrollBoundary;
+
   @override
   State<DocumentScaffold> createState() => _DocumentScaffoldState();
 }
@@ -146,6 +151,7 @@ class _DocumentScaffoldState extends State<DocumentScaffold> {
         onBuildScheduled: onBuildScheduled,
         showDebugPaint: widget.debugPaint.layout,
         documentSelection: widget.documentSelection,
+        selectionExtentAutoScrollBoundary: widget.selectionExtentAutoScrollBoundary,
       ),
       underlays: widget.underlays,
       overlays: widget.overlays,

@@ -117,6 +117,14 @@ abstract class ScrollableDocumentLayout extends DocumentLayout {
   /// and trailing edges. It costs scroll distance, not viewport size, so the document
   /// still paints edge to edge. Callers that float content over the editor, e.g., a
   /// mobile drag handle beneath the caret, pass the space they need.
+  ///
+  /// A layout may also carry a minimum of its own, configured by the app - see
+  /// `SingleColumnDocumentLayout.selectionExtentAutoScrollBoundary`. Where it does,
+  /// the larger of the two applies per direction, so [boundary] is a request for at
+  /// least this much space rather than exactly this much.
+  ///
+  /// A negative [boundary] reveals [position] past the viewport's edge, by at most
+  /// the height of the rect being revealed.
   void ensureVisible(DocumentPosition position, {AxisOffset boundary = AxisOffset.zero});
   void animateToBeginningOfDocument({required Duration duration, required Curve curve});
   void animateToEndOfDocument({required Duration duration, required Curve curve});

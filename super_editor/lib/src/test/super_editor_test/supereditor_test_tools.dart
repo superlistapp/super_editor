@@ -318,6 +318,11 @@ class TestSuperEditorConfigurator {
     return this;
   }
 
+  TestSuperEditorConfigurator withSelectionExtentAutoScrollBoundary(AxisOffset? boundary) {
+    _config.selectionExtentAutoScrollBoundary = boundary;
+    return this;
+  }
+
   /// Configures the [SuperEditor] to use the given [focusNode]
   TestSuperEditorConfigurator withFocusNode(FocusNode? focusNode) {
     _config.focusNode = focusNode;
@@ -691,6 +696,7 @@ class _TestSuperEditorState extends State<_TestSuperEditor> {
         if (widget.testConfiguration.componentBuilders == null) TaskComponentBuilder(widget.testDocumentContext.editor)
       ],
       scrollController: widget.testConfiguration.scrollController,
+      selectionExtentAutoScrollBoundary: widget.testConfiguration.selectionExtentAutoScrollBoundary,
       documentOverlayBuilders: _createOverlayBuilders(),
       plugins: widget.testConfiguration.plugins,
     );
@@ -762,6 +768,7 @@ class SuperEditorTestConfiguration {
   List<ComponentBuilder>? componentBuilders;
   Stylesheet? stylesheet;
   ScrollController? scrollController;
+  AxisOffset? selectionExtentAutoScrollBoundary;
   bool insideCustomScrollView = false;
   DocumentGestureMode? gestureMode;
   bool isHistoryEnabled = false;
