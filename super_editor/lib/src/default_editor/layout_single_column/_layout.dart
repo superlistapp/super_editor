@@ -102,6 +102,8 @@ class SingleColumnDocumentLayout extends StatefulWidget {
   ///
   /// When `null`, the layout imposes no minimum and the caller's boundary is used
   /// as given, including a negative one, which reveals a position past the edge.
+  /// A negative boundary shrinks the revealed rect rather than growing it, so it
+  /// reveals past the edge by at most that rect's own height.
   final AxisOffset? selectionExtentAutoScrollBoundary;
 
   @override

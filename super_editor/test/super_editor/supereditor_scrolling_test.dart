@@ -515,11 +515,11 @@ void main() {
       final clearance = await _trailingClearanceAfterReveal(
         tester,
         layoutBoundary: null,
-        callerBoundary: const AxisOffset.symmetric(-24),
+        callerBoundary: const AxisOffset.symmetric(-8),
       );
 
       // 0 would mean the negative boundary was clamped away by the layout's default.
-      expect(clearance, closeTo(-24, 1));
+      expect(clearance, closeTo(-8, 1));
     });
 
     testWidgetsOnDesktop("keeps the larger auto-scroll boundary in the leading direction too", (tester) async {

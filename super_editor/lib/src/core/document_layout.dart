@@ -122,6 +122,9 @@ abstract class ScrollableDocumentLayout extends DocumentLayout {
   /// `SingleColumnDocumentLayout.selectionExtentAutoScrollBoundary`. Where it does,
   /// the larger of the two applies per direction, so [boundary] is a request for at
   /// least this much space rather than exactly this much.
+  ///
+  /// A negative [boundary] reveals [position] past the viewport's edge, by at most
+  /// the height of the rect being revealed.
   void ensureVisible(DocumentPosition position, {AxisOffset boundary = AxisOffset.zero});
   void animateToBeginningOfDocument({required Duration duration, required Curve curve});
   void animateToEndOfDocument({required Duration duration, required Curve curve});
