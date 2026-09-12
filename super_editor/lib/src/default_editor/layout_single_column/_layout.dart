@@ -7,6 +7,7 @@ import 'package:super_editor/src/core/document.dart';
 import 'package:super_editor/src/core/document_layout.dart';
 import 'package:super_editor/src/core/document_selection.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
+import 'package:super_editor/src/infrastructure/document_gestures.dart';
 import 'package:super_editor/src/infrastructure/render_sliver_ext.dart';
 import 'package:super_sliver_list/super_sliver_list.dart';
 
@@ -887,7 +888,7 @@ class _SingleColumnDocumentLayoutState extends State<SingleColumnDocumentLayout>
   }
 
   @override
-  void ensureVisible(DocumentPosition position) {
+  void ensureVisible(DocumentPosition position, {AxisOffset boundary = AxisOffset.zero}) {
     final component = getComponentByNodeId(position.nodeId);
 
     final scrollable = Scrollable.maybeOf(context);
@@ -911,6 +912,24 @@ class _SingleColumnDocumentLayoutState extends State<SingleColumnDocumentLayout>
     final componentRect = component.getRectForPosition(position.nodePosition); // .translate(padding.left, padding.top);
     // print('CR $index $componentRect');
 
+    // Revealing a rect aligns that rect's edge with the viewport's edge. Growing the
+    // rect past the position therefore leaves that much space between the position and
+    // the edge, without shrinking the viewport. Each direction grows only on the side
+    // it reveals, so that a boundary never pushes the position away from the edge it's
+    // being revealed at.
+    final leadingRect = Rect.fromLTRB(
+      componentRect.left,
+      componentRect.top - boundary.leading,
+      componentRect.right,
+      componentRect.bottom,
+    );
+    final trailingRect = Rect.fromLTRB(
+      componentRect.left,
+      componentRect.top,
+      componentRect.right,
+      componentRect.bottom + boundary.trailing,
+    );
+
     {
       final viewport = RenderAbstractViewport.maybeOf(context.findRenderObject());
       if (viewport == null) return;
@@ -920,7 +939,7 @@ class _SingleColumnDocumentLayoutState extends State<SingleColumnDocumentLayout>
           .getOffsetToRevealExt(
             target!,
             0.0,
-            rect: componentRect,
+            rect: leadingRect,
             esimationOnly: true,
           )
           .offset;
@@ -932,19 +951,19 @@ class _SingleColumnDocumentLayoutState extends State<SingleColumnDocumentLayout>
             .getOffsetToRevealExt(
               target,
               0.0,
-              rect: componentRect,
+              rect: leadingRect,
               esimationOnly: false,
             )
             .offset;
         scrollable.position.moveTo(offset);
       } else {
-        final maxOffset = viewport.getOffsetToRevealExt(target, 1.0, rect: componentRect).offset;
+        final maxOffset = viewport.getOffsetToRevealExt(target, 1.0, rect: trailingRect).offset;
         if (position.pixels < maxOffset) {
           final offset = viewport
               .getOffsetToRevealExt(
                 target,
                 1.0,
-                rect: componentRect,
+                rect: trailingRect,
                 esimationOnly: false,
               )
               .offset;

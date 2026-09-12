@@ -850,15 +850,17 @@ class _IOSSuperTextFieldSystemContextMenuState extends State<IOSSuperTextFieldSy
     // The size reported by the controller's toolbarFocalPoint is one frame behind. Query the information
     // overlayController instead.
     final topAnchor = widget.controller.overlayController.toolbarTopAnchor;
-    final bottomAnchor = widget.controller.overlayController.toolbarTopAnchor;
+    final bottomAnchor = widget.controller.overlayController.toolbarBottomAnchor;
 
-    if (topAnchor == null || bottomAnchor == null) {
-      // We don't expect the toolbar builder to be called without having the anchors
-      // defined. But, since these properties are nullable, we account for that.
+    final menuRect = sanitizeSystemContextMenuAnchor(topAnchor, bottomAnchor);
+    if (menuRect == null) {
+      // Either the anchors aren't defined yet, or they resolved to non-finite
+      // values. We can't show the system menu without a valid anchor rect, so
+      // bail out for this frame. See [sanitizeSystemContextMenuAnchor].
       return;
     }
 
-    _systemContextMenuController.show(Rect.fromLTRB(topAnchor.dx, topAnchor.dy, bottomAnchor.dx, bottomAnchor.dy));
+    _systemContextMenuController.show(menuRect);
   }
 
   @override
@@ -866,4 +868,33 @@ class _IOSSuperTextFieldSystemContextMenuState extends State<IOSSuperTextFieldSy
     assert(IOSSystemContextMenu.isSupported(context));
     return const SizedBox.shrink();
   }
+}
+
+/// Builds the anchor [Rect] for the iOS system context menu from the toolbar's
+/// top and bottom anchor offsets, or returns `null` when no menu should be
+/// shown.
+///
+/// Returns `null` when either anchor is `null` (the toolbar hasn't been
+/// positioned yet) or when the resulting rect is not finite.
+///
+/// The anchors originate from text-layout geometry that is mapped through
+/// ancestor render transforms via `RenderBox.localToGlobal`/`globalToLocal`.
+/// During overlay or keyboard transitions an ancestor transform can be
+/// momentarily singular (zero determinant), which makes those mappings produce
+/// `NaN`/`Infinity`. Forwarding a non-finite rect to
+/// [SystemContextMenuController.show] sends it across the platform channel,
+/// where `NaN` fails to JSON-encode and throws `JsonUnsupportedObjectError`.
+/// Returning `null` lets the caller skip showing the menu for that frame.
+@visibleForTesting
+Rect? sanitizeSystemContextMenuAnchor(Offset? topAnchor, Offset? bottomAnchor) {
+  if (topAnchor == null || bottomAnchor == null) {
+    return null;
+  }
+
+  final rect = Rect.fromLTRB(topAnchor.dx, topAnchor.dy, bottomAnchor.dx, bottomAnchor.dy);
+  if (!rect.isFinite) {
+    return null;
+  }
+
+  return rect;
 }

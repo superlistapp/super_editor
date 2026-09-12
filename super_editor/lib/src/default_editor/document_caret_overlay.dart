@@ -86,6 +86,11 @@ class CaretDocumentOverlayState extends DocumentLayoutLayerState<CaretDocumentOv
       widget.composer.selectionNotifier.addListener(_onSelectionChange);
 
       _startOrStopBlinking();
+    } else if (widget.displayOnAllPlatforms != oldWidget.displayOnAllPlatforms ||
+        widget.platformOverride != oldWidget.platformOverride) {
+      // Whether we paint a caret just changed, and with it whether we have
+      // anything to blink.
+      _startOrStopBlinking();
     }
   }
 
@@ -123,9 +128,27 @@ class CaretDocumentOverlayState extends DocumentLayoutLayerState<CaretDocumentOv
     }
   }
 
+  /// Returns `true` if this overlay paints a caret on the current platform, or `false`
+  /// if it paints nothing.
+  ///
+  /// On mobile, `SuperEditor` paints the caret and the drag handles elsewhere, so this
+  /// overlay builds an empty box, which means it has no caret to blink.
+  bool get _paintsCaret {
+    if (widget.displayOnAllPlatforms) {
+      return true;
+    }
+
+    final platform = widget.platformOverride ?? defaultTargetPlatform;
+    return platform != TargetPlatform.android && platform != TargetPlatform.iOS;
+  }
+
   void _startOrStopBlinking() {
     // TODO: allow a configurable policy as to whether to show the caret at all when the selection is expanded: https://github.com/superlistapp/super_editor/issues/234
-    final wantsToBlink = widget.composer.selection != null;
+    //
+    // Only blink when this overlay actually paints a caret. Otherwise a `Ticker` runs
+    // for a caret that's never on screen, which forces full FPS rendering on mobile
+    // and prevents `pumpAndSettle()` from ever settling in tests.
+    final wantsToBlink = _paintsCaret && widget.composer.selection != null;
     if (wantsToBlink && _blinkController.isBlinking) {
       return;
     }
