@@ -670,6 +670,107 @@ Paragraph two
       });
     });
 
+    group('on Safari (macOS web) with a dead key', () {
+      testWidgetsOnMacWeb('does not overwrite the composing selection', (tester) async {
+        final testContext = await tester //
+            .createDocument()
+            .withSingleEmptyParagraph()
+            .withInputSource(TextInputSource.ime)
+            .pump();
+
+        await tester.placeCaretInParagraph('1', 0);
+        await tester.typeImeText('hola');
+
+        final sentValues = <Map>[];
+        tester
+            .interceptChannel(SystemChannels.textInput.name) //
+            .interceptMethod(
+          'TextInput.setEditingState',
+          (methodCall) {
+            sentValues.add(methodCall.arguments as Map);
+            return null;
+          },
+        );
+
+        // Safari reports a pending dead-key accent as composing text that is
+        // also selected.
+        await tester.ime.sendDeltas(const [
+          TextEditingDeltaInsertion(
+            oldText: '. hola',
+            textInserted: "'",
+            insertionOffset: 6,
+            selection: TextSelection(baseOffset: 6, extentOffset: 7),
+            composing: TextRange(start: 6, end: 7),
+          ),
+        ], getter: imeClientGetter);
+
+        expect(sentValues, isEmpty);
+        expect(SuperEditorInspector.findTextInComponent('1').toPlainText(), "hola'");
+
+        // Safari commits the composition by replacing the accent with the
+        // accented vowel.
+        await tester.ime.sendDeltas(const [
+          TextEditingDeltaReplacement(
+            oldText: ". hola'",
+            replacementText: 'é',
+            replacedRange: TextRange(start: 6, end: 7),
+            selection: TextSelection.collapsed(offset: 7),
+            composing: TextRange.empty,
+          ),
+        ], getter: imeClientGetter);
+
+        expect(SuperEditorInspector.findTextInComponent('1').toPlainText(), 'holaé');
+        expect(testContext.composer.composingRegion.value, isNull);
+      });
+
+      testWidgetsOnMacWeb('sends selection changes after the composition ends', (tester) async {
+        await tester //
+            .createDocument()
+            .withSingleEmptyParagraph()
+            .withInputSource(TextInputSource.ime)
+            .pump();
+
+        await tester.placeCaretInParagraph('1', 0);
+        await tester.typeImeText('hola');
+
+        await tester.ime.sendDeltas(const [
+          TextEditingDeltaInsertion(
+            oldText: '. hola',
+            textInserted: "'",
+            insertionOffset: 6,
+            selection: TextSelection(baseOffset: 6, extentOffset: 7),
+            composing: TextRange(start: 6, end: 7),
+          ),
+          TextEditingDeltaReplacement(
+            oldText: ". hola'",
+            replacementText: 'é',
+            replacedRange: TextRange(start: 6, end: 7),
+            selection: TextSelection.collapsed(offset: 7),
+            composing: TextRange.empty,
+          ),
+        ], getter: imeClientGetter);
+
+        final sentSelections = <TextSelection>[];
+        tester
+            .interceptChannel(SystemChannels.textInput.name) //
+            .interceptMethod(
+          'TextInput.setEditingState',
+          (methodCall) {
+            final params = methodCall.arguments as Map;
+            sentSelections.add(TextSelection(
+              baseOffset: params['selectionBase'],
+              extentOffset: params['selectionExtent'],
+            ));
+            return null;
+          },
+        );
+
+        await tester.placeCaretInParagraph('1', 2);
+
+        expect(sentSelections, contains(const TextSelection.collapsed(offset: 4)));
+      });
+    });
+
     group('on iPhone 11 (iOS 13.7) with chinese keyboard', () {
       testWidgetsOnIos('applies keyboard suggestions', (tester) async {
         // Holds the composing region that we sent to the IME.
