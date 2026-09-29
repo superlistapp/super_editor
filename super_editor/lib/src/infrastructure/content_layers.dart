@@ -232,7 +232,10 @@ class ContentLayersElement extends RenderObjectElement {
 
   static bool _isDirty = false;
 
-  bool _isSubtreeDirty(Element element) {
+  @visibleForTesting
+  static bool isSubtreeDirty(Element element) => _isSubtreeDirty(element);
+
+  static bool _isSubtreeDirty(Element element) {
     _isDirty = false;
     element.visitChildren(_isSubtreeDirtyVisitor);
     return _isDirty;
@@ -241,6 +244,11 @@ class ContentLayersElement extends RenderObjectElement {
 // This is intentionally static to prevent closure allocation during
   // the traversal of the element tree.
   static void _isSubtreeDirtyVisitor(Element element) {
+    if (_isDirty) {
+      // The result is already known. Don't descend into the remaining siblings.
+      return;
+    }
+
     // Can't use the () => message syntax because it allocates a closure.
     assert(() {
       if (contentLayersLog.isLoggable(Level.FINEST)) {
