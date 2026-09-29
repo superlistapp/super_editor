@@ -6,6 +6,7 @@ import 'package:super_editor/src/core/document_selection.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/platforms/ios/ios_document_controls.dart';
 import 'package:super_editor/src/infrastructure/platforms/mac/mac_ime.dart';
+import 'package:super_editor/src/infrastructure/platforms/platform.dart';
 
 import 'document_delta_editing.dart';
 import 'document_serialization.dart';
@@ -124,6 +125,15 @@ class DocumentImeInputClient extends TextInputConnectionDecorator with TextInput
     editorImeLog.fine("Wants to send a value to IME: $newValue");
     editorImeLog.fine("The current local IME value: $_currentTextEditingValue");
     editorImeLog.fine("The current platform IME value: $_currentTextEditingValue");
+    if (CurrentPlatform.isWeb && _isSelectionOnlyChangeDuringComposition(newValue)) {
+      // Safari selects the composing text, e.g., a pending dead-key accent. Writing
+      // our collapsed selection back cancels the composition without a compositionend
+      // event, which duplicates the accent and leaves the browser's IME state stale.
+      editorImeLog.fine("Not sending a selection-only change to IME during composition: $newValue");
+      _currentTextEditingValue = newValue;
+      return;
+    }
+
     if (newValue != _platformTextEditingValue) {
       // We've been given a new IME value. We compare its value to _platformTextEditingValue
       // instead of _currentTextEditingValue. Why is that?
@@ -161,6 +171,14 @@ class DocumentImeInputClient extends TextInputConnectionDecorator with TextInput
 
     _currentTextEditingValue = newValue;
     _platformTextEditingValue = newValue;
+  }
+
+  bool _isSelectionOnlyChangeDuringComposition(TextEditingValue newValue) {
+    final platformComposing = _platformTextEditingValue.composing;
+    return platformComposing.isValid &&
+        !platformComposing.isCollapsed &&
+        newValue.text == _platformTextEditingValue.text &&
+        newValue.composing == platformComposing;
   }
 
   @override
