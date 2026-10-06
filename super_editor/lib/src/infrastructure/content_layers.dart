@@ -133,8 +133,8 @@ class ContentLayersElement extends RenderObjectElement {
     if (_realOnBuildScheduled == null) {
       _realOnBuildScheduled = owner!.onBuildScheduled!;
       owner!.onBuildScheduled = _globalOnBuildScheduled;
-      _onBuildListeners.add(_onBuildScheduled);
     }
+    _onBuildListeners.add(_onBuildScheduled);
 
     _content = inflateWidget(widget.content(_onContentBuildScheduled), contentSlot);
   }
@@ -171,6 +171,7 @@ class ContentLayersElement extends RenderObjectElement {
     _onBuildListeners.remove(_onBuildScheduled);
     if (_onBuildListeners.isEmpty) {
       owner!.onBuildScheduled = _realOnBuildScheduled;
+      _realOnBuildScheduled = null;
     }
 
     super.unmount();
@@ -199,10 +200,8 @@ class ContentLayersElement extends RenderObjectElement {
         return;
       }
 
-      final isContentDirty = _isContentDirty();
-      final isAnyLayerDirty = _isAnyLayerDirty();
-
-      if (isContentDirty && isAnyLayerDirty) {
+      // Content only needs inspection when a layer might rebuild before it.
+      if (_isAnyLayerDirty() && _isContentDirty()) {
         contentLayersLog.fine("Marking needs build because content and at least one layer are both dirty.");
         _temporarilyForgetLayers();
       }
@@ -237,11 +236,14 @@ class ContentLayersElement extends RenderObjectElement {
 
   static bool _isSubtreeDirty(Element element) {
     _isDirty = false;
+    if (element.dirty) {
+      return true;
+    }
     element.visitChildren(_isSubtreeDirtyVisitor);
     return _isDirty;
   }
 
-// This is intentionally static to prevent closure allocation during
+  // This is intentionally static to prevent closure allocation during
   // the traversal of the element tree.
   static void _isSubtreeDirtyVisitor(Element element) {
     if (_isDirty) {
