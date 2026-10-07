@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:super_editor/src/infrastructure/render_sliver_ext.dart';
@@ -756,6 +757,277 @@ void main() {
       await tester.pump();
     });
   });
+
+  group("Content layers scheduled checks", () {
+    testWidgets("registers concurrent editors and restores interception after remount", (tester) async {
+      final owner = tester.binding.buildOwner!;
+      final originalCallback = owner.onBuildScheduled;
+      var firstVisits = 0;
+      var secondVisits = 0;
+      Widget editor(String id, VoidCallback onVisit) => BoxContentLayers(
+            key: ValueKey(id),
+            content: (_) => const SizedBox(width: 20, height: 20),
+            overlays: [
+              (_) => ContentLayerProxyWidget(
+                    child: _VisitCounting(onVisit: onVisit, child: const SizedBox()),
+                  ),
+            ],
+          );
+      final first = editor('first', () => firstVisits++);
+      final second = editor('second', () => secondVisits++);
+
+      Future<void> mount(List<Widget> editors) async {
+        await tester.pumpWidget(Directionality(
+          textDirection: TextDirection.ltr,
+          child: Column(children: editors),
+        ));
+        await tester.pumpAndSettle();
+      }
+
+      Future<void> expectChecks({required bool first, required bool second}) async {
+        firstVisits = 0;
+        secondVisits = 0;
+        owner.onBuildScheduled!();
+        var checked = false;
+        // Observe only the scheduled dirty checks, before build/layout visits.
+        SchedulerBinding.instance.scheduleFrameCallback((_) {
+          expect(firstVisits > 0, first);
+          expect(secondVisits > 0, second);
+          checked = true;
+        });
+        await tester.pump();
+        expect(checked, isTrue);
+      }
+
+      await mount([first, second]);
+      expect(owner.onBuildScheduled, isNot(originalCallback));
+      await expectChecks(first: true, second: true);
+
+      await mount([second]);
+      expect(owner.onBuildScheduled, isNot(originalCallback));
+      await expectChecks(first: false, second: true);
+
+      await mount([]);
+      expect(owner.onBuildScheduled, originalCallback);
+
+      await mount([first]);
+      expect(owner.onBuildScheduled, isNot(originalCallback));
+      await expectChecks(first: true, second: false);
+
+      await mount([]);
+      expect(owner.onBuildScheduled, originalCallback);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets("skips content with clean layers but inspects it for a dirty layer root", (tester) async {
+      final layerKey = GlobalKey();
+      var contentVisits = 0;
+      await tester.pumpWidget(Directionality(
+        textDirection: TextDirection.ltr,
+        child: BoxContentLayers(
+          content: (_) => _VisitCounting(
+            onVisit: () => contentVisits++,
+            child: const SizedBox(width: 20, height: 20),
+          ),
+          overlays: [(_) => ContentLayerProxyWidget(key: layerKey, child: const SizedBox())],
+        ),
+      ));
+      await tester.pumpAndSettle();
+
+      Future<void> checkContentVisits(bool expected) async {
+        contentVisits = 0;
+        tester.binding.buildOwner!.onBuildScheduled!();
+        var checked = false;
+        SchedulerBinding.instance.scheduleFrameCallback((_) {
+          expect(contentVisits > 0, expected);
+          checked = true;
+        });
+        await tester.pump();
+        expect(checked, isTrue);
+      }
+
+      await checkContentVisits(false);
+      (layerKey.currentContext! as Element).markNeedsBuild();
+      await checkContentVisits(true);
+      await checkContentVisits(false);
+      expect(tester.takeException(), isNull);
+    });
+  });
+
+  group("Content layers dirty subtree check", () {
+    const branchCount = 100;
+    const branchDepth = 20;
+
+    testWidgets("recognizes a dirty root without visiting its clean descendants", (tester) async {
+      await _pumpDirtySubtreeScaffold(tester, _buildCleanBranches(branchCount, branchDepth));
+      final root = _findSubtreeRoot(tester);
+      root.markNeedsBuild();
+      _VisitCountingElement.visitCount = 0;
+
+      expect(ContentLayersElement.isSubtreeDirty(root), isTrue);
+      expect(_VisitCountingElement.visitCount, 0);
+
+      await tester.pump();
+      expect(ContentLayersElement.isSubtreeDirty(root), isFalse);
+    });
+
+    testWidgets("stops descending once it finds a dirty element", (tester) async {
+      final dirtyKey = GlobalKey();
+      await _pumpDirtySubtreeScaffold(
+        tester,
+        [
+          _Rebuildable(key: dirtyKey),
+          ..._buildCleanBranches(branchCount, branchDepth),
+        ],
+      );
+
+      final root = _findSubtreeRoot(tester);
+      (dirtyKey.currentContext! as Element).markNeedsBuild();
+      _VisitCountingElement.visitCount = 0;
+
+      expect(ContentLayersElement.isSubtreeDirty(root), isTrue);
+      expect(_VisitCountingElement.visitCount, 0);
+    });
+
+    testWidgets("finds a dirty element after clean branches", (tester) async {
+      final dirtyKey = GlobalKey();
+      await _pumpDirtySubtreeScaffold(
+        tester,
+        [
+          ..._buildCleanBranches(branchCount, branchDepth),
+          _Rebuildable(key: dirtyKey),
+        ],
+      );
+
+      final root = _findSubtreeRoot(tester);
+      (dirtyKey.currentContext! as Element).markNeedsBuild();
+      _VisitCountingElement.visitCount = 0;
+
+      expect(ContentLayersElement.isSubtreeDirty(root), isTrue);
+      expect(_VisitCountingElement.visitCount, branchCount * branchDepth);
+    });
+
+    testWidgets("visits the whole subtree when nothing is dirty", (tester) async {
+      await _pumpDirtySubtreeScaffold(
+        tester,
+        [
+          _Rebuildable(key: GlobalKey()),
+          ..._buildCleanBranches(branchCount, branchDepth),
+        ],
+      );
+
+      final root = _findSubtreeRoot(tester);
+      _VisitCountingElement.visitCount = 0;
+
+      expect(ContentLayersElement.isSubtreeDirty(root), isFalse);
+      expect(_VisitCountingElement.visitCount, branchCount * branchDepth);
+    });
+
+    testWidgets("resets its state between checks", (tester) async {
+      final dirtyKey = GlobalKey();
+      final cleanRootKey = GlobalKey();
+      await _pumpDirtySubtreeScaffold(
+        tester,
+        [
+          _Rebuildable(key: dirtyKey),
+          KeyedSubtree(
+            key: cleanRootKey,
+            child: Column(
+              children: _buildCleanBranches(branchCount, branchDepth),
+            ),
+          ),
+        ],
+      );
+      final root = _findSubtreeRoot(tester);
+      final cleanRoot = tester.element(find.byKey(cleanRootKey));
+
+      (dirtyKey.currentContext! as Element).markNeedsBuild();
+      expect(ContentLayersElement.isSubtreeDirty(root), isTrue);
+
+      // A previous dirty result must not short-circuit a check of a clean subtree.
+      _VisitCountingElement.visitCount = 0;
+      expect(ContentLayersElement.isSubtreeDirty(cleanRoot), isFalse);
+      expect(_VisitCountingElement.visitCount, branchCount * branchDepth);
+
+      expect(ContentLayersElement.isSubtreeDirty(root), isTrue);
+
+      await tester.pump();
+
+      _VisitCountingElement.visitCount = 0;
+      expect(ContentLayersElement.isSubtreeDirty(root), isFalse);
+      expect(_VisitCountingElement.visitCount, branchCount * branchDepth);
+    });
+  });
+}
+
+final _subtreeRootKey = GlobalKey();
+
+Future<void> _pumpDirtySubtreeScaffold(WidgetTester tester, List<Widget> children) async {
+  await tester.pumpWidget(
+    Directionality(
+      textDirection: TextDirection.ltr,
+      child: KeyedSubtree(
+        key: _subtreeRootKey,
+        child: Column(children: children),
+      ),
+    ),
+  );
+}
+
+Element _findSubtreeRoot(WidgetTester tester) => tester.element(find.byKey(_subtreeRootKey));
+
+List<Widget> _buildCleanBranches(int count, int depth) {
+  return [
+    for (int i = 0; i < count; i += 1) _buildVisitCountingChain(depth),
+  ];
+}
+
+Widget _buildVisitCountingChain(int depth) {
+  Widget child = const SizedBox();
+  for (int i = 0; i < depth; i += 1) {
+    child = _VisitCounting(child: child);
+  }
+  return child;
+}
+
+/// A widget whose `Element` counts how many times its children are visited.
+class _VisitCounting extends StatelessWidget {
+  const _VisitCounting({required this.child, this.onVisit});
+
+  final Widget child;
+  final VoidCallback? onVisit;
+
+  @override
+  StatelessElement createElement() => _VisitCountingElement(this);
+
+  @override
+  Widget build(BuildContext context) => child;
+}
+
+class _VisitCountingElement extends StatelessElement {
+  _VisitCountingElement(super.widget);
+
+  static int visitCount = 0;
+
+  @override
+  void visitChildren(ElementVisitor visitor) {
+    visitCount += 1;
+    (widget as _VisitCounting).onVisit?.call();
+    super.visitChildren(visitor);
+  }
+}
+
+/// A widget that can be marked dirty through its `Element`.
+class _Rebuildable extends StatefulWidget {
+  const _Rebuildable({super.key});
+
+  @override
+  State<_Rebuildable> createState() => _RebuildableState();
+}
+
+class _RebuildableState extends State<_Rebuildable> {
+  @override
+  Widget build(BuildContext context) => const SizedBox();
 }
 
 Future<void> _pumpScaffold(
