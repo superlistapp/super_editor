@@ -1,0 +1,5 @@
+dependency_overrides:
+  attributed_text:
+    path: ../attributed_text
+  super_text_layout:
+    path: ../super_text_layout
