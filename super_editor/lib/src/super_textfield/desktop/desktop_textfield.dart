@@ -1642,8 +1642,13 @@ class _SuperTextFieldImeInteractorState extends State<SuperTextFieldImeInteracto
       return;
     }
 
-    _textController.inputConnectionNotifier.value!
-        .setEditableSizeAndTransform(renderBox.size, renderBox.getTransformTo(null));
+    final size = renderBox.size;
+    final transform = renderBox.getTransformTo(null);
+    if (!size.isFinite || transform.storage.any((value) => !value.isFinite)) {
+      return;
+    }
+
+    _textController.inputConnectionNotifier.value!.setEditableSizeAndTransform(size, transform);
   }
 
   void _reportCaretRectToIme() {

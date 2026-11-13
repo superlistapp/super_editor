@@ -480,6 +480,10 @@ class SuperEditorImeInteractorState extends State<SuperEditorImeInteractor> impl
       transform = renderSliver.getTransformTo(null);
     }
 
+    if (!size.isFinite || transform.storage.any((value) => !value.isFinite)) {
+      return;
+    }
+
     SuperIme.instance.getImeConnectionForOwner(_myImeId)!.setEditableSizeAndTransform(size, transform);
   }
 
