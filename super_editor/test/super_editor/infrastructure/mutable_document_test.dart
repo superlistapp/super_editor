@@ -398,8 +398,62 @@ void main() {
         expect(document.getNodeIndexById(secondNode.id), 1);
         expect(document.getNodeIndexById(fourthNode.id), 2);
       });
+
+      test("when replacing a node with a node that has the same ID", () {
+        final document = _createThreeParagraphDoc();
+        final firstNode = document.getNodeAt(0)!;
+        final secondNode = document.getNodeAt(1)!;
+        final thirdNode = document.getNodeAt(2)!;
+
+        final updatedSecondNode = ParagraphNode(
+          id: secondNode.id,
+          text: AttributedText("This is the updated second paragraph."),
+        );
+
+        document.replaceNodeById(
+          secondNode.id,
+          updatedSecondNode,
+        );
+
+        expect(document.toList(), [firstNode, updatedSecondNode, thirdNode]);
+        expect(document.getNodeById(secondNode.id), same(updatedSecondNode));
+        expect(document.getNodeIndexById(firstNode.id), 0);
+        expect(document.getNodeIndexById(secondNode.id), 1);
+        expect(document.getNodeIndexById(thirdNode.id), 2);
+      });
+
+      test("without re-indexing the other nodes when the ID stays the same", () {
+        final nodes = [
+          for (var i = 0; i < 100; i++) _IdReadCountingParagraphNode("$i"),
+        ];
+        final document = MutableDocument(nodes: [...nodes]);
+        for (final node in nodes) {
+          node.idReads = 0;
+        }
+
+        document.replaceNodeById("50", ParagraphNode(id: "50", text: AttributedText("Updated")));
+
+        final idReadsOfOtherNodes = [
+          for (var i = 0; i < nodes.length; i++)
+            if (i != 50) nodes[i].idReads,
+        ];
+        expect(idReadsOfOtherNodes, everyElement(0));
+        expect(document.getNodeIndexById("51"), 51);
+      });
     });
   });
+}
+
+class _IdReadCountingParagraphNode extends ParagraphNode {
+  _IdReadCountingParagraphNode(String id) : super(id: id, text: AttributedText("Paragraph $id"));
+
+  int idReads = 0;
+
+  @override
+  String get id {
+    idReads += 1;
+    return super.id;
+  }
 }
 
 MutableDocument _createTwoParagraphDoc() {

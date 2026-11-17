@@ -1339,9 +1339,13 @@ class MutableDocument with Iterable<DocumentNode> implements Document, Editable 
     final index = getNodeIndexById(nodeId);
 
     if (index >= 0) {
-      _nodes.removeAt(index);
-      _nodes.insert(index, newNode);
-      _refreshNodeIdCaches();
+      _nodes[index] = newNode;
+      if (newNode.id == nodeId) {
+        // No index moves, so only this node's cache entry changes.
+        _nodesById[nodeId] = newNode;
+      } else {
+        _refreshNodeIdCaches();
+      }
     } else {
       throw Exception('Could not find node with ID: $nodeId');
     }
