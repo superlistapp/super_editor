@@ -288,6 +288,40 @@ void main() {
       });
     });
 
+    group('setting shorter text', () {
+      for (final (description, selection, expected) in [
+        (
+          'moves a caret to the end',
+          const TextSelection.collapsed(offset: 8),
+          const TextSelection.collapsed(offset: 3)
+        ),
+        (
+          'keeps a base that fits',
+          const TextSelection(baseOffset: 2, extentOffset: 8),
+          const TextSelection(baseOffset: 2, extentOffset: 3)
+        ),
+        (
+          'keeps an extent that fits',
+          const TextSelection(baseOffset: 8, extentOffset: 2),
+          const TextSelection(baseOffset: 3, extentOffset: 2)
+        ),
+        (
+          'clamps an upstream caret',
+          const TextSelection.collapsed(offset: 8, affinity: TextAffinity.upstream),
+          const TextSelection.collapsed(offset: 3, affinity: TextAffinity.upstream),
+        ),
+      ]) {
+        test(description, () {
+          final controller = AttributedTextEditingController(
+            text: AttributedText('Buy milk'),
+            selection: selection,
+          )..text = AttributedText('Buy');
+
+          expect(controller.selection, expected);
+        });
+      }
+    });
+
     group('composing region', () {
       AttributedTextEditingController composing() => AttributedTextEditingController(
             text: AttributedText('Buy milk'),

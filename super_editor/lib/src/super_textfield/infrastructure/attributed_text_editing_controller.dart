@@ -175,8 +175,8 @@ class AttributedTextEditingController with ChangeNotifier {
       // the end of the new text value
       if (_selection.end > _text.length) {
         _selection = _selection.copyWith(
-          baseOffset: _selection.affinity == TextAffinity.downstream ? _selection.baseOffset : _text.length,
-          extentOffset: _selection.affinity == TextAffinity.downstream ? _text.length : _selection.extentOffset,
+          baseOffset: min(_selection.baseOffset, _text.length),
+          extentOffset: min(_selection.extentOffset, _text.length),
         );
       }
       _dropComposingRegionBeyondText();
