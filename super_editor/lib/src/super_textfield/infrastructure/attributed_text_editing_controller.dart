@@ -158,6 +158,7 @@ class AttributedTextEditingController with ChangeNotifier {
 
     _switchText(text);
     _selection = selection;
+    _dropComposingRegionBeyondText();
 
     _updateComposingAttributions();
 
@@ -178,6 +179,7 @@ class AttributedTextEditingController with ChangeNotifier {
           extentOffset: _selection.affinity == TextAffinity.downstream ? _text.length : _selection.extentOffset,
         );
       }
+      _dropComposingRegionBeyondText();
 
       notifyListeners();
     }
@@ -187,6 +189,15 @@ class AttributedTextEditingController with ChangeNotifier {
     _text.removeListener(notifyListeners);
     _text = newText;
     _text.addListener(notifyListeners);
+  }
+
+  /// Platform IMEs reject a composing region that extends beyond the text,
+  /// e.g., Android throws "invalid composing start", so a text replacement
+  /// that removes the composed characters must also end the composition.
+  void _dropComposingRegionBeyondText() {
+    if (_composingRegion.isValid && _composingRegion.end > _text.length) {
+      _composingRegion = TextRange.empty;
+    }
   }
 
   /// Inserts the given [text] at the current caret position.
@@ -649,6 +660,7 @@ class AttributedTextEditingController with ChangeNotifier {
     if (composingRegion != null) {
       _composingRegion = composingRegion;
     }
+    _dropComposingRegionBeyondText();
 
     _updateComposingAttributions();
 
