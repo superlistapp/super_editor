@@ -110,6 +110,69 @@ void main() {
           expect(composingExtent, -1);
         });
 
+        group('when the app replaces the text while the IME is composing', () {
+          Future<List<Map<String, dynamic>>> composeAndInterceptEditingStates(
+            WidgetTester tester,
+            ImeAttributedTextEditingController controller,
+          ) async {
+            await _pumpSuperTextField(tester, controller);
+            await tester.placeCaretInSuperTextField(0);
+            await tester.ime.sendDeltas(
+              const [
+                TextEditingDeltaInsertion(
+                  oldText: '',
+                  textInserted: 'Buy milk',
+                  insertionOffset: 0,
+                  selection: TextSelection.collapsed(offset: 8),
+                  composing: TextRange(start: 4, end: 8),
+                ),
+              ],
+              getter: imeClientGetter,
+            );
+            expect(controller.composingRegion, const TextRange(start: 4, end: 8));
+
+            final editingStates = <Map<String, dynamic>>[];
+            tester
+                .interceptChannel(SystemChannels.textInput.name) //
+                .interceptMethod(
+              'TextInput.setEditingState',
+              (methodCall) {
+                editingStates.add(Map<String, dynamic>.from(methodCall.arguments as Map));
+                return null;
+              },
+            );
+            return editingStates;
+          }
+
+          testWidgetsOnAllPlatforms('clears a composing region beyond the new text', (tester) async {
+            final controller = ImeAttributedTextEditingController();
+            final editingStates = await composeAndInterceptEditingStates(tester, controller);
+
+            controller.updateTextAndSelection(
+              text: AttributedText(),
+              selection: const TextSelection.collapsed(offset: 0),
+            );
+
+            expect(controller.composingRegion, TextRange.empty);
+            expect(editingStates, hasLength(1));
+            expect(editingStates.single['text'], '');
+            expect(editingStates.single['composingBase'], -1);
+            expect(editingStates.single['composingExtent'], -1);
+          });
+
+          testWidgetsOnAllPlatforms('keeps a composing region that fits the new text', (tester) async {
+            final controller = ImeAttributedTextEditingController();
+            final editingStates = await composeAndInterceptEditingStates(tester, controller);
+
+            controller.text = AttributedText('Buy milk!');
+
+            expect(controller.composingRegion, const TextRange(start: 4, end: 8));
+            expect(editingStates, hasLength(1));
+            expect(editingStates.single['composingBase'], 4);
+            expect(editingStates.single['composingExtent'], 8);
+          });
+        });
+
         testWidgetsOnAllPlatforms('and don\'t send editing value back to IME if matches the expected value',
             (tester) async {
           await _pumpEmptySuperTextField(tester);

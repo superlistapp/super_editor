@@ -288,6 +288,90 @@ void main() {
       });
     });
 
+    group('setting shorter text', () {
+      for (final (description, selection, expected) in [
+        (
+          'moves a caret to the end',
+          const TextSelection.collapsed(offset: 8),
+          const TextSelection.collapsed(offset: 3)
+        ),
+        (
+          'keeps a base that fits',
+          const TextSelection(baseOffset: 2, extentOffset: 8),
+          const TextSelection(baseOffset: 2, extentOffset: 3)
+        ),
+        (
+          'keeps an extent that fits',
+          const TextSelection(baseOffset: 8, extentOffset: 2),
+          const TextSelection(baseOffset: 3, extentOffset: 2)
+        ),
+        (
+          'clamps an upstream caret',
+          const TextSelection.collapsed(offset: 8, affinity: TextAffinity.upstream),
+          const TextSelection.collapsed(offset: 3, affinity: TextAffinity.upstream),
+        ),
+      ]) {
+        test(description, () {
+          final controller = AttributedTextEditingController(
+            text: AttributedText('Buy milk'),
+            selection: selection,
+          )..text = AttributedText('Buy');
+
+          expect(controller.selection, expected);
+        });
+      }
+    });
+
+    group('composing region', () {
+      AttributedTextEditingController composing() => AttributedTextEditingController(
+            text: AttributedText('Buy milk'),
+            selection: const TextSelection.collapsed(offset: 8),
+            composingRegion: const TextRange(start: 4, end: 8),
+          );
+
+      test('is cleared when updateTextAndSelection removes the composed text', () {
+        final controller = composing()
+          ..updateTextAndSelection(
+            text: AttributedText(),
+            selection: const TextSelection.collapsed(offset: 0),
+          );
+
+        expect(controller.composingRegion, TextRange.empty);
+      });
+
+      test('is cleared when setting text that is shorter than the region', () {
+        final controller = composing()..text = AttributedText('Buy');
+
+        expect(controller.composingRegion, TextRange.empty);
+      });
+
+      test('is cleared when update replaces the text without a new region', () {
+        final controller = composing()..update(text: AttributedText('Buy mi'));
+
+        expect(controller.composingRegion, TextRange.empty);
+      });
+
+      test('is kept when the new text still contains it', () {
+        final controller = composing()
+          ..updateTextAndSelection(
+            text: AttributedText('Buy milk today'),
+            selection: const TextSelection.collapsed(offset: 8),
+          );
+
+        expect(controller.composingRegion, const TextRange(start: 4, end: 8));
+      });
+
+      test('is kept when update provides a region for the new text', () {
+        final controller = composing()
+          ..update(
+            text: AttributedText('Buy'),
+            composingRegion: const TextRange(start: 0, end: 3),
+          );
+
+        expect(controller.composingRegion, const TextRange(start: 0, end: 3));
+      });
+    });
+
     group('insert', () {
       test('into empty text', () {
         final controller = AttributedTextEditingController(
