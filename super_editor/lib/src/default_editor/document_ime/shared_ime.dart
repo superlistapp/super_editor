@@ -70,12 +70,14 @@ class SuperIme with ChangeNotifier {
     }
 
     superImeLog.info("Opening IME connection (owner: '$ownerInputId')");
-    _imeConnection ??= TextInput.attach(client, configuration);
-    if (showKeyboard) {
-      _imeConnection!.show();
-    }
-
+    final connection = _imeConnection ??= TextInput.attach(client, configuration);
+    // Let the owner initialize the editing state before activating the keyboard.
+    // Updating text after activation can synchronously drain the iOS keyboard queue.
     notifyListeners();
+
+    if (showKeyboard && isOwner(ownerInputId) && identical(_imeConnection, connection) && connection.attached) {
+      connection.show();
+    }
   }
 
   /// If the given [ownerInputId] is the current owner, then the current input connection
