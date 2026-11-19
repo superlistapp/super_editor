@@ -149,12 +149,15 @@ class ImeAttributedTextEditingController extends AttributedTextEditingController
     // Delta model is required for SuperTextField to work.
     final imeConfig = configuration.copyWith(enableDeltaModel: true);
     final inputConnection = _inputConnectionFactory?.call(this, imeConfig) ?? TextInput.attach(this, imeConfig);
-    inputConnection.show();
-
     _inputConnectionNotifier.value = inputConnection;
+    if (!identical(_inputConnectionNotifier.value, inputConnection) || !inputConnection.attached) {
+      return;
+    }
     _sendEditingValueToPlatform();
 
     _osCurrentTextEditingValue = _latestTextEditingValueSentToPlatform!;
+    // Initialize text and selection before iOS activates its keyboard input delegate.
+    inputConnection.show();
     _log.fine('Is attached to input client? ${inputConnection.attached}');
   }
 
@@ -191,12 +194,15 @@ class ImeAttributedTextEditingController extends AttributedTextEditingController
       textCapitalization: textCapitalization,
     );
     final inputConnection = _inputConnectionFactory?.call(this, imeConfig) ?? TextInput.attach(this, imeConfig);
-    inputConnection.show();
-
     _inputConnectionNotifier.value = inputConnection;
+    if (!identical(_inputConnectionNotifier.value, inputConnection) || !inputConnection.attached) {
+      return;
+    }
     _sendEditingValueToPlatform();
 
     _osCurrentTextEditingValue = _latestTextEditingValueSentToPlatform!;
+    // Initialize text and selection before iOS activates its keyboard input delegate.
+    inputConnection.show();
   }
 
   void detachFromIme() {
